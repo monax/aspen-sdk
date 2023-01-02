@@ -3,6 +3,10 @@ import * as t from 'io-ts';
 import { JsonFromString } from 'io-ts-types';
 import path from 'path';
 import { parseFromEnvOrFile } from '../environment';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // A JSON object of type EnvCredentials is expected to be saved here (ignored from repo)
 const defaultConfigFile = path.resolve(path.join(__dirname, 'providers.json'));

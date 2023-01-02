@@ -4,6 +4,10 @@ import * as t from 'io-ts';
 import { JsonFromString } from 'io-ts-types';
 import * as path from 'path';
 import { parseFromEnvOrFile } from '../environment';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const Credential = t.type({
   baseUrl: t.string,
