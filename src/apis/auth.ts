@@ -4,10 +4,7 @@ import * as t from 'io-ts';
 import { JsonFromString } from 'io-ts-types';
 import * as path from 'path';
 import { parseFromEnvOrFile } from '../environment';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { URL } from 'url';
 
 const Credential = t.type({
   baseUrl: t.string,
@@ -61,7 +58,7 @@ export async function authenticate(
 
 export async function authenticateAllFromFile(
   environment: AspenEnvironment,
-  credentialsFile = path.resolve(path.join(__dirname, defaultCredentialsFile)),
+  credentialsFile = new URL(defaultCredentialsFile, import.meta.url).pathname,
   credentialsEnvVarName = defaultCedentialsEnvVarName,
 ): Promise<void> {
   const envCreds = await parseFromEnvOrFile(

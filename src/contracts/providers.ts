@@ -1,15 +1,11 @@
 import { providers, Wallet } from 'ethers';
 import * as t from 'io-ts';
 import { JsonFromString } from 'io-ts-types';
-import path from 'path';
 import { parseFromEnvOrFile } from '../environment';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { URL } from 'url';
 
 // A JSON object of type EnvCredentials is expected to be saved here (ignored from repo)
-const defaultConfigFile = path.resolve(path.join(__dirname, 'providers.json'));
+const defaultConfigFile = new URL('providers.json', import.meta.url).pathname;
 const defaultConfigEnvVarName = 'PROVIDERS_JSON';
 
 const NetworkSecrets = t.partial({

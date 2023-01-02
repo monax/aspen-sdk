@@ -2,8 +2,7 @@ import { BigNumber } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 import { createReadStream } from 'fs';
 import { GraphQLClient } from 'graphql-request';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { URL } from 'url';
 import { AspenEnvironment, authenticateAllFromFile } from '../src/apis/auth';
 import { deployERC721, wait } from '../src/apis/publishing/collection';
 import { PostFileResponse, uploadFile } from '../src/apis/files';
@@ -32,9 +31,6 @@ import { GasStrategy, getGasStrategy } from '../src/contracts/gas';
 import { RoleMatchType } from '../src/apis/gating';
 import { getInnermostError } from '../src/contracts/errors';
 import { CollectionService, FileType } from '../src/apis/publishing';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Global config for flows
 const network: SupportedNetwork = 'Mumbai';
@@ -282,7 +278,7 @@ async function claimGraphQuery(contractAddresses: string[], userAddress?: string
   });
 }
 
-const placeHolderFile = path.join(__dirname, 'assets', 'tokens', '0.jpg');
+const placeHolderFile = new URL('./assets/tokens/0.jpg', import.meta.url).pathname;
 
 async function issueTokenFlow(
   collectionGuid: string,
