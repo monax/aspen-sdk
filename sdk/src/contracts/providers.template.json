@@ -1,0 +1,14 @@
+{
+  "providerUrls": {
+    "Mumbai": "",
+    "Mainnet": "",
+    "Goerli": "",
+    "Polygon": ""
+  },
+  "privateKeys": {
+    "Mumbai": "",
+    "Mainnet": "",
+    "Goerli": "",
+    "Polygon": ""
+  }
+}
