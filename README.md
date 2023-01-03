@@ -56,11 +56,11 @@ In the `flows.ts` file.
 
 In order to not repeatedly redeploy collections and to demonstrate the necessary issuance state that needs to be saved to a database there are two files:
 
-- [collection-info.json](examples/collection-info.json) (delete to deploy fresh collections)
-- [issuance-info.json](examples/issuance-info.json) (delete to forget any existing issuance)
+- [collection-info.json](collection-info.json) (delete to deploy fresh collections)
+- [issuance-info.json](issuance-info.json) (delete to forget any existing issuance)
 
 ```shell
-yarn workspace clear-state
+yarn examples:clear-state
 ```
 
 Removes both of these files, but either can deleted independently.

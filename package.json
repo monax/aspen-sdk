@@ -65,6 +65,6 @@
     "generate:typechain": "typechain --out-dir=src/contracts/generated --target=ethers-v5 abis/* --show-stack-traces",
     "generate:graphql": "yarn graphql-codegen",
     "examples:flows": "yarn tsnode examples/flows.ts",
-    "examples:clear-state": "rm examples/collection-info.json src/examples/issuance-info.json"
+    "examples:clear-state": "rm collection-info.json issuance-info.json"
   }
 }
