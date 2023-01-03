@@ -1,11 +1,19 @@
+# Non zero-installs
+.pnp.*
 .yarn/*
-!.yarn/releases
+!.yarn/patches
 !.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+
+tsconfig.tsbuildinfo
 .DS_Store
 
 # Generated code
 generated/
-abis/
+sdk/abis
 *.gen.ts
 
 node_modules

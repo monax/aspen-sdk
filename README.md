@@ -10,8 +10,8 @@
 
 The SDK expects some secret credential files to be present in order to function (and to build) they are:
 
-- [src/apis/credentials.json](src/apis/credentials.template.json)
-- [src/contracts/providers.json](src/contracts/providers.template.json)
+- [src/apis/credentials.json](sdk/src/apis/credentials.template.json)
+- [src/contracts/providers.json](sdk/src/contracts/providers.template.json)
 
 The links above take you to a template for these files each of which you should copy to the same directory remoing `.template` from the filename.
 
@@ -56,8 +56,8 @@ In the `flows.ts` file.
 
 In order to not repeatedly redeploy collections and to demonstrate the necessary issuance state that needs to be saved to a database there are two files:
 
-- [collection-info.json](collection-info.json) (delete to deploy fresh collections)
-- [issuance-info.json](issuance-info.json) (delete to forget any existing issuance)
+- [collection-info.json](examples/flows/collection-info.json) (delete to deploy fresh collections)
+- [issuance-info.json](examples/flows/issuance-info.json) (delete to forget any existing issuance)
 
 ```shell
 yarn examples:clear-state

@@ -1,0 +1,15 @@
+config:
+  namingConvention:
+    enumValues: keep
+generates:
+  ./src/claimgraph/claims.types.ts:
+    schema: https://api.thegraph.com/subgraphs/name/silasdavis/claimgraph-mumbai
+    documents:
+      - ./src/claimgraph/claims.ts
+    plugins:
+      - typescript
+      - typescript-operations
+    config:
+      scalars:
+        BigInt: string | number
+        BigDecimal: string | number
