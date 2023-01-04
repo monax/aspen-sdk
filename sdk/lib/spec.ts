@@ -1,13 +1,12 @@
 import fs from 'fs';
 import * as path from 'path';
+import * as url from 'url';
 import { ContractManifest, ContractsManifest } from '../src/manifest';
 import { parse } from '../src/schema';
 import { printJsonObjectAsTypescriptConst } from './typescript';
-import * as url from 'url';
 const dirname = url.fileURLToPath(new url.URL('.', import.meta.url));
 
 export const specDir = path.join(dirname, '..', 'node_modules', '@monaxlabs', 'spec');
-const contractFamilies = new Set(['CedarDeployer', 'CedarERC721Drop', 'CedarERC1155Drop']);
 
 export async function generateTsFile(
   constName: string,
@@ -25,7 +24,7 @@ export async function dumpLatestABIs(abiDir: string): Promise<void> {
     ContractsManifest,
     JSON.parse(fs.readFileSync(path.join(specDir, 'contracts/manifest.json')).toString()),
   );
-  for (const m of Object.values(manifest).filter((m) => contractFamilies.has(m.family))) {
+  for (const m of Object.values(manifest)) {
     writeABI(abiDir, m);
   }
 }

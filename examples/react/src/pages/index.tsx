@@ -113,6 +113,7 @@ const MintCedarERC721DropV0: React.FC<{ contractAddress: string }> = ({ contract
       reciever: account.toLowerCase(),
       quantity: 1,
       currency: CURRENCY,
+      // TODO: get price
       pricePerToken: 0,
       proofs: [],
       proofMaxQuantity: 0,
