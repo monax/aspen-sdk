@@ -30,7 +30,7 @@
     "@graphql-codegen/import-types-preset": "^2.2.4",
     "@graphql-codegen/typescript": "^2.7.4",
     "@graphql-codegen/typescript-operations": "^2.5.4",
-    "@monaxlabs/spec": "0.9.14",
+    "@monaxlabs/spec": "0.9.14-1-gf7f12377",
     "@typechain/ethers-v5": "^10.2.0",
     "@types/jest": "^29.2.5",
     "@types/prettier": "^2.7.2",
