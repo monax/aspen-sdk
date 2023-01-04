@@ -10,7 +10,8 @@
     ]
   },
   "scripts": {
-    "build": "yarn workspaces foreach --topological run build"
+    "build": "yarn workspaces foreach --topological run build",
+    "examples:flows": "yarn workspace @monaxlabs/aspen-sdk-examples-flows run flows"
   },
   "packageManager": "yarn@3.3.1"
 }

@@ -52,7 +52,6 @@
     "fix": "yarn fix:prettier && yarn fix:eslint",
     "fix:prettier": "prettier --write ..",
     "fix:eslint": "eslint --fix '**/*.ts'",
-    "examples:flows": "yarn workspace @monaxlabs/aspen-sdk-examples-flows run flows",
     "tsnode": "ts-node --esm --experimental-specifier-resolution=node",
     "generate:spec": "yarn tsnode lib/cmd/generate-from-spec.ts",
     "generate:publishing": "npx openapi-typescript-codegen --input ./node_modules/@monaxlabs/spec/apis/publishing.json --output ./src/apis/publishing/generated --client axios --useOptions",

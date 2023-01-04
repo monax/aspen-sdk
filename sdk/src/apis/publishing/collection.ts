@@ -175,7 +175,7 @@ export async function deployERC721(
     requestBody: {
       name: 'Public Mint',
       currency: Currency.NATIVE_COIN,
-      pricePerToken: 0.01,
+      pricePerToken: 0.00001,
       startTimestamp: new Date().toISOString(),
       maxClaimableSupply: 0,
       quantityLimitPerTransaction: 100,
