@@ -1,14 +1,16 @@
-import { getReadonlyProvider } from '@/utils/chain/provider';
-import type { Address, ChainId } from '@monax/aspen-spec';
-import type { Signerish } from '@monax/pando';
-import { ICedarFeaturesV0__factory } from '@monax/pando/dist/types';
+import { Provider } from '@ethersproject/providers';
+import { parse } from '../../schema';
+import { Address } from '../address';
+import { ICedarFeaturesV0__factory } from '../generated';
+import { ChainId } from '../network';
+import { Signerish } from '../providers';
 import { InterfaceNotLoadedError } from './constants';
-import { FeatureInterface } from './FeatureInterface';
-import { Agreements } from './Features/Agreements';
-import { Issuance } from './Features/Issuance';
-import { Metadata } from './Features/Metadata';
-import { Ownable } from './Features/Ownable';
-import { Royalties } from './Features/Royalties';
+import { FeatureInterface } from './features';
+import { Agreements } from './features/agreements';
+import { Issuance } from './features/issuance';
+import { Metadata } from './features/metadata';
+import { Ownable } from './features/ownable';
+import { Royalties } from './features/royalties';
 import type {
   CollectionCallData,
   CollectionInfo,
@@ -34,35 +36,23 @@ export const DefaultErrorHandler = (
 };
 
 export class CollectionContract {
-  private static _cache: { [key: string]: CollectionContract } = {};
-
   private _supportedFeatures: string[] = [];
   private _interfaces: FeatureInterfacesMap | null = null;
   private _tokenStandard: TokenStandard | null = null;
-  private readonly _provider: Signerish;
+  private readonly _provider: Provider;
+  private chainId: ChainId | null = null;
   private static _debugHandler: DebugHandler | undefined;
   private static _errorHandler: ErrorHandler | undefined;
   private static _throwErrors = false;
 
-  readonly chainId: ChainId;
   readonly address: Address;
 
-  // Features
+  // features
   readonly metadata: Metadata;
   readonly agreements: Agreements;
   readonly royalties: Royalties;
   readonly issuance: Issuance;
   readonly ownable: Ownable;
-
-  static memo(chainId: ChainId, collectionAddress: Address): CollectionContract {
-    const key = `${chainId}-${collectionAddress}`;
-
-    if (!this._cache[key]) {
-      this._cache[key] = new CollectionContract(chainId, collectionAddress);
-    }
-
-    return this._cache[key];
-  }
 
   static setDebugHandler(handler: DebugHandler | undefined) {
     CollectionContract._debugHandler = handler;
@@ -76,10 +66,9 @@ export class CollectionContract {
     CollectionContract._throwErrors = shouldThrowErrors;
   }
 
-  constructor(chainId: ChainId, collectionAddress: Address) {
-    this.chainId = chainId;
+  constructor(provider: Provider, collectionAddress: Address) {
     this.address = collectionAddress;
-    this._provider = getReadonlyProvider(chainId);
+    this._provider = provider;
 
     this.metadata = new Metadata(this);
     this.agreements = new Agreements(this);
@@ -105,12 +94,23 @@ export class CollectionContract {
     return this._tokenStandard;
   }
 
-  get provider(): Signerish {
+  get provider(): Provider {
     return this._provider;
   }
+
+  async getChainId(): Promise<ChainId> {
+    if (!this.chainId) {
+      const { chainId } = await this.provider.getNetwork();
+      this.chainId = parse(ChainId, chainId);
+    }
+    return this.chainId;
+  }
+
   async load(forceUpdate = false): Promise<boolean> {
     if (this._interfaces == null || forceUpdate) {
       try {
+        // Preload chainId
+        await this.getChainId();
         const contract = ICedarFeaturesV0__factory.connect(this.address, this._provider);
         this._supportedFeatures = await contract.supportedFeatures();
         this.debug('Loaded supported features', this._supportedFeatures);

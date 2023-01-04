@@ -1,7 +1,8 @@
-import type { Address } from '@monax/aspen-spec';
-import type { Signerish } from '@monax/pando';
+import { Address } from '../address';
+import { Signerish } from '../providers';
+import type { CollectionContract } from './collections';
 import { FeatureInterfaceMap } from './constants';
-import type { FeatureInterfaceFactory, SupportedInterfaces } from './types';
+import { FeatureInterfaceFactory, SupportedInterfaces } from './types';
 
 export class FeatureInterface<T> {
   private readonly _factory: FeatureInterfaceFactory<T>;
@@ -37,4 +38,13 @@ export class FeatureInterface<T> {
 
     return new FeatureInterface<SupportedInterfaces>(factory, address, signer);
   }
+}
+export abstract class Features {
+  readonly base: CollectionContract;
+
+  constructor(base: CollectionContract) {
+    this.base = base;
+  }
+
+  abstract get supported(): boolean;
 }

@@ -1,3 +1,4 @@
+import * as t from 'io-ts';
 export const ChainIdFromChainName = {
   Mainnet: 1,
   Ropsten: 3,
@@ -17,7 +18,16 @@ export const ChainIdFromChainName = {
 } as const;
 
 export type ChainName = keyof typeof ChainIdFromChainName;
+export const ChainName = t.keyof(ChainIdFromChainName);
+
+const chainIds = new Set(Object.values(ChainIdFromChainName));
 export type ChainId = typeof ChainIdFromChainName[ChainName];
+export const ChainId = new t.Type<ChainId>(
+  'ChainId',
+  (u): u is ChainId => typeof u === 'number' && chainIds.has(u as ChainId),
+  (i, c) => (chainIds.has(Number(i) as ChainId) ? t.success(Number(i) as ChainId) : t.failure(i, c)),
+  t.identity,
+);
 
 export const ChainNameFromChainId = Object.fromEntries(
   Object.entries(ChainIdFromChainName).map(([n, i]) => [i, n]),

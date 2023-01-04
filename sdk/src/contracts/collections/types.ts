@@ -1,6 +1,4 @@
 import type { Provider } from '@ethersproject/providers';
-import type { Address, ChainId } from '@monax/aspen-spec';
-import type { Signerish } from '@monax/pando';
 import type {
   ICedarAgreementV0,
   ICedarAgreementV1,
@@ -36,22 +34,25 @@ import type {
   IPrimarySaleV0,
   IPrimarySaleV1,
   IPublicAgreementV0,
-  IPublicAgreementV1,
+  // IPublicAgreementV1,
   IPublicMetadataV0,
   IPublicNFTIssuanceV0,
-  IPublicNFTIssuanceV1,
-  IPublicOwnableV0,
+  // IPublicNFTIssuanceV1,
+  // IPublicOwnableV0,
   IPublicPrimarySaleV1,
   IPublicRoyaltyV0,
   IPublicSFTIssuanceV0,
-  IPublicSFTIssuanceV1,
+  // IPublicSFTIssuanceV1,
   IPublicUpdateBaseURIV0,
   IRoyaltyV0,
   ISFTSupplyV0,
-} from '@monax/pando/dist/types';
+} from '../generated';
 import type { BigNumber, Signer } from 'ethers';
 import type { CollectionMetaImageType, CollectionMetaLinkType } from './constants';
-import type { FeatureInterface } from './FeatureInterface';
+import {FeatureInterface} from "./features";
+import {ChainId} from "../network";
+import {Address} from "../address";
+import {Signerish} from "../providers";
 
 export type FeatureInterfacesMap = {
   ICedarFeaturesV0?: FeatureInterface<ICedarFeaturesV0>;
@@ -62,7 +63,7 @@ export type FeatureInterfacesMap = {
   ICedarAgreementV0?: FeatureInterface<ICedarAgreementV0>;
   ICedarAgreementV1?: FeatureInterface<ICedarAgreementV1>;
   IPublicAgreementV0?: FeatureInterface<IPublicAgreementV0>;
-  IPublicAgreementV1?: FeatureInterface<IPublicAgreementV1>;
+  // IPublicAgreementV1?: FeatureInterface<IPublicAgreementV1>;
   ICedarUpdateBaseURIV0?: FeatureInterface<ICedarUpdateBaseURIV0>;
   ICedarUpgradeBaseURIV0?: FeatureInterface<ICedarUpgradeBaseURIV0>;
   IPublicUpdateBaseURIV0?: FeatureInterface<IPublicUpdateBaseURIV0>;
@@ -72,13 +73,13 @@ export type FeatureInterfacesMap = {
   ICedarNFTIssuanceV3?: FeatureInterface<ICedarNFTIssuanceV3>;
   ICedarNFTIssuanceV4?: FeatureInterface<ICedarNFTIssuanceV4>;
   IPublicNFTIssuanceV0?: FeatureInterface<IPublicNFTIssuanceV0>;
-  IPublicNFTIssuanceV1?: FeatureInterface<IPublicNFTIssuanceV1>;
+  // IPublicNFTIssuanceV1?: FeatureInterface<IPublicNFTIssuanceV1>;
   ICedarSFTIssuanceV0?: FeatureInterface<ICedarSFTIssuanceV0>;
   ICedarSFTIssuanceV1?: FeatureInterface<ICedarSFTIssuanceV1>;
   ICedarSFTIssuanceV2?: FeatureInterface<ICedarSFTIssuanceV2>;
   ICedarSFTIssuanceV3?: FeatureInterface<ICedarSFTIssuanceV3>;
   IPublicSFTIssuanceV0?: FeatureInterface<IPublicSFTIssuanceV0>;
-  IPublicSFTIssuanceV1?: FeatureInterface<IPublicSFTIssuanceV1>;
+  // IPublicSFTIssuanceV1?: FeatureInterface<IPublicSFTIssuanceV1>;
   ICedarPausableV0?: FeatureInterface<ICedarPausableV0>;
   ICedarPremintV0?: FeatureInterface<ICedarPremintV0>;
   ICedarLazyMintV0?: FeatureInterface<ICedarLazyMintV0>;
@@ -99,7 +100,7 @@ export type FeatureInterfacesMap = {
   IERC1155SupplyV1?: FeatureInterface<IERC1155SupplyV1>;
   ISFTSupplyV0?: FeatureInterface<ISFTSupplyV0>;
   IERC2981V0?: FeatureInterface<IERC2981V0>;
-  IPublicOwnableV0?: FeatureInterface<IPublicOwnableV0>;
+  // IPublicOwnableV0?: FeatureInterface<IPublicOwnableV0>;
 };
 
 export type SupportedInterfaces =
@@ -111,7 +112,7 @@ export type SupportedInterfaces =
   | ICedarAgreementV0
   | ICedarAgreementV1
   | IPublicAgreementV0
-  | IPublicAgreementV1
+  // | IPublicAgreementV1
   | ICedarUpdateBaseURIV0
   | ICedarUpgradeBaseURIV0
   | IPublicUpdateBaseURIV0
@@ -121,13 +122,13 @@ export type SupportedInterfaces =
   | ICedarNFTIssuanceV3
   | ICedarNFTIssuanceV4
   | IPublicNFTIssuanceV0
-  | IPublicNFTIssuanceV1
+  // | IPublicNFTIssuanceV1
   | ICedarSFTIssuanceV0
   | ICedarSFTIssuanceV1
   | ICedarSFTIssuanceV2
   | ICedarSFTIssuanceV3
   | IPublicSFTIssuanceV0
-  | IPublicSFTIssuanceV1
+  // | IPublicSFTIssuanceV1
   | ICedarPausableV0
   | ICedarPremintV0
   | ICedarLazyMintV0
@@ -148,7 +149,7 @@ export type SupportedInterfaces =
   | IERC1155SupplyV1
   | ISFTSupplyV0
   | IERC2981V0
-  | IPublicOwnableV0;
+  // | IPublicOwnableV0;
 
 export interface FeatureInterfaceFactory<T> {
   connect(address: string, signerOrProvider: Signer | Provider): T;
@@ -302,7 +303,7 @@ export type TermsUserAcceptanceState = {
 };
 
 export type CollectionInfo = {
-  chainId: ChainId;
+  chainId: ChainId | null;
   address: Address;
   tokenStandard: TokenStandard | null;
 };
