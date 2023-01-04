@@ -130,8 +130,8 @@ export class Metadata extends Features {
       const interfaces = this.base.interfaces;
       let iSft: ICedarSFTMetadataV1 | ethers.Contract;
 
-      if (interfaces.ICedarSFTMetadataV1) {
-        iSft = interfaces.ICedarSFTMetadataV1.connectReadOnly();
+      if (interfaces['metadata/IContractMetadata.sol:ICedarMetadataV1']) {
+        iSft = interfaces['metadata/IContractMetadata.sol:ICedarMetadataV1'].connectReadOnly();
       } else {
         const abi = ['function uri(uint256 _tokenId) external view returns (string memory)'];
         iSft = new ethers.Contract(this.base.address, abi, this.base.provider);
@@ -150,8 +150,8 @@ export class Metadata extends Features {
       const interfaces = this.base.interfaces;
       let iNft: ICedarNFTMetadataV1 | ethers.Contract;
 
-      if (interfaces.ICedarNFTMetadataV1) {
-        iNft = interfaces.ICedarNFTMetadataV1.connectReadOnly();
+      if (interfaces['metadata/IContractMetadata.sol:ICedarMetadataV1']) {
+        iNft = interfaces['metadata/IContractMetadata.sol:ICedarMetadataV1'].connectReadOnly();
       } else {
         const abi = ['function tokenURI(uint256 _tokenId) external view returns (string memory)'];
         iNft = new ethers.Contract(this.base.address, abi, this.base.provider);
@@ -192,6 +192,6 @@ export class Metadata extends Features {
   getVerifications(): ContractVerificationType[] {
     const interfaces = this.base.interfaces;
 
-    return interfaces.ICedarFeaturesV0 ? ['aspen-minted'] : [];
+    return interfaces['IAspenFeatures.sol:ICedarFeaturesV0'] ? ['aspen-minted'] : [];
   }
 }

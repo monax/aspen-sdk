@@ -1,7 +1,7 @@
 import { BigNumber, ContractTransaction } from 'ethers';
-import { Address, isSameAddress } from '../../address';
 import { resolveIpfsUrl } from '../../../ipfs';
-import {IPFS_GATEWAY_PREFIX, ZERO_ADDRESS} from '../../constants';
+import { Address, isSameAddress } from '../../address';
+import { IPFS_GATEWAY_PREFIX, ZERO_ADDRESS } from '../../constants';
 import { Signerish } from '../../providers';
 import { Features } from '../features';
 import type { TermsUserAcceptanceState } from '../types';
@@ -14,7 +14,7 @@ export class Agreements extends Features {
     const interfaces = this.base.interfaces;
 
     return !!(
-      (interfaces.ICedarAgreementV0 || interfaces.ICedarAgreementV1 || interfaces.IPublicAgreementV0)
+      (interfaces['agreement/IAgreement.sol:ICedarAgreementV0'] || interfaces['agreement/IAgreement.sol:ICedarAgreementV1'] || interfaces['agreement/IAgreement.sol:IPublicAgreementV0'])
       // || interfaces.IPublicAgreementV1
     );
   }
@@ -26,14 +26,14 @@ export class Agreements extends Features {
     let termsLink = '';
     let termsVersion = 0;
 
-    if (interfaces.ICedarAgreementV0) {
+    if (interfaces['agreement/IAgreement.sol:ICedarAgreementV0']) {
       [termsActivated, termsAccepted, termsLink] = await Promise.all([
         this.getTermsActivated(),
         isSameAddress(userAddress, ZERO_ADDRESS) ? false : this.getTermsAccepted(userAddress),
         this.getTermsLink(),
       ]);
-    } else if (interfaces.ICedarAgreementV1) {
-      const iAgreements = interfaces.ICedarAgreementV1.connectReadOnly();
+    } else if (interfaces['agreement/IAgreement.sol:ICedarAgreementV1']) {
+      const iAgreements = interfaces['agreement/IAgreement.sol:ICedarAgreementV1'].connectReadOnly();
       const [accepted, details] = await Promise.all([
         isSameAddress(userAddress, ZERO_ADDRESS) ? false : iAgreements.hasAcceptedTerms(userAddress),
         iAgreements.getTermsDetails(),
@@ -42,8 +42,8 @@ export class Agreements extends Features {
       termsActivated = details.termsActivated;
       termsLink = resolveIpfsUrl(details.termsURI, IPFS_GATEWAY_PREFIX);
       termsVersion = details.termsVersion;
-    } else if (interfaces.IPublicAgreementV0) {
-      const iAgreements = interfaces.IPublicAgreementV0.connectReadOnly();
+    } else if (interfaces['agreement/IAgreement.sol:IPublicAgreementV0']) {
+      const iAgreements = interfaces['agreement/IAgreement.sol:IPublicAgreementV0'].connectReadOnly();
       const [accepted, details] = await Promise.all([
         isSameAddress(userAddress, ZERO_ADDRESS) ? false : iAgreements['hasAcceptedTerms(address)'](userAddress),
         iAgreements.getTermsDetails(),
@@ -52,16 +52,16 @@ export class Agreements extends Features {
       termsActivated = details.termsActivated;
       termsLink = resolveIpfsUrl(details.termsURI, IPFS_GATEWAY_PREFIX);
       termsVersion = details.termsVersion;
-      // } else if (interfaces.IPublicAgreementV1) {
-      //   const iAgreements = interfaces.IPublicAgreementV1.connectReadOnly();
-      //   const [accepted, details] = await Promise.all([
-      //     isSameAddress(userAddress, ZERO_ADDRESS) ? false : iAgreements['hasAcceptedTerms(address)'](userAddress),
-      //     iAgreements.getTermsDetails(),
-      //   ]);
-      //   termsAccepted = accepted;
-      //   termsActivated = details.termsActivated;
-      //   termsLink = resolveIpfsUrl(details.termsURI);
-      //   termsVersion = details.termsVersion;
+    } else if (interfaces['agreement/IAgreement.sol:IPublicAgreementV1']) {
+      const iAgreements = interfaces['agreement/IAgreement.sol:IPublicAgreementV1'].connectReadOnly();
+      const [accepted, details] = await Promise.all([
+        isSameAddress(userAddress, ZERO_ADDRESS) ? false : iAgreements['hasAcceptedTerms(address)'](userAddress),
+        iAgreements.getTermsDetails(),
+      ]);
+      termsAccepted = accepted;
+      termsActivated = details.termsActivated;
+      termsLink = resolveIpfsUrl(details.termsURI, IPFS_GATEWAY_PREFIX);
+      termsVersion = details.termsVersion;
     }
 
     this.base.debug('Loaded terms state', { termsActivated, termsAccepted, termsLink });
@@ -74,9 +74,9 @@ export class Agreements extends Features {
 
     let termsActivated = false;
 
-    if (interfaces.ICedarAgreementV0) {
+    if (interfaces['agreement/IAgreement.sol:ICedarAgreementV0']) {
       try {
-        const iAgreements = interfaces.ICedarAgreementV0.connectReadOnly();
+        const iAgreements = interfaces['agreement/IAgreement.sol:ICedarAgreementV0'].connectReadOnly();
         termsActivated = await iAgreements.termsActivated();
         this.base.debug('Loaded termsActivated', termsActivated);
       } catch (err) {
@@ -95,9 +95,9 @@ export class Agreements extends Features {
 
     let termsLink = '';
 
-    if (interfaces.ICedarAgreementV0) {
+    if (interfaces['agreement/IAgreement.sol:ICedarAgreementV0']) {
       try {
-        const iAgreements = interfaces.ICedarAgreementV0.connectReadOnly();
+        const iAgreements = interfaces['agreement/IAgreement.sol:ICedarAgreementV0'].connectReadOnly();
         termsLink = resolveIpfsUrl(await iAgreements.userAgreement(), IPFS_GATEWAY_PREFIX);
         this.base.debug('Loaded termsLink', termsLink);
       } catch (err) {
@@ -116,9 +116,9 @@ export class Agreements extends Features {
 
     let termsAccepted = false;
 
-    if (interfaces.ICedarAgreementV0) {
+    if (interfaces['agreement/IAgreement.sol:ICedarAgreementV0']) {
       try {
-        const iAgreements = interfaces.ICedarAgreementV0.connectReadOnly();
+        const iAgreements = interfaces['agreement/IAgreement.sol:ICedarAgreementV0'].connectReadOnly();
         termsAccepted = await iAgreements.getAgreementStatus(userAddress);
         this.base.debug('Loaded termsAccepted', termsAccepted);
       } catch (err) {
@@ -137,38 +137,38 @@ export class Agreements extends Features {
 
     let acceptTx: ContractTransaction | null = null;
 
-    if (interfaces.ICedarAgreementV0) {
+    if (interfaces['agreement/IAgreement.sol:ICedarAgreementV0']) {
       try {
-        const iAgreements = interfaces.ICedarAgreementV0.connectWith(signer);
+        const iAgreements = interfaces['agreement/IAgreement.sol:ICedarAgreementV0'].connectWith(signer);
         acceptTx = await iAgreements.acceptTerms();
         this.base.debug('Accepted terms', acceptTx);
       } catch (err) {
         this.base.error('Failed to accept terms', err, 'agreements.acceptTerms', undefined, signer);
       }
-    } else if (interfaces.ICedarAgreementV1) {
+    } else if (interfaces['agreement/IAgreement.sol:ICedarAgreementV1']) {
       try {
-        const iAgreements = interfaces.ICedarAgreementV1.connectWith(signer);
+        const iAgreements = interfaces['agreement/IAgreement.sol:ICedarAgreementV1'].connectWith(signer);
         acceptTx = await iAgreements['acceptTerms()']();
         this.base.debug('Accepted terms', acceptTx);
       } catch (err) {
         this.base.error('Failed to accept terms', err, 'agreements.acceptTerms');
       }
-    } else if (interfaces.IPublicAgreementV0) {
+    } else if (interfaces['agreement/IAgreement.sol:IPublicAgreementV0']) {
       try {
-        const iAgreements = interfaces.IPublicAgreementV0.connectWith(signer);
+        const iAgreements = interfaces['agreement/IAgreement.sol:IPublicAgreementV0'].connectWith(signer);
         acceptTx = await iAgreements.acceptTerms();
         this.base.debug('Accepted terms', acceptTx);
       } catch (err) {
         this.base.error('Failed to accept terms', err, 'agreements.acceptTerms');
       }
-      // } else if (interfaces.IPublicAgreementV1) {
-      //   try {
-      //     const iAgreements = interfaces.IPublicAgreementV1.connectWith(signer);
-      //     acceptTx = await iAgreements.acceptTerms();
-      //     this.base.debug('Accepted terms', acceptTx);
-      //   } catch (err) {
-      //     this.base.error('Failed to accept terms', err, 'agreements.acceptTerms');
-      //   }
+    } else if (interfaces['agreement/IAgreement.sol:IPublicAgreementV1']) {
+      try {
+        const iAgreements = interfaces['agreement/IAgreement.sol:IPublicAgreementV1'].connectWith(signer);
+        acceptTx = await iAgreements.acceptTerms();
+        this.base.debug('Accepted terms', acceptTx);
+      } catch (err) {
+        this.base.error('Failed to accept terms', err, 'agreements.acceptTerms');
+      }
     } else {
       const err = new Error("Contract doesn't support agreements interface");
       this.base.error('Failed to accept terms', err, 'agreements.acceptTerms', undefined, signer);
@@ -180,9 +180,9 @@ export class Agreements extends Features {
   async estimateGasForAcceptTerms(signer: Signerish): Promise<BigNumber | null> {
     const interfaces = this.base.interfaces;
 
-    if (interfaces.ICedarAgreementV0) {
+    if (interfaces['agreement/IAgreement.sol:ICedarAgreementV0']) {
       try {
-        const iAgreements = interfaces.ICedarAgreementV0.connectWith(signer);
+        const iAgreements = interfaces['agreement/IAgreement.sol:ICedarAgreementV0'].connectWith(signer);
         return await iAgreements.estimateGas.acceptTerms();
       } catch (err) {
         this.base.error(
@@ -193,27 +193,27 @@ export class Agreements extends Features {
           signer,
         );
       }
-    } else if (interfaces.ICedarAgreementV1) {
+    } else if (interfaces['agreement/IAgreement.sol:ICedarAgreementV1']) {
       try {
-        const iAgreements = interfaces.ICedarAgreementV1.connectWith(signer);
+        const iAgreements = interfaces['agreement/IAgreement.sol:ICedarAgreementV1'].connectWith(signer);
         return await iAgreements.estimateGas['acceptTerms()']();
       } catch (err) {
         this.base.error('Failed to estimate gas for accept terms', err, 'agreements.estimateGasForAcceptTerms');
       }
-    } else if (interfaces.IPublicAgreementV0) {
+    } else if (interfaces['agreement/IAgreement.sol:IPublicAgreementV0']) {
       try {
-        const iAgreements = interfaces.IPublicAgreementV0.connectWith(signer);
+        const iAgreements = interfaces['agreement/IAgreement.sol:IPublicAgreementV0'].connectWith(signer);
         return await iAgreements.estimateGas.acceptTerms();
       } catch (err) {
         this.base.error('Failed to estimate gas for accept terms', err, 'agreements.estimateGasForAcceptTerms');
       }
-      // } else if (interfaces.IPublicAgreementV1) {
-      //   try {
-      //     const iAgreements = interfaces.IPublicAgreementV1.connectWith(signer);
-      //     return await iAgreements.estimateGas.acceptTerms();
-      //   } catch (err) {
-      //     this.base.error('Failed to estimate gas for accept terms', err, 'agreements.estimateGasForAcceptTerms');
-      //   }
+    } else if (interfaces['agreement/IAgreement.sol:IPublicAgreementV1']) {
+      try {
+        const iAgreements = interfaces['agreement/IAgreement.sol:IPublicAgreementV1'].connectWith(signer);
+        return await iAgreements.estimateGas.acceptTerms();
+      } catch (err) {
+        this.base.error('Failed to estimate gas for accept terms', err, 'agreements.estimateGasForAcceptTerms');
+      }
     } else {
       const err = new Error("Contract doesn't support agreements interface");
       this.base.error(

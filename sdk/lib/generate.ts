@@ -1,10 +1,10 @@
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import prettier from 'prettier';
 import ts from 'typescript';
 import { ContractManifest, ContractsManifest } from '../src/manifest';
 import { parse } from '../src/schema';
-const nonFeatureDirs = new Set(['deploy', 'impl', 'standard']);
+const nonFeatureDirs = new Set(['deploy', 'impl']);
 
 export function isFeatureId(manifest: ContractsManifest, id: string): boolean {
   return !!Object.values(manifest).find((c) => !nonFeatureDirs.has(c.dir) && c.id === id);
@@ -102,12 +102,12 @@ export function generateFeatureFactoriesMapTs(manifest: ContractsManifest): ts.N
         ),
       ),
     ),
-    ts.factory.createStringLiteral('./contracts/generated'),
+    ts.factory.createStringLiteral('../../contracts/generated'),
     undefined,
   );
 
   const constNode = exportConst(
-    'CedarFeatureFactories',
+    'FeatureFactories',
     ts.factory.createObjectLiteralExpression(
       currentFeatures.map((m) =>
         ts.factory.createPropertyAssignment(

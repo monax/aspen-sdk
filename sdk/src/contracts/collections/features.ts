@@ -1,8 +1,20 @@
+import { Provider } from '@ethersproject/providers';
+import { Signer } from 'ethers';
+import * as t from 'io-ts';
 import { Address } from '../address';
 import { Signerish } from '../providers';
 import type { CollectionContract } from './collections';
-import { FeatureInterfaceMap } from './constants';
-import { FeatureInterfaceFactory, SupportedInterfaces } from './types';
+import { FeatureFactories } from './feature-factories.gen';
+
+export interface FeatureInterfaceFactory<T> {
+  connect(address: string, signerOrProvider: Signer | Provider): T;
+}
+
+export const FeatureInterfaceId = t.keyof(FeatureFactories);
+export type FeatureInterfaceId = t.TypeOf<typeof FeatureInterfaceId>;
+export type FeatureFactories = typeof FeatureFactories;
+export type FeatureFactory<T extends FeatureInterfaceId> = FeatureFactories[T];
+export type FeatureContract<T extends FeatureInterfaceId> = ReturnType<FeatureFactory<T>['connect']>;
 
 export class FeatureInterface<T> {
   private readonly _factory: FeatureInterfaceFactory<T>;
@@ -28,15 +40,15 @@ export class FeatureInterface<T> {
     return this._factory.connect(this._address, signer);
   }
 
-  static fromFeature(
-    feature: string,
+  static fromFeature<T extends FeatureInterfaceId>(
+    feature: T,
     address: Address,
     signer: Signerish,
-  ): FeatureInterface<SupportedInterfaces> | null {
-    const factory = FeatureInterfaceMap[feature] || null;
-    if (!factory) return null;
-
-    return new FeatureInterface<SupportedInterfaces>(factory, address, signer);
+  ): FeatureInterface<FeatureContract<T>> {
+    const factory = FeatureFactories[feature];
+    // FIXME[Silas]: this makes me sad but typescript is not smart enough to understand that the map key union
+    //  is correlated with the map value union and narrow appropriately (even though this _does_ work with a literal key)
+    return new FeatureInterface(factory as unknown as FeatureInterfaceFactory<FeatureContract<T>>, address, signer);
   }
 }
 export abstract class Features {

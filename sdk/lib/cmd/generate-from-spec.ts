@@ -4,12 +4,13 @@ import { ContractsManifest } from '../../src/manifest';
 import { parse } from '../../src/schema';
 import { dumpLatestABIs, generateTsFile, writeFeaturesFactoriesMap } from '../generate';
 const dirname = url.fileURLToPath(new url.URL('.', import.meta.url));
+// const dirname = __dirname;
 
 export const sdkDir = path.join(dirname, '..', '..');
 const srcDir = path.join(sdkDir, 'src');
 const deployersFileTs = path.join(srcDir, 'deployers.gen.ts');
 const manifestFileTs = path.join(srcDir, 'manifest.gen.ts');
-const featureFactoriesTs = path.join(srcDir, 'feature-factories.gen.ts');
+const featureFactoriesTs = path.join(srcDir, 'contracts', 'collections', 'feature-factories.gen.ts');
 export const contractsAbiDir = path.join(sdkDir, 'abis');
 export const specDir = path.join(dirname, '..', '..', 'node_modules', '@monaxlabs', 'spec');
 const pathToManifestJson = path.join(specDir, 'contracts/manifest.json');

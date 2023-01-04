@@ -1,3 +1,4 @@
+import { parse } from '../../../schema';
 import { Address } from '../../address';
 import { Features } from '../features';
 
@@ -8,26 +9,25 @@ export class Ownable extends Features {
    */
   get supported(): boolean {
     const features = this.base.interfaces;
-    return false;
-    // return features.IPublicOwnableV0 ? true : false;
+    return !!features['ownable/IOwnable.sol:IPublicOwnableV0'];
   }
 
   /**
-   * This function returns returns the owner of the contract.
+   * This function returns the owner of the contract.
    * @returns Address | null
    */
   async getOwner(): Promise<Address | null> {
     const interfaces = this.base.interfaces;
 
-    // if (interfaces.IPublicOwnableV0) {
-    //   try {
-    //     const iOwnable = interfaces.IPublicOwnableV0.connectReadOnly();
-    //     const ownerAddress = await iOwnable.owner();
-    //     return parse(Address, ownerAddress);
-    //   } catch (err) {
-    //     this.base.error('Failed to load getOwner', err, 'ownable.getOwner');
-    //   }
-    // }
+    if (interfaces['ownable/IOwnable.sol:IPublicOwnableV0']) {
+      try {
+        const iOwnable = interfaces['ownable/IOwnable.sol:IPublicOwnableV0'].connectReadOnly();
+        const ownerAddress = await iOwnable.owner();
+        return parse(Address, ownerAddress);
+      } catch (err) {
+        this.base.error('Failed to load getOwner', err, 'ownable.getOwner');
+      }
+    }
 
     return null;
   }
