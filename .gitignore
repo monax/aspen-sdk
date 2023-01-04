@@ -20,7 +20,7 @@ node_modules
 dist
 
 # Publishing/gating password files
-examples/flows/secrets/credentials.json
+credentials.json
 providers.json
 collection-info.json
 issuance-info.json

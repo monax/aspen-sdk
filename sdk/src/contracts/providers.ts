@@ -1,11 +1,11 @@
-import { providers, Wallet } from 'ethers';
+import { Provider } from '@ethersproject/providers';
+import { providers, Signer, Wallet } from 'ethers';
 import * as t from 'io-ts';
 import { JsonFromString } from 'io-ts-types';
-import { URL } from 'url';
 import { parseFromEnvOrFile } from '../environment';
 
 // A JSON object of type EnvCredentials is expected to be saved here (ignored from repo)
-const defaultConfigFile = new URL('providers.json', import.meta.url).pathname;
+const defaultConfigFile = 'providers.json';
 const defaultConfigEnvVarName = 'PROVIDERS_JSON';
 
 const NetworkSecrets = t.partial({
@@ -14,6 +14,8 @@ const NetworkSecrets = t.partial({
   Goerli: t.string,
   Polygon: t.string,
 });
+
+export type Signerish = Signer | Provider;
 
 type NetworkSecrets = t.TypeOf<typeof NetworkSecrets>;
 

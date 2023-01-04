@@ -33,19 +33,19 @@ import {
   IPrimarySaleV0__factory,
   IPrimarySaleV1__factory,
   IPublicAgreementV0__factory,
-  IPublicAgreementV1__factory,
+  // IPublicAgreementV1__factory,
   IPublicMetadataV0__factory,
   IPublicNFTIssuanceV0__factory,
-  IPublicNFTIssuanceV1__factory,
-  IPublicOwnableV0__factory,
+  // IPublicNFTIssuanceV1__factory,
+  // IPublicOwnableV0__factory,
   IPublicPrimarySaleV1__factory,
   IPublicRoyaltyV0__factory,
   IPublicSFTIssuanceV0__factory,
-  IPublicSFTIssuanceV1__factory,
+  // IPublicSFTIssuanceV1__factory,
   IPublicUpdateBaseURIV0__factory,
   IRoyaltyV0__factory,
   ISFTSupplyV0__factory,
-} from '@monax/pando/dist/types';
+} from '../generated';
 import type { FeatureInterfaceFactoryMapper } from './types';
 
 export const InterfaceNotLoadedError = new Error('Interface is not loaded');
@@ -76,7 +76,7 @@ export const FeatureInterfaceMap: FeatureInterfaceFactoryMapper = {
   'agreement/ICedarAgreement.sol:ICedarAgreementV0': ICedarAgreementV0__factory,
   'agreement/ICedarAgreement.sol:ICedarAgreementV1': ICedarAgreementV1__factory,
   'agreement/ICedarAgreement.sol:IPublicAgreementV0': IPublicAgreementV0__factory,
-  'agreement/ICedarAgreement.sol:IPublicAgreementV1': IPublicAgreementV1__factory,
+  // 'agreement/ICedarAgreement.sol:IPublicAgreementV1': IPublicAgreementV1__factory,
 
   // Base URI
   'baseURI/ICedarUpdateBaseURI.sol:ICedarUpdateBaseURIV0': ICedarUpdateBaseURIV0__factory,
@@ -90,13 +90,13 @@ export const FeatureInterfaceMap: FeatureInterfaceFactoryMapper = {
   'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3': ICedarNFTIssuanceV3__factory,
   'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4': ICedarNFTIssuanceV4__factory,
   'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0': IPublicNFTIssuanceV0__factory,
-  'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1': IPublicNFTIssuanceV1__factory,
+  // 'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1': IPublicNFTIssuanceV1__factory,
   'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV0': ICedarSFTIssuanceV0__factory,
   'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1': ICedarSFTIssuanceV1__factory,
   'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2': ICedarSFTIssuanceV2__factory,
   'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3': ICedarSFTIssuanceV3__factory,
   'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0': IPublicSFTIssuanceV0__factory,
-  'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1': IPublicSFTIssuanceV1__factory,
+  // 'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1': IPublicSFTIssuanceV1__factory,
   'issuance/ICedarPremint.sol:ICedarPremintV0': ICedarPremintV0__factory,
   'issuance/INFTSupply.sol:INFTSupplyV0': INFTSupplyV0__factory,
   'issuance/ISFTSupply.sol:ISFTSupplyV0': ISFTSupplyV0__factory,
@@ -132,5 +132,5 @@ export const FeatureInterfaceMap: FeatureInterfaceFactoryMapper = {
   'standard/IERC1155.sol:IERC1155SupplyV1': IERC1155SupplyV1__factory,
 
   //Ownable
-  'ownable/IOwnable.sol:IPublicOwnableV0': IPublicOwnableV0__factory,
-};
+  // 'ownable/IOwnable.sol:IPublicOwnableV0': IPublicOwnableV0__factory,
+};;

@@ -1,20 +1,20 @@
-import { parseAddress } from '@/utils/address';
-import type { Address } from '@monax/aspen-spec';
-import { BaseFeature } from '../BaseFeature';
+import { Address } from '../../address';
+import { parse } from '../../../schema';
+import { Features } from '../features';
 
 export type RoyaltyInfo = {
   recipient: Address;
   basisPoints: number;
 };
 
-export class Royalties extends BaseFeature {
+export class Royalties extends Features {
   /**
    * @returns True if the contract supports royalties interface
    */
   get supported(): boolean {
     const features = this.base.interfaces;
 
-    return features.IRoyaltyV0 || features.IPublicRoyaltyV0 ? true : false;
+    return !!(features.IRoyaltyV0 || features.IPublicRoyaltyV0);
   }
 
   /**
@@ -28,13 +28,13 @@ export class Royalties extends BaseFeature {
       try {
         const iRoyalty = interfaces.IRoyaltyV0.connectReadOnly();
         const [recipient, basisPoints] = await iRoyalty.getDefaultRoyaltyInfo();
-        return { recipient: parseAddress(recipient), basisPoints };
+        return { recipient: parse(Address, recipient), basisPoints };
       } catch {}
     } else if (interfaces.IPublicRoyaltyV0) {
       try {
         const iRoyalty = interfaces.IPublicRoyaltyV0.connectReadOnly();
         const [recipient, basisPoints] = await iRoyalty.getDefaultRoyaltyInfo();
-        return { recipient: parseAddress(recipient), basisPoints };
+        return { recipient: parse(Address, recipient), basisPoints };
       } catch {}
     }
 

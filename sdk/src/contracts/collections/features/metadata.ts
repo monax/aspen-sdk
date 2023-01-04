@@ -1,13 +1,15 @@
-import { resolveIpfsUrl } from '@/utils/ipfs';
-import type { ContractVerificationType } from '@monax/aspen-spec';
-import { ICedarNFTMetadataV1, ICedarSFTMetadataV1, IPublicMetadataV0__factory } from '@monax/pando/dist/types';
 import axios from 'axios';
 import { ethers } from 'ethers';
-import { BaseFeature } from '../BaseFeature';
+import { resolveIpfsUrl } from '../../../ipfs';
+import { IPFS_GATEWAY_PREFIX } from '../../constants';
+import { ICedarNFTMetadataV1, ICedarSFTMetadataV1, IPublicMetadataV0__factory } from '../../generated';
 import { CollectionMetaImageType } from '../constants';
+import { Features } from '../features';
 import type { CollectionMetadata, TokenMetadata } from '../types';
 
-export class Metadata extends BaseFeature {
+export type ContractVerificationType = 'aspen-minted' | 'aspen-partner' | 'os-verified';
+
+export class Metadata extends Features {
   private _uri: string | null = null;
   private _metadata: CollectionMetadata | null = null;
 
@@ -60,7 +62,7 @@ export class Metadata extends BaseFeature {
 
   static async getCollectionMetadataFromUri(collectionIpfsUri: string): Promise<CollectionMetadata | null> {
     try {
-      const url = resolveIpfsUrl(collectionIpfsUri);
+      const url = resolveIpfsUrl(collectionIpfsUri, IPFS_GATEWAY_PREFIX);
       const meta = await axios.get(url).then((r) => r.data);
 
       return Metadata.resolveCollectionIpfsUris(meta);
@@ -73,7 +75,7 @@ export class Metadata extends BaseFeature {
     const newMeta: CollectionMetadata = { ...collectionMeta };
 
     if (newMeta.image) {
-      newMeta.image = resolveIpfsUrl(newMeta.image);
+      newMeta.image = resolveIpfsUrl(newMeta.image, IPFS_GATEWAY_PREFIX);
     }
 
     if (newMeta.images) {
@@ -82,7 +84,7 @@ export class Metadata extends BaseFeature {
       const images = { ...newMeta.images };
       for (imageType in CollectionMetaImageType) {
         if (images[imageType]) {
-          images[imageType] = resolveIpfsUrl(images[imageType] as string);
+          images[imageType] = resolveIpfsUrl(images[imageType] || '', IPFS_GATEWAY_PREFIX);
         }
       }
       newMeta.images = images;
@@ -165,7 +167,7 @@ export class Metadata extends BaseFeature {
 
   static async getTokenMetadataFromUri(tokenIpfsUri: string): Promise<TokenMetadata | null> {
     try {
-      const url = resolveIpfsUrl(tokenIpfsUri);
+      const url = resolveIpfsUrl(tokenIpfsUri, IPFS_GATEWAY_PREFIX);
       const meta = await axios.get(url).then((r) => r.data);
 
       return Metadata.resolveTokenIpfsUris(meta);
@@ -178,10 +180,10 @@ export class Metadata extends BaseFeature {
     const newMeta: TokenMetadata = { ...tokenMeta };
 
     if (newMeta.image) {
-      newMeta.image = resolveIpfsUrl(newMeta.image);
+      newMeta.image = resolveIpfsUrl(newMeta.image, IPFS_GATEWAY_PREFIX);
     }
     if (newMeta.image_ipfs) {
-      newMeta.image_ipfs = resolveIpfsUrl(newMeta.image_ipfs);
+      newMeta.image_ipfs = resolveIpfsUrl(newMeta.image_ipfs, IPFS_GATEWAY_PREFIX);
     }
 
     return newMeta;
