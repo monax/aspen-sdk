@@ -50,6 +50,7 @@
   },
   "jest": {
     "preset": "ts-jest",
+    "injectGlobals": false,
     "testMatch": [
       "**/*.test.ts"
     ]

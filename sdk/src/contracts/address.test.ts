@@ -1,6 +1,6 @@
-import { describe, test } from '@jest/globals';
-import { ChainAddress } from './address';
+import { describe, expect, test } from '@jest/globals';
 import { parse } from '../schema';
+import { ChainAddress } from './address';
 
 describe('Address', () => {
   test('Can parse ChainAddress', () => {
