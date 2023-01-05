@@ -7,21 +7,13 @@ import { Address, CollectionContract, parse } from "@monaxlabs/aspen-sdk";
 import { useEffect, useState } from "react";
 import { BigNumber } from "ethers";
 
-const Mint: React.FC<{ contract: CollectionContract }> = ({ contract }) => {
+const Mint: React.FC<{ contract: CollectionContract; tokenId: string }> = ({
+  contract,
+  tokenId,
+}) => {
   const { account, library } = useWeb3React<Web3Provider>();
   const [canMint, setCanMint] = useState(false);
   const [activeClaimConditions, setActiveClaimConditions] = useState(null);
-
-console.log(activeClaimConditions)
-
-  useEffect(() => {
-    if (!contract) return;
-    (async () => {
-      const activeConditions =
-        await contract?.issuance.getActiveClaimConditions("0");
-      setActiveClaimConditions(activeConditions);
-    })();
-  }, [contract, account]);
 
   const onMint = async () => {
     if (!library) return;
@@ -29,7 +21,7 @@ console.log(activeClaimConditions)
     await contract.issuance.claim(
       library.getSigner(),
       parse(Address, account),
-      "0",
+      tokenId,
       BigNumber.from(1),
       activeClaimConditions.activeClaimCondition.currency,
       activeClaimConditions.activeClaimCondition.pricePerToken,
@@ -42,12 +34,13 @@ console.log(activeClaimConditions)
     if (!contract) return;
     (async () => {
       const activeConditions =
-        await contract?.issuance.getActiveClaimConditions("0");
+        await contract?.issuance.getActiveClaimConditions(tokenId);
+      setActiveClaimConditions(activeConditions);
 
       if (account) {
         const userConditions = await contract?.issuance.getUserClaimConditions(
           account as Address,
-          "0"
+          tokenId
         );
 
         const restrictions = await contract?.issuance.getUserClaimRestrictions(
@@ -59,7 +52,7 @@ console.log(activeClaimConditions)
         setCanMint(restrictions.claimState === "ok" ? true : false);
       }
     })();
-  }, [contract, account]);
+  }, [contract, account, tokenId]);
 
   return (
     <div>

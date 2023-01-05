@@ -114,6 +114,9 @@
   border-radius: 10px;
   align-items: center;
   border-color: transparent;
+  height: 2.25rem;
+  margin: 10px;
+  outline: none;
 }
 
 .container {

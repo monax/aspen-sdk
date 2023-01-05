@@ -3,12 +3,19 @@ import { useEffect, useState } from "react";
 import styles from "../styles/Home.module.css";
 
 import { Web3Provider } from "@ethersproject/providers";
-import { CollectionContract, parse, Address } from "@monaxlabs/aspen-sdk";
+import {
+  CollectionContract,
+  parse,
+  Address,
+  ISFTSupplyV0,
+  IERC1155SupplyV1,
+} from "@monaxlabs/aspen-sdk";
 import { useWeb3React } from "@web3-react/core";
 import ConnectWallet from "components/ConnectWallet";
 import LoadClaimConditions from "components/LoadClaimConditions";
 import Mint from "components/Mint";
 import AcceptTerms from "components/AcceptTerms";
+import Select from "components/common/Select";
 
 const Home: NextPage = () => {
   const [contractAddress, setContractAddress] = useState(
@@ -16,7 +23,8 @@ const Home: NextPage = () => {
   );
 
   const [contract, setContract] = useState<CollectionContract>(null);
-
+  const [tokens, setTokens] = useState([]);
+  const [selectedToken, setSelectedToken] = useState("0");
   const { active, library } = useWeb3React<Web3Provider>();
 
   useEffect(() => {
@@ -27,8 +35,10 @@ const Home: NextPage = () => {
         parse(Address, contractAddress)
       );
       await collectionContract.load();
-      console.log(collectionContract.tokenStandard);
       setContract(collectionContract);
+
+      let tokensCount = await collectionContract.issuance.getTokensCount();
+      setTokens(Array.from(Array(tokensCount.toNumber()).keys()));
     })();
   }, [active, library, contractAddress]);
 
@@ -52,10 +62,18 @@ const Home: NextPage = () => {
                 onChange={(e) => setContractAddress(e.target.value)}
               />
             </div>
+            <div className={styles.flex}>
+              <p>Select Token : </p>
+              <Select
+                value={selectedToken}
+                onChange={(e) => setSelectedToken(e.target.value)}
+                options={tokens}
+              />
+            </div>
 
-            <LoadClaimConditions contract={contract} />
+            <LoadClaimConditions contract={contract} tokenId={selectedToken} />
             <AcceptTerms contract={contract} />
-            <Mint contract={contract} />
+            <Mint contract={contract} tokenId={selectedToken} />
           </div>
         )}
       </main>

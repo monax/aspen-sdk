@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { Web3Provider } from "@ethersproject/providers";
 import styles from "../styles/Home.module.css";
 
-const LoadClaimConditions: React.FC<{ contract: CollectionContract }> = ({
-  contract,
-}) => {
+const LoadClaimConditions: React.FC<{
+  contract: CollectionContract;
+  tokenId: string;
+}> = ({ contract, tokenId }) => {
   const { account } = useWeb3React<Web3Provider>();
   const [userClaimRestrictions, setUserClaimRestrictions] = useState(null);
   const [userClaimConditions, setUserClaimConditions] = useState(null);
@@ -16,7 +17,7 @@ const LoadClaimConditions: React.FC<{ contract: CollectionContract }> = ({
     if (!contract) return;
     (async () => {
       const activeConditions =
-        await contract?.issuance.getActiveClaimConditions("0");
+        await contract?.issuance.getActiveClaimConditions(tokenId);
       setActiveClaimConditions(activeConditions);
 
       if (account) {
@@ -35,7 +36,7 @@ const LoadClaimConditions: React.FC<{ contract: CollectionContract }> = ({
         setUserClaimRestrictions(restrictions);
       }
     })();
-  }, [contract, account]);
+  }, [contract, account, tokenId]);
 
   return (
     <>
@@ -77,7 +78,9 @@ const LoadClaimConditions: React.FC<{ contract: CollectionContract }> = ({
             Can Claim Tokens :{" "}
             {userClaimRestrictions.canClaimTokens ? "TRUE" : "FALSE"}
           </p>
-          <p>Can Mint After : {(userClaimRestrictions.canMintAfter).toDateString()}</p>
+          <p>
+            Can Mint After : {userClaimRestrictions.canMintAfter.toDateString()}
+          </p>
         </div>
       )}
     </>
