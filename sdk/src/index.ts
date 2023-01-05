@@ -7,5 +7,4 @@ export * from './contracts/constants';
 export * from './contracts/gas';
 export * from './contracts/generated';
 export * from './contracts/network';
-export * from './contracts/providers';
 export * from './ipfs';
