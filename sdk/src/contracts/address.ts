@@ -1,4 +1,3 @@
-// import { randomFillSync } from 'crypto';
 import { utils } from 'ethers';
 import { tryCatch } from 'fp-ts/lib/Either';
 import * as t from 'io-ts';
