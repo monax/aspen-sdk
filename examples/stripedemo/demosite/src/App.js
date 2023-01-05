@@ -81,7 +81,7 @@ function TokenList() {
             },
           ].map((e) => (
             <div className="card">
-              <img className="img" src={e.img} />
+              <img alt="img" className="img" src={e.img} />
               <div className="name">
                 {e.name} - {e.price}
               </div>
@@ -105,7 +105,7 @@ function TokenList() {
 function Header() {
   return (
     <div className="Header">
-      <img src="banner.png" className="banner" />
+      <img alt="banner" src="banner.png" className="banner" />
     </div>
   );
 }
