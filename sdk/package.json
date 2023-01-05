@@ -49,18 +49,29 @@
     "typescript": "^4.8.4"
   },
   "jest": {
-    "preset": "ts-jest",
+    "extensionsToTreatAsEsm": [".ts"],
     "injectGlobals": false,
     "testMatch": [
       "**/*.test.ts"
-    ]
+    ],
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "transform": {
+      ".+\\.tsx?$": [
+        "ts-jest",
+        {
+          "useESM": true
+        }
+      ]
+    }
   },
   "scripts": {
     "build": "yarn build:generate && yarn build:ts",
     "build:generate": "yarn generate:spec && yarn generate:typechain && yarn generate:gating && yarn generate:publishing && yarn generate:graphql",
     "build:ts": "tsc --build",
     "clean:compiled": "find .. -name node_modules -prune -o \\\\( -wholename '**/src/**' -a \\\\( -name '*.js' -o -name '*.d.ts' -o -name '*.js.map' \\\\) \\\\) -print",
-    "test": "jest",
+    "test": "yarn node --experimental-vm-modules $(yarn bin jest)",
     "fix": "yarn fix:prettier && yarn fix:eslint",
     "fix:prettier": "prettier --write ..",
     "fix:eslint": "eslint --fix '**/*.ts'",
