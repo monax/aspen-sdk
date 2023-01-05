@@ -1,0 +1,60 @@
+body {
+  text-align: center;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #210011;
+  color: #f4e7ef;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+button {
+  background-color: #824282;
+  border: none;
+  color: white;
+  padding: 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  border-radius: 8px;
+}
+
+img {
+  width: 100%;
+}
+
+.tokenList {
+}
+
+.card {
+  display: inline-block;
+  margin: 20px;
+  width: 300px;
+  border: #824282 3px solid;
+  border-radius: 8px;
+  font-weight: bold;
+  padding-bottom: 20px;
+}
+
+.img {
+  border-radius: 8px;
+}
+
+.name {
+  margin: 10px;
+  font-size: larger;
+}
+
+.buyLink {
+  color: #f4e7ef;
+  padding: 10px;
+}
