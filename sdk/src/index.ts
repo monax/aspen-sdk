@@ -8,3 +8,4 @@ export * from './contracts/gas';
 export * from './contracts/generated';
 export * from './contracts/network';
 export * from './ipfs';
+export * from './schema';
