@@ -1,5 +1,5 @@
-import {describe, expect, test} from '@jest/globals';
-import {resolveIpfsUrl} from './ipfs';
+import { describe, expect, test } from '@jest/globals';
+import { resolveIpfsUrl } from './ipfs';
 
 const CID = 'QmWU5iKU65xY7bxYQgNLrmEBc3MRr5p8owmdFuk94XXTwS';
 
