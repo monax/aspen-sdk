@@ -1,5 +1,5 @@
-import { Address } from '../../address';
 import { parse } from '../../../schema';
+import { Address } from '../../address';
 import { Features } from '../features';
 
 export type RoyaltyInfo = {
@@ -14,7 +14,7 @@ export class Royalties extends Features {
   get supported(): boolean {
     const features = this.base.interfaces;
 
-    return !!(features.IRoyaltyV0 || features.IPublicRoyaltyV0);
+    return !!(features['royalties/IRoyalty.sol:IRoyaltyV0'] || features['royalties/IRoyalty.sol:IPublicRoyaltyV0']);
   }
 
   /**
@@ -24,15 +24,15 @@ export class Royalties extends Features {
   async getDefaultRoyaltyInfo(): Promise<RoyaltyInfo | null> {
     const interfaces = this.base.interfaces;
 
-    if (interfaces.IRoyaltyV0) {
+    if (interfaces['royalties/IRoyalty.sol:IRoyaltyV0']) {
       try {
-        const iRoyalty = interfaces.IRoyaltyV0.connectReadOnly();
+        const iRoyalty = interfaces['royalties/IRoyalty.sol:IRoyaltyV0'].connectReadOnly();
         const [recipient, basisPoints] = await iRoyalty.getDefaultRoyaltyInfo();
         return { recipient: parse(Address, recipient), basisPoints };
       } catch {}
-    } else if (interfaces.IPublicRoyaltyV0) {
+    } else if (interfaces['royalties/IRoyalty.sol:IPublicRoyaltyV0']) {
       try {
-        const iRoyalty = interfaces.IPublicRoyaltyV0.connectReadOnly();
+        const iRoyalty = interfaces['royalties/IRoyalty.sol:IPublicRoyaltyV0'].connectReadOnly();
         const [recipient, basisPoints] = await iRoyalty.getDefaultRoyaltyInfo();
         return { recipient: parse(Address, recipient), basisPoints };
       } catch {}

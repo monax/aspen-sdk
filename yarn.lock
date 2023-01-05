@@ -2333,7 +2333,7 @@ __metadata:
     "@graphql-codegen/import-types-preset": ^2.2.4
     "@graphql-codegen/typescript": ^2.7.4
     "@graphql-codegen/typescript-operations": ^2.5.4
-    "@monaxlabs/spec": 0.9.14
+    "@monaxlabs/spec": 0.9.14-1-gf7f12377
     "@typechain/ethers-v5": ^10.2.0
     "@types/jest": ^29.2.5
     "@types/prettier": ^2.7.2
@@ -2367,10 +2367,10 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@monaxlabs/spec@npm:0.9.14":
-  version: 0.9.14
-  resolution: "@monaxlabs/spec@npm:0.9.14"
-  checksum: cc9648707e1b433edcd498b2cb6378da8959890282ee381274ac1f1f3eebb76eff48d4e2914c4591d4ea607917bc5a03d308ffb1f7bd7f59c73760efc17a9ff2
+"@monaxlabs/spec@npm:0.9.14-1-gf7f12377":
+  version: 0.9.14-1-gf7f12377
+  resolution: "@monaxlabs/spec@npm:0.9.14-1-gf7f12377"
+  checksum: a590241c523f3c005181d1b55307495a5c91cf3aa24e0b448112f9077ec09d21622c811c4b8ee7c5f087320df3cfc5f4bf2a1f4f7d830abe0991e860d2aa291a
   languageName: node
   linkType: hard
 

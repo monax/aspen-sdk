@@ -1,25 +1,18 @@
 import { Provider } from '@ethersproject/providers';
+import * as t from 'io-ts';
 import { parse } from '../../schema';
 import { Address } from '../address';
 import { ICedarFeaturesV0__factory } from '../generated';
 import { ChainId } from '../network';
 import { Signerish } from '../providers';
 import { InterfaceNotLoadedError } from './constants';
-import { FeatureInterface } from './features';
+import { FeatureContract, FeatureFactories, FeatureInterface, FeatureInterfaceId } from './features';
 import { Agreements } from './features/agreements';
 import { Issuance } from './features/issuance';
 import { Metadata } from './features/metadata';
 import { Ownable } from './features/ownable';
 import { Royalties } from './features/royalties';
-import type {
-  CollectionCallData,
-  CollectionInfo,
-  DebugHandler,
-  ErrorHandler,
-  FeatureInterfacesMap,
-  SupportedInterfaces,
-  TokenStandard,
-} from './types';
+import type { CollectionCallData, CollectionInfo, DebugHandler, ErrorHandler, TokenStandard } from './types';
 
 export const DefaultDebugHandler = (collection: CollectionInfo, action: string, ...data: unknown[]) => {
   console.debug(`Collection Contract ${collection.chainId} # ${collection.address} -> ${action}`, ...data);
@@ -35,9 +28,11 @@ export const DefaultErrorHandler = (
   console.error(error);
 };
 
+export type FeatureInterfaces = { -readonly [K in keyof FeatureFactories]: FeatureInterface<FeatureContract<K>> };
+
 export class CollectionContract {
-  private _supportedFeatures: string[] = [];
-  private _interfaces: FeatureInterfacesMap | null = null;
+  private _supportedFeatures: FeatureInterfaceId[] = [];
+  private _interfaces: Partial<FeatureInterfaces> | null = null;
   private _tokenStandard: TokenStandard | null = null;
   private readonly _provider: Provider;
   private chainId: ChainId | null = null;
@@ -85,7 +80,7 @@ export class CollectionContract {
    * @throws InterfaceNotLoadedError
    * @returns An object with mapped interface factories
    */
-  get interfaces(): FeatureInterfacesMap {
+  get interfaces(): Partial<FeatureInterfaces> {
     if (!this._interfaces) throw InterfaceNotLoadedError;
     return this._interfaces;
   }
@@ -112,7 +107,7 @@ export class CollectionContract {
         // Preload chainId
         await this.getChainId();
         const contract = ICedarFeaturesV0__factory.connect(this.address, this._provider);
-        this._supportedFeatures = await contract.supportedFeatures();
+        this._supportedFeatures = parse(t.array(FeatureInterfaceId), await contract.supportedFeatures());
         this.debug('Loaded supported features', this._supportedFeatures);
 
         this.buildInterface();
@@ -132,18 +127,12 @@ export class CollectionContract {
       this.debug('Interfaces set to null');
       return;
     }
-
-    this._interfaces = this._supportedFeatures.reduce<{
-      [key: string]: FeatureInterface<SupportedInterfaces>;
-    }>((iface, feature) => {
-      if (!feature) return iface;
-
-      const [, featureKey] = feature.split(':');
-      const iFeature = FeatureInterface.fromFeature(feature, this.address, this._provider);
-      if (iFeature) iface[featureKey] = iFeature;
-
-      return iface;
-    }, {});
+    // Note: we are forced to subvert the type system since it cannot invert that the keys and values are correlated
+    const interfaces = {} as Record<FeatureInterfaceId, FeatureInterface<unknown>>;
+    for (const feature of this._supportedFeatures) {
+      interfaces[feature] = FeatureInterface.fromFeature(feature, this.address, this._provider);
+    }
+    this._interfaces = interfaces as Partial<FeatureInterfaces>;
 
     this.debug('Interfaces initialized');
 
@@ -154,13 +143,16 @@ export class CollectionContract {
     if (!this._interfaces) {
       this._tokenStandard = null;
     } else if (
-      this._interfaces.IERC1155V0 ||
-      this._interfaces.IERC1155SupplyV0 ||
-      this._interfaces.IERC1155SupplyV1 ||
-      this._interfaces.ISFTSupplyV0
+      this._interfaces['standard/IERC1155.sol:IERC1155V0'] ||
+      this._interfaces['standard/IERC1155.sol:IERC1155SupplyV0'] ||
+      this._interfaces['standard/IERC1155.sol:IERC1155SupplyV1'] ||
+      this._interfaces['issuance/ISFTSupply.sol:ISFTSupplyV0']
     ) {
       this._tokenStandard = 'ERC1155';
-    } else if (this._interfaces.IERC721V0 || this._interfaces.INFTSupplyV0) {
+    } else if (
+      this._interfaces['standard/IERC721.sol:IERC721V0'] ||
+      this._interfaces['issuance/INFTSupply.sol:INFTSupplyV0']
+    ) {
       this._tokenStandard = 'ERC721';
     } else {
       this._tokenStandard = null;

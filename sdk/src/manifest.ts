@@ -24,6 +24,7 @@ export const ContractManifest = t.intersection([
   t.partial({
     // Deprecated interfaces no longer have their Solidity source in-repo and may be removed at a later date
     deprecated: t.boolean,
+    delegated: t.boolean,
   }),
 ]);
 

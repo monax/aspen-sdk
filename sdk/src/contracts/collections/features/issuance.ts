@@ -15,9 +15,9 @@ import {
   IERC1155SupplyV0,
   IERC1155SupplyV1,
   IPublicNFTIssuanceV0,
-  // IPublicNFTIssuanceV1,
+  IPublicNFTIssuanceV1,
   IPublicSFTIssuanceV0,
-  // IPublicSFTIssuanceV1,
+  IPublicSFTIssuanceV1,
   ISFTSupplyV0,
 } from '../../generated';
 import type { TokensClaimedEventObject as ERC721TokensClaimedEventObject } from '../../generated/ICedarNFTIssuanceV4';
@@ -45,16 +45,16 @@ export class Issuance extends Features {
   get supported(): boolean {
     const features = this.base.interfaces;
     return !!(
-      features.ICedarNFTIssuanceV1 ||
-      features.ICedarNFTIssuanceV2 ||
-      features.ICedarNFTIssuanceV3 ||
-      features.ICedarNFTIssuanceV4 ||
-      features.IPublicNFTIssuanceV0 ||
-      // features.IPublicNFTIssuanceV1 ||
-      features.ICedarSFTIssuanceV1 ||
-      features.ICedarSFTIssuanceV2 ||
-      features.ICedarSFTIssuanceV3 ||
-      features.IPublicSFTIssuanceV0
+      features['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1'] ||
+      features['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2'] ||
+      features['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3'] ||
+      features['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4'] ||
+      features['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0'] ||
+      features['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1'] ||
+      features['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1'] ||
+      features['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2'] ||
+      features['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3'] ||
+      features['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0']
     );
   }
 
@@ -207,18 +207,18 @@ export class Issuance extends Features {
         | ICedarSFTIssuanceV2
         | ICedarSFTIssuanceV3
         | IPublicSFTIssuanceV0
-        // | IPublicSFTIssuanceV1
+        | IPublicSFTIssuanceV1
         | null = null;
-      if (interfaces.ICedarSFTIssuanceV1) {
-        iSftIssuance = interfaces.ICedarSFTIssuanceV1.connectWith(signer);
-      } else if (interfaces.ICedarSFTIssuanceV2) {
-        iSftIssuance = interfaces.ICedarSFTIssuanceV2.connectWith(signer);
-      } else if (interfaces.ICedarSFTIssuanceV3) {
-        iSftIssuance = interfaces.ICedarSFTIssuanceV3.connectWith(signer);
-      } else if (interfaces.IPublicSFTIssuanceV0) {
-        iSftIssuance = interfaces.IPublicSFTIssuanceV0.connectWith(signer);
-        // } else if (interfaces.IPublicSFTIssuanceV1) {
-        //   iSftIssuance = interfaces.IPublicSFTIssuanceV1.connectWith(signer);
+      if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1']) {
+        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1'].connectWith(signer);
+      } else if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2']) {
+        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2'].connectWith(signer);
+      } else if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3']) {
+        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3'].connectWith(signer);
+      } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0']) {
+        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0'].connectWith(signer);
+      } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1']) {
+        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1'].connectWith(signer);
       }
 
       if (!iSftIssuance) return null;
@@ -265,21 +265,21 @@ export class Issuance extends Features {
         | ICedarNFTIssuanceV3
         | ICedarNFTIssuanceV4
         | IPublicNFTIssuanceV0
-        // | IPublicNFTIssuanceV1
+        | IPublicNFTIssuanceV1
         | null = null;
 
-      if (interfaces.ICedarNFTIssuanceV1) {
-        iNftIssuance = interfaces.ICedarNFTIssuanceV1.connectWith(signer);
-      } else if (interfaces.ICedarNFTIssuanceV2) {
-        iNftIssuance = interfaces.ICedarNFTIssuanceV2.connectWith(signer);
-      } else if (interfaces.ICedarNFTIssuanceV3) {
-        iNftIssuance = interfaces.ICedarNFTIssuanceV3.connectWith(signer);
-      } else if (interfaces.ICedarNFTIssuanceV4) {
-        iNftIssuance = interfaces.ICedarNFTIssuanceV4.connectWith(signer);
-      } else if (interfaces.IPublicNFTIssuanceV0) {
-        iNftIssuance = interfaces.IPublicNFTIssuanceV0.connectWith(signer);
-        // } else if (interfaces.IPublicNFTIssuanceV1) {
-        //   iNftIssuance = interfaces.IPublicNFTIssuanceV1.connectWith(signer);
+      if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1']) {
+        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1'].connectWith(signer);
+      } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2']) {
+        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2'].connectWith(signer);
+      } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3']) {
+        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3'].connectWith(signer);
+      } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4']) {
+        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4'].connectWith(signer);
+      } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0']) {
+        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0'].connectWith(signer);
+      } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1']) {
+        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1'].connectWith(signer);
       }
 
       if (!iNftIssuance) return null;
@@ -369,18 +369,18 @@ export class Issuance extends Features {
         | ICedarSFTIssuanceV2
         | ICedarSFTIssuanceV3
         | IPublicSFTIssuanceV0
-        // | IPublicSFTIssuanceV1
+        | IPublicSFTIssuanceV1
         | null = null;
-      if (interfaces.ICedarSFTIssuanceV1) {
-        iSftIssuance = interfaces.ICedarSFTIssuanceV1.connectWith(signer);
-      } else if (interfaces.ICedarSFTIssuanceV2) {
-        iSftIssuance = interfaces.ICedarSFTIssuanceV2.connectWith(signer);
-      } else if (interfaces.ICedarSFTIssuanceV3) {
-        iSftIssuance = interfaces.ICedarSFTIssuanceV3.connectWith(signer);
-      } else if (interfaces.IPublicSFTIssuanceV0) {
-        iSftIssuance = interfaces.IPublicSFTIssuanceV0.connectWith(signer);
-        // } else if (interfaces.IPublicSFTIssuanceV1) {
-        //   iSftIssuance = interfaces.IPublicSFTIssuanceV1.connectWith(signer);
+      if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1']) {
+        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1'].connectWith(signer);
+      } else if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2']) {
+        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2'].connectWith(signer);
+      } else if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3']) {
+        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3'].connectWith(signer);
+      } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0']) {
+        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0'].connectWith(signer);
+      } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1']) {
+        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1'].connectWith(signer);
       }
 
       if (!iSftIssuance) return null;
@@ -420,10 +420,10 @@ export class Issuance extends Features {
 
     try {
       let iNftIssuance: ICedarNFTIssuanceV1 | ICedarNFTIssuanceV2 | null = null;
-      if (interfaces.ICedarNFTIssuanceV1) {
-        iNftIssuance = interfaces.ICedarNFTIssuanceV1.connectWith(signer);
-      } else if (interfaces.ICedarNFTIssuanceV2) {
-        iNftIssuance = interfaces.ICedarNFTIssuanceV2.connectWith(signer);
+      if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1']) {
+        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1'].connectWith(signer);
+      } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2']) {
+        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2'].connectWith(signer);
       }
 
       if (!iNftIssuance) return null;
@@ -518,18 +518,18 @@ export class Issuance extends Features {
         | ICedarSFTIssuanceV2
         | ICedarSFTIssuanceV3
         | IPublicSFTIssuanceV0
-        // | IPublicSFTIssuanceV1
+        | IPublicSFTIssuanceV1
         | null = null;
-      if (interfaces.ICedarSFTIssuanceV1) {
-        iSftIssuance = interfaces.ICedarSFTIssuanceV1.connectReadOnly();
-      } else if (interfaces.ICedarSFTIssuanceV2) {
-        iSftIssuance = interfaces.ICedarSFTIssuanceV2.connectReadOnly();
-      } else if (interfaces.ICedarSFTIssuanceV3) {
-        iSftIssuance = interfaces.ICedarSFTIssuanceV3.connectReadOnly();
-      } else if (interfaces.IPublicSFTIssuanceV0) {
-        iSftIssuance = interfaces.IPublicSFTIssuanceV0.connectReadOnly();
-        // } else if (interfaces.IPublicSFTIssuanceV1) {
-        //   iSftIssuance = interfaces.IPublicSFTIssuanceV1.connectReadOnly();
+      if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1']) {
+        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1'].connectReadOnly();
+      } else if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2']) {
+        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2'].connectReadOnly();
+      } else if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3']) {
+        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3'].connectReadOnly();
+      } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0']) {
+        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0'].connectReadOnly();
+      } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1']) {
+        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1'].connectReadOnly();
       }
 
       if (!iSftIssuance) return false;
@@ -581,21 +581,21 @@ export class Issuance extends Features {
         | ICedarNFTIssuanceV3
         | ICedarNFTIssuanceV4
         | IPublicNFTIssuanceV0
-        // | IPublicNFTIssuanceV1
+        | IPublicNFTIssuanceV1
         | null = null;
 
-      if (interfaces.ICedarNFTIssuanceV1) {
-        iNftIssuance = interfaces.ICedarNFTIssuanceV1.connectReadOnly();
-      } else if (interfaces.ICedarNFTIssuanceV2) {
-        iNftIssuance = interfaces.ICedarNFTIssuanceV2.connectReadOnly();
-      } else if (interfaces.ICedarNFTIssuanceV3) {
-        iNftIssuance = interfaces.ICedarNFTIssuanceV3.connectReadOnly();
-      } else if (interfaces.ICedarNFTIssuanceV4) {
-        iNftIssuance = interfaces.ICedarNFTIssuanceV4.connectReadOnly();
-      } else if (interfaces.IPublicNFTIssuanceV0) {
-        iNftIssuance = interfaces.IPublicNFTIssuanceV0.connectReadOnly();
-        // } else if (interfaces.IPublicNFTIssuanceV1) {
-        //   iNftIssuance = interfaces.IPublicNFTIssuanceV1.connectReadOnly();
+      if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1']) {
+        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1'].connectReadOnly();
+      } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2']) {
+        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2'].connectReadOnly();
+      } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3']) {
+        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3'].connectReadOnly();
+      } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4']) {
+        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4'].connectReadOnly();
+      } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0']) {
+        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0'].connectReadOnly();
+      } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1']) {
+        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1'].connectReadOnly();
       }
 
       if (!iNftIssuance) return false;
@@ -772,12 +772,15 @@ export class Issuance extends Features {
     try {
       const interfaces = this.base.interfaces;
 
-      if (interfaces.ICedarNFTIssuanceV1 || interfaces.ICedarNFTIssuanceV2) {
+      if (
+        interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1'] ||
+        interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2']
+      ) {
         let iNftIssuance: ICedarNFTIssuanceV1 | ICedarNFTIssuanceV2 | null = null;
-        if (interfaces.ICedarNFTIssuanceV1) {
-          iNftIssuance = interfaces.ICedarNFTIssuanceV1.connectReadOnly();
-        } else if (interfaces.ICedarNFTIssuanceV2) {
-          iNftIssuance = interfaces.ICedarNFTIssuanceV2.connectReadOnly();
+        if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1']) {
+          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1'].connectReadOnly();
+        } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2']) {
+          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2'].connectReadOnly();
         }
 
         if (!iNftIssuance) return null;
@@ -813,8 +816,8 @@ export class Issuance extends Features {
             isClaimingPaused: false,
           },
         };
-      } else if (interfaces.ICedarNFTIssuanceV3) {
-        const iNftIssuance = interfaces.ICedarNFTIssuanceV3.connectReadOnly();
+      } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3']) {
+        const iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3'].connectReadOnly();
 
         const { condition, conditionId, walletMaxClaimCount, remainingSupply, isClaimPaused } =
           await iNftIssuance.getActiveClaimConditions();
@@ -848,22 +851,18 @@ export class Issuance extends Features {
           },
         };
       } else if (
-        interfaces.ICedarNFTIssuanceV4 ||
-        interfaces.IPublicNFTIssuanceV0
-        // || interfaces.IPublicNFTIssuanceV1
+        interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4'] ||
+        interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0'] ||
+        interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1']
       ) {
-        let iNftIssuance:
-          | ICedarNFTIssuanceV4
-          | IPublicNFTIssuanceV0
-          // IPublicNFTIssuanceV1 |
-          | null = null;
+        let iNftIssuance: ICedarNFTIssuanceV4 | IPublicNFTIssuanceV0 | IPublicNFTIssuanceV1 | null = null;
 
-        if (interfaces.ICedarNFTIssuanceV4) {
-          iNftIssuance = interfaces.ICedarNFTIssuanceV4.connectReadOnly();
-        } else if (interfaces.IPublicNFTIssuanceV0) {
-          iNftIssuance = interfaces.IPublicNFTIssuanceV0.connectReadOnly();
-          // } else if (interfaces.IPublicNFTIssuanceV1) {
-          //   iNftIssuance = interfaces.IPublicNFTIssuanceV1.connectReadOnly();
+        if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4']) {
+          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4'].connectReadOnly();
+        } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0']) {
+          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0'].connectReadOnly();
+        } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1']) {
+          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1'].connectReadOnly();
         }
 
         if (!iNftIssuance) return null;
@@ -916,13 +915,16 @@ export class Issuance extends Features {
     try {
       const interfaces = this.base.interfaces;
 
-      if (interfaces.ICedarNFTIssuanceV1 || interfaces.ICedarNFTIssuanceV2) {
+      if (
+        interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1'] ||
+        interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2']
+      ) {
         let iNftIssuance: ICedarNFTIssuanceV1 | ICedarNFTIssuanceV2 | null = null;
 
-        if (interfaces.ICedarNFTIssuanceV1) {
-          iNftIssuance = interfaces.ICedarNFTIssuanceV1.connectReadOnly();
-        } else if (interfaces.ICedarNFTIssuanceV2) {
-          iNftIssuance = interfaces.ICedarNFTIssuanceV2.connectReadOnly();
+        if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1']) {
+          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1'].connectReadOnly();
+        } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2']) {
+          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2'].connectReadOnly();
         }
 
         if (!iNftIssuance) return null;
@@ -937,8 +939,8 @@ export class Issuance extends Features {
           lastClaimTimestamp: lastClaimTimestamp.toNumber(),
           nextClaimTimestamp: nextValidClaimTimestamp.toNumber(),
         };
-      } else if (interfaces.ICedarNFTIssuanceV3) {
-        const iNftIssuance = interfaces.ICedarNFTIssuanceV3.connectReadOnly();
+      } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3']) {
+        const iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3'].connectReadOnly();
 
         const {
           conditionId,
@@ -955,19 +957,19 @@ export class Issuance extends Features {
           lastClaimTimestamp: lastClaimTimestamp.toNumber(),
           nextClaimTimestamp: nextValidClaimTimestamp.toNumber(),
         };
-      } else if (interfaces.ICedarNFTIssuanceV4 || interfaces.IPublicNFTIssuanceV0
-        // || interfaces.IPublicNFTIssuanceV1
+      } else if (
+        interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4'] ||
+        interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0'] ||
+        interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1']
       ) {
-        let iNftIssuance: ICedarNFTIssuanceV4 | IPublicNFTIssuanceV0 |
-          // IPublicNFTIssuanceV1 |
-          null = null;
+        let iNftIssuance: ICedarNFTIssuanceV4 | IPublicNFTIssuanceV0 | IPublicNFTIssuanceV1 | null = null;
 
-        if (interfaces.ICedarNFTIssuanceV4) {
-          iNftIssuance = interfaces.ICedarNFTIssuanceV4.connectReadOnly();
-        } else if (interfaces.IPublicNFTIssuanceV0) {
-          iNftIssuance = interfaces.IPublicNFTIssuanceV0.connectReadOnly();
-        // } else if (interfaces.IPublicNFTIssuanceV1) {
-        //   iNftIssuance = interfaces.IPublicNFTIssuanceV1.connectReadOnly();
+        if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4']) {
+          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4'].connectReadOnly();
+        } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0']) {
+          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0'].connectReadOnly();
+        } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1']) {
+          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1'].connectReadOnly();
         }
 
         if (!iNftIssuance) return null;
@@ -1000,8 +1002,8 @@ export class Issuance extends Features {
       const interfaces = this.base.interfaces;
       const tokenIdBn = BigNumber.from(tokenId);
 
-      if (interfaces.ICedarSFTIssuanceV1) {
-        const iSftIssuance = interfaces.ICedarSFTIssuanceV1.connectReadOnly();
+      if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1']) {
+        const iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1'].connectReadOnly();
 
         const { condition, conditionId, walletMaxClaimCount, remainingSupply } =
           await iSftIssuance.getActiveClaimConditions(tokenIdBn);
@@ -1034,8 +1036,8 @@ export class Issuance extends Features {
             isClaimingPaused: false,
           },
         };
-      } else if (interfaces.ICedarSFTIssuanceV2) {
-        const iSftIssuance = interfaces.ICedarSFTIssuanceV2.connectReadOnly();
+      } else if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2']) {
+        const iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2'].connectReadOnly();
 
         const { condition, conditionId, walletMaxClaimCount, remainingSupply, isClaimPaused } =
           await iSftIssuance.getActiveClaimConditions(tokenIdBn);
@@ -1068,8 +1070,8 @@ export class Issuance extends Features {
             isClaimingPaused: isClaimPaused,
           },
         };
-      } else if (interfaces.ICedarSFTIssuanceV3) {
-        const iSftIssuance = interfaces.ICedarSFTIssuanceV3.connectReadOnly();
+      } else if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3']) {
+        const iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3'].connectReadOnly();
 
         const { condition, conditionId, walletMaxClaimCount, isClaimPaused, tokenSupply, maxTotalSupply } =
           await iSftIssuance.getActiveClaimConditions(tokenIdBn);
@@ -1098,8 +1100,8 @@ export class Issuance extends Features {
             isClaimingPaused: isClaimPaused,
           },
         };
-      } else if (interfaces.IPublicSFTIssuanceV0) {
-        const iSftIssuance = interfaces.IPublicSFTIssuanceV0.connectReadOnly();
+      } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0']) {
+        const iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0'].connectReadOnly();
 
         const { condition, conditionId, walletMaxClaimCount, isClaimPaused, tokenSupply, maxTotalSupply } =
           await iSftIssuance.getActiveClaimConditions(tokenIdBn);
@@ -1128,36 +1130,36 @@ export class Issuance extends Features {
             isClaimingPaused: isClaimPaused,
           },
         };
-      // } else if (interfaces.IPublicSFTIssuanceV1) {
-      //   const iSftIssuance = interfaces.IPublicSFTIssuanceV1.connectReadOnly();
-      //
-      //   const { condition, conditionId, walletMaxClaimCount, isClaimPaused, tokenSupply, maxTotalSupply } =
-      //     await iSftIssuance.getActiveClaimConditions(tokenIdBn);
-      //
-      //   const remainingSupply = maxTotalSupply.eq(0) ? SUPPLY_TRESHOLD : maxTotalSupply.sub(tokenSupply);
-      //   const claimableSupply = condition.maxClaimableSupply.eq(0)
-      //     ? SUPPLY_TRESHOLD
-      //     : condition.maxClaimableSupply.sub(condition.supplyClaimed);
-      //   const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
-      //
-      //   return {
-      //     maxWalletClaimCount: walletMaxClaimCount,
-      //     tokenSupply: tokenSupply,
-      //     maxTotalSupply: maxTotalSupply,
-      //     maxAvailableSupply: maxAvailableSupply,
-      //     activeClaimConditionId: conditionId.toNumber(),
-      //     activeClaimCondition: {
-      //       currency: condition.currency as Address,
-      //       maxClaimableSupply: condition.maxClaimableSupply,
-      //       supplyClaimed: condition.supplyClaimed,
-      //       merkleRoot: condition.merkleRoot,
-      //       pricePerToken: condition.pricePerToken,
-      //       quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
-      //       startTimestamp: condition.startTimestamp.toNumber(),
-      //       waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
-      //       isClaimingPaused: isClaimPaused,
-      //     },
-      //   };
+      } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1']) {
+        const iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1'].connectReadOnly();
+
+        const { condition, conditionId, walletMaxClaimCount, isClaimPaused, tokenSupply, maxTotalSupply } =
+          await iSftIssuance.getActiveClaimConditions(tokenIdBn);
+
+        const remainingSupply = maxTotalSupply.eq(0) ? SUPPLY_TRESHOLD : maxTotalSupply.sub(tokenSupply);
+        const claimableSupply = condition.maxClaimableSupply.eq(0)
+          ? SUPPLY_TRESHOLD
+          : condition.maxClaimableSupply.sub(condition.supplyClaimed);
+        const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
+
+        return {
+          maxWalletClaimCount: walletMaxClaimCount,
+          tokenSupply: tokenSupply,
+          maxTotalSupply: maxTotalSupply,
+          maxAvailableSupply: maxAvailableSupply,
+          activeClaimConditionId: conditionId.toNumber(),
+          activeClaimCondition: {
+            currency: condition.currency as Address,
+            maxClaimableSupply: condition.maxClaimableSupply,
+            supplyClaimed: condition.supplyClaimed,
+            merkleRoot: condition.merkleRoot,
+            pricePerToken: condition.pricePerToken,
+            quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
+            startTimestamp: condition.startTimestamp.toNumber(),
+            waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            isClaimingPaused: isClaimPaused,
+          },
+        };
       }
     } catch (err) {
       this.base.error('Failed to get token claim conditions', err, 'getCollectionClaimInfoERC1155', { tokenId });
@@ -1176,8 +1178,8 @@ export class Issuance extends Features {
       const interfaces = this.base.interfaces;
       const tokenIdBn = BigNumber.from(tokenId);
 
-      if (interfaces.ICedarSFTIssuanceV1) {
-        const iSftIssuance = interfaces.ICedarSFTIssuanceV1.connectReadOnly();
+      if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1']) {
+        const iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1'].connectReadOnly();
 
         const { conditionId, walletClaimedCount, lastClaimTimestamp, nextValidClaimTimestamp } =
           await iSftIssuance.getUserClaimConditions(tokenIdBn, userAddress);
@@ -1190,25 +1192,25 @@ export class Issuance extends Features {
           nextClaimTimestamp: nextValidClaimTimestamp.toNumber(),
         };
       } else if (
-        interfaces.ICedarSFTIssuanceV2 ||
-        interfaces.ICedarSFTIssuanceV3 ||
-        interfaces.IPublicSFTIssuanceV0
-        // || interfaces.IPublicSFTIssuanceV1
+        interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2'] ||
+        interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3'] ||
+        interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0'] ||
+        interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1']
       ) {
         let iSftIssuance:
           | ICedarSFTIssuanceV2
           | ICedarSFTIssuanceV3
           | IPublicSFTIssuanceV0
-          // | IPublicSFTIssuanceV1
+          | IPublicSFTIssuanceV1
           | null = null;
-        if (interfaces.ICedarSFTIssuanceV2) {
-          iSftIssuance = interfaces.ICedarSFTIssuanceV2.connectReadOnly();
-        } else if (interfaces.ICedarSFTIssuanceV3) {
-          iSftIssuance = interfaces.ICedarSFTIssuanceV3.connectReadOnly();
-        } else if (interfaces.IPublicSFTIssuanceV0) {
-          iSftIssuance = interfaces.IPublicSFTIssuanceV0.connectReadOnly();
-        // } else if (interfaces.IPublicSFTIssuanceV1) {
-        //   iSftIssuance = interfaces.IPublicSFTIssuanceV1.connectReadOnly();
+        if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2']) {
+          iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2'].connectReadOnly();
+        } else if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3']) {
+          iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3'].connectReadOnly();
+        } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0']) {
+          iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0'].connectReadOnly();
+        } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1']) {
+          iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1'].connectReadOnly();
         }
 
         if (!iSftIssuance) return null;
@@ -1258,12 +1260,12 @@ export class Issuance extends Features {
       const interfaces = this.base.interfaces;
       let iSft: ISFTSupplyV0 | IERC1155SupplyV1 | IERC1155SupplyV0 | ethers.Contract;
 
-      if (interfaces.ISFTSupplyV0) {
-        iSft = interfaces.ISFTSupplyV0.connectReadOnly();
-      } else if (interfaces.IERC1155SupplyV1) {
-        iSft = interfaces.IERC1155SupplyV1.connectReadOnly();
-      } else if (interfaces.IERC1155SupplyV0) {
-        iSft = interfaces.IERC1155SupplyV0.connectReadOnly();
+      if (interfaces['issuance/ISFTSupply.sol:ISFTSupplyV0']) {
+        iSft = interfaces['issuance/ISFTSupply.sol:ISFTSupplyV0'].connectReadOnly();
+      } else if (interfaces['standard/IERC1155.sol:IERC1155SupplyV1']) {
+        iSft = interfaces['standard/IERC1155.sol:IERC1155SupplyV1'].connectReadOnly();
+      } else if (interfaces['standard/IERC1155.sol:IERC1155SupplyV0']) {
+        iSft = interfaces['standard/IERC1155.sol:IERC1155SupplyV0'].connectReadOnly();
       } else {
         const abi = ['function totalSupply(uint256 _tokenId) public view returns (uint256)'];
         iSft = new ethers.Contract(this.base.address, abi, this.base.provider);
@@ -1300,10 +1302,10 @@ export class Issuance extends Features {
       const interfaces = this.base.interfaces;
       let iSftIssuance: ISFTSupplyV0 | IERC1155SupplyV1 | null = null;
 
-      if (interfaces.ISFTSupplyV0) {
-        iSftIssuance = interfaces.ISFTSupplyV0.connectReadOnly();
-      } else if (interfaces.IERC1155SupplyV1) {
-        iSftIssuance = interfaces.IERC1155SupplyV1.connectReadOnly();
+      if (interfaces['issuance/ISFTSupply.sol:ISFTSupplyV0']) {
+        iSftIssuance = interfaces['issuance/ISFTSupply.sol:ISFTSupplyV0'].connectReadOnly();
+      } else if (interfaces['standard/IERC1155.sol:IERC1155SupplyV1']) {
+        iSftIssuance = interfaces['standard/IERC1155.sol:IERC1155SupplyV1'].connectReadOnly();
       }
 
       if (!iSftIssuance) return BigNumber.from(0);
@@ -1322,8 +1324,8 @@ export class Issuance extends Features {
 
     try {
       const interfaces = this.base.interfaces;
-      if (interfaces.INFTSupplyV0) {
-        const iNft = interfaces.INFTSupplyV0.connectReadOnly();
+      if (interfaces['issuance/INFTSupply.sol:INFTSupplyV0']) {
+        const iNft = interfaces['issuance/INFTSupply.sol:INFTSupplyV0'].connectReadOnly();
         return await iNft.totalSupply();
       }
     } catch (err) {
