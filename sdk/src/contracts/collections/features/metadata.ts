@@ -1,13 +1,11 @@
 import axios from 'axios';
 import { ethers } from 'ethers';
-import { resolveIpfsUrl } from '../../../ipfs';
-import { IPFS_GATEWAY_PREFIX } from '../../constants';
+import { IPFS_GATEWAY_PREFIX } from '../..';
+import { resolveIpfsUrl } from '../../../utils';
 import { ICedarNFTMetadataV1, ICedarSFTMetadataV1, IPublicMetadataV0__factory } from '../../generated';
 import { CollectionMetaImageType } from '../constants';
 import { Features } from '../features';
-import type { CollectionMetadata, TokenMetadata } from '../types';
-
-export type ContractVerificationType = 'aspen-minted' | 'aspen-partner' | 'os-verified';
+import type { CollectionMetadata, ContractVerificationType, TokenMetadata } from '../types';
 
 export class Metadata extends Features {
   private _uri: string | null = null;

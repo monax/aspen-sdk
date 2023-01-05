@@ -1,12 +1,11 @@
 import { utils } from 'ethers';
 import { tryCatch } from 'fp-ts/lib/Either';
 import * as t from 'io-ts';
+import { ZERO_ADDRESS } from './constants';
 
 export interface AddressBrand {
   readonly Address: unique symbol;
 }
-
-export const zeroAddress = '0x0000000000000000000000000000000000000000' as Address;
 
 export const Address = t.string
   .pipe(
@@ -30,7 +29,7 @@ export type Address = t.TypeOf<typeof Address>;
 export type AddressOrName = t.TypeOf<typeof Address> | string;
 
 export function isZeroAddress(address = ''): boolean {
-  return isSameAddress(address, zeroAddress);
+  return isSameAddress(address, ZERO_ADDRESS);
 }
 
 export function isSameAddress(address1 = '', address2 = ''): boolean {

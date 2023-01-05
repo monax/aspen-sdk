@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import * as t from 'io-ts';
-import { parse } from './schema';
+import { parse } from '@monaxlabs/aspen-sdk/src/schema';
 
 export function getEnv(key: string, defaultValue?: string): string {
   const value = process.env[key];

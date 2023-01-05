@@ -1,7 +1,7 @@
 import * as t from 'io-ts';
 import { Readable, ReadableOptions } from 'stream';
-import { UtilityService } from './publishing';
-import { parse } from '../schema';
+import { UtilityService } from '@monaxlabs/aspen-sdk/src/apis/publishing';
+import { parse } from '@monaxlabs/aspen-sdk/src/schema';
 
 export interface NamedReadable extends Readable {
   readonly name: string;

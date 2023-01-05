@@ -2,8 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import prettier from 'prettier';
 import ts from 'typescript';
-import { ContractManifest, ContractsManifest } from '../src/manifest';
-import { parse } from '../src/schema';
+import { parse } from '../utils';
+import { ContractManifest, ContractsManifest } from './manifest';
 const nonFeatureDirs = new Set(['deploy', 'impl']);
 
 export function isFeatureId(manifest: ContractsManifest, id: string): boolean {

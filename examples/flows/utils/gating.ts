@@ -1,3 +1,10 @@
+import { Signer } from 'ethers';
+import { either as E, function as F } from 'fp-ts';
+import * as t from 'io-ts';
+import { importJWK, JWTPayload, jwtVerify } from 'jose';
+import { SupportedNetwork } from './providers';
+import { ChainIdFromChainName } from '@monaxlabs/aspen-sdk/src/contracts/network';
+import { parse } from '../../schema';
 import {
   AuthService,
   CreateRoleRequest,
@@ -7,14 +14,7 @@ import {
   GateType,
   JWK,
   RolesService,
-} from './index';
-import { Signer } from 'ethers';
-import { either as E, function as F } from 'fp-ts';
-import * as t from 'io-ts';
-import { importJWK, JWTPayload, jwtVerify } from 'jose';
-import { SupportedNetwork } from '../../contracts/providers';
-import { ChainIdFromChainName } from '../../contracts/network';
-import { parse } from '../../schema';
+} from '@monaxlabs/aspen-sdk/src/apis/gating';
 
 export type GateCreated = GateResponse & { id: string };
 

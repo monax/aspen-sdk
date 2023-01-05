@@ -13,7 +13,7 @@ import {
   OperationType,
   TokenService,
   UpdatableCollectionFieldsJsonPatchDocument,
-} from './index';
+} from '@monaxlabs/aspen-sdk/src/apis/publishing';
 import { coerceToBlob } from '../files';
 import { waitForCompletion } from '../../waiter';
 import { SupportedNetwork } from '../../contracts/providers';

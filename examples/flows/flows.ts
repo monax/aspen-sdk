@@ -1,27 +1,23 @@
-import { AspenEnvironment, authenticateAllFromFile } from '@monaxlabs/aspen-sdk/dist/apis/auth';
-import { PostFileResponse, uploadFile } from '@monaxlabs/aspen-sdk/dist/apis/files';
-import { RoleMatchType } from '@monaxlabs/aspen-sdk/dist/apis/gating';
-import { authenticateForGate, configureGate, parseAndVerifyJWT } from '@monaxlabs/aspen-sdk/dist/apis/gating/gating';
-import { CollectionService, FileType } from '@monaxlabs/aspen-sdk/dist/apis/publishing';
-import { deployERC721, wait } from '@monaxlabs/aspen-sdk/dist/apis/publishing/collection';
-import { issueToken } from '@monaxlabs/aspen-sdk/dist/apis/publishing/issue';
-import { getClaimBalances } from '@monaxlabs/aspen-sdk/dist/claimgraph/claims';
-import { ClaimBalance } from '@monaxlabs/aspen-sdk/dist/claimgraph/claims.types';
-import { generateAccounts } from '@monaxlabs/aspen-sdk/dist/contracts/accounts';
-import { getInnermostError } from '@monaxlabs/aspen-sdk/dist/contracts/errors';
-import { GasStrategy, getGasStrategy } from '@monaxlabs/aspen-sdk/dist/contracts/gas';
+import { AspenEnvironment, authenticateAllFromFile } from './utils/auth';
+import { PostFileResponse, uploadFile } from './utils/files';
+import { authenticateForGate, configureGate, parseAndVerifyJWT } from './utils/gating';
+import { deployERC721, wait } from './utils/collection';
+import { issueToken } from './utils/issue';
 import {
+  GasStrategy,
+  getGasStrategy,
+  ClaimBalance,
+  GatingAPI,
+  getClaimBalances,
+  PublishingAPI,
   ICedarERC1155DropV5,
   ICedarERC1155DropV5__factory,
   ICedarERC721DropV7,
   ICedarERC721DropV7__factory,
-} from '@monaxlabs/aspen-sdk/dist/contracts/generated';
-import {
-  getProvider,
-  getSigner,
-  initialiseProvider,
-  SupportedNetwork,
-} from '@monaxlabs/aspen-sdk/dist/contracts/providers';
+} from '@monaxlabs/aspen-sdk';
+import { generateAccounts } from './utils/accounts';
+import { getInnermostError } from './utils/errors';
+import { getProvider, getSigner, initialiseProvider, SupportedNetwork } from './utils/providers';
 import { BigNumber } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 import { createReadStream } from 'fs';
@@ -187,7 +183,7 @@ async function cmdGateA(): Promise<void> {
       {
         name: `TokenAHolder`,
         contractAddress: collectionA.address,
-        matchType: RoleMatchType.NFT,
+        matchType: GatingAPI.RoleMatchType.NFT,
         priority: 1,
         requiredQuantity: 1,
       },
@@ -298,9 +294,9 @@ async function issueTokenFlow(
   commitIssue: (issuee: string, tokenId: number) => Promise<void>,
   { ipfsUrl, web2Url, contentType, extension }: PostFileResponse,
 ): Promise<{ tokenId: number; collectionGuid: string }> {
-  const { address } = await CollectionService.getCollectionById({ guid: collectionGuid });
+  const { address } = await PublishingAPI.CollectionService.getCollectionById({ guid: collectionGuid });
   const tokenData = {
-    files: [{ fileType: FileType.IMAGE, url: web2Url, contentType, extension }],
+    files: [{ fileType: PublishingAPI.FileType.IMAGE, url: web2Url, contentType, extension }],
     // No need for you to do this just showing you what it looks like
     attributes: [
       { trait_type: 'ipfs_backup', traitObject: { name: 'image', value: ipfsUrl } },
@@ -351,7 +347,7 @@ async function acceptTerms(
 }
 
 async function checkTokenURI(collectionGuid: string, tokenId: number): Promise<string> {
-  const { address } = await CollectionService.getCollectionById({ guid: collectionGuid });
+  const { address } = await PublishingAPI.CollectionService.getCollectionById({ guid: collectionGuid });
   if (!address) {
     throw new Error(`Collection has no address, is it deployed?`);
   }

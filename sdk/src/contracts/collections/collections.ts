@@ -1,10 +1,9 @@
 import { Provider } from '@ethersproject/providers';
 import * as t from 'io-ts';
-import { parse } from '../../schema';
+import { parse } from '../../utils';
 import { Address } from '../address';
 import { ICedarFeaturesV0__factory } from '../generated';
 import { ChainId } from '../network';
-import { Signerish } from '../providers';
 import { InterfaceNotLoadedError } from './constants';
 import { FeatureContract, FeatureFactories, FeatureInterface, FeatureInterfaceId } from './features';
 import { Agreements } from './features/agreements';
@@ -12,7 +11,7 @@ import { Issuance } from './features/issuance';
 import { Metadata } from './features/metadata';
 import { Ownable } from './features/ownable';
 import { Royalties } from './features/royalties';
-import type { CollectionCallData, CollectionInfo, DebugHandler, ErrorHandler, TokenStandard } from './types';
+import type { CollectionCallData, CollectionInfo, DebugHandler, ErrorHandler, Signerish, TokenStandard } from './types';
 
 export const DefaultDebugHandler = (collection: CollectionInfo, action: string, ...data: unknown[]) => {
   console.debug(`Collection Contract ${collection.chainId} # ${collection.address} -> ${action}`, ...data);

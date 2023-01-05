@@ -1,4 +1,4 @@
-import { QueueStatus } from './apis/publishing';
+import { QueueStatus } from '@monaxlabs/aspen-sdk/src/apis/publishing';
 
 const defaultWaitForSuccessConfig = {
   sleepMs: 1000,

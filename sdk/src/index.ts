@@ -1,11 +1,4 @@
-export * as GatingAPI from './apis/gating';
-export * as PublishingAPI from './apis/publishing';
+export * from './apis';
 export * from './claimgraph';
-export * from './contracts/address';
-export * from './contracts/collections';
-export * from './contracts/constants';
-export * from './contracts/gas';
-export * from './contracts/generated';
-export * from './contracts/network';
-export * from './ipfs';
-export * from './schema';
+export * from './contracts';
+export * from './utils';

@@ -2,9 +2,9 @@ import { Provider } from '@ethersproject/providers';
 import { Signer } from 'ethers';
 import * as t from 'io-ts';
 import { Address } from '../address';
-import { Signerish } from '../providers';
 import type { CollectionContract } from './collections';
 import { FeatureFactories } from './feature-factories.gen';
+import { Signerish } from './types';
 
 export interface FeatureInterfaceFactory<T> {
   connect(address: string, signerOrProvider: Signer | Provider): T;

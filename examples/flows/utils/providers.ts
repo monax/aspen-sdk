@@ -2,7 +2,7 @@ import { Provider } from '@ethersproject/providers';
 import { providers, Signer, Wallet } from 'ethers';
 import * as t from 'io-ts';
 import { JsonFromString } from 'io-ts-types';
-import { parseFromEnvOrFile } from '../environment';
+import { parseFromEnvOrFile } from '@monaxlabs/aspen-sdk/src/environment';
 
 // A JSON object of type EnvCredentials is expected to be saved here (ignored from repo)
 const defaultConfigFile = 'providers.json';
