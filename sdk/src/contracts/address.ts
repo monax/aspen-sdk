@@ -1,8 +1,6 @@
-import { randomFillSync } from 'crypto';
 import { utils } from 'ethers';
 import { tryCatch } from 'fp-ts/lib/Either';
 import * as t from 'io-ts';
-import { parse } from '../schema';
 
 export interface AddressBrand {
   readonly Address: unique symbol;
@@ -30,12 +28,6 @@ export const Address = t.string
 export type Address = t.TypeOf<typeof Address>;
 
 export type AddressOrName = t.TypeOf<typeof Address> | string;
-
-export function randomAddress(): Address {
-  const buf = Buffer.allocUnsafe(20);
-  randomFillSync(buf);
-  return parse(Address, '0x' + buf.toString('hex'));
-}
 
 export function isZeroAddress(address = ''): boolean {
   return isSameAddress(address, zeroAddress);
