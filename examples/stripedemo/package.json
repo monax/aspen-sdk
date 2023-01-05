@@ -1,0 +1,20 @@
+{
+  "type": "module",
+  "scripts": {
+    "build": "tsc --build",
+    "tsnode": "ts-node --esm --experimental-specifier-resolution=node",
+    "start": "yarn run tsnode server.ts"
+  },
+  "dependencies": {
+    "@monaxlabs/aspen-sdk": "workspace:sdk",
+    "express": "^4.18.2",
+    "stripe": "^11.5.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.15",
+    "@types/node": "^18.11.18",
+    "concurrently": "^7.6.0",
+    "nodemon": "^2.0.20",
+    "typescript": "^4.9.4"
+  }
+}

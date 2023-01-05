@@ -10,6 +10,7 @@
 
 tsconfig.tsbuildinfo
 .DS_Store
+.envrc
 
 # Generated code
 generated/
@@ -18,6 +19,7 @@ sdk/abis
 
 node_modules
 dist
+build
 
 # Publishing/gating password files
 credentials.json
@@ -32,3 +34,4 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+

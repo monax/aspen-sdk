@@ -6,7 +6,8 @@
   "workspaces": {
     "packages": [
       "sdk",
-      "examples/*"
+      "examples/*",
+      "examples/stripedemo/demosite"
     ]
   },
   "scripts": {
