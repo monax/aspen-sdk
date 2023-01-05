@@ -1,9 +1,11 @@
-import { CollectionActionsService, IssuanceStatus, IssueRequest } from './index';
-import { waitForSuccess } from '../../waiter';
+import { PublishingAPI } from '@monaxlabs/aspen-sdk';
+import { waitForSuccess } from './waiter';
+
+const { CollectionActionsService, IssuanceStatus } = PublishingAPI;
 
 export async function issueToken(
   collectionGuid: string,
-  issueRequest: IssueRequest,
+  issueRequest: PublishingAPI.IssueRequest,
 ): Promise<{ tokenId: number; issuanceId: number }> {
   const { issuanceId } = await CollectionActionsService.postCollectionIssue({
     guid: collectionGuid,

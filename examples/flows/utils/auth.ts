@@ -1,9 +1,8 @@
+import { GatingAPI, PublishingAPI } from '@monaxlabs/aspen-sdk';
 import * as t from 'io-ts';
 import { JsonFromString } from 'io-ts-types';
 import * as path from 'path';
-import { parseFromEnvOrFile } from '../environment';
-import * as g from './gating';
-import * as p from './publishing';
+import { parseFromEnvOrFile } from './environment';
 
 const Credential = t.type({
   baseUrl: t.string,
@@ -38,16 +37,16 @@ const defaultCedentialsEnvVarName = 'CREDENTIALS_JSON';
 
 // Authenticate the API in a global state (which is horrible, but hey)
 export async function authenticateAll({ publishing, gating }: Credentials): Promise<void> {
-  await authenticate(p.OpenAPI, publishing);
-  await authenticate(g.OpenAPI, gating);
+  await authenticate(PublishingAPI.OpenAPI, publishing);
+  await authenticate(GatingAPI.OpenAPI, gating);
 }
 
 export async function authenticate(
-  config: p.OpenAPIConfig & g.OpenAPIConfig,
+  config: PublishingAPI.OpenAPIConfig & GatingAPI.OpenAPIConfig,
   { baseUrl, name, password }: Credential,
 ): Promise<string> {
   config.BASE = baseUrl;
-  const accessToken = await p.AuthService.postAuth({
+  const accessToken = await PublishingAPI.AuthService.postAuth({
     requestBody: { name, password },
   });
   const token = accessToken.replace('Bearer ', '');

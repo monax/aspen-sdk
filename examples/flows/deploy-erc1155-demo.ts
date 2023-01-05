@@ -1,17 +1,19 @@
-import { generateAccounts } from '@monaxlabs/aspen-sdk/dist/contracts/accounts';
-import { NATIVE_TOKEN, ZERO_BYTES32 } from '@monaxlabs/aspen-sdk/dist/contracts/constants';
-import { getDeployer } from '@monaxlabs/aspen-sdk/dist/contracts/deployer';
-import { extractEvents } from '@monaxlabs/aspen-sdk/dist/contracts/events';
-import { getGasStrategy } from '@monaxlabs/aspen-sdk/dist/contracts/gas';
+import { generateAccounts } from './utils/accounts';
 import {
+  getGasStrategy,
+  extractEvents,
+  getDeployer,
+  NATIVE_TOKEN,
+  ZERO_BYTES32,
   ICedarDeployerV9,
   ICedarERC1155DropV4,
   ICedarERC1155DropV4__factory,
-} from '@monaxlabs/aspen-sdk/dist/contracts/generated';
+} from '@monaxlabs/aspen-sdk';
 import { IDropClaimConditionV0 } from '@monaxlabs/aspen-sdk/dist/contracts/generated/ICedarERC1155DropV4';
 import '@nomiclabs/hardhat-ethers';
 import { Overrides, providers } from 'ethers/lib/ethers';
 import 'hardhat-deploy';
+
 import ClaimConditionStruct = IDropClaimConditionV0.ClaimConditionStruct;
 
 const log = console.log;

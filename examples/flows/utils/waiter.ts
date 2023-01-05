@@ -1,4 +1,4 @@
-import { QueueStatus } from '@monaxlabs/aspen-sdk/src/apis/publishing';
+import { PublishingAPI } from '@monaxlabs/aspen-sdk';
 
 const defaultWaitForSuccessConfig = {
   sleepMs: 1000,
@@ -9,14 +9,14 @@ const defaultWaitForSuccessConfig = {
 
 type StatusResponse<TStatus> = { status?: TStatus | undefined; message?: string | null };
 
-export function waitForCompletion<T extends unknown[], TResponse extends StatusResponse<QueueStatus>>(
+export function waitForCompletion<T extends unknown[], TResponse extends StatusResponse<PublishingAPI.QueueStatus>>(
   getter: (...args: T) => Promise<TResponse>,
   ...args: T
 ): Promise<TResponse> {
   return waitForSuccess(
     {
-      successStatus: QueueStatus.COMPLETED,
-      errorStatus: QueueStatus.ERROR,
+      successStatus: PublishingAPI.QueueStatus.COMPLETED,
+      errorStatus: PublishingAPI.QueueStatus.ERROR,
     },
     getter,
     ...args,

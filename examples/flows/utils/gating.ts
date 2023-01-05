@@ -3,20 +3,13 @@ import { either as E, function as F } from 'fp-ts';
 import * as t from 'io-ts';
 import { importJWK, JWTPayload, jwtVerify } from 'jose';
 import { SupportedNetwork } from './providers';
-import { ChainIdFromChainName } from '@monaxlabs/aspen-sdk/src/contracts/network';
-import { parse } from '../../schema';
-import {
-  AuthService,
-  CreateRoleRequest,
-  GateResponse,
-  GateService,
-  GateSignInMode,
-  GateType,
-  JWK,
-  RolesService,
-} from '@monaxlabs/aspen-sdk/src/apis/gating';
+import { ChainIdFromChainName } from '@monaxlabs/aspen-sdk';
+import { GatingAPI } from '@monaxlabs/aspen-sdk';
+import { parse } from '@monaxlabs/aspen-sdk';
 
-export type GateCreated = GateResponse & { id: string };
+const { AuthService, GateService, GateSignInMode, GateType, RolesService } = GatingAPI;
+
+export type GateCreated = GatingAPI.GateResponse & { id: string };
 
 export type GateOptions = {
   onExisting?: 'delete' | 'reuse';
@@ -27,7 +20,7 @@ const DefaultGateOptions: GateOptions = {};
 export async function configureGate(
   network: SupportedNetwork,
   gateName: string,
-  roles: Omit<CreateRoleRequest, 'chainId'>[],
+  roles: Omit<GatingAPI.CreateRoleRequest, 'chainId'>[],
   options?: GateOptions,
 ): Promise<GateCreated> {
   const { onExisting } = { ...DefaultGateOptions, ...options };
@@ -79,7 +72,7 @@ const Roles = new t.Type<string[]>(
 );
 
 export async function parseAndVerifyJWT(
-  publicKey: JWK,
+  publicKey: GatingAPI.JWK,
   jwtToken: string,
 ): Promise<{ payload: JWTPayload; roles: string[] }> {
   const key = await importJWK(publicKey, '', true);
