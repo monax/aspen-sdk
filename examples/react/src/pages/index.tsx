@@ -23,6 +23,7 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     if (!active || !library) return;
+    
     (async () => {
       const collectionContract = new CollectionContract(
         library,
@@ -45,7 +46,7 @@ const Home: NextPage = () => {
           to connect to the correct Network
         </p>
         <ConnectWallet />
-        {active && (
+        {active && contract && (
           <div className={styles.container}>
             <div className={styles.flex}>
               <p>Contract Address : </p>
