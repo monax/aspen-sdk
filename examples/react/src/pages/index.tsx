@@ -3,13 +3,7 @@ import { useEffect, useState } from "react";
 import styles from "../styles/Home.module.css";
 
 import { Web3Provider } from "@ethersproject/providers";
-import {
-  CollectionContract,
-  parse,
-  Address,
-  ISFTSupplyV0,
-  IERC1155SupplyV1,
-} from "@monaxlabs/aspen-sdk";
+import { CollectionContract, parse, Address } from "@monaxlabs/aspen-sdk";
 import { useWeb3React } from "@web3-react/core";
 import ConnectWallet from "components/ConnectWallet";
 import LoadClaimConditions from "components/LoadClaimConditions";
