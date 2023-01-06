@@ -49,7 +49,9 @@
     "typescript": "^4.8.4"
   },
   "jest": {
-    "extensionsToTreatAsEsm": [".ts"],
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ],
     "injectGlobals": false,
     "testMatch": [
       "**/*.test.ts"
