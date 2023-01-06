@@ -1,28 +1,23 @@
-import { AspenEnvironment, authenticateAllFromFile } from './utils/auth';
-import { PostFileResponse, uploadFile } from '@monaxlabs/aspen-sdk/src/apis/utils/files';
-import { authenticateForGate, configureGate, parseAndVerifyJWT } from './utils/gating';
-import { deployERC721, wait } from './utils/collection';
-import { issueToken } from '@monaxlabs/aspen-sdk/src/apis/utils/issue';
 import {
-  GasStrategy,
-  getGasStrategy,
-  ClaimBalance,
+  PostFileResponse,
+  uploadFile,
+  issueToken,
+  AspenEnvironment,
+  authenticateAllFromFile,
+  generateAccounts,
+  configureGate,
   GatingAPI,
-  getClaimBalances,
+  authenticateForGate,
+  parseAndVerifyJWT,
+  getInnermostError,
   PublishingAPI,
-  ICedarERC1155DropV5,
-  ICedarERC1155DropV5__factory,
-  ICedarERC721DropV7,
-  ICedarERC721DropV7__factory,
-} from '@monaxlabs/aspen-sdk';
-import { generateAccounts } from './utils/accounts';
-import { getInnermostError } from './utils/errors';
-import {
   getProvider,
   getSigner,
   initialiseProvider,
   SupportedNetwork,
-} from '@monaxlabs/aspen-sdk/src/apis/utils/providers';
+} from '@monaxlabs/aspen-sdk/dist/apis';
+import { ClaimBalance, getClaimBalances } from '@monaxlabs/aspen-sdk/dist/claimgraph';
+import { deployERC721, wait } from './utils/collection';
 import { BigNumber } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 import { createReadStream } from 'fs';
@@ -38,6 +33,14 @@ import {
   writeCollectionInfo,
   writeIssuanceInfo,
 } from './state';
+import {
+  GasStrategy,
+  getGasStrategy,
+  ICedarERC1155DropV5,
+  ICedarERC1155DropV5__factory,
+  ICedarERC721DropV7,
+  ICedarERC721DropV7__factory,
+} from '@monaxlabs/aspen-sdk/dist/contracts';
 
 const providersFile = new URL('secrets/providers.json', import.meta.url).pathname;
 const credentialsFile = new URL('secrets/credentials.json', import.meta.url).pathname;

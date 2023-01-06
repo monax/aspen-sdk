@@ -4,6 +4,11 @@
     "rootDir": "./src",
     "outDir": "./dist"
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["src/codegen/**/*"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/codegen/**/*"
+  ],
+  "declaration": true
 }
