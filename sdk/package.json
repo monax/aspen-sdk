@@ -1,21 +1,39 @@
 {
   "name": "@monaxlabs/aspen-sdk",
-  "version": "0.0.0",
-  "main": "dist/index.js",
-  "repository": "git@github.com:monax/aspen-sdk.git",
-  "author": "Silas Davis <silas.davis@monaxlabs.io>",
   "license": "Apache-2.0",
+  "version": "0.0.0",
+  "author": "Silas Davis <silas.davis@monaxlabs.io>",
   "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:monax/aspen-sdk.git",
+    "directory": "sdk"
+  },
+  "sideEffects": false,
   "files": [
     "dist/**",
     "LICENSE",
     "README.md"
   ],
   "exports": {
-    "./api": "./dist/api",
-    "./contracts": "./dist/contracts",
-    "./claimgraph": "./dist/claimgraph",
-    "./utils": "./dist/utils"
+    "./api": {
+      "default": "./dist/api/index.js",
+      "types": "./dist/api/index.d.ts"
+    },
+    "./contracts": {
+      "default": "./dist/contracts/index.js",
+      "types": "./dist/contracts/index.d.ts"
+    },
+    "./claimgraph": {
+      "default": "./dist/claimgraph/index.js",
+      "types": "./dist/claimgraph/index.d.ts"
+    },
+    "./utils": {
+      "default": "./dist/utils/index.js",
+      "types": "./dist/utils/index.d.ts"
+    }
   },
   "dependencies": {
     "@ethersproject/abi": "^5.7.0",
