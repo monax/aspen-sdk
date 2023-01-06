@@ -1,8 +1,8 @@
 import { AspenEnvironment, authenticateAllFromFile } from './utils/auth';
-import { PostFileResponse, uploadFile } from './utils/files';
+import { PostFileResponse, uploadFile } from '@monaxlabs/aspen-sdk/src/apis/utils/files';
 import { authenticateForGate, configureGate, parseAndVerifyJWT } from './utils/gating';
 import { deployERC721, wait } from './utils/collection';
-import { issueToken } from './utils/issue';
+import { issueToken } from '@monaxlabs/aspen-sdk/src/apis/utils/issue';
 import {
   GasStrategy,
   getGasStrategy,
@@ -17,7 +17,12 @@ import {
 } from '@monaxlabs/aspen-sdk';
 import { generateAccounts } from './utils/accounts';
 import { getInnermostError } from './utils/errors';
-import { getProvider, getSigner, initialiseProvider, SupportedNetwork } from './utils/providers';
+import {
+  getProvider,
+  getSigner,
+  initialiseProvider,
+  SupportedNetwork,
+} from '@monaxlabs/aspen-sdk/src/apis/utils/providers';
 import { BigNumber } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 import { createReadStream } from 'fs';

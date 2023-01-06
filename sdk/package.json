@@ -11,6 +11,12 @@
     "LICENSE",
     "README.md"
   ],
+  "exports": {
+    "./api": "./dist/api",
+    "./contracts": "./dist/contracts",
+    "./claimgraph": "./dist/claimgraph",
+    "./utils": "./dist/utils"
+  },
   "dependencies": {
     "@ethersproject/abi": "^5.7.0",
     "@ethersproject/abstract-provider": "^5.7.0",

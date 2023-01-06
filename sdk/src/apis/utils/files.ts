@@ -1,7 +1,7 @@
 import * as t from 'io-ts';
 import { Readable, ReadableOptions } from 'stream';
-import { UtilityService } from '@monaxlabs/aspen-sdk/src/apis/publishing';
-import { parse } from '@monaxlabs/aspen-sdk';
+import { PublishingAPI } from '..';
+import { parse } from '../../utils';
 
 export interface NamedReadable extends Readable {
   readonly name: string;
@@ -57,7 +57,7 @@ export async function uploadFile(
   iterable: Iterable<any> | AsyncIterable<any>,
   filename?: string,
 ): Promise<PostFileResponse> {
-  const jsonPretendingToBeString = await UtilityService.postUtilityFiles({
+  const jsonPretendingToBeString = await PublishingAPI.UtilityService.postUtilityFiles({
     formData: { file: coerceToBlob(iterable, filename) },
   });
   return parse(PostFileResponse, jsonPretendingToBeString);

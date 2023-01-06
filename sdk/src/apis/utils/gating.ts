@@ -2,10 +2,10 @@ import { Signer } from 'ethers';
 import { either as E, function as F } from 'fp-ts';
 import * as t from 'io-ts';
 import { importJWK, JWTPayload, jwtVerify } from 'jose';
+import { GatingAPI } from '..';
+import { ChainIdFromChainName } from '../../contracts';
+import { parse } from '../../utils';
 import { SupportedNetwork } from './providers';
-import { ChainIdFromChainName } from '@monaxlabs/aspen-sdk';
-import { GatingAPI } from '@monaxlabs/aspen-sdk';
-import { parse } from '@monaxlabs/aspen-sdk';
 
 const { AuthService, GateService, GateSignInMode, GateType, RolesService } = GatingAPI;
 

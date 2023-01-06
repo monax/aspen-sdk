@@ -1,4 +1,4 @@
-import { PublishingAPI } from '@monaxlabs/aspen-sdk';
+import { PublishingAPI } from '..';
 import { waitForSuccess } from './waiter';
 
 const { CollectionActionsService, IssuanceStatus } = PublishingAPI;

@@ -1,5 +1,5 @@
 import { AspenEnvironment } from './utils/auth';
-import { SupportedNetwork } from './utils/providers';
+import { SupportedNetwork } from '@monaxlabs/aspen-sdk/src/apis/utils/providers';
 import { parse, Json, parseFromString } from '@monaxlabs/aspen-sdk';
 import { promises as fs } from 'fs';
 import * as t from 'io-ts';

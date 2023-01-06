@@ -1,7 +1,7 @@
-import { GatingAPI, PublishingAPI } from '@monaxlabs/aspen-sdk';
 import * as t from 'io-ts';
 import { JsonFromString } from 'io-ts-types';
 import * as path from 'path';
+import { GatingAPI, PublishingAPI } from '..';
 import { parseFromEnvOrFile } from './environment';
 
 const Credential = t.type({

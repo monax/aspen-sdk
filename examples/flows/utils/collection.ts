@@ -13,9 +13,9 @@ import {
   OperationType,
   TokenService,
   UpdatableCollectionFieldsJsonPatchDocument,
-} from '@monaxlabs/aspen-sdk/src/apis/publishing';
-import { coerceToBlob } from './files';
-import { SupportedNetwork } from './providers';
+} from '@monaxlabs/aspen-sdk/api/publishing';
+import { coerceToBlob } from '@monaxlabs/aspen-sdk/src/apis/utils/files';
+import { SupportedNetwork } from '@monaxlabs/aspen-sdk/src/apis/utils/providers';
 import { waitForCompletion } from './waiter';
 
 let mutex = false;
