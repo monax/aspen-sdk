@@ -1,7 +1,9 @@
 import express, { Express } from "express";
 import Stripe from "stripe";
-import { issueToken } from "@monaxlabs/aspen-sdk/dist/apis/publishing/issue";
-import { authenticateAllFromFile } from "@monaxlabs/aspen-sdk/dist/apis/auth";
+import {
+  issueToken,
+  authenticateAllFromFile,
+} from "@monaxlabs/aspen-sdk/dist/apis";
 
 const credentialsFile = new URL("./credentials.json", import.meta.url).pathname;
 const apiKey = process.env.STRIPE_APIKEY!;
