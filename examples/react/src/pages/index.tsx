@@ -3,7 +3,11 @@ import { useEffect, useState } from "react";
 import styles from "../styles/Home.module.css";
 
 import { Web3Provider } from "@ethersproject/providers";
-import { CollectionContract, parse, Address } from "@monaxlabs/aspen-sdk";
+import {
+  CollectionContract,
+  Address,
+} from "@monaxlabs/aspen-sdk/dist/contracts";
+import { parse } from "@monaxlabs/aspen-sdk/dist/utils";
 import { useWeb3React } from "@web3-react/core";
 import ConnectWallet from "components/ConnectWallet";
 import LoadClaimConditions from "components/LoadClaimConditions";
@@ -23,7 +27,7 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     if (!active || !library) return;
-    
+
     (async () => {
       const collectionContract = new CollectionContract(
         library,

@@ -1,10 +1,8 @@
 import { BigNumber, ContractTransaction } from 'ethers';
-import { resolveIpfsUrl } from '../../../ipfs';
-import { Address, isSameAddress } from '../../address';
-import { IPFS_GATEWAY_PREFIX, ZERO_ADDRESS } from '../../constants';
-import { Signerish } from '../../providers';
+import { Address, IPFS_GATEWAY_PREFIX, isSameAddress, ZERO_ADDRESS } from '../..';
+import { resolveIpfsUrl } from '../../../utils';
 import { Features } from '../features';
-import type { TermsUserAcceptanceState } from '../types';
+import type { Signerish, TermsUserAcceptanceState } from '../types';
 
 export class Agreements extends Features {
   /**
@@ -14,8 +12,10 @@ export class Agreements extends Features {
     const interfaces = this.base.interfaces;
 
     return !!(
-      (interfaces['agreement/IAgreement.sol:ICedarAgreementV0'] || interfaces['agreement/IAgreement.sol:ICedarAgreementV1'] || interfaces['agreement/IAgreement.sol:IPublicAgreementV0'])
-      // || interfaces.IPublicAgreementV1
+      interfaces['agreement/IAgreement.sol:ICedarAgreementV0'] ||
+      interfaces['agreement/IAgreement.sol:ICedarAgreementV1'] ||
+      interfaces['agreement/IAgreement.sol:IPublicAgreementV0'] ||
+      interfaces['agreement/IAgreement.sol:IPublicAgreementV1']
     );
   }
 

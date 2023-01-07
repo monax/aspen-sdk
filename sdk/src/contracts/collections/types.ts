@@ -1,10 +1,13 @@
-import type { BigNumber } from 'ethers';
-import { Address } from '../address';
-import { ChainId } from '../network';
-import { Signerish } from '../providers';
+import { Provider } from '@ethersproject/abstract-provider';
+import type { BigNumber, Signer } from 'ethers';
+import { Address, ChainId } from '..';
 import type { CollectionMetaImageType, CollectionMetaLinkType } from './constants';
 
+export type Signerish = Signer | Provider;
+
 export type TokenStandard = 'ERC721' | 'ERC1155' | 'ERC20';
+
+export type ContractVerificationType = 'aspen-minted' | 'aspen-partner' | 'os-verified';
 
 export type MetadataKind = 'collection';
 

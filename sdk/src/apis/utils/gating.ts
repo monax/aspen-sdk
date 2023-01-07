@@ -1,22 +1,15 @@
-import {
-  AuthService,
-  CreateRoleRequest,
-  GateResponse,
-  GateService,
-  GateSignInMode,
-  GateType,
-  JWK,
-  RolesService,
-} from './index';
 import { Signer } from 'ethers';
 import { either as E, function as F } from 'fp-ts';
 import * as t from 'io-ts';
 import { importJWK, JWTPayload, jwtVerify } from 'jose';
-import { SupportedNetwork } from '../../contracts/providers';
-import { ChainIdFromChainName } from '../../contracts/network';
-import { parse } from '../../schema';
+import { GatingAPI } from '..';
+import { ChainIdFromChainName } from '../../contracts';
+import { parse } from '../../utils';
+import { SupportedNetwork } from './providers';
 
-export type GateCreated = GateResponse & { id: string };
+const { AuthService, GateService, GateSignInMode, GateType, RolesService } = GatingAPI;
+
+export type GateCreated = GatingAPI.GateResponse & { id: string };
 
 export type GateOptions = {
   onExisting?: 'delete' | 'reuse';
@@ -27,7 +20,7 @@ const DefaultGateOptions: GateOptions = {};
 export async function configureGate(
   network: SupportedNetwork,
   gateName: string,
-  roles: Omit<CreateRoleRequest, 'chainId'>[],
+  roles: Omit<GatingAPI.CreateRoleRequest, 'chainId'>[],
   options?: GateOptions,
 ): Promise<GateCreated> {
   const { onExisting } = { ...DefaultGateOptions, ...options };
@@ -79,7 +72,7 @@ const Roles = new t.Type<string[]>(
 );
 
 export async function parseAndVerifyJWT(
-  publicKey: JWK,
+  publicKey: GatingAPI.JWK,
   jwtToken: string,
 ): Promise<{ payload: JWTPayload; roles: string[] }> {
   const key = await importJWK(publicKey, '', true);

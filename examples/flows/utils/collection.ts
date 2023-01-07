@@ -13,10 +13,10 @@ import {
   OperationType,
   TokenService,
   UpdatableCollectionFieldsJsonPatchDocument,
-} from './index';
-import { coerceToBlob } from '../files';
-import { waitForCompletion } from '../../waiter';
-import { SupportedNetwork } from '../../contracts/providers';
+} from '@monaxlabs/aspen-sdk/dist/apis/publishing';
+import { coerceToBlob } from '@monaxlabs/aspen-sdk/dist/apis/utils/files';
+import { SupportedNetwork } from '@monaxlabs/aspen-sdk/dist/apis/utils/providers';
+import { waitForCompletion } from './waiter';
 
 let mutex = false;
 

@@ -1,5 +1,5 @@
-import { parse } from '../../../schema';
-import { Address } from '../../address';
+import { Address } from '../..';
+import { parse } from '../../../utils';
 import { Features } from '../features';
 
 // TODO: reinstate when released

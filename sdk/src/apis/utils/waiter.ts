@@ -1,5 +1,3 @@
-import { QueueStatus } from './apis/publishing';
-
 const defaultWaitForSuccessConfig = {
   sleepMs: 1000,
   // 20 minutes
@@ -7,21 +5,7 @@ const defaultWaitForSuccessConfig = {
   logger: console.error,
 };
 
-type StatusResponse<TStatus> = { status?: TStatus | undefined; message?: string | null };
-
-export function waitForCompletion<T extends unknown[], TResponse extends StatusResponse<QueueStatus>>(
-  getter: (...args: T) => Promise<TResponse>,
-  ...args: T
-): Promise<TResponse> {
-  return waitForSuccess(
-    {
-      successStatus: QueueStatus.COMPLETED,
-      errorStatus: QueueStatus.ERROR,
-    },
-    getter,
-    ...args,
-  );
-}
+export type StatusResponse<TStatus> = { status?: TStatus | undefined; message?: string | null };
 
 export async function waitForSuccess<TArgs extends unknown[], TStatus, TResponse extends StatusResponse<TStatus>>(
   config: {

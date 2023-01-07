@@ -1,4 +1,7 @@
-import { Address, CollectionContract } from "@monaxlabs/aspen-sdk";
+import {
+  Address,
+  CollectionContract,
+} from "@monaxlabs/aspen-sdk/dist/contracts";
 import { useWeb3React } from "@web3-react/core";
 import { useEffect, useState } from "react";
 import { Web3Provider } from "@ethersproject/providers";

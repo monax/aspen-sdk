@@ -14,7 +14,7 @@ tsconfig.tsbuildinfo
 
 # Generated code
 generated/
-sdk/abis
+sdk/src/contracts/abis/
 *.gen.ts
 
 node_modules

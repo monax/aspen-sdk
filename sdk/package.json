@@ -1,11 +1,41 @@
 {
   "name": "@monaxlabs/aspen-sdk",
-  "version": "0.0.0",
-  "main": "dist/index.js",
-  "repository": "git@github.com:monax/aspen-sdk.git",
-  "author": "Silas Davis <silas.davis@monaxlabs.io>",
   "license": "Apache-2.0",
+  "version": "0.0.0",
+  "author": "Silas Davis <silas.davis@monaxlabs.io>",
   "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:monax/aspen-sdk.git",
+    "directory": "sdk"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist/**",
+    "LICENSE",
+    "README.md"
+  ],
+  "exports": {
+    "./dist/*": "./dist/*",
+    "./api": {
+      "default": "./dist/api/index.js",
+      "types": "./dist/api/index.d.ts"
+    },
+    "./contracts": {
+      "default": "./dist/contracts/index.js",
+      "types": "./dist/contracts/index.d.ts"
+    },
+    "./claimgraph": {
+      "default": "./dist/claimgraph/index.js",
+      "types": "./dist/claimgraph/index.d.ts"
+    },
+    "./utils": {
+      "default": "./dist/utils/index.js",
+      "types": "./dist/utils/index.d.ts"
+    }
+  },
   "dependencies": {
     "@ethersproject/abi": "^5.7.0",
     "@ethersproject/abstract-provider": "^5.7.0",
@@ -78,10 +108,10 @@
     "fix:prettier": "prettier --write ..",
     "fix:eslint": "eslint --fix '**/*.ts'",
     "tsnode": "ts-node --esm --experimental-specifier-resolution=node",
-    "generate:spec": "yarn tsnode lib/cmd/generate-from-spec.ts",
+    "generate:spec": "yarn tsnode src/codegen/cmd/generate-from-spec.ts",
     "generate:publishing": "npx openapi-typescript-codegen --input ./node_modules/@monaxlabs/spec/apis/publishing.json --output ./src/apis/publishing/generated --client axios --useOptions",
     "generate:gating": "npx openapi-typescript-codegen --input ./node_modules/@monaxlabs/spec/apis/gating.json --output ./src/apis/gating/generated --client axios --useOptions",
-    "generate:typechain": "typechain --out-dir=src/contracts/generated --target=ethers-v5 abis/* --show-stack-traces",
+    "generate:typechain": "typechain --out-dir=src/contracts/generated --target=ethers-v5 src/contracts/abis/* --show-stack-traces",
     "generate:graphql": "yarn graphql-codegen",
     "examples:clear-state": "rm ../examples/flows/collection-info.json src/examples/issuance-info.json"
   }

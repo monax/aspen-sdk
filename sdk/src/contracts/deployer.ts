@@ -1,5 +1,5 @@
 import { providers, Signer } from 'ethers';
-import { deployers } from '../deployers.gen';
+import { deployers } from './deployers.gen';
 import { ICedarDeployerV9, ICedarDeployerV9__factory } from './generated';
 
 export type Network = typeof deployers[number]['network'];

@@ -1,18 +1,20 @@
 import * as path from 'path';
 import * as url from 'url';
-import { ContractsManifest } from '../../src/manifest';
-import { parse } from '../../src/schema';
+import { parse } from '../../utils';
 import { dumpLatestABIs, generateTsFile, writeFeaturesFactoriesMap } from '../generate';
-const dirname = url.fileURLToPath(new url.URL('.', import.meta.url));
-// const dirname = __dirname;
+import { ContractsManifest } from '../manifest';
 
-export const sdkDir = path.join(dirname, '..', '..');
+const dirname = url.fileURLToPath(new url.URL('.', import.meta.url));
+
+const sdkDir = path.join(dirname, '..', '..', '..');
 const srcDir = path.join(sdkDir, 'src');
-const deployersFileTs = path.join(srcDir, 'deployers.gen.ts');
-const manifestFileTs = path.join(srcDir, 'manifest.gen.ts');
+
+const manifestFileTs = path.join(srcDir, 'codegen', 'manifest.gen.ts');
+const deployersFileTs = path.join(srcDir, 'contracts', 'deployers.gen.ts');
+const contractsAbiDir = path.join(srcDir, 'contracts', 'abis');
 const featureFactoriesTs = path.join(srcDir, 'contracts', 'collections', 'feature-factories.gen.ts');
-export const contractsAbiDir = path.join(sdkDir, 'abis');
-export const specDir = path.join(dirname, '..', '..', 'node_modules', '@monaxlabs', 'spec');
+
+const specDir = path.join(sdkDir, 'node_modules', '@monaxlabs', 'spec');
 const pathToManifestJson = path.join(specDir, 'contracts/manifest.json');
 const prettierConfigFile = path.join(sdkDir, '.prettierrc');
 

@@ -3,7 +3,11 @@ import styles from "../styles/Home.module.css";
 import { Web3Provider } from "@ethersproject/providers";
 
 import { useWeb3React } from "@web3-react/core";
-import { Address, CollectionContract, parse } from "@monaxlabs/aspen-sdk";
+import {
+  Address,
+  CollectionContract,
+} from "@monaxlabs/aspen-sdk/dist/contracts";
+import { parse } from "@monaxlabs/aspen-sdk/dist/utils";
 import { useEffect, useState } from "react";
 
 const AcceptTerms: React.FC<{ contract: CollectionContract }> = ({
