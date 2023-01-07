@@ -4,8 +4,6 @@
   "version": "0.0.0",
   "author": "Silas Davis <silas.davis@monaxlabs.io>",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git@github.com:monax/aspen-sdk.git",
@@ -108,10 +106,11 @@
     "fix:prettier": "prettier --write ..",
     "fix:eslint": "eslint --fix '**/*.ts'",
     "tsnode": "ts-node --esm --experimental-specifier-resolution=node",
-    "generate:spec": "yarn tsnode src/codegen/cmd/generate-from-spec.ts",
+    "generate:spec": "yarn tsnode src/codegen/cmd/generate.ts",
     "generate:publishing": "npx openapi-typescript-codegen --input ./node_modules/@monaxlabs/spec/apis/publishing.json --output ./src/apis/publishing/generated --client axios --useOptions",
     "generate:gating": "npx openapi-typescript-codegen --input ./node_modules/@monaxlabs/spec/apis/gating.json --output ./src/apis/gating/generated --client axios --useOptions",
     "generate:typechain": "typechain --out-dir=src/contracts/generated --target=ethers-v5 src/contracts/abis/* --show-stack-traces",
+    "generate:typechain:nodenext": "typechain --out-dir=src/contracts/generated --target=ethers-v5 src/contracts/abis/* --show-stack-traces --node16-modules # switch when/if https://github.com/dethcrypto/TypeChain/pull/799 is merged",
     "generate:graphql": "yarn graphql-codegen",
     "examples:clear-state": "rm ../examples/flows/collection-info.json src/examples/issuance-info.json"
   }

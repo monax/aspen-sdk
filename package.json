@@ -13,7 +13,9 @@
   "scripts": {
     "test": "yarn workspaces foreach --topological run test",
     "build": "yarn workspaces foreach --topological run build",
-    "examples:flows": "yarn workspace @monaxlabs/aspen-sdk-examples-flows run flows"
+    "examples:flows": "yarn workspace @monaxlabs/aspen-sdk-examples-flows run flows",
+    "clean": "git clean -fdX --exclude='!credentials.json' --exclude='!providers.json' --exclude='!.idea' --exclude='!.idea/**'",
+    "clean:dry-run": "yarn clean -n"
   },
   "packageManager": "yarn@3.3.1"
 }
