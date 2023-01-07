@@ -3,6 +3,7 @@ import styles from "../styles/Home.module.css";
 import { Web3Provider } from "@ethersproject/providers";
 
 import {
+  ActiveClaimConditions,
   Address,
   CollectionContract,
 } from "@monaxlabs/aspen-sdk/dist/contracts";
@@ -17,10 +18,15 @@ const Mint: React.FC<{ contract: CollectionContract; tokenId: string }> = ({
 }) => {
   const { account, library } = useWeb3React<Web3Provider>();
   const [canMint, setCanMint] = useState(false);
-  const [activeClaimConditions, setActiveClaimConditions] = useState(null);
+  const [activeClaimConditions, setActiveClaimConditions] =
+    useState<ActiveClaimConditions | null>(null);
 
   const onMint = async () => {
     if (!library) return;
+
+    if (!activeClaimConditions) {
+      throw new Error(`No active claim condition`);
+    }
 
     await contract.issuance.claim(
       library.getSigner(),
@@ -37,8 +43,12 @@ const Mint: React.FC<{ contract: CollectionContract; tokenId: string }> = ({
   useEffect(() => {
     if (!contract) return;
     (async () => {
-      const activeConditions =
-        await contract?.issuance.getActiveClaimConditions(tokenId);
+      const activeConditions = await contract.issuance.getActiveClaimConditions(
+        tokenId
+      );
+      if (!activeConditions) {
+        throw new Error(`No active claim condition`);
+      }
       setActiveClaimConditions(activeConditions);
 
       if (account) {
@@ -46,6 +56,10 @@ const Mint: React.FC<{ contract: CollectionContract; tokenId: string }> = ({
           account as Address,
           tokenId
         );
+
+        if (!userConditions) {
+          throw new Error(`No user claim conditions`);
+        }
 
         const restrictions = await contract?.issuance.getUserClaimRestrictions(
           userConditions,

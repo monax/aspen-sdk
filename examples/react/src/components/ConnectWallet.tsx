@@ -16,15 +16,18 @@ const ConnectWallet: React.FC = () => {
     supportedChainIds: Object.keys(network).map(Number),
   });
   const { chainId, account, activate, active } = useWeb3React<Web3Provider>();
-  const onClick = () => {
-    activate(injectedConnector);
-  };
-
+  const onClick = () => activate(injectedConnector);
   return (
     <div>
       {active ? (
         <>
-          <div>Network: {network[chainId]}</div>
+          {/*FIXME[Silas]: use proper chainId parsing from the SDK*/}
+          <div>
+            Network:{" "}
+            {chainId
+              ? network[chainId as keyof typeof network] || `unknown chainId`
+              : `no chainId`}
+          </div>
           <div>ChainId: {chainId}</div>
           <div>Account: {account}</div>
           <div>✅ </div>

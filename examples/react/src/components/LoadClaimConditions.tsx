@@ -1,10 +1,13 @@
+import { Web3Provider } from "@ethersproject/providers";
 import {
+  ActiveClaimConditions,
   Address,
   CollectionContract,
+  CollectionUserClaimConditions,
+  UserClaimConditions,
 } from "@monaxlabs/aspen-sdk/dist/contracts";
 import { useWeb3React } from "@web3-react/core";
 import { useEffect, useState } from "react";
-import { Web3Provider } from "@ethersproject/providers";
 import styles from "../styles/Home.module.css";
 
 const LoadClaimConditions: React.FC<{
@@ -12,25 +15,35 @@ const LoadClaimConditions: React.FC<{
   tokenId: string;
 }> = ({ contract, tokenId }) => {
   const { account } = useWeb3React<Web3Provider>();
-  const [userClaimRestrictions, setUserClaimRestrictions] = useState(null);
-  const [userClaimConditions, setUserClaimConditions] = useState(null);
-  const [activeClaimConditions, setActiveClaimConditions] = useState(null);
+  const [userClaimConditions, setUserClaimConditions] =
+    useState<UserClaimConditions | null>(null);
+  const [userClaimRestrictions, setUserClaimRestrictions] =
+    useState<CollectionUserClaimConditions | null>(null);
+  const [activeClaimConditions, setActiveClaimConditions] =
+    useState<ActiveClaimConditions | null>(null);
 
   useEffect(() => {
     if (!contract) return;
     (async () => {
-      const activeConditions =
-        await contract?.issuance.getActiveClaimConditions(tokenId);
+      const activeConditions = await contract.issuance.getActiveClaimConditions(
+        tokenId
+      );
       setActiveClaimConditions(activeConditions);
 
       if (account) {
-        const userConditions = await contract?.issuance.getUserClaimConditions(
+        const userConditions = await contract.issuance.getUserClaimConditions(
           account as Address,
           "0"
         );
-        setUserClaimConditions(userConditions);
 
-        const restrictions = await contract?.issuance.getUserClaimRestrictions(
+        if (!activeConditions) {
+          throw new Error(`No active claim conditions`);
+        }
+        if (!userConditions) {
+          throw new Error(`No user claim condition`);
+        }
+        setUserClaimConditions(userConditions);
+        const restrictions = await contract.issuance.getUserClaimRestrictions(
           userConditions,
           activeConditions,
           [],
@@ -76,7 +89,10 @@ const LoadClaimConditions: React.FC<{
       {userClaimRestrictions && (
         <div className={styles.card}>
           <h4>User Claim Restrictions : </h4>
-          <p>Available Quantity : {userClaimRestrictions.availableQuantity.toString()}</p>
+          <p>
+            Available Quantity :{" "}
+            {userClaimRestrictions.availableQuantity.toString()}
+          </p>
           <p>
             Can Claim Tokens :{" "}
             {userClaimRestrictions.canClaimTokens ? "TRUE" : "FALSE"}

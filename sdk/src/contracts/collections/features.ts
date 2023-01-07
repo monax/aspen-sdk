@@ -77,7 +77,7 @@ export function extractKnownSupportedFeatures(supportedFeaturesFromContract: str
     .filter((f): f is FeatureInterfaceId => Boolean(f));
 }
 
-// A cover is a set of non-empty subsets of T provider as a Record where each subset is identified by a key in K where
+// A cover is a set of non-empty subsets of T provided as a Record where each subset is identified by a key in K where
 // the union of the subsets contains T
 type Cover<K extends string, T, C extends Record<K, NonEmptyArray<T>>, E = C[K][number]> =
   // Provide _some_ arguments
@@ -91,16 +91,17 @@ type Cover<K extends string, T, C extends Record<K, NonEmptyArray<T>>, E = C[K][
     : never;
 
 // Exhaustive union partitioner takes a Cover and for each subset in the Cover returns a single type which is the first
-// truthy value in image of the subset under the map M. It is useful for dealing with a subset of features without knowing
-// which exact feature is implemented when you are able to work with the intersection of the features in a subset
+// truthy value in the image of the subset under the map M. It is useful for dealing with a subset of features without
+// branching on each exact feature when you are able to work with the intersection interface of the features in a subset
 export const exhaustiveUnionPartitioner =
   <T extends string, V, M extends Partial<Record<T, V>>>(map: M, ...keys: T[]) =>
   <K extends string, C extends Record<K, NonEmptyArray<T>>, R>(
     cover: Cover<K, T, C>,
   ): { [k in K]: M[C[k][number]] } => {
+    // Flatten the cover down to its element type then map them with M to get the values
     const ret = {} as { [k in K]: M[C[k][number]] };
     for (const [key, subset] of Object.entries(cover)) {
-      // Here we are use short-circuit or-ing together A || B || ... ||
+      // Here we are just short-circuit or-ing together A || B || ... ||
       ret[key as K] = (subset as T[]).reduce((acc, k) => acc || map[k], undefined as M[T]);
     }
     return ret;
