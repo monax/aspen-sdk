@@ -21,3 +21,20 @@ yarn dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Features
+
+### In `index.tsx` contains components :
+
+
+To be able to run the examples first you need to connect to the Wallet:
+
+`ConnectWallet` component provides a button whenever the wallet is not connected, otherwise network informations should be displayed.
+You need to connect with Mumbai network where examples contract are deployed.
+
+
+There are two diffetent components for minting : 
+
+MintCedarERC721DropV0
+
+
