@@ -17,11 +17,12 @@ import Mint from "components/Mint";
 
 const Home: NextPage = () => {
   const [contractAddress, setContractAddress] = useState(
-    process.env.NEXT_PUBLIC_TEST_CONTRACT || "0xfe66131bF7f81bE9aeDf1ae58284ec17484E5Da9"
+    process.env.NEXT_PUBLIC_TEST_CONTRACT ||
+      "0xfe66131bF7f81bE9aeDf1ae58284ec17484E5Da9"
   );
 
-  const [contract, setContract] = useState<CollectionContract>(null);
-  const [tokens, setTokens] = useState([]);
+  const [contract, setContract] = useState<CollectionContract | null>(null);
+  const [tokens, setTokens] = useState<number[]>([]);
   const [selectedToken, setSelectedToken] = useState("0");
   const { active, library } = useWeb3React<Web3Provider>();
 
@@ -66,7 +67,7 @@ const Home: NextPage = () => {
               <Select
                 value={selectedToken}
                 onChange={(e) => setSelectedToken(e.target.value)}
-                options={tokens}
+                options={tokens.map((t) => String(t))}
               />
             </div>
 

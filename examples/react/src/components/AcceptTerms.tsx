@@ -2,28 +2,34 @@ import styles from "../styles/Home.module.css";
 
 import { Web3Provider } from "@ethersproject/providers";
 
-import { useWeb3React } from "@web3-react/core";
 import {
   Address,
   CollectionContract,
+  TermsUserAcceptanceState,
 } from "@monaxlabs/aspen-sdk/dist/contracts";
 import { parse } from "@monaxlabs/aspen-sdk/dist/utils";
+import { useWeb3React } from "@web3-react/core";
 import { useEffect, useState } from "react";
 
 const AcceptTerms: React.FC<{ contract: CollectionContract }> = ({
   contract,
 }) => {
   const { account, library } = useWeb3React<Web3Provider>();
-  const [termsInfo, setTermsInfo] = useState(null);
+  const [termsInfo, setTermsInfo] = useState<TermsUserAcceptanceState | null>(
+    null
+  );
 
-  const handleAcceptTerms = async () => {
+  if (!library) {
+    // FIXME: can we do better than this?
+    throw new Error(`web3React library unexpectedly null`)
+  }
+
+  const handleAcceptTerms = () =>
     contract.agreements.acceptTerms(library.getSigner());
-  };
-
   useEffect(() => {
     if (!contract) return;
     (async () => {
-      const acceptTerms = await contract?.agreements.getState(
+      const acceptTerms = await contract.agreements.getState(
         parse(Address, account)
       );
       setTermsInfo(acceptTerms);
