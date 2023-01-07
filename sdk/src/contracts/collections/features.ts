@@ -1,6 +1,7 @@
 import { Provider } from '@ethersproject/providers';
 import { Signer } from 'ethers';
 import * as t from 'io-ts';
+import { parseThenOrElse } from '../../utils';
 import { Address } from '../address.js';
 import type { CollectionContract } from './collections.js';
 import { FeatureFactories } from './feature-factories.gen.js';
@@ -51,6 +52,7 @@ export class FeatureInterface<T> {
     return new FeatureInterface(factory as unknown as FeatureInterfaceFactory<FeatureContract<T>>, address, signer);
   }
 }
+
 export abstract class Features {
   readonly base: CollectionContract;
 
@@ -59,4 +61,17 @@ export abstract class Features {
   }
 
   abstract get supported(): boolean;
+}
+
+export function extractKnownSupportedFeatures(supportedFeaturesFromContract: string[]): FeatureInterfaceId[] {
+  return supportedFeaturesFromContract
+    .map((f) =>
+      parseThenOrElse(
+        FeatureInterfaceId,
+        f,
+        (f) => f,
+        () => null,
+      ),
+    )
+    .filter((f): f is FeatureInterfaceId => Boolean(f));
 }

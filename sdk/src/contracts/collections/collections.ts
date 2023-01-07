@@ -1,11 +1,16 @@
 import { Provider } from '@ethersproject/providers';
-import * as t from 'io-ts';
 import { parse } from '../../utils';
 import { Address } from '../address';
 import { ICedarFeaturesV0__factory } from '../generated';
 import { ChainId } from '../network';
 import { InterfaceNotLoadedError } from './constants';
-import { FeatureContract, FeatureFactories, FeatureInterface, FeatureInterfaceId } from './features';
+import {
+  extractKnownSupportedFeatures,
+  FeatureContract,
+  FeatureFactories,
+  FeatureInterface,
+  FeatureInterfaceId,
+} from './features';
 import { Agreements } from './features/agreements';
 import { Issuance } from './features/issuance';
 import { Metadata } from './features/metadata';
@@ -106,7 +111,7 @@ export class CollectionContract {
         // Preload chainId
         await this.getChainId();
         const contract = ICedarFeaturesV0__factory.connect(this.address, this._provider);
-        this._supportedFeatures = parse(t.array(FeatureInterfaceId), await contract.supportedFeatures());
+        this._supportedFeatures = extractKnownSupportedFeatures(await contract.supportedFeatures());
         this.debug('Loaded supported features', this._supportedFeatures);
 
         this.buildInterface();
