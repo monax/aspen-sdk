@@ -23,6 +23,7 @@ describe.skip('Collections', () => {
   });
 
   test('User claim restrictions', async () => {
+    const foo = await contract?.agreements.getState(account)
     const tokenId = '0';
     const activeConditions = await contract?.issuance.getActiveClaimConditions(tokenId);
 

@@ -81,6 +81,7 @@
       ".ts"
     ],
     "preset": "ts-jest/presets/default-esm",
+    "injectGlobals": false,
     "testMatch": [
       "**/*.test.ts"
     ],

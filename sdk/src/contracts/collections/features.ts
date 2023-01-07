@@ -1,5 +1,6 @@
 import { Provider } from '@ethersproject/providers';
 import { Signer } from 'ethers';
+import { NonEmptyArray } from 'fp-ts/NonEmptyArray';
 import * as t from 'io-ts';
 import { parseThenOrElse } from '../../utils/schema.js';
 import { Address } from '../address.js';
@@ -74,4 +75,43 @@ export function extractKnownSupportedFeatures(supportedFeaturesFromContract: str
       ),
     )
     .filter((f): f is FeatureInterfaceId => Boolean(f));
+}
+
+// A cover is a set of non-empty subsets of T provider as a Record where each subset is identified by a key in K where
+// the union of the subsets contains T
+type Cover<K extends string, T, C extends Record<K, NonEmptyArray<T>>, E = C[K][number]> =
+  // Provide _some_ arguments
+  C extends any
+    ? // If excluding E from T is empty then E covers T so this should be a success
+      Exclude<T, E> extends never
+      ? C
+      : // Otherwise we have some missing elements, we now make the argument type be exactly the ones that are
+        // missing so type checking fails. This gives a hint.
+        Record<K, Exclude<T, E>[]>
+    : never;
+
+// Exhaustive union partitioner takes a Cover and for each subset in the Cover returns a single type which is the first
+// truthy value in image of the subset under the map M. It is useful for dealing with a subset of features without knowing
+// which exact feature is implemented when you are able to work with the intersection of the features in a subset
+export const exhaustiveUnionPartitioner =
+  <T extends string, V, M extends Partial<Record<T, V>>>(map: M, ...keys: T[]) =>
+  <K extends string, C extends Record<K, NonEmptyArray<T>>, R>(
+    cover: Cover<K, T, C>,
+  ): { [k in K]: M[C[k][number]] } => {
+    const ret = {} as { [k in K]: M[C[k][number]] };
+    for (const [key, subset] of Object.entries(cover)) {
+      // Here we are use short-circuit or-ing together A || B || ... ||
+      ret[key as K] = (subset as T[]).reduce((acc, k) => acc || map[k], undefined as M[T]);
+    }
+    return ret;
+  };
+
+export function memoise<T>(thunk: () => T): () => T {
+  let t: T;
+  return () => {
+    if (!t) {
+      t = thunk();
+    }
+    return t;
+  };
 }
