@@ -2,14 +2,14 @@ import styles from "../styles/Home.module.css";
 
 import { Web3Provider } from "@ethersproject/providers";
 
-import { useWeb3React } from "@web3-react/core";
 import {
   Address,
   CollectionContract,
 } from "@monaxlabs/aspen-sdk/dist/contracts";
 import { parse } from "@monaxlabs/aspen-sdk/dist/utils";
-import { useEffect, useState } from "react";
+import { useWeb3React } from "@web3-react/core";
 import { BigNumber } from "ethers";
+import { useEffect, useState } from "react";
 
 const Mint: React.FC<{ contract: CollectionContract; tokenId: string }> = ({
   contract,
@@ -53,7 +53,7 @@ const Mint: React.FC<{ contract: CollectionContract; tokenId: string }> = ({
           [],
           0
         );
-        setCanMint(restrictions.claimState === "ok" ? true : false);
+        setCanMint(restrictions.claimState === "ok");
       }
     })();
   }, [contract, account, tokenId]);

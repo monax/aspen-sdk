@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { parse } from '../utils';
+import { parse } from '../utils/schema';
 import { ChainAddress } from './address';
 import { ChainId } from './network';
 

@@ -1,6 +1,7 @@
 import { add } from 'date-fns';
 import { BigNumber, ContractReceipt, ContractTransaction, ethers, PayableOverrides } from 'ethers';
-import { Address, isSameAddress, NATIVE_TOKEN, ZERO_BYTES32 } from '../..';
+import type { TokensClaimedEventObject as ERC721TokensClaimedEventObject } from '../../generated/ICedarNFTIssuanceV4.js';
+import type { TokensClaimedEventObject as ERC1155TokensClaimedEventObject } from '../../generated/ICedarSFTIssuanceV3.js';
 import {
   ICedarNFTIssuanceV0__factory,
   ICedarNFTIssuanceV1,
@@ -22,9 +23,9 @@ import {
   IPublicSFTIssuanceV2,
   ISFTSupplyV0,
 } from '../../generated';
-import type { TokensClaimedEventObject as ERC721TokensClaimedEventObject } from '../../generated/ICedarNFTIssuanceV4';
-import type { TokensClaimedEventObject as ERC1155TokensClaimedEventObject } from '../../generated/ICedarSFTIssuanceV3';
-import { Features } from '../features';
+import { Address, isSameAddress, NATIVE_TOKEN, ZERO_BYTES32 } from '../../index.js';
+import { Features } from '../features.js';
+import { max, min } from '../number.js';
 import type {
   ActiveClaimConditions,
   CollectionUserClaimConditions,
@@ -33,7 +34,7 @@ import type {
   TokenAsset,
   TokenAssetMetadata,
   UserClaimConditions,
-} from '../types';
+} from '../types.js';
 
 export const TokenIdRequiredError = new Error('Token is required for ERC1155 contracts!');
 
@@ -700,14 +701,14 @@ export class Issuance extends Features {
     const remainingSupply =
       respectRemainingSupply && claimInfo.maxTotalSupply.eq(0)
         ? Infinity
-        : claimInfo.maxTotalSupply.sub(claimInfo.tokenSupply).toNumber();
+        : claimInfo.maxTotalSupply.sub(claimInfo.tokenSupply);
 
     const phaseClaimableSupply = phase.maxClaimableSupply.gt(0)
-      ? phase.maxClaimableSupply.sub(phase.supplyClaimed).toNumber()
+      ? phase.maxClaimableSupply.sub(phase.supplyClaimed)
       : Infinity;
 
     const remainingWalletAllocation = claimInfo.maxWalletClaimCount.gt(0)
-      ? claimInfo.maxWalletClaimCount.sub(userClaimInfo.walletClaimCount || 0).toNumber()
+      ? claimInfo.maxWalletClaimCount.sub(userClaimInfo.walletClaimCount || 0)
       : Infinity;
 
     const allowlistRemainingAllocation = oneTimeAllowlistClaimUsed
@@ -716,14 +717,14 @@ export class Issuance extends Features {
       ? proofMaxQuantityPerTransaction - userClaimInfo.walletClaimedCountInPhase.toNumber()
       : Infinity;
 
-    const availableQuantity = Math.max(
+    const availableQuantity = max(
       0, // making sure it's not negative
-      Math.min(
+      min(
         remainingSupply,
         phaseClaimableSupply,
         remainingWalletAllocation,
         allowlistRemainingAllocation,
-        phase.quantityLimitPerTransaction.toNumber(),
+        phase.quantityLimitPerTransaction,
       ),
     );
 

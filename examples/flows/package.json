@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@monaxlabs/aspen-sdk": "workspace:sdk",
+    "date-fns": "^2.29.3",
     "ethers": "^5.7.2",
     "fp-ts": "^2.13.1",
     "graphql": "^16.6.0",
@@ -37,6 +38,7 @@
     "build": "tsc --build",
     "tsnode": "ts-node --esm --experimental-specifier-resolution=node",
     "flows": "yarn tsnode flows.ts",
+    "react-test-contract": "yarn tsnode react-test-contract.ts >> ../react/.env.local",
     "clear-state": "rm collection-info.json issuance-info.json"
   }
 }

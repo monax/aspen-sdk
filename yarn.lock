@@ -3607,6 +3607,7 @@ __metadata:
     "@types/prettier": ^2.7.2
     "@typescript-eslint/eslint-plugin": ^5.40.0
     "@typescript-eslint/parser": ^5.40.0
+    date-fns: ^2.29.3
     eslint: 8.21.0
     eslint-config-prettier: ^8.5.0
     ethers: ^5.7.2

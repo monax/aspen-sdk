@@ -1,4 +1,4 @@
-# Aspen Publishing SDK's examples
+# Aspen SDK's examples
 
 The examples are created in `Next.js`. In `index.tsx` we can find snippets of the code on how to call the contracts, the function associated and the parameters that they need.
 

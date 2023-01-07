@@ -80,7 +80,7 @@
     "extensionsToTreatAsEsm": [
       ".ts"
     ],
-    "injectGlobals": false,
+    "preset": "ts-jest/presets/default-esm",
     "testMatch": [
       "**/*.test.ts"
     ],

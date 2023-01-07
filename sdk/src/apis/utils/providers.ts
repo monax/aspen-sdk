@@ -19,22 +19,24 @@ export type Signerish = Signer | Provider;
 
 type NetworkSecrets = t.TypeOf<typeof NetworkSecrets>;
 
-const ProviderConfig = t.type({
+export const ProviderConfig = t.type({
   providerUrls: NetworkSecrets,
   privateKeys: NetworkSecrets,
 });
 
-type ProviderConfig = t.TypeOf<typeof ProviderConfig>;
-
-let providerConfig: ProviderConfig;
+export type ProviderConfig = t.TypeOf<typeof ProviderConfig>;
 
 export type SupportedNetwork = keyof NetworkSecrets;
 export const SupportedNetwork = t.keyof(NetworkSecrets.props);
 
 export const supportedNetworks = Object.freeze(Object.keys(NetworkSecrets.props)) as SupportedNetwork[];
 
-export async function getProvider(network: SupportedNetwork, chainId?: number): Promise<providers.JsonRpcProvider> {
-  const { providerUrls } = await getProviderConfig();
+export async function getProvider(
+  network: SupportedNetwork,
+  providerConfig: ProviderConfig,
+  chainId?: number,
+): Promise<providers.JsonRpcProvider> {
+  const { providerUrls } = providerConfig;
   const providerUrl = providerUrls[network];
   if (!providerUrl) {
     throw new Error(`No provider URL provided for network ${network}`);
@@ -42,9 +44,9 @@ export async function getProvider(network: SupportedNetwork, chainId?: number): 
   return new providers.JsonRpcProvider(providerUrl, chainId);
 }
 
-export async function getSigner(network: SupportedNetwork): Promise<Wallet> {
-  const { privateKeys } = await getProviderConfig();
-  const provider = await getProvider(network);
+export async function getSigner(network: SupportedNetwork, providerConfig: ProviderConfig): Promise<Wallet> {
+  const { privateKeys } = providerConfig;
+  const provider = await getProvider(network, providerConfig);
   const privateKey = privateKeys[network];
   if (!privateKey) {
     throw new Error(`No private key provided for network ${network}`);
@@ -52,20 +54,9 @@ export async function getSigner(network: SupportedNetwork): Promise<Wallet> {
   return new Wallet(privateKey, provider);
 }
 
-export async function initialiseProvider(
-  configFile = defaultConfigFile,
-  configEnvVarName = defaultConfigEnvVarName,
-): Promise<void> {
-  // FIXME: contain this state in some kind of SDK object rather tha global state
-  await getProviderConfig(configFile, configEnvVarName);
-}
-
-async function getProviderConfig(
+export async function getProviderConfig(
   configFile = defaultConfigFile,
   configEnvVarName = defaultConfigEnvVarName,
 ): Promise<ProviderConfig> {
-  if (!providerConfig) {
-    providerConfig = await parseFromEnvOrFile(JsonFromString.pipe(ProviderConfig), configFile, configEnvVarName);
-  }
-  return providerConfig;
+  return parseFromEnvOrFile(JsonFromString.pipe(ProviderConfig), configFile, configEnvVarName);
 }

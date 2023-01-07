@@ -48,12 +48,12 @@ const LoadClaimConditions: React.FC<{
           <h4>Active Claim Conditions : </h4>
           <p>
             Max Claimable Supply :{" "}
-            {activeClaimConditions.activeClaimCondition.maxClaimableSupply.toNumber()}
+            {activeClaimConditions.activeClaimCondition.maxClaimableSupply.toString()}
           </p>
           {activeClaimConditions.activeClaimCondition.pricePerToken && (
             <p>
               Price Per Token :{" "}
-              {activeClaimConditions.activeClaimCondition.pricePerToken.toNumber()}
+              {activeClaimConditions.activeClaimCondition.pricePerToken.toString()}
             </p>
           )}
         </div>
@@ -63,12 +63,12 @@ const LoadClaimConditions: React.FC<{
           <h4>User Claim Conditions : </h4>
           <p>
             Wallet Claim Count :{" "}
-            {userClaimConditions.walletClaimCount.toNumber()}
+            {userClaimConditions.walletClaimCount.toString()}
           </p>
           {userClaimConditions.walletClaimedCountInPhase && (
             <p>
               Wallet Claimed Count In Phase :{" "}
-              {userClaimConditions.walletClaimedCountInPhase.toNumber()}
+              {userClaimConditions.walletClaimedCountInPhase.toString()}
             </p>
           )}
         </div>
@@ -76,7 +76,7 @@ const LoadClaimConditions: React.FC<{
       {userClaimRestrictions && (
         <div className={styles.card}>
           <h4>User Claim Restrictions : </h4>
-          <p>Available Quantity : {userClaimRestrictions.availableQuantity}</p>
+          <p>Available Quantity : {userClaimRestrictions.availableQuantity.toString()}</p>
           <p>
             Can Claim Tokens :{" "}
             {userClaimRestrictions.canClaimTokens ? "TRUE" : "FALSE"}

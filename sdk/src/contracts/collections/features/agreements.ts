@@ -1,6 +1,6 @@
 import { BigNumber, ContractTransaction } from 'ethers';
 import { Address, IPFS_GATEWAY_PREFIX, isSameAddress, ZERO_ADDRESS } from '../..';
-import { resolveIpfsUrl } from '../../../utils';
+import { resolveIpfsUrl } from '../../../utils/ipfs.js';
 import { Features } from '../features';
 import type { Signerish, TermsUserAcceptanceState } from '../types';
 

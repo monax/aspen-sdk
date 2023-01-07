@@ -11,6 +11,7 @@ import {
   Currency,
   FileSource,
   OperationType,
+  PhaseRequest,
   TokenService,
   UpdatableCollectionFieldsJsonPatchDocument,
 } from '@monaxlabs/aspen-sdk/dist/apis/publishing';
@@ -20,25 +21,28 @@ import { waitForCompletion } from './waiter';
 
 let mutex = false;
 
+export type PhaseTemplate = Omit<PhaseRequest, 'tokenGuid'>;
+
 export async function deployERC1155(
   network: SupportedNetwork,
-  overrides?: Partial<CreateCollectionRequest>,
+  phases: PhaseRequest[],
+  collectionOverrides?: Partial<CreateCollectionRequest>,
 ): Promise<CollectionResponse> {
-  const maxTokens = 999999991;
+  const createCollectionRequest: CreateCollectionRequest = {
+    name: 'AccessPass',
+    symbol: 'AAA',
+    maxTokens: 999999991,
+    chain: networkToChain[network],
+    contractName: 'CedarERC1155Drop',
+    visibility: CollectionVisibility.REVEALED,
+    royaltyPercentage: 2,
+    fileSource: FileSource.WEB2,
+    ...collectionOverrides,
+  };
   const collection = await CollectionService.postCollection({
-    requestBody: {
-      name: 'AccessPass',
-      symbol: 'AAA',
-      maxTokens: maxTokens,
-      chain: networkToChain[network],
-      contractName: 'CedarERC1155Drop',
-      visibility: CollectionVisibility.REVEALED,
-      royaltyPercentage: 2,
-      fileSource: FileSource.WEB2,
-      ...overrides,
-    },
+    requestBody: createCollectionRequest,
   });
-
+  const maxTokens = createCollectionRequest.maxTokens;
   const collectionGuid = collection.guid;
   if (collectionGuid === undefined) {
     throw new Error(`No collection ID returned`);
@@ -56,21 +60,15 @@ export async function deployERC1155(
   for (const tokenRequest of tokenRequests) {
     const token = await TokenService.postToken({ requestBody: tokenRequest });
     console.error(`Created token guid: ${token.guid} tokenId: ${token.tokenId}`);
-    CollectionTokenPhasesService.postCollectionPhases({
-      collectionGuid,
-      requestBody: {
-        name: 'Public Mint',
-        tokenGuid: token.guid,
-        currency: Currency.NATIVE_COIN,
-        pricePerToken: 0.0001,
-        startTimestamp: new Date().toISOString(),
-        // FIXME: we ought to be able to omit this value to here to mean 'unbounded' but not yet implemented correctly
-        //   on contract or API so we must provide a value
-        maxClaimableSupply: maxTokens,
-        quantityLimitPerTransaction: 100,
-        waitTimeInSecondsBetweenClaims: 0,
-      },
-    });
+    for (const phase of phases) {
+      CollectionTokenPhasesService.postCollectionPhases({
+        collectionGuid,
+        requestBody: {
+          ...phase,
+          tokenGuid: token.guid,
+        },
+      });
+    }
   }
   CollectionService.postCollectionRoyaltyrecipients({
     guid: collectionGuid,

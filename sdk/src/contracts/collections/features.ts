@@ -1,7 +1,7 @@
 import { Provider } from '@ethersproject/providers';
 import { Signer } from 'ethers';
 import * as t from 'io-ts';
-import { parseThenOrElse } from '../../utils';
+import { parseThenOrElse } from '../../utils/schema.js';
 import { Address } from '../address.js';
 import type { CollectionContract } from './collections.js';
 import { FeatureFactories } from './feature-factories.gen.js';
