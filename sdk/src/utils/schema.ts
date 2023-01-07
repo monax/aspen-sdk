@@ -1,5 +1,5 @@
-import { match } from 'fp-ts/lib/Either';
-import { pipe } from 'fp-ts/lib/function';
+import { match } from 'fp-ts/lib/Either.js';
+import { pipe } from 'fp-ts/lib/function.js';
 import * as t from 'io-ts';
 import { formatValidationErrors } from 'io-ts-reporters';
 

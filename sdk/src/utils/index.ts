@@ -1,2 +1,2 @@
-export * from './ipfs';
-export * from './schema';
+export * from './ipfs.js';
+export * from './schema.js';

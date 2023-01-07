@@ -1,10 +1,10 @@
 import { Provider } from '@ethersproject/providers';
 import { Signer } from 'ethers';
 import * as t from 'io-ts';
-import { Address } from '../address';
-import type { CollectionContract } from './collections';
-import { FeatureFactories } from './feature-factories.gen';
-import { Signerish } from './types';
+import { Address } from '../address.js';
+import type { CollectionContract } from './collections.js';
+import { FeatureFactories } from './feature-factories.gen.js';
+import { Signerish } from './types.js';
 
 export interface FeatureInterfaceFactory<T> {
   connect(address: string, signerOrProvider: Signer | Provider): T;

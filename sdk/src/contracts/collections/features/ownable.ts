@@ -1,6 +1,6 @@
-import { Address } from '../..';
-import { parse } from '../../../utils';
-import { Features } from '../features';
+import { parse } from '../../../utils/schema.js';
+import { Address } from '../../address.js';
+import { Features } from '../features.js';
 
 // TODO: reinstate when released
 export class Ownable extends Features {
