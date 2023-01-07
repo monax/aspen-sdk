@@ -3,7 +3,11 @@ import type { AppProps } from "next/app";
 
 import { Web3ReactProvider } from "@web3-react/core";
 import { Web3Provider } from "@ethersproject/providers";
-import { CollectionContract, DefaultDebugHandler, DefaultErrorHandler } from "@monaxlabs/aspen-sdk";
+import {
+  CollectionContract,
+  DefaultDebugHandler,
+  DefaultErrorHandler,
+} from "@monaxlabs/aspen-sdk/dist/contracts";
 
 CollectionContract.setDebugHandler(DefaultDebugHandler);
 CollectionContract.setErrorHandler(DefaultErrorHandler);
