@@ -190,6 +190,8 @@ export class Metadata extends Features {
   getVerifications(): ContractVerificationType[] {
     const interfaces = this.base.interfaces;
 
-    return interfaces['IAspenFeatures.sol:ICedarFeaturesV0'] ? ['aspen-minted'] : [];
+    return interfaces['IAspenFeatures.sol:ICedarFeaturesV0'] || interfaces['ICedarFeatures.sol:ICedarFeaturesV0']
+      ? ['aspen-minted']
+      : [];
   }
 }

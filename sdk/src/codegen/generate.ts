@@ -88,9 +88,7 @@ function writeABI(abiDir: string, manifest: ContractManifest) {
 export function generateFeatureFactoriesMapTs(manifest: ContractsManifest): ts.Node[] {
   // Only include features with current Solidity code that Typechain will process and exclude
   // the cedar interfaces that are not features (those under impl, deploy, and standard)
-  const currentFeatures = Object.values(manifest).filter(
-    (m) => !m.delegated && !m.deprecated && m.abi.length && isFeatureId(manifest, m.id),
-  );
+  const currentFeatures = Object.values(manifest).filter((m) => m.abi.length && isFeatureId(manifest, m.id));
   const importNode = ts.factory.createImportDeclaration(
     undefined,
     ts.factory.createImportClause(
