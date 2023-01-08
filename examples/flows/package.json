@@ -11,7 +11,7 @@
     ]
   },
   "dependencies": {
-    "@monaxlabs/aspen-sdk": "workspace:sdk",
+    "@monaxlabs/aspen-sdk": "workspace:0.0.1",
     "date-fns": "^2.29.3",
     "ethers": "^5.7.2",
     "fp-ts": "^2.13.1",

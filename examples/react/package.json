@@ -10,7 +10,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@monaxlabs/aspen-sdk": "workspace:sdk",
+    "@monaxlabs/aspen-sdk": "workspace:0.0.1",
     "@web3-react/core": "^6.1.9",
     "@web3-react/injected-connector": "^6.0.7",
     "ethers": "^5.6.9",

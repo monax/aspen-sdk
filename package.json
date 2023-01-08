@@ -3,16 +3,7 @@
   "repository": "git@github.com:monax/aspen-sdk.git",
   "author": "Silas Davis <silas.davis@monaxlabs.io>",
   "license": "Apache-2.0",
-  "workspaces": {
-    "packages": [
-      "sdk",
-      "examples/*",
-      "examples/stripedemo/demosite"
-    ]
-  },
   "scripts": {
-    "test": "yarn workspaces foreach --topological run test",
-    "build": "yarn workspaces foreach --topological run build",
     "examples:flows": "yarn workspace @monaxlabs/aspen-sdk-examples-flows run flows",
     "clean": "git clean -fdX --exclude='!credentials.json' --exclude='!providers.json' --exclude='!.idea' --exclude='!.idea/**'",
     "clean:dry-run": "yarn clean -n"

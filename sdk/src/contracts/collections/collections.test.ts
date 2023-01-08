@@ -1,9 +1,9 @@
-import { beforeAll, describe, test } from '@jest/globals';
-import { URL } from 'url';
 import { getProviderConfig, getSigner } from '../../apis';
-import { parse } from '../../utils/schema.js';
+import { parse, parseFromString } from '../../utils/schema.js';
 import { Address } from '../address';
 import { CollectionContract } from './collections';
+import { beforeAll, describe, test } from '@jest/globals';
+import { URL } from 'url';
 
 // FIXME: pull in from CI environment
 const providersFile = new URL('../../../../examples/flows/secrets/providers.json', import.meta.url).pathname;
@@ -23,7 +23,7 @@ describe.skip('Collections', () => {
   });
 
   test('User claim restrictions', async () => {
-    const foo = await contract?.agreements.getState(account)
+    const foo = await contract?.agreements.getState(account);
     const tokenId = '0';
     const activeConditions = await contract?.issuance.getActiveClaimConditions(tokenId);
 
@@ -34,6 +34,6 @@ describe.skip('Collections', () => {
     }
 
     const restrictions = await contract?.issuance.getUserClaimRestrictions(userConditions, activeConditions, [], 0);
-    console.log(restrictions)
+    console.log(restrictions);
   });
 });

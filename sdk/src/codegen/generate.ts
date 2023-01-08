@@ -74,6 +74,7 @@ export async function generateTsFile(
 }
 
 export async function dumpLatestABIs(abiDir: string, pathToManifestJson: string): Promise<void> {
+  fs.rmSync(abiDir, { recursive: true, force: true });
   fs.mkdirSync(abiDir, { recursive: true });
   const manifest = parse(ContractsManifest, JSON.parse(fs.readFileSync(pathToManifestJson).toString()));
   for (const m of Object.values(manifest)) {
@@ -82,7 +83,9 @@ export async function dumpLatestABIs(abiDir: string, pathToManifestJson: string)
 }
 
 function writeABI(abiDir: string, manifest: ContractManifest) {
-  fs.writeFileSync(path.join(abiDir, manifest.name + '.json'), JSON.stringify(manifest.abi, null, 2));
+  const dir = path.join(abiDir, manifest.file);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, manifest.name + '.json'), JSON.stringify(manifest.abi, null, 2));
 }
 
 export function generateFeatureFactoriesMapTs(manifest: ContractsManifest): ts.Node[] {
@@ -96,7 +99,7 @@ export function generateFeatureFactoriesMapTs(manifest: ContractsManifest): ts.N
       undefined,
       ts.factory.createNamedImports(
         currentFeatures.map((m) =>
-          ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier(m.name + '__factory')),
+          ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier(m.file+ '__factory')),
         ),
       ),
     ),
@@ -127,9 +130,9 @@ export async function writeFeaturesFactoriesMap(
   let generated = printNodes(...generateFeatureFactoriesMapTs(manifest));
   const options = await prettier.resolveConfig(prettierConfigFile);
 
-  generated = prettier.format(generated, {
-    parser: 'typescript',
-    ...options,
-  });
+  // generated = prettier.format(generated, {
+  //   parser: 'typescript',
+  //   ...options,
+  // });
   fs.writeFileSync(featureFactoryMapFile, generated);
 }

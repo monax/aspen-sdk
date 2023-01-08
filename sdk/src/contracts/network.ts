@@ -21,7 +21,7 @@ export type ChainName = keyof typeof ChainIdFromChainName;
 export const ChainName = t.keyof(ChainIdFromChainName);
 
 const chainIds = new Set(Object.values(ChainIdFromChainName));
-export type ChainId = typeof ChainIdFromChainName[ChainName];
+export type ChainId = (typeof ChainIdFromChainName)[ChainName];
 export const ChainId = new t.Type<ChainId>(
   'ChainId',
   (u): u is ChainId => typeof u === 'number' && chainIds.has(u as ChainId),
