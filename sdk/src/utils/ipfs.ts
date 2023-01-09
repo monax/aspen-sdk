@@ -4,12 +4,21 @@ export function resolveIpfsUrl(hashOrUrl: string, gatewayPrefix: string): string
   if (!gatewayPrefix) {
     return hashOrUrl;
   }
+
+  // Raw hash
   if (cid(hashOrUrl)) {
     return gatewayPrefix + hashOrUrl;
   }
-  const url = new URL(hashOrUrl);
-  if (cid(url.hostname)) {
-    return gatewayPrefix + url.hostname + url.pathname;
+
+  // IPFS protocol
+  if (!hashOrUrl.startsWith('ipfs://')) {
+    return hashOrUrl;
   }
+
+  const pathParts = hashOrUrl.slice(7).split('/');
+  if (cid(pathParts[0])) {
+    return gatewayPrefix + pathParts.join('/');
+  }
+
   return hashOrUrl;
 }
