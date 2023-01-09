@@ -1,7 +1,6 @@
 import type { NextPage } from "next";
 import { useEffect, useState } from "react";
 import styles from "../styles/Home.module.css";
-
 import { Web3Provider } from "@ethersproject/providers";
 import {
   Address,
@@ -14,6 +13,11 @@ import Select from "components/common/Select";
 import ConnectWallet from "components/ConnectWallet";
 import LoadClaimConditions from "components/LoadClaimConditions";
 import Mint from "components/Mint";
+import { loadStripe } from "@stripe/stripe-js";
+
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
+);
 
 const Home: NextPage = () => {
   const [contractAddress, setContractAddress] = useState(
