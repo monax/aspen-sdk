@@ -4,9 +4,16 @@
   "author": "Silas Davis <silas.davis@monaxlabs.io>",
   "license": "Apache-2.0",
   "scripts": {
-    "examples:flows": "yarn workspace @monaxlabs/aspen-sdk-examples-flows run flows",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "prettier '**/*.ts'",
+    "lint:fix": "prettier -w '**/*.ts'",
+    "examples:flows": "pnpm -C examples/flows run flows",
+    "examples:react:test-contract": "pnpm --silent -C examples/flows run react-test-contract >> examples/react/.env.local",
+    "examples:react": "pnpm -C examples/react dev",
+    "examples:react:fresh-contract": "pnpm examples:react:test-contract && pnpm examples:react",
     "clean": "git clean -fdX --exclude='!credentials.json' --exclude='!providers.json' --exclude='!.idea' --exclude='!.idea/**'",
-    "clean:dry-run": "yarn clean -n"
+    "clean:dry-run": "pnpm clean -n"
   },
-  "packageManager": "yarn@3.3.1"
+  "packageManager": "pnpm@3.3.1"
 }

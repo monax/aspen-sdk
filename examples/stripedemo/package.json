@@ -3,10 +3,10 @@
   "scripts": {
     "build": "tsc --build",
     "tsnode": "ts-node --esm --experimental-specifier-resolution=node",
-    "start": "yarn run tsnode server.ts"
+    "start": "pnpm run tsnode server.ts"
   },
   "dependencies": {
-    "@monaxlabs/aspen-sdk": "workspace:sdk",
+    "@monaxlabs/aspen-sdk": "workspace:*",
     "express": "^4.18.2",
     "stripe": "^11.5.0"
   },

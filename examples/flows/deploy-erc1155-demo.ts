@@ -1,5 +1,5 @@
 import { generateAccounts } from '@monaxlabs/aspen-sdk/dist/apis';
-import { IDropClaimConditionV0 } from '@monaxlabs/aspen-sdk/dist/contracts/generated/ICedarERC1155DropV4';
+import { IDropClaimConditionV0 } from '@monaxlabs/aspen-sdk/dist/contracts/generated/impl/ICedarERC1155Drop.sol/ICedarERC1155DropV4';
 import {
   extractEvents,
   getDeployer,

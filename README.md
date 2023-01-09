@@ -26,9 +26,9 @@ Note that currently the Identity/Gating API accepts the exact same bearer token 
 From the root of the repository run:
 
 ```shell
-yarn install
+pnpm install
 # Generates necessary code then builds
-yarn build
+pnpm build
 ```
 
 To install dependencies and build all sub-packages.
@@ -40,7 +40,7 @@ The main entry point for this repo is a demo-come-integration test [pkg/ddc/src/
 They can be run with:
 
 ```shell
-yarn flows
+pnpm flows
 ```
 
 From the root of the repo. The flows to run can be customised by editing:
@@ -60,7 +60,7 @@ In order to not repeatedly redeploy collections and to demonstrate the necessary
 - [issuance-info.json](examples/flows/issuance-info.json) (delete to forget any existing issuance)
 
 ```shell
-yarn examples:clear-state
+pnpm examples:clear-state
 ```
 
 Removes both of these files, but either can deleted independently.

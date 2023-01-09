@@ -4,3 +4,4 @@ artifacts
 cache
 deployments
 dist
+*.types.ts

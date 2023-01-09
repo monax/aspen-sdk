@@ -43,8 +43,8 @@ For testing purposes we can self-host the webhook receiver and use the `stripe c
    - `STRIPE_ENDPOINTSECRET` - the `webhook signing secret` output in step 2.
    - `SERVEDEMO` - `true` to enable the demonstration frontend
    - `PORT` (Optional) - the port the webhook receiver will operate on.
-4. `cd demosite && yarn install && yarn build` (Optional if demo site is required)
-5. `yarn start`
+4. `cd demosite && pnpm install && pnpm build` (Optional if demo site is required)
+5. `pnpm start`
 
 ## Productionisation
 

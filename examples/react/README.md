@@ -7,7 +7,7 @@ The examples are created in `Next.js`. In `index.tsx` we can find snippets of th
 ### Step 1: Install dependencies
 
 ```
-   $ yarn install
+   $ pnpm install
 ```
 
 ### Step 2: Make it run
@@ -17,7 +17,7 @@ First, run the development server:
 ```bash
 npm run dev
 # or
-yarn dev
+pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

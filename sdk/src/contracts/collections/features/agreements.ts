@@ -50,7 +50,7 @@ export class Agreements extends Features {
     return { getState, acceptTerms };
   });
 
-  getPartition<T extends keyof ReturnType<typeof this._partitions>>(key: T) {
+  protected getPartition<T extends keyof ReturnType<typeof this._partitions>>(key: T) {
     return this._partitions()[key];
   }
 
