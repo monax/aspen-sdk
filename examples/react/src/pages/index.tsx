@@ -1,10 +1,13 @@
 import type { NextPage } from "next";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import styles from "../styles/Home.module.css";
 import { Web3Provider } from "@ethersproject/providers";
 import {
+  ActiveClaimConditions,
   Address,
   CollectionContract,
+  CollectionUserClaimConditions,
+  UserClaimConditions,
 } from "@monaxlabs/aspen-sdk/dist/contracts";
 import { parse } from "@monaxlabs/aspen-sdk/dist/utils";
 import { useWeb3React } from "@web3-react/core";
@@ -19,6 +22,8 @@ const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 );
 
+const DELAY = 30000;
+
 const Home: NextPage = () => {
   const [contractAddress, setContractAddress] = useState(
     process.env.NEXT_PUBLIC_TEST_CONTRACT ||
@@ -28,11 +33,54 @@ const Home: NextPage = () => {
   const [contract, setContract] = useState<CollectionContract | null>(null);
   const [tokens, setTokens] = useState<number[]>([]);
   const [selectedToken, setSelectedToken] = useState("0");
-  const { active, library } = useWeb3React<Web3Provider>();
+  const { account, active, library } = useWeb3React<Web3Provider>();
+  const [userClaimConditions, setUserClaimConditions] =
+    useState<UserClaimConditions | null>(null);
+  const [userClaimRestrictions, setUserClaimRestrictions] =
+    useState<CollectionUserClaimConditions | null>(null);
+  const [activeClaimConditions, setActiveClaimConditions] =
+    useState<ActiveClaimConditions | null>(null);
+
+  const loadClaimConditions = useCallback(async () => {
+    if (!contract) return;
+    const activeConditions = await contract.issuance.getActiveClaimConditions(
+      selectedToken
+    );
+    setActiveClaimConditions(activeConditions);
+
+    if (account) {
+      const userConditions = await contract.issuance.getUserClaimConditions(
+        account as Address,
+        selectedToken
+      );
+
+      if (!activeConditions) {
+        throw new Error(`No active claim conditions`);
+      }
+      if (!userConditions) {
+        throw new Error(`No user claim condition`);
+      }
+      setUserClaimConditions(userConditions);
+      const restrictions = await contract.issuance.getUserClaimRestrictions(
+        userConditions,
+        activeConditions,
+        [],
+        0
+      );
+      setUserClaimRestrictions(restrictions);
+    }
+  }, [account, contract, selectedToken]);
+
+  useEffect(() => {
+    loadClaimConditions();
+    const interval = setInterval(() => {
+      loadClaimConditions();
+    }, DELAY);
+    return () => clearInterval(interval);
+  }, [loadClaimConditions]);
 
   useEffect(() => {
     if (!active || !library) return;
-
     (async () => {
       const collectionContract = new CollectionContract(
         library,
@@ -75,9 +123,19 @@ const Home: NextPage = () => {
               />
             </div>
 
-            <LoadClaimConditions contract={contract} tokenId={selectedToken} />
+            <LoadClaimConditions
+              userClaimConditions={userClaimConditions}
+              userClaimRestrictions={userClaimRestrictions}
+              activeClaimConditions={activeClaimConditions}
+            />
             <AcceptTerms contract={contract} />
-            <Mint contract={contract} tokenId={selectedToken} />
+            <Mint
+              userClaimRestrictions={userClaimRestrictions}
+              activeClaimConditions={activeClaimConditions}
+              contract={contract}
+              tokenId={selectedToken}
+              onUpdate={loadClaimConditions}
+            />
           </div>
         )}
       </main>

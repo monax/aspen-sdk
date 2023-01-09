@@ -21,11 +21,12 @@ const AcceptTerms: React.FC<{ contract: CollectionContract }> = ({
 
   if (!library) {
     // FIXME: can we do better than this?
-    throw new Error(`web3React library unexpectedly null`)
+    throw new Error(`web3React library unexpectedly null`);
   }
 
   const handleAcceptTerms = () =>
     contract.agreements.acceptTerms(library.getSigner());
+
   useEffect(() => {
     if (!contract) return;
     (async () => {

@@ -6,27 +6,38 @@ import {
   ActiveClaimConditions,
   Address,
   CollectionContract,
+  CollectionUserClaimConditions,
 } from "@monaxlabs/aspen-sdk/dist/contracts";
 import { parse } from "@monaxlabs/aspen-sdk/dist/utils";
 import { useWeb3React } from "@web3-react/core";
 import { BigNumber } from "ethers";
 import { useEffect, useState } from "react";
 
-const Mint: React.FC<{ contract: CollectionContract; tokenId: string }> = ({
+const Mint: React.FC<{
+  contract: CollectionContract;
+  tokenId: string;
+  userClaimRestrictions: CollectionUserClaimConditions | null;
+  activeClaimConditions: ActiveClaimConditions | null;
+  onUpdate: () => void;
+}> = ({
   contract,
   tokenId,
+  activeClaimConditions,
+  userClaimRestrictions,
+  onUpdate,
 }) => {
   const { account, library } = useWeb3React<Web3Provider>();
   const [canMint, setCanMint] = useState(false);
-  const [activeClaimConditions, setActiveClaimConditions] =
-    useState<ActiveClaimConditions | null>(null);
+  const [loadingMintButton, setLoadingMintButton] = useState(false);
 
   const onMint = async () => {
     if (!library) return;
+    setLoadingMintButton(true)
 
     if (!activeClaimConditions) {
       throw new Error(`No active claim condition`);
     }
+
 
     (async () => {
       const tx = await contract.issuance.claim(
@@ -39,12 +50,17 @@ const Mint: React.FC<{ contract: CollectionContract; tokenId: string }> = ({
         [],
         BigNumber.from(0)
       );
-      if (tx) {
-        const receipt = await tx.wait();
-        if (receipt.status === 1) {
-          const a = await contract.issuance.getClaimedTokenAssets(receipt);
-          console.log(a)
+      try {
+        if (tx) {
+          const receipt = await tx.wait();
+          if (receipt.status === 1) {
+            onUpdate();
+          }
         }
+      } catch (error) {
+        console.error(error)
+      } finally {
+        setLoadingMintButton(false)
       }
     })();
   };
@@ -52,34 +68,11 @@ const Mint: React.FC<{ contract: CollectionContract; tokenId: string }> = ({
   useEffect(() => {
     if (!contract) return;
     (async () => {
-      const activeConditions = await contract.issuance.getActiveClaimConditions(
-        tokenId
-      );
-      if (!activeConditions) {
-        throw new Error(`No active claim condition`);
-      }
-      setActiveClaimConditions(activeConditions);
-
       if (account) {
-        const userConditions = await contract?.issuance.getUserClaimConditions(
-          account as Address,
-          tokenId
-        );
-
-        if (!userConditions) {
-          throw new Error(`No user claim conditions`);
-        }
-
-        const restrictions = await contract?.issuance.getUserClaimRestrictions(
-          userConditions,
-          activeConditions,
-          [],
-          0
-        );
-        setCanMint(restrictions.claimState === "ok");
+        setCanMint(userClaimRestrictions?.claimState === "ok");
       }
     })();
-  }, [contract, account, tokenId]);
+  }, [contract, account, tokenId, userClaimRestrictions?.claimState]);
 
   const query = new URLSearchParams({
     walletAddress: `${account}`,
@@ -91,7 +84,7 @@ const Mint: React.FC<{ contract: CollectionContract; tokenId: string }> = ({
     <div className="flex">
       {canMint && (
         <div className={styles.footer}>
-          <button className={styles.button} type="button" onClick={onMint}>
+          <button className={loadingMintButton? styles.loading : styles.button} type="button" onClick={onMint}>
             Mint
           </button>
           {/* <a
