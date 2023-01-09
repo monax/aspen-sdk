@@ -137,7 +137,7 @@ export type CollectionUserClaimState =
   | 'claimed-wallet-allowance';
 
 export type CollectionUserClaimConditions = {
-  availableQuantity: number;
+  availableQuantity: BigNumber;
   canClaimTokens: boolean;
   canMintAfter: Date;
   claimState: CollectionUserClaimState;

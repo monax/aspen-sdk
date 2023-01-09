@@ -8,11 +8,15 @@ on:
       - main
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - run: yarn install
-      - run: yarn test
+      - uses: pnpm/action-setup@v2
+        with:
+          version: ^7.18.0
+      - run: pnpm install
+      - run: pnpm build
+      - run: pnpm test

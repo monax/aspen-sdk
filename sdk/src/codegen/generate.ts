@@ -4,6 +4,7 @@ import prettier from 'prettier';
 import ts from 'typescript';
 import { parse } from '../utils';
 import { ContractManifest, ContractsManifest } from './manifest';
+
 const nonFeatureDirs = new Set(['deploy', 'impl']);
 
 export function isFeatureId(manifest: ContractsManifest, id: string): boolean {
@@ -74,6 +75,7 @@ export async function generateTsFile(
 }
 
 export async function dumpLatestABIs(abiDir: string, pathToManifestJson: string): Promise<void> {
+  fs.rmSync(abiDir, { recursive: true, force: true });
   fs.mkdirSync(abiDir, { recursive: true });
   const manifest = parse(ContractsManifest, JSON.parse(fs.readFileSync(pathToManifestJson).toString()));
   for (const m of Object.values(manifest)) {
@@ -82,26 +84,35 @@ export async function dumpLatestABIs(abiDir: string, pathToManifestJson: string)
 }
 
 function writeABI(abiDir: string, manifest: ContractManifest) {
-  fs.writeFileSync(path.join(abiDir, manifest.name + '.json'), JSON.stringify(manifest.abi, null, 2));
+  const dir = path.join(abiDir, manifest.file);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, manifest.name + '.json'), JSON.stringify(manifest.abi, null, 2));
 }
 
 export function generateFeatureFactoriesMapTs(manifest: ContractsManifest): ts.Node[] {
   // Only include features with current Solidity code that Typechain will process and exclude
   // the cedar interfaces that are not features (those under impl, deploy, and standard)
   const currentFeatures = Object.values(manifest).filter((m) => m.abi.length && isFeatureId(manifest, m.id));
-  const importNode = ts.factory.createImportDeclaration(
-    undefined,
-    ts.factory.createImportClause(
-      false,
+
+  const featuresByFile = currentFeatures.reduce(
+    (g, m) => ({ ...g, [m.file]: [...(g[m.file] || []), m] }),
+    {} as Record<string, ContractManifest[]>,
+  );
+
+  // For numbered namespace imports
+  const importIdentifiers = Object.fromEntries(
+    Array.from(new Set(currentFeatures.map((m) => m.file)).values()).map((f, i) => [
+      f,
+      ts.factory.createIdentifier(`factory_${i}`),
+    ]),
+  );
+  const importNodes = Object.entries(importIdentifiers).flatMap(([file, ident]) =>
+    ts.factory.createImportDeclaration(
       undefined,
-      ts.factory.createNamedImports(
-        currentFeatures.map((m) =>
-          ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier(m.name + '__factory')),
-        ),
-      ),
+      ts.factory.createImportClause(false, undefined, ts.factory.createNamespaceImport(ident)),
+      ts.factory.createStringLiteral(path.join('..', '..', 'contracts', 'generated', 'factories', file)),
+      undefined,
     ),
-    ts.factory.createStringLiteral('../../contracts/generated'),
-    undefined,
   );
 
   const constNode = exportConst(
@@ -110,13 +121,16 @@ export function generateFeatureFactoriesMapTs(manifest: ContractsManifest): ts.N
       currentFeatures.map((m) =>
         ts.factory.createPropertyAssignment(
           ts.factory.createStringLiteral(m.id),
-          ts.factory.createIdentifier(m.name + '__factory'),
+          ts.factory.createPropertyAccessExpression(
+            importIdentifiers[m.file],
+            ts.factory.createIdentifier(m.name + '__factory'),
+          ),
         ),
       ),
     ),
     { asConst: true },
   );
-  return [importNode, constNode];
+  return [...importNodes, constNode];
 }
 
 export async function writeFeaturesFactoriesMap(
@@ -124,12 +138,13 @@ export async function writeFeaturesFactoriesMap(
   prettierConfigFile: string,
   featureFactoryMapFile: string,
 ): Promise<void> {
-  let generated = printNodes(...generateFeatureFactoriesMapTs(manifest));
   const options = await prettier.resolveConfig(prettierConfigFile);
 
-  generated = prettier.format(generated, {
-    parser: 'typescript',
-    ...options,
-  });
-  fs.writeFileSync(featureFactoryMapFile, generated);
+  fs.writeFileSync(
+    featureFactoryMapFile,
+    prettier.format(printNodes(...generateFeatureFactoriesMapTs(manifest)), {
+      parser: 'typescript',
+      ...options,
+    }),
+  );
 }

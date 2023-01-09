@@ -4,24 +4,25 @@ import styles from "../styles/Home.module.css";
 
 import { Web3Provider } from "@ethersproject/providers";
 import {
-  CollectionContract,
   Address,
+  CollectionContract,
 } from "@monaxlabs/aspen-sdk/dist/contracts";
 import { parse } from "@monaxlabs/aspen-sdk/dist/utils";
 import { useWeb3React } from "@web3-react/core";
+import AcceptTerms from "components/AcceptTerms";
+import Select from "components/common/Select";
 import ConnectWallet from "components/ConnectWallet";
 import LoadClaimConditions from "components/LoadClaimConditions";
 import Mint from "components/Mint";
-import AcceptTerms from "components/AcceptTerms";
-import Select from "components/common/Select";
 
 const Home: NextPage = () => {
   const [contractAddress, setContractAddress] = useState(
-    "0xfe66131bF7f81bE9aeDf1ae58284ec17484E5Da9"
+    process.env.NEXT_PUBLIC_TEST_CONTRACT ||
+      "0xfe66131bF7f81bE9aeDf1ae58284ec17484E5Da9"
   );
 
-  const [contract, setContract] = useState<CollectionContract>(null);
-  const [tokens, setTokens] = useState([]);
+  const [contract, setContract] = useState<CollectionContract | null>(null);
+  const [tokens, setTokens] = useState<number[]>([]);
   const [selectedToken, setSelectedToken] = useState("0");
   const { active, library } = useWeb3React<Web3Provider>();
 
@@ -44,7 +45,7 @@ const Home: NextPage = () => {
   return (
     <div>
       <main className={styles.main}>
-        <h2>Aspen Publishing SDK Example </h2>
+        <h2>Aspen SDK Example </h2>
         <p>
           The examples are with contracts that are deployed on Mumbai, make sure
           to connect to the correct Network
@@ -66,7 +67,7 @@ const Home: NextPage = () => {
               <Select
                 value={selectedToken}
                 onChange={(e) => setSelectedToken(e.target.value)}
-                options={tokens}
+                options={tokens.map((t) => String(t))}
               />
             </div>
 

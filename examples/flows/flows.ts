@@ -1,23 +1,31 @@
 import {
-  PostFileResponse,
-  uploadFile,
-  issueToken,
   AspenEnvironment,
   authenticateAllFromFile,
-  generateAccounts,
+  authenticateForGate,
   configureGate,
   GatingAPI,
-  authenticateForGate,
-  parseAndVerifyJWT,
+  generateAccounts,
   getInnermostError,
-  PublishingAPI,
   getProvider,
+  getProviderConfig,
   getSigner,
-  initialiseProvider,
+  issueToken,
+  parseAndVerifyJWT,
+  PostFileResponse,
+  ProviderConfig,
+  PublishingAPI,
   SupportedNetwork,
+  uploadFile,
 } from '@monaxlabs/aspen-sdk/dist/apis';
 import { ClaimBalance, getClaimBalances } from '@monaxlabs/aspen-sdk/dist/claimgraph';
-import { deployERC721, wait } from './utils/collection';
+import {
+  GasStrategy,
+  getGasStrategy,
+  ICedarERC1155DropV5,
+  ICedarERC1155DropV5__factory,
+  ICedarERC721DropV7,
+  ICedarERC721DropV7__factory,
+} from '@monaxlabs/aspen-sdk/dist/contracts';
 import { BigNumber } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 import { createReadStream } from 'fs';
@@ -33,22 +41,15 @@ import {
   writeCollectionInfo,
   writeIssuanceInfo,
 } from './state';
-import {
-  GasStrategy,
-  getGasStrategy,
-  ICedarERC1155DropV5,
-  ICedarERC1155DropV5__factory,
-  ICedarERC721DropV7,
-  ICedarERC721DropV7__factory,
-} from '@monaxlabs/aspen-sdk/dist/contracts';
+import { deployERC721, wait } from './utils/collection';
 
 const providersFile = new URL('secrets/providers.json', import.meta.url).pathname;
 const credentialsFile = new URL('secrets/credentials.json', import.meta.url).pathname;
 
 // Global config for flows
 const network: SupportedNetwork = 'Mumbai';
-const claimGraphUrl = `https://api.thegraph.com/subgraphs/name/silasdavis/claimgraph-${network.toLowerCase()}`;
 const environment: AspenEnvironment = 'production';
+const claimGraphUrl = `https://api.thegraph.com/subgraphs/name/silasdavis/claimgraph-${network.toLowerCase()}`;
 const numberOfCollectionPairs = 1;
 const numberOfTokensPerCollection = 100;
 
@@ -68,11 +69,13 @@ const flows = {
 // Change this to perform a different run
 const flowToRun: (keyof typeof flows)[] = [1, 2, 3, 4];
 
+let providerConfig: ProviderConfig;
+
 async function main(): Promise<void> {
   // Store global auth token
   await authenticateAllFromFile(environment, credentialsFile);
   // Read in provider which is then cached as a singleton
-  await initialiseProvider(providersFile);
+  providerConfig = await getProviderConfig(providersFile);
   await runFlows();
 }
 
@@ -116,8 +119,8 @@ async function cmdClaimA(): Promise<void> {
   const randomPair = collections[rnd(0, collections.length)];
   const collectionA = randomPair.a;
   const collectionB = randomPair.b;
-  const signer = await getSigner(network);
-  const provider = await getProvider(network);
+  const signer = await getSigner(network, providerConfig);
+  const provider = signer.provider;
   const numAccounts = 4;
   // TODO: these user signers should be pulled from metamask
   const userSigners = generateAccounts(numAccounts, { mnemonic: demoMnemonic, provider });
@@ -199,7 +202,7 @@ async function cmdGateA(): Promise<void> {
     { onExisting: 'delete' },
   );
 
-  const provider = await getProvider(network);
+  const provider = await getProvider(network, providerConfig);
   const numAccounts = 4;
   const accounts = generateAccounts(numAccounts, { mnemonic: demoMnemonic, provider });
 
@@ -359,7 +362,7 @@ async function checkTokenURI(collectionGuid: string, tokenId: number): Promise<s
   if (!address) {
     throw new Error(`Collection has no address, is it deployed?`);
   }
-  const drop = Drop721__factory.connect(address, await getProvider(network));
+  const drop = Drop721__factory.connect(address, await getProvider(network, providerConfig));
   return await drop.tokenURI(tokenId);
 }
 
