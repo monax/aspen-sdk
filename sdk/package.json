@@ -34,6 +34,25 @@
       "types": "./dist/utils/index.d.ts"
     }
   },
+  "scripts": {
+    "build": "pnpm run build:generate && pnpm run build:ts",
+    "build:generate": "pnpm run generate:spec && pnpm run generate:typechain && pnpm run generate:gating && pnpm run generate:publishing && pnpm run generate:graphql",
+    "build:ts": "tsc --build",
+    "clean:compiled": "find .. -name node_modules -prune -o \\\\( -wholename '**/src/**' -a \\\\( -name '*.js' -o -name '*.d.ts' -o -name '*.js.map' \\\\) \\\\) -print",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "fix": "pnpm run fix:prettier && pnpm run fix:eslint",
+    "fix:prettier": "prettier --write ..",
+    "fix:eslint": "eslint --fix '**/*.ts'",
+    "tsnode": "ts-node --esm --experimental-specifier-resolution=node",
+    "generate:spec": "pnpm run tsnode src/codegen/cmd/generate.ts",
+    "generate:publishing": "npx openapi-typescript-codegen --input ./node_modules/@monaxlabs/spec/apis/publishing.json --output ./src/apis/publishing/generated --client axios --useOptions",
+    "generate:gating": "npx openapi-typescript-codegen --input ./node_modules/@monaxlabs/spec/apis/gating.json --output ./src/apis/gating/generated --client axios --useOptions",
+    "generate:typechain": "typechain --out-dir=src/contracts/generated --target=ethers-v5 'src/contracts/abis/**/*.json' --show-stack-traces",
+    "generate:typechain:nodenext": "typechain --out-dir=src/contracts/generated --target=ethers-v5 src/contracts/abis/* --show-stack-traces --node16-modules # switch when/if https://github.com/dethcrypto/TypeChain/pull/799 is merged",
+    "generate:graphql": "pnpm graphql-codegen",
+    "examples:clear-state": "rm ../examples/flows/collection-info.json src/examples/issuance-info.json",
+    "publish:sdk": "pnpm publish --no-git-checks --access public"
+  },
   "dependencies": {
     "@ethersproject/abi": "^5.7.0",
     "@ethersproject/abstract-provider": "^5.7.0",
@@ -99,23 +118,5 @@
         }
       ]
     }
-  },
-  "scripts": {
-    "build": "pnpm run build:generate && pnpm run build:ts",
-    "build:generate": "pnpm run generate:spec && pnpm run generate:typechain && pnpm run generate:gating && pnpm run generate:publishing && pnpm run generate:graphql",
-    "build:ts": "tsc --build",
-    "clean:compiled": "find .. -name node_modules -prune -o \\\\( -wholename '**/src/**' -a \\\\( -name '*.js' -o -name '*.d.ts' -o -name '*.js.map' \\\\) \\\\) -print",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "fix": "pnpm run fix:prettier && pnpm run fix:eslint",
-    "fix:prettier": "prettier --write ..",
-    "fix:eslint": "eslint --fix '**/*.ts'",
-    "tsnode": "ts-node --esm --experimental-specifier-resolution=node",
-    "generate:spec": "pnpm run tsnode src/codegen/cmd/generate.ts",
-    "generate:publishing": "npx openapi-typescript-codegen --input ./node_modules/@monaxlabs/spec/apis/publishing.json --output ./src/apis/publishing/generated --client axios --useOptions",
-    "generate:gating": "npx openapi-typescript-codegen --input ./node_modules/@monaxlabs/spec/apis/gating.json --output ./src/apis/gating/generated --client axios --useOptions",
-    "generate:typechain": "typechain --out-dir=src/contracts/generated --target=ethers-v5 'src/contracts/abis/**/*.json' --show-stack-traces",
-    "generate:typechain:nodenext": "typechain --out-dir=src/contracts/generated --target=ethers-v5 src/contracts/abis/* --show-stack-traces --node16-modules # switch when/if https://github.com/dethcrypto/TypeChain/pull/799 is merged",
-    "generate:graphql": "pnpm graphql-codegen",
-    "examples:clear-state": "rm ../examples/flows/collection-info.json src/examples/issuance-info.json"
   }
 }
