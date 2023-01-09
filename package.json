@@ -13,7 +13,9 @@
     "examples:react": "pnpm -C examples/react dev",
     "examples:react:fresh-contract": "pnpm examples:react:test-contract && pnpm examples:react",
     "clean": "git clean -fdX --exclude='!credentials.json' --exclude='!providers.json' --exclude='!.idea' --exclude='!.idea/**'",
-    "clean:dry-run": "pnpm clean -n"
+    "clean:dry-run": "pnpm clean -n",
+    "publish:bump-version": "cd sdk && npm version --no-git-tag-version $(../scripts/version.sh)",
+    "publish": "pnpm publish:bump-version && pnpm -C sdk publish:sdk"
   },
   "packageManager": "pnpm@3.3.1"
 }
