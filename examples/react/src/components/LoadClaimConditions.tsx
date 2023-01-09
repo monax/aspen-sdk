@@ -33,7 +33,7 @@ const LoadClaimConditions: React.FC<{
       if (account) {
         const userConditions = await contract.issuance.getUserClaimConditions(
           account as Address,
-          "0"
+          tokenId
         );
 
         if (!activeConditions) {
@@ -95,7 +95,7 @@ const LoadClaimConditions: React.FC<{
           </p>
           <p>
             Can Claim Tokens :{" "}
-            {userClaimRestrictions.canClaimTokens ? "TRUE" : "FALSE"}
+            {userClaimRestrictions.canClaimTokens ? "YES" : "NO"}
           </p>
           <p>
             Can Mint After : {userClaimRestrictions.canMintAfter.toDateString()}

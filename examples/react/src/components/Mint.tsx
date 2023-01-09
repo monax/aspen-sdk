@@ -28,16 +28,25 @@ const Mint: React.FC<{ contract: CollectionContract; tokenId: string }> = ({
       throw new Error(`No active claim condition`);
     }
 
-    await contract.issuance.claim(
-      library.getSigner(),
-      parse(Address, account),
-      tokenId,
-      BigNumber.from(1),
-      activeClaimConditions.activeClaimCondition.currency,
-      activeClaimConditions.activeClaimCondition.pricePerToken,
-      [],
-      BigNumber.from(0)
-    );
+    (async () => {
+      const tx = await contract.issuance.claim(
+        library.getSigner(),
+        parse(Address, account),
+        tokenId,
+        BigNumber.from(1),
+        activeClaimConditions.activeClaimCondition.currency,
+        activeClaimConditions.activeClaimCondition.pricePerToken,
+        [],
+        BigNumber.from(0)
+      );
+      if (tx) {
+        const receipt = await tx.wait();
+        if (receipt.status === 1) {
+          const a = await contract.issuance.getClaimedTokenAssets(receipt);
+          console.log(a)
+        }
+      }
+    })();
   };
 
   useEffect(() => {
