@@ -59,11 +59,22 @@ const Mint: React.FC<{ contract: CollectionContract; tokenId: string }> = ({
   }, [contract, account, tokenId]);
 
   return (
-    <div>
+    <div className="flex">
       {canMint && (
-        <button className={styles.button} type="button" onClick={onMint}>
-          Mint
-        </button>
+        <>
+          <button className={styles.button} type="button" onClick={onMint}>
+            Mint
+          </button>
+          <a
+            className={styles.button}
+            type="button"
+            href="https://buy.stripe.com/test_9AQ8wSfnlbNFb0QcMO"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Mint with fiat
+          </a>
+        </>
       )}
     </div>
   );
