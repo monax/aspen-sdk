@@ -86,7 +86,8 @@ type Cover<K extends string, T, C extends Record<K, NonEmptyArray<T>>, E = C[K][
       Exclude<T, E> extends never
       ? C
       : // Otherwise we have some missing elements, we now make the argument type be exactly the ones that are
-        // missing so type checking fails. This gives a hint.
+        // missing so type checking fails. This gives a hint. (note: we could use never here, but it can cause narrowing
+        // on inferred K so that an extraneous partition subset can be present with the wrong keys)
         Record<K, Exclude<T, E>[]>
     : never;
 

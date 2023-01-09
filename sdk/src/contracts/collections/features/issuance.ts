@@ -1,7 +1,5 @@
 import { add } from 'date-fns';
 import { BigNumber, ContractReceipt, ContractTransaction, ethers, PayableOverrides } from 'ethers';
-import type { TokensClaimedEventObject as ERC721TokensClaimedEventObject } from '../../generated/ICedarNFTIssuanceV4.js';
-import type { TokensClaimedEventObject as ERC1155TokensClaimedEventObject } from '../../generated/ICedarSFTIssuanceV3.js';
 import {
   ICedarNFTIssuanceV0__factory,
   ICedarNFTIssuanceV1,
@@ -23,6 +21,8 @@ import {
   IPublicSFTIssuanceV2,
   ISFTSupplyV0,
 } from '../../generated';
+import type { TokensClaimedEventObject as ERC721TokensClaimedEventObject } from '../../generated/issuance/ICedarNFTIssuance.sol/ICedarNFTIssuanceV4.js';
+import type { TokensClaimedEventObject as ERC1155TokensClaimedEventObject } from '../../generated/issuance/ICedarSFTIssuance.sol/ICedarSFTIssuanceV2.js';
 import { Address, isSameAddress, NATIVE_TOKEN, ZERO_BYTES32 } from '../../index.js';
 import { Features } from '../features.js';
 import { max, min } from '../number.js';
@@ -45,6 +45,7 @@ export class Issuance extends Features {
   /**
    * @returns True if the contract supports Issuance interface
    */
+
   get supported(): boolean {
     const features = this.base.interfaces;
     return !!(
