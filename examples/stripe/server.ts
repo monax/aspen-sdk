@@ -5,7 +5,7 @@ import {
   authenticateAllFromFile,
 } from "@monaxlabs/aspen-sdk/dist/apis";
 
-const credentialsFile = new URL("./credentials.json", import.meta.url).pathname;
+const credentialsFile = new URL("../secrets/credentials.json", import.meta.url).pathname;
 const apiKey = process.env.STRIPE_APIKEY!;
 const endpointSecret = process.env.STRIPE_ENDPOINTSECRET!;
 

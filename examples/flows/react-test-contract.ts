@@ -1,12 +1,11 @@
 import { AspenEnvironment, authenticateAllFromFile, SupportedNetwork } from '@monaxlabs/aspen-sdk/dist/apis';
 import { Currency } from '@monaxlabs/aspen-sdk/dist/apis/publishing';
 import { addHours, addMinutes } from 'date-fns';
+import { credentialsFile } from './secrets';
 import { deployERC1155 } from './utils/collection';
 
 const network: SupportedNetwork = 'Mumbai';
 const environment: AspenEnvironment = 'production';
-const providersFile = new URL('secrets/providers.json', import.meta.url).pathname;
-const credentialsFile = new URL('secrets/credentials.json', import.meta.url).pathname;
 
 async function main(): Promise<void> {
   // Read in provider which is then cached as a singleton

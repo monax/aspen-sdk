@@ -54,6 +54,7 @@ export async function authenticate(
   return token;
 }
 
+// FIXME: rename to reflect env var usage, move environment to last arg and default to 'production'
 export async function authenticateAllFromFile(
   environment: AspenEnvironment,
   credentialsFile = defaultCredentialsFile,
