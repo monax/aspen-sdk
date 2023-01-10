@@ -357,7 +357,7 @@ async function main(contract: CollectionContract): Promise<void> {
     tokenId,
     // Quantity to claim (multiple tokens can be claimed in a single call for both ERC721 and ERC1155)
     BigNumber.from(1),
-    // The 
+    // The
     activeClaimConditions.activeClaimCondition.currency,
     activeClaimConditions.activeClaimCondition.pricePerToken,
   );
@@ -365,6 +365,26 @@ async function main(contract: CollectionContract): Promise<void> {
 ```
 
 ### Issue a token (server-side)
+
+Tokens can be issued using the publishing API directly. This skips claim conditions and allows issuing a token based on a fiat payment provider or for dynamics use cases.
+
+```typescript
+import { authenticate, issueToken, PublishingAPI } from '@monaxlabs/aspen-sdk/dist/apis';
+
+async function main(): Promise<void> {
+  await authenticate(PublishingAPI.OpenAPI, {
+    baseUrl: PUBLISHING_API_BASEURI,
+    name: PUBLISHING_API_USERNAME,
+    password: PUBLISHING_API_PASSWORD,
+  });
+  await issueToken(collectionGuid, {
+    to: wallet,
+    tokenId: Number.parseInt(tokenId),
+  });
+}
+```
+
+See a complete webhook example [here](https://github.com/monax/aspen-sdk/blob/main/examples/react/src/pages/api/webhooks.ts)
 
 ## Examples
 
