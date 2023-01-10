@@ -12,14 +12,21 @@
   "dependencies": {
     "@ethersproject/providers": "^5.7.2",
     "@monaxlabs/aspen-sdk": "workspace:*",
+    "@stripe/react-stripe-js": "^1.16.2",
+    "@stripe/stripe-js": "^1.46.0",
     "@web3-react/core": "^6.1.9",
     "@web3-react/injected-connector": "^6.0.7",
     "ethers": "^5.6.9",
-    "next": "^13.1.1",
+    "micro": "^10.0.1",
+    "micro-cors": "^0.1.1",
+    "next": "latest",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "stripe": "^11.6.0"
   },
   "devDependencies": {
+    "@types/micro": "^7.3.7",
+    "@types/micro-cors": "^0.1.2",
     "@types/node": "^18.11.18",
     "@types/react": "^18.0.26",
     "@types/react-dom": "^18.0.10",

@@ -72,14 +72,20 @@ const Mint: React.FC<{ contract: CollectionContract; tokenId: string }> = ({
     })();
   }, [contract, account, tokenId]);
 
+  const query = new URLSearchParams({
+    walletAddress: `${account}`,
+    collectionGuid: process.env.NEXT_PUBLIC_TEST_CONTRACT_GUID!,
+    tokenId,
+  });
+
   return (
     <div className="flex">
       {canMint && (
-        <>
+        <div className={styles.footer}>
           <button className={styles.button} type="button" onClick={onMint}>
             Mint
           </button>
-          <a
+          {/* <a
             className={styles.button}
             type="button"
             href="https://buy.stripe.com/test_9AQ8wSfnlbNFb0QcMO"
@@ -87,8 +93,18 @@ const Mint: React.FC<{ contract: CollectionContract; tokenId: string }> = ({
             rel="noreferrer"
           >
             Mint with fiat
-          </a>
-        </>
+          </a> */}
+
+          <form
+            id="mintToken"
+            action={`/api/mint-with-fiat?${query.toString()}`}
+            method="POST"
+          >
+            <button className={styles.button} type="submit">
+              Mint with fiat
+            </button>
+          </form>
+        </div>
       )}
     </div>
   );
