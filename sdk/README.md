@@ -174,7 +174,7 @@ There are five Aspen NFT contract feature families supported by the Aspen SDK:
 
 Each of these features comprises a set of utility methods that interact with contracts. Where possible we maintain backward-compatibility of certain feature functions across previous versions of our smart contracts. As we develop and improve our contracts newer collections may have additional functionality.
 
-You can interact with features by accessing the corresponding feature property on the `CollectionContract. Some examples:
+You can interact with features by accessing the corresponding feature property on the `CollectionContract`. Some examples:
 
 ```typescript
 import { NATIVE_TOKEN } from '@monaxlabs/aspen-sdk/dist/contract';
@@ -225,11 +225,13 @@ async function main(): Promise<void> {
 #### Metadata
 
 - **[CollectionContract.metadata.getTokenMetadata](./src/contracts/collections/features/metadata.ts)**: gets images, attributes and other metadata associated with a token
--
 
 #### Issuance
 
-- **[CollectionContract.metadata.](./src/contracts/collections/features/metadata.ts)**: gets images, attributes and other metadata associated with a token
+- **[CollectionContract.issuance.getActiveClaimConditions](./src/contracts/collections/features/issuance.ts)**: gets the claim conditions (price, limits, etc) for the currently active phase. There is only ever a single phase active a moment in time.
+- **[CollectionContract.issuance.getUserClaimConditions](./src/contracts/collections/features/issuance.ts)**: returns a user-specific augmented view of the claim phase.
+- **[CollectionContract.issuance.getUserClaimRestrictions](./src/contracts/collections/features/issuance.ts)**: combines the `activeClaimConditions` and `userClaimConditions` and computes whether the current user-account is able to claim.
+- **[CollectionContract.issuance.claim](./src/contracts/collections/features/issuance.ts)**: calls the claim function minting and NFT and delivering it to the desired recipient on-chain.
 
 #### Phases
 
