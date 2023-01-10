@@ -1,5 +1,5 @@
 import { add } from 'date-fns';
-import { BigNumber, ContractReceipt, ContractTransaction, ethers, PayableOverrides } from 'ethers';
+import { BigNumber, BigNumberish, ContractReceipt, ContractTransaction, ethers, PayableOverrides } from 'ethers';
 import {
   ICedarNFTIssuanceV0__factory,
   ICedarNFTIssuanceV1,
@@ -162,8 +162,8 @@ export class Issuance extends Features {
     quantity: BigNumber,
     currency: Address,
     pricePerToken: BigNumber,
-    proofs: string[],
-    proofMaxQuantityPerTransaction: BigNumber,
+    proofs: string[] = [],
+    proofMaxQuantityPerTransaction: BigNumberish = 0,
   ): Promise<ContractTransaction | null> {
     if (!this.supported) return null;
 
@@ -204,7 +204,7 @@ export class Issuance extends Features {
     currency: Address,
     pricePerToken: BigNumber,
     proofs: string[],
-    proofMaxQuantityPerTransaction: BigNumber,
+    proofMaxQuantityPerTransaction: BigNumberish,
   ): Promise<ContractTransaction | null> {
     try {
       const interfaces = this.base.interfaces;
@@ -325,7 +325,7 @@ export class Issuance extends Features {
     currency: Address,
     pricePerToken: BigNumber,
     proofs: string[],
-    proofMaxQuantityPerTransaction: BigNumber,
+    proofMaxQuantityPerTransaction: BigNumberish,
   ): Promise<ContractTransaction | null> {
     try {
       const iNftIssuance = this.getNftIssuance(signer);

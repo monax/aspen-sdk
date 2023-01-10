@@ -42,9 +42,7 @@ import {
   writeIssuanceInfo,
 } from './state';
 import { deployERC721, wait } from './utils/collection';
-
-const providersFile = new URL('secrets/providers.json', import.meta.url).pathname;
-const credentialsFile = new URL('secrets/credentials.json', import.meta.url).pathname;
+import {credentialsFile, providersFile} from "./secrets";
 
 // Global config for flows
 const network: SupportedNetwork = 'Mumbai';

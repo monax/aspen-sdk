@@ -15,7 +15,9 @@
     "clean": "git clean -fdX --exclude='!credentials.json' --exclude='!providers.json' --exclude='!.idea' --exclude='!.idea/**'",
     "clean:dry-run": "pnpm clean -n",
     "publish:bump-version": "cd sdk && npm version --no-git-tag-version $(../scripts/version.sh)",
-    "publish": "pnpm publish:bump-version && pnpm -C sdk publish:sdk"
+    "publish": "pnpm publish:bump-version && pnpm -C sdk publish:sdk",
+    "ci:test": "pnpm install && pnpm build && pnpm test",
+    "ci:publish": "pnpm install && pnpm build && pnpm run publish"
   },
   "packageManager": "pnpm@3.3.1"
 }
