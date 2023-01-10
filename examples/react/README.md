@@ -24,17 +24,27 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Features
 
-### In `index.tsx` contains components :
-
-
 To be able to run the examples first you need to connect to the Wallet:
 
 `ConnectWallet` component provides a button whenever the wallet is not connected, otherwise network informations should be displayed.
 You need to connect with Mumbai network where examples contract are deployed.
 
+`index.tsx` component shows how to set up connection with a contract. To be able to use its features you need to pass as an arguments `provider` and  `contract address` to the `CollectionContract`
+then `contract` needs to be loaded : 
 
-There are two diffetent components for minting : 
+```js
+      const collectionContract = new CollectionContract(
+        library,
+        parse(Address, contractAddress)
+      );
+      await collectionContract.load();
+```
+When contract is loaded you can access features provided :
+- Metadata
+- Issuance
+- Agreements
+- Royalties
+- Ownable
 
-MintCedarERC721DropV0
 
 
