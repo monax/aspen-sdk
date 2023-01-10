@@ -21,6 +21,7 @@ const Mint: React.FC<{
   activeClaimConditions: ActiveClaimConditions | null;
   termsInfo: TermsUserAcceptanceState | null;
   onUpdate: () => void;
+  onError: (error: string) => void;
 }> = ({
   contract,
   tokenId,
@@ -28,6 +29,7 @@ const Mint: React.FC<{
   userClaimRestrictions,
   termsInfo,
   onUpdate,
+  onError,
 }) => {
   const { account, library } = useWeb3React<Web3Provider>();
   const [canMint, setCanMint] = useState(false);
@@ -37,7 +39,8 @@ const Mint: React.FC<{
     if (!library || loadingMintButton) return;
 
     if (!activeClaimConditions) {
-      throw new Error(`No active claim condition`);
+      onError("No active claim condition");
+      return;
     }
 
     setLoadingMintButton(true);

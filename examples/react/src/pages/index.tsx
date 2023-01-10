@@ -18,6 +18,8 @@ import ConnectWallet from "components/ConnectWallet";
 import LoadClaimConditions from "components/LoadClaimConditions";
 import Mint from "components/Mint";
 import { loadStripe } from "@stripe/stripe-js";
+import Error from "components/common/Error";
+import { useError } from "hooks/useError";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
@@ -37,6 +39,7 @@ const Home: NextPage = () => {
   const [termsInfo, setTermsInfo] = useState<TermsUserAcceptanceState | null>(
     null
   );
+  const { error, setError } = useError();
   const { account, active, library } = useWeb3React<Web3Provider>();
   const [userClaimConditions, setUserClaimConditions] =
     useState<UserClaimConditions | null>(null);
@@ -59,10 +62,12 @@ const Home: NextPage = () => {
       );
 
       if (!activeConditions) {
-        throw new Error(`No active claim conditions`);
+        setError("No active claim conditions");
+        return;
       }
       if (!userConditions) {
-        throw new Error(`No user claim condition`);
+        setError("No user claim condition");
+        return;
       }
       setUserClaimConditions(userConditions);
       const restrictions = await contract.issuance.getUserClaimRestrictions(
@@ -73,7 +78,7 @@ const Home: NextPage = () => {
       );
       setUserClaimRestrictions(restrictions);
     }
-  }, [account, contract, selectedToken]);
+  }, [account, contract, selectedToken, setError]);
 
   useEffect(() => {
     loadClaimConditions();
@@ -110,6 +115,7 @@ const Home: NextPage = () => {
 
   return (
     <div>
+      <Error error={error} />
       <main className={styles.main}>
         <h2>Aspen SDK Example </h2>
         <p>
@@ -142,7 +148,11 @@ const Home: NextPage = () => {
               userClaimRestrictions={userClaimRestrictions}
               activeClaimConditions={activeClaimConditions}
             />
-            <AcceptTerms contract={contract} termsInfo={termsInfo} />
+            <AcceptTerms
+              contract={contract}
+              termsInfo={termsInfo}
+              onError={setError}
+            />
             <Mint
               userClaimRestrictions={userClaimRestrictions}
               activeClaimConditions={activeClaimConditions}
@@ -150,6 +160,7 @@ const Home: NextPage = () => {
               tokenId={selectedToken}
               termsInfo={termsInfo}
               onUpdate={loadClaimConditions}
+              onError={setError}
             />
           </div>
         )}
