@@ -7,6 +7,7 @@ import {
   Address,
   CollectionContract,
   CollectionUserClaimConditions,
+  TermsUserAcceptanceState,
   UserClaimConditions,
 } from "@monaxlabs/aspen-sdk/dist/contracts";
 import { parse } from "@monaxlabs/aspen-sdk/dist/utils";
@@ -33,6 +34,9 @@ const Home: NextPage = () => {
   const [contract, setContract] = useState<CollectionContract | null>(null);
   const [tokens, setTokens] = useState<number[]>([]);
   const [selectedToken, setSelectedToken] = useState("0");
+  const [termsInfo, setTermsInfo] = useState<TermsUserAcceptanceState | null>(
+    null
+  );
   const { account, active, library } = useWeb3React<Web3Provider>();
   const [userClaimConditions, setUserClaimConditions] =
     useState<UserClaimConditions | null>(null);
@@ -94,6 +98,16 @@ const Home: NextPage = () => {
     })();
   }, [active, library, contractAddress]);
 
+  useEffect(() => {
+    if (!contract) return;
+    (async () => {
+      const acceptTerms = await contract.agreements.getState(
+        parse(Address, account)
+      );
+      setTermsInfo(acceptTerms);
+    })();
+  }, [contract, account]);
+
   return (
     <div>
       <main className={styles.main}>
@@ -128,12 +142,13 @@ const Home: NextPage = () => {
               userClaimRestrictions={userClaimRestrictions}
               activeClaimConditions={activeClaimConditions}
             />
-            <AcceptTerms contract={contract} />
+            <AcceptTerms contract={contract} termsInfo={termsInfo} />
             <Mint
               userClaimRestrictions={userClaimRestrictions}
               activeClaimConditions={activeClaimConditions}
               contract={contract}
               tokenId={selectedToken}
+              termsInfo={termsInfo}
               onUpdate={loadClaimConditions}
             />
           </div>

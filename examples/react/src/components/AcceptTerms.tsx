@@ -11,13 +11,11 @@ import { parse } from "@monaxlabs/aspen-sdk/dist/utils";
 import { useWeb3React } from "@web3-react/core";
 import { useEffect, useState } from "react";
 
-const AcceptTerms: React.FC<{ contract: CollectionContract }> = ({
-  contract,
-}) => {
-  const { account, library } = useWeb3React<Web3Provider>();
-  const [termsInfo, setTermsInfo] = useState<TermsUserAcceptanceState | null>(
-    null
-  );
+const AcceptTerms: React.FC<{
+  contract: CollectionContract;
+  termsInfo: TermsUserAcceptanceState | null;
+}> = ({ contract, termsInfo }) => {
+  const { library } = useWeb3React<Web3Provider>();
 
   if (!library) {
     // FIXME: can we do better than this?
@@ -26,16 +24,6 @@ const AcceptTerms: React.FC<{ contract: CollectionContract }> = ({
 
   const handleAcceptTerms = () =>
     contract.agreements.acceptTerms(library.getSigner());
-
-  useEffect(() => {
-    if (!contract) return;
-    (async () => {
-      const acceptTerms = await contract.agreements.getState(
-        parse(Address, account)
-      );
-      setTermsInfo(acceptTerms);
-    })();
-  }, [contract, account]);
 
   return (
     <div>
