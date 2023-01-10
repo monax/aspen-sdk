@@ -1,72 +1,37 @@
-import { Web3Provider } from "@ethersproject/providers";
 import {
   ActiveClaimConditions,
-  Address,
-  CollectionContract,
   CollectionUserClaimConditions,
   UserClaimConditions,
 } from "@monaxlabs/aspen-sdk/dist/contracts";
-import { useWeb3React } from "@web3-react/core";
-import { useEffect, useState } from "react";
+import { ethers } from "ethers";
 import styles from "../styles/Home.module.css";
 
 const LoadClaimConditions: React.FC<{
-  contract: CollectionContract;
-  tokenId: string;
-}> = ({ contract, tokenId }) => {
-  const { account } = useWeb3React<Web3Provider>();
-  const [userClaimConditions, setUserClaimConditions] =
-    useState<UserClaimConditions | null>(null);
-  const [userClaimRestrictions, setUserClaimRestrictions] =
-    useState<CollectionUserClaimConditions | null>(null);
-  const [activeClaimConditions, setActiveClaimConditions] =
-    useState<ActiveClaimConditions | null>(null);
-
-  useEffect(() => {
-    if (!contract) return;
-    (async () => {
-      const activeConditions = await contract.issuance.getActiveClaimConditions(
-        tokenId
-      );
-      setActiveClaimConditions(activeConditions);
-
-      if (account) {
-        const userConditions = await contract.issuance.getUserClaimConditions(
-          account as Address,
-          "0"
-        );
-
-        if (!activeConditions) {
-          throw new Error(`No active claim conditions`);
-        }
-        if (!userConditions) {
-          throw new Error(`No user claim condition`);
-        }
-        setUserClaimConditions(userConditions);
-        const restrictions = await contract.issuance.getUserClaimRestrictions(
-          userConditions,
-          activeConditions,
-          [],
-          0
-        );
-        setUserClaimRestrictions(restrictions);
-      }
-    })();
-  }, [contract, account, tokenId]);
+  userClaimConditions: UserClaimConditions | null;
+  userClaimRestrictions: CollectionUserClaimConditions | null;
+  activeClaimConditions: ActiveClaimConditions | null;
+}> = ({
+  userClaimConditions,
+  userClaimRestrictions,
+  activeClaimConditions,
+}) => {
+  const maxClaimableSupply =
+    activeClaimConditions?.activeClaimCondition.maxClaimableSupply.gt(1e9)
+      ? Infinity
+      : activeClaimConditions?.activeClaimCondition.maxClaimableSupply.toString();
 
   return (
     <>
       {activeClaimConditions && (
         <div className={styles.card}>
           <h4>Active Claim Conditions : </h4>
-          <p>
-            Max Claimable Supply :{" "}
-            {activeClaimConditions.activeClaimCondition.maxClaimableSupply.toString()}
-          </p>
+          <p>Max Claimable Supply : {maxClaimableSupply === Infinity ? '∞' : maxClaimableSupply}</p>
           {activeClaimConditions.activeClaimCondition.pricePerToken && (
             <p>
               Price Per Token :{" "}
-              {activeClaimConditions.activeClaimCondition.pricePerToken.toString()}
+              {ethers.utils.formatEther(
+                activeClaimConditions?.activeClaimCondition.pricePerToken
+              )}
             </p>
           )}
         </div>
@@ -95,7 +60,7 @@ const LoadClaimConditions: React.FC<{
           </p>
           <p>
             Can Claim Tokens :{" "}
-            {userClaimRestrictions.canClaimTokens ? "TRUE" : "FALSE"}
+            {userClaimRestrictions.canClaimTokens ? "YES" : "NO"}
           </p>
           <p>
             Can Mint After : {userClaimRestrictions.canMintAfter.toDateString()}
