@@ -1,5 +1,13 @@
 import { add } from 'date-fns';
-import { BigNumber, BigNumberish, ContractReceipt, ContractTransaction, ethers, PayableOverrides } from 'ethers';
+import {
+  BigNumber,
+  BigNumberish,
+  constants,
+  ContractReceipt,
+  ContractTransaction,
+  ethers,
+  PayableOverrides,
+} from 'ethers';
 import {
   ICedarNFTIssuanceV0__factory,
   ICedarNFTIssuanceV1,
@@ -36,10 +44,21 @@ import type {
   UserClaimConditions,
 } from '../types.js';
 
-export const TokenIdRequiredError = new Error('Token is required for ERC1155 contracts!');
+// FIXME[Silas]: global constant errors break stack traces. Subclass Error with a string constant code instead.
+//   Also makes it easier to add error context. Possible inspiration: https://github.com/monax/platform/blob/main/pkg/api/src/services/errors.ts
+//   I have inlined this for now, leaving original definition here
+// export const TokenIdRequiredError = new Error('Token is required for ERC1155 contracts!');
+
+function ensureERC1155TokenId(tokenId: BigNumberish | null): BigNumberish {
+  const TokenIdRequiredError = new Error('Token is required for ERC1155 contracts!');
+  if (tokenId === null || tokenId === undefined) {
+    throw TokenIdRequiredError;
+  }
+  return tokenId;
+}
 
 // Reasonably large number to compare with
-const SUPPLY_TRESHOLD = BigNumber.from(1e9);
+const SUPPLY_THRESHOLD = constants.MaxInt256;
 
 export class Issuance extends Features {
   /**
@@ -158,10 +177,10 @@ export class Issuance extends Features {
   async claim(
     signer: Signerish,
     receiver: Address,
-    tokenId: string | null = null,
-    quantity: BigNumber,
+    tokenId: BigNumberish | null = null,
+    quantity: BigNumberish,
     currency: Address,
-    pricePerToken: BigNumber,
+    pricePerToken: BigNumberish,
     proofs: string[] = [],
     proofMaxQuantityPerTransaction: BigNumberish = 0,
   ): Promise<ContractTransaction | null> {
@@ -169,7 +188,7 @@ export class Issuance extends Features {
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        if (!tokenId) throw TokenIdRequiredError;
+        tokenId = ensureERC1155TokenId(tokenId);
 
         return this.claimERC1155(
           signer,
@@ -199,10 +218,10 @@ export class Issuance extends Features {
   protected async claimERC1155(
     signer: Signerish,
     receiver: Address,
-    tokenId: string,
-    quantity: BigNumber,
+    tokenId: BigNumberish,
+    quantity: BigNumberish,
     currency: Address,
-    pricePerToken: BigNumber,
+    pricePerToken: BigNumberish,
     proofs: string[],
     proofMaxQuantityPerTransaction: BigNumberish,
   ): Promise<ContractTransaction | null> {
@@ -235,7 +254,7 @@ export class Issuance extends Features {
 
       const overrides: PayableOverrides = {};
       if (isSameAddress(currency, NATIVE_TOKEN)) {
-        overrides.value = pricePerToken.mul(quantity);
+        overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
       const tx = await iSftIssuance.claim(
@@ -321,9 +340,9 @@ export class Issuance extends Features {
   protected async claimERC721(
     signer: Signerish,
     receiver: Address,
-    quantity: BigNumber,
+    quantity: BigNumberish,
     currency: Address,
-    pricePerToken: BigNumber,
+    pricePerToken: BigNumberish,
     proofs: string[],
     proofMaxQuantityPerTransaction: BigNumberish,
   ): Promise<ContractTransaction | null> {
@@ -333,7 +352,7 @@ export class Issuance extends Features {
 
       const overrides: PayableOverrides = {};
       if (isSameAddress(currency, NATIVE_TOKEN)) {
-        overrides.value = pricePerToken.mul(quantity);
+        overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
       const tx = await iNftIssuance.claim(
@@ -357,18 +376,18 @@ export class Issuance extends Features {
   async estimateGasForClaim(
     signer: Signerish,
     receiver: Address,
-    tokenId: string | null = null,
-    quantity: BigNumber,
+    tokenId: BigNumberish | null = null,
+    quantity: BigNumberish,
     currency: Address,
-    pricePerToken: BigNumber,
+    pricePerToken: BigNumberish,
     proofs: string[],
-    proofMaxQuantityPerTransaction: BigNumber,
+    proofMaxQuantityPerTransaction: BigNumberish,
   ): Promise<BigNumber | null> {
     if (!this.supported) return null;
 
     switch (this.base.tokenStandard) {
       case 'ERC1155': {
-        if (!tokenId) throw TokenIdRequiredError;
+        tokenId = ensureERC1155TokenId(tokenId);
         return this.estimateGasForClaimERC1155(
           signer,
           receiver,
@@ -399,22 +418,22 @@ export class Issuance extends Features {
   protected async estimateGasForClaimERC1155(
     signer: Signerish,
     receiver: Address,
-    tokenId: string,
-    quantity: BigNumber,
+    tokenId: BigNumberish,
+    quantity: BigNumberish,
     currency: Address,
-    pricePerToken: BigNumber,
+    pricePerToken: BigNumberish,
     proofs: string[],
-    proofMaxQuantityPerTransaction: BigNumber,
+    proofMaxQuantityPerTransaction: BigNumberish,
   ): Promise<BigNumber | null> {
     try {
-      if (!tokenId) throw TokenIdRequiredError;
+      tokenId = ensureERC1155TokenId(tokenId);
 
       const iSftIssuance = this.getSftIssuance(signer);
       if (!iSftIssuance) return null;
 
       const overrides: PayableOverrides = {};
       if (isSameAddress(currency, NATIVE_TOKEN)) {
-        overrides.value = pricePerToken.mul(quantity);
+        overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
       return await iSftIssuance.estimateGas.claim(
@@ -437,11 +456,11 @@ export class Issuance extends Features {
   protected async estimateGasForClaimERC721(
     signer: Signerish,
     receiver: Address,
-    quantity: BigNumber,
+    quantity: BigNumberish,
     currency: Address,
-    pricePerToken: BigNumber,
+    pricePerToken: BigNumberish,
     proofs: string[],
-    proofMaxQuantityPerTransaction: BigNumber,
+    proofMaxQuantityPerTransaction: BigNumberish,
   ): Promise<BigNumber | null> {
     try {
       const iNftIssuance = this.getNftIssuance(signer);
@@ -449,7 +468,7 @@ export class Issuance extends Features {
 
       const overrides: PayableOverrides = {};
       if (isSameAddress(currency, NATIVE_TOKEN)) {
-        overrides.value = pricePerToken.mul(quantity);
+        overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
       return await iNftIssuance.estimateGas.claim(
@@ -485,7 +504,7 @@ export class Issuance extends Features {
   async verifyClaim(
     conditionId: number,
     receiver: Address,
-    tokenId: string | null = null,
+    tokenId: BigNumberish | null = null,
     quantity: number,
     currency: Address,
     pricePerToken: BigNumber,
@@ -495,7 +514,7 @@ export class Issuance extends Features {
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        if (!tokenId) throw TokenIdRequiredError;
+        tokenId = ensureERC1155TokenId(tokenId);
 
         return await this.verifyClaimERC1155(
           conditionId,
@@ -523,7 +542,7 @@ export class Issuance extends Features {
   protected async verifyClaimERC1155(
     conditionId: number,
     receiver: Address,
-    tokenId: string,
+    tokenId: BigNumberish,
     quantity: number,
     currency: Address,
     pricePerToken: BigNumber,
@@ -628,6 +647,8 @@ export class Issuance extends Features {
 
       // this internal try catches the revert error
       // which is a signal that the claim conditions aren't met
+      // FIXME[Silas]: This is throwing away the custom errors. They should be decoded and returned using `decodeCustomError`
+      //  from errors.ts.
       try {
         await iNftIssuance.verifyClaim(
           conditionId,
@@ -657,12 +678,12 @@ export class Issuance extends Features {
    * @param tokenId Optional token id - use for ERC1155 contracts
    * @returns Token or Collection claim conditions
    */
-  async getActiveClaimConditions(tokenId: string | null = null): Promise<ActiveClaimConditions | null> {
+  async getActiveClaimConditions(tokenId: BigNumberish | null = null): Promise<ActiveClaimConditions | null> {
     if (!this.supported) return null;
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        if (!tokenId) throw TokenIdRequiredError;
+        tokenId = ensureERC1155TokenId(tokenId);
         return await this.getActiveClaimConditionsERC1155(tokenId);
       case 'ERC721':
         return await this.getActiveClaimConditionsERC721();
@@ -779,14 +800,13 @@ export class Issuance extends Features {
    */
   async getUserClaimConditions(
     userAddress: Address,
-    tokenId: string | null = null,
+    tokenId: BigNumberish | null = null,
   ): Promise<UserClaimConditions | null> {
     if (!this.supported) return null;
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        if (!tokenId) throw TokenIdRequiredError;
-        return this.getUserClaimConditionsERC1155(userAddress, tokenId);
+        return this.getUserClaimConditionsERC1155(userAddress, ensureERC1155TokenId(tokenId));
       case 'ERC721':
         return this.getUserClaimConditionsERC721(userAddress);
     }
@@ -815,12 +835,12 @@ export class Issuance extends Features {
           await iNftIssuance.getActiveClaimConditions();
 
         const tokenSupply = await this.getERC721TokensCount();
-        const maxTotalSupply = remainingSupply.gt(SUPPLY_TRESHOLD)
+        const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD)
           ? BigNumber.from(0)
           : remainingSupply.add(tokenSupply);
 
         const claimableSupply = condition.maxClaimableSupply.eq(0)
-          ? SUPPLY_TRESHOLD
+          ? SUPPLY_THRESHOLD
           : condition.maxClaimableSupply.sub(condition.supplyClaimed);
         const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
 
@@ -849,12 +869,12 @@ export class Issuance extends Features {
           await iNftIssuance.getActiveClaimConditions();
 
         const tokenSupply = await this.getERC721TokensCount();
-        const maxTotalSupply = remainingSupply.gt(SUPPLY_TRESHOLD)
+        const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD)
           ? BigNumber.from(0)
           : remainingSupply.add(tokenSupply);
 
         const claimableSupply = condition.maxClaimableSupply.eq(0)
-          ? SUPPLY_TRESHOLD
+          ? SUPPLY_THRESHOLD
           : condition.maxClaimableSupply.sub(condition.supplyClaimed);
         const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
 
@@ -913,9 +933,9 @@ export class Issuance extends Features {
         // TEMP HACK: to fix the issue where the tokenSupply and maxTotalSupply can be switched
         const [tokenSupply, maxTotalSupply] = v1.lt(v2) ? [v1, v2] : [v2, v1];
 
-        const remainingSupply = maxTotalSupply.eq(0) ? SUPPLY_TRESHOLD : maxTotalSupply.sub(tokenSupply);
+        const remainingSupply = maxTotalSupply.eq(0) ? SUPPLY_THRESHOLD : maxTotalSupply.sub(tokenSupply);
         const claimableSupply = condition.maxClaimableSupply.eq(0)
-          ? SUPPLY_TRESHOLD
+          ? SUPPLY_THRESHOLD
           : condition.maxClaimableSupply.sub(condition.supplyClaimed);
         const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
 
@@ -1039,7 +1059,7 @@ export class Issuance extends Features {
     return null;
   }
 
-  protected async getActiveClaimConditionsERC1155(tokenId: string): Promise<ActiveClaimConditions | null> {
+  protected async getActiveClaimConditionsERC1155(tokenId: BigNumberish): Promise<ActiveClaimConditions | null> {
     try {
       const interfaces = this.base.interfaces;
       const tokenIdBn = BigNumber.from(tokenId);
@@ -1051,12 +1071,12 @@ export class Issuance extends Features {
           await iSftIssuance.getActiveClaimConditions(tokenIdBn);
 
         const tokenSupply = await this.getERC1155TokenSupply(tokenId);
-        const maxTotalSupply = remainingSupply.gt(SUPPLY_TRESHOLD)
+        const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD)
           ? BigNumber.from(0)
           : remainingSupply.add(tokenSupply);
 
         const claimableSupply = condition.maxClaimableSupply.eq(0)
-          ? SUPPLY_TRESHOLD
+          ? SUPPLY_THRESHOLD
           : condition.maxClaimableSupply.sub(condition.supplyClaimed);
         const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
 
@@ -1085,12 +1105,12 @@ export class Issuance extends Features {
           await iSftIssuance.getActiveClaimConditions(tokenIdBn);
 
         const tokenSupply = await this.getERC1155TokenSupply(tokenId);
-        const maxTotalSupply = remainingSupply.gt(SUPPLY_TRESHOLD)
+        const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD)
           ? BigNumber.from(0)
           : remainingSupply.add(tokenSupply);
 
         const claimableSupply = condition.maxClaimableSupply.eq(0)
-          ? SUPPLY_TRESHOLD
+          ? SUPPLY_THRESHOLD
           : condition.maxClaimableSupply.sub(condition.supplyClaimed);
         const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
 
@@ -1139,9 +1159,9 @@ export class Issuance extends Features {
         const { condition, conditionId, walletMaxClaimCount, isClaimPaused, tokenSupply, maxTotalSupply } =
           await iSftIssuance.getActiveClaimConditions(tokenIdBn);
 
-        const remainingSupply = maxTotalSupply.eq(0) ? SUPPLY_TRESHOLD : maxTotalSupply.sub(tokenSupply);
+        const remainingSupply = maxTotalSupply.eq(0) ? SUPPLY_THRESHOLD : maxTotalSupply.sub(tokenSupply);
         const claimableSupply = condition.maxClaimableSupply.eq(0)
-          ? SUPPLY_TRESHOLD
+          ? SUPPLY_THRESHOLD
           : condition.maxClaimableSupply.sub(condition.supplyClaimed);
         const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
 
@@ -1173,7 +1193,7 @@ export class Issuance extends Features {
 
   protected async getUserClaimConditionsERC1155(
     userAddress: Address,
-    tokenId: string,
+    tokenId: BigNumberish,
   ): Promise<UserClaimConditions | null> {
     if (this.base.tokenStandard != 'ERC1155') return null;
 
@@ -1248,19 +1268,18 @@ export class Issuance extends Features {
   /**
    * @returns Number of tokens in supply (ERC1155) (doesn't take into consideration burnt tokens)
    */
-  async getTokenSupply(tokenId: string | null = null): Promise<BigNumber> {
+  async getTokenSupply(tokenId: BigNumberish | null = null): Promise<BigNumber> {
     if (!this.supported) return BigNumber.from(0);
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        if (!tokenId) throw TokenIdRequiredError;
-        return this.getERC1155TokenSupply(tokenId);
+        return this.getERC1155TokenSupply(ensureERC1155TokenId(tokenId));
     }
 
     return BigNumber.from(0);
   }
 
-  protected async getERC1155TokenSupply(tokenId: string): Promise<BigNumber> {
+  protected async getERC1155TokenSupply(tokenId: BigNumberish): Promise<BigNumber> {
     if (!this.supported || this.base.tokenStandard !== 'ERC1155') return BigNumber.from(0);
 
     try {

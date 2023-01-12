@@ -3,9 +3,9 @@ import {
   authenticateAllFromFile,
   authenticateForGate,
   configureGate,
+  extractCustomError,
   GatingAPI,
   generateAccounts,
-  getInnermostError,
   getProvider,
   getProviderConfig,
   getSigner,
@@ -14,11 +14,15 @@ import {
   PostFileResponse,
   ProviderConfig,
   PublishingAPI,
+  publishingChainFromNetwork,
   SupportedNetwork,
   uploadFile,
 } from '@monaxlabs/aspen-sdk/dist/apis';
+import { ContractService, Currency } from '@monaxlabs/aspen-sdk/dist/apis/publishing';
 import { ClaimBalance, getClaimBalances } from '@monaxlabs/aspen-sdk/dist/claimgraph';
 import {
+  Address,
+  CollectionContract,
   GasStrategy,
   getGasStrategy,
   ICedarERC1155DropV5,
@@ -26,13 +30,16 @@ import {
   ICedarERC721DropV7,
   ICedarERC721DropV7__factory,
 } from '@monaxlabs/aspen-sdk/dist/contracts';
-import { BigNumber } from 'ethers';
+import { parse } from '@monaxlabs/aspen-sdk/dist/utils';
+import { BigNumber, BigNumberish, Signer } from 'ethers';
+import { providers } from 'ethers/lib/ethers';
 import { formatEther } from 'ethers/lib/utils';
 import { createReadStream } from 'fs';
 import { GraphQLClient } from 'graphql-request';
 import { URL } from 'url';
 import { format } from 'util';
 import { demoMnemonic } from './keys';
+import { credentialsFile, providersFile } from './secrets';
 import {
   collectionInfoFile,
   CollectionPair,
@@ -41,8 +48,7 @@ import {
   writeCollectionInfo,
   writeIssuanceInfo,
 } from './state';
-import { deployERC721, wait } from './utils/collection';
-import {credentialsFile, providersFile} from "./secrets";
+import { deployERC1155, deployERC721, wait } from './utils/collection';
 
 // Global config for flows
 const network: SupportedNetwork = 'Mumbai';
@@ -55,17 +61,20 @@ type Drop1155 = ICedarERC1155DropV5;
 const Drop1155__factory = ICedarERC1155DropV5__factory;
 type Drop721 = ICedarERC721DropV7;
 const Drop721__factory = ICedarERC721DropV7__factory;
+type Drop = Drop721 | Drop1155;
 
 // Various flows:
 const flows = {
-  1: { cmd: cmdDeployCollections, desc: 'Contract creation via API of A and B (done once on our end)' },
+  1: { cmd: cmdDeployCollections, desc: 'Contract creation via API of collections A and B (done once on our end)' },
   2: { cmd: cmdClaimA, desc: 'Claiming some A tokens to some different addresses (client-side flow)' },
   3: { cmd: cmdIssueB, desc: 'Issue B based on looking up claims on A from claimgraph (server-side flow)' },
   4: { cmd: cmdGateA, desc: 'Gating something on A/B (server-side flow)' },
+  5: { cmd: cmdDeployAllowlistAndClaim, desc: 'Deploy collection with allowlist and claim' },
 } as const;
 
 // Change this to perform a different run
-const flowToRun: (keyof typeof flows)[] = [1, 2, 3, 4];
+// const flowToRun: (keyof typeof flows)[] = [1, 2, 3, 4];
+const flowToRun: (keyof typeof flows)[] = [5];
 
 let providerConfig: ProviderConfig;
 
@@ -213,7 +222,106 @@ async function cmdGateA(): Promise<void> {
   }
 }
 
+async function cmdDeployAllowlistAndClaim(): Promise<void> {
+  const provider = await getProvider(network, providerConfig);
+  const accounts = generateAccounts(4, { mnemonic: demoMnemonic, provider });
+  const allowlist = Object.fromEntries(accounts.slice(0, 2).map((w) => [parse(Address, w.address), 3]));
+
+  const contractAddress = await deployERC1155WithAllowlist(allowlist);
+  // TODO: test address, can be removed
+  // const contractAddress = parse(Address, '0xf098f440273037097bFA258e7A6D52125F3C1a5d');
+  console.error(`Deployed contract with allowlist to ${contractAddress}`);
+  // We have only defined a single token
+  const tokenId = 0;
+
+  const contract = new CollectionContract(provider, contractAddress);
+  await contract.load();
+  //
+  const phase = await contract.issuance.getActiveClaimConditions(tokenId);
+  if (!phase) {
+    throw new Error(`No active phase`);
+  }
+
+  const { pricePerToken, currency } = phase.activeClaimCondition;
+  const gasStrategy = await getGasStrategy(provider);
+
+  const reserve = await getSigner(network, providerConfig);
+  for (const claimer of accounts) {
+    const receiver = parse(Address, claimer.address);
+    console.error(`Considering allowlist claim for ${receiver}`);
+    const maxClaimable = allowlist[claimer.address] || 0;
+    if (maxClaimable) {
+      console.error(`Receiver should be on allow list, retrieving proof`);
+      const { proofs, proofMaxQuantityPerTransaction = 0 } = await ContractService.getMerkleProofsFromContract({
+        contractAddress,
+        walletAddress: receiver,
+        chainName: publishingChainFromNetwork(network),
+        tokenId,
+      });
+      if (!proofs || !proofMaxQuantityPerTransaction) {
+        throw new Error(`Merkle proof not retrieved from API for ${receiver}`);
+      }
+      const goodClaim = await contract.issuance.verifyClaim(
+        phase.activeClaimConditionId,
+        receiver,
+        tokenId,
+        maxClaimable,
+        currency,
+        pricePerToken,
+        true,
+      );
+      if (!goodClaim) {
+        throw new Error(`Claim did not verify!`);
+      }
+      const gas = await contract.issuance.estimateGasForClaim(
+        reserve,
+        receiver,
+        tokenId,
+        maxClaimable,
+        currency,
+        pricePerToken,
+        proofs,
+        proofMaxQuantityPerTransaction,
+      );
+      await gasClaimerWallet(reserve, provider, gas || 0, claimer.address, pricePerToken, gasStrategy);
+      console.error(`Performing claim for ${receiver}`);
+      await contract.issuance.claim(
+        claimer,
+        receiver,
+        tokenId,
+        maxClaimable,
+        currency,
+        pricePerToken,
+        proofs,
+        proofMaxQuantityPerTransaction,
+      );
+      console.error(`Allowlist claim successful for ${receiver}`);
+    }
+  }
+}
+
 // Support functions
+
+async function deployERC1155WithAllowlist(allowlist: Record<string, number>): Promise<Address> {
+  const now = new Date();
+  const collection = await deployERC1155(
+    network,
+    [
+      {
+        name: 'Allowlist Mint',
+        currency: Currency.NATIVE_COIN,
+        pricePerToken: 0.00001,
+        startTimestamp: now.toISOString(),
+        maxClaimableSupply: 0,
+        quantityLimitPerTransaction: 100,
+        waitTimeInSecondsBetweenClaims: 1,
+        allowlist,
+      },
+    ],
+    { tokenCount: 1, maxSupplyPerToken: 100 },
+  );
+  return parse(Address, collection.address);
+}
 
 async function deployERC721Pair(): Promise<CollectionPair> {
   const a = await deployERC721(network, { maxTokens: numberOfTokensPerCollection });
@@ -228,8 +336,8 @@ async function claimA(
   gasStrategy: GasStrategy,
   quantity: number,
 ): Promise<void> {
-  const [condition] = await dropA.getActiveClaimConditions();
-  const { pricePerToken, currency } = condition;
+  const phase = await dropA.getActiveClaimConditions();
+  const { pricePerToken, currency } = phase.condition;
   const priceEth = formatEther(pricePerToken);
   const receiver = await dropAReceiver.signer.getAddress();
   try {
@@ -253,28 +361,39 @@ async function claimA(
     console.error(`Claim transaction sent with tx hash ${tx.hash}`);
     await tx.wait();
   } catch (err) {
-    const innerError = getInnermostError(err);
-    if (innerError) {
-      const revertData = innerError.data;
-      if (typeof revertData === 'string') {
-        const decodedError = dropA.interface.parseError(revertData);
-        throw decodedError;
-      }
+    const customError = extractCustomError(dropA.interface, err);
+    if (customError) {
+      throw customError;
     }
-    // Beware stupidly nested solidity errors with 'data' set - they can be decoded to a custom error
-    console.error(err);
-    process.exit(1);
+    throw err;
   }
 }
 
-async function gasClaimerWallet(drop: Drop721, claimer: string, pricePerToken: BigNumber, gasStrategy: GasStrategy) {
+async function gasClaimerWalletForAcceptTerms(
+  drop: Drop721 | Drop1155,
+  claimer: string,
+  pricePerToken: BigNumber,
+  gasStrategy: GasStrategy,
+) {
   const gas = await drop.estimateGas['acceptTerms()']();
-  const walletAddress = await drop.signer.getAddress();
-  const gasPrice = await drop.provider.getGasPrice();
-  const value = gas.mul(gasPrice).add(pricePerToken);
-  const claimerBalance = await drop.provider.getBalance(claimer);
+  await gasClaimerWallet(drop.signer, drop.provider, gas, claimer, pricePerToken, gasStrategy);
+}
+
+async function gasClaimerWallet(
+  signer: Signer,
+  provider: providers.Provider,
+  gas: BigNumberish,
+  claimer: string,
+  pricePerToken: BigNumber,
+  gasStrategy: GasStrategy,
+) {
+  const walletAddress = await signer.getAddress();
+  console.error(`Gassing claimer wallet ${walletAddress}...`);
+  const gasPrice = await provider.getGasPrice();
+  const value = gasPrice.mul(gas).add(pricePerToken);
+  const claimerBalance = await provider.getBalance(claimer);
   if (claimerBalance.lt(value)) {
-    const tx = await drop.signer.sendTransaction({
+    const tx = await signer.sendTransaction({
       from: walletAddress,
       to: claimer,
       value: value.mul(4),
@@ -331,15 +450,15 @@ async function issueTokenFlow(
 }
 
 async function acceptTerms(
-  dropPayer: Drop721,
-  dropReceiver: Drop721,
+  dropPayer: Drop,
+  dropReceiver: Drop,
   receiver: string,
   pricePerToken: BigNumber,
   gasStrategy: GasStrategy,
   didUserAcceptTerms: (termsURI: string) => Promise<boolean>,
 ) {
   // Make sure our test wallets have enough gas to claim
-  await gasClaimerWallet(dropPayer, receiver, pricePerToken, gasStrategy);
+  await gasClaimerWalletForAcceptTerms(dropPayer, receiver, pricePerToken, gasStrategy);
   const termsAlreadyAccepted = await dropReceiver['hasAcceptedTerms(address)'](receiver);
   if (termsAlreadyAccepted) {
     return true;

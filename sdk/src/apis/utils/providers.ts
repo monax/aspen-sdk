@@ -2,6 +2,7 @@ import { Provider } from '@ethersproject/providers';
 import { providers, Signer, Wallet } from 'ethers';
 import * as t from 'io-ts';
 import { JsonFromString } from 'io-ts-types';
+import { Chain } from '../publishing';
 import { parseFromEnvOrFile } from './environment';
 
 // A JSON object of type EnvCredentials is expected to be saved here (ignored from repo)
@@ -59,4 +60,14 @@ export async function getProviderConfig(
   configEnvVarName = defaultConfigEnvVarName,
 ): Promise<ProviderConfig> {
   return parseFromEnvOrFile(JsonFromString.pipe(ProviderConfig), configFile, configEnvVarName);
+}
+
+export function publishingChainFromNetwork(network: SupportedNetwork): Chain {
+  // FIXME: single network definition, double-sided mapping, use const object instead of enum for lookup
+  if (network === 'Mainnet') return Chain.ETHEREUM;
+  if (network === 'Goerli') return Chain.GOERLI;
+  if (network === 'Polygon') return Chain.POLYGON;
+  if (network === 'Mumbai') return Chain.MUMBAI;
+
+  throw new Error(`Missing case in SupportedNetwork selection`);
 }
