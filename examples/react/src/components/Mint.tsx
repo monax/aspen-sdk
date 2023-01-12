@@ -45,7 +45,7 @@ const Mint: React.FC<{
 
     setLoadingMintButton(true);
 
-    (async () => {
+    await (async () => {
       const verifyClaim = await contract.issuance.verifyClaim(
         activeClaimConditions?.activeClaimConditionId,
         parse(Address, account),
