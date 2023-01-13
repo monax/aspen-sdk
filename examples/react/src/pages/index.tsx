@@ -1,5 +1,6 @@
+/* eslint-disable @next/next/no-img-element */
 import type { NextPage } from "next";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "../styles/Home.module.css";
 import { Web3Provider } from "@ethersproject/providers";
 import {
@@ -8,6 +9,7 @@ import {
   CollectionContract,
   CollectionUserClaimConditions,
   TermsUserAcceptanceState,
+  TokenMetadata,
   UserClaimConditions,
 } from "@monaxlabs/aspen-sdk/dist/contracts";
 import { parse } from "@monaxlabs/aspen-sdk/dist/utils";
@@ -20,10 +22,12 @@ import Mint from "components/Mint";
 import { loadStripe } from "@stripe/stripe-js";
 import Error from "components/common/Error";
 import { useError } from "hooks/useError";
+import Image from "next/image";
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-);
+type Metadata = {
+  uri: string | null;
+  metadata: TokenMetadata | null;
+};
 
 const DELAY = 30000;
 
@@ -36,6 +40,7 @@ const Home: NextPage = () => {
   const [contract, setContract] = useState<CollectionContract | null>(null);
   const [tokens, setTokens] = useState<number[]>([]);
   const [selectedToken, setSelectedToken] = useState("0");
+  const [tokenMetadata, setTokenMetadata] = useState<Metadata | null>(null);
   const [termsInfo, setTermsInfo] = useState<TermsUserAcceptanceState | null>(
     null
   );
@@ -97,11 +102,10 @@ const Home: NextPage = () => {
       );
       await collectionContract.load();
       setContract(collectionContract);
-
       let tokensCount = await collectionContract.issuance.getTokensCount();
       setTokens(Array.from(Array(tokensCount.toNumber()).keys()));
     })();
-  }, [active, library, contractAddress]);
+  }, [active, library, contractAddress, selectedToken]);
 
   useEffect(() => {
     if (!contract) return;
@@ -112,6 +116,14 @@ const Home: NextPage = () => {
       setTermsInfo(acceptTerms);
     })();
   }, [contract, account]);
+
+  useEffect(() => {
+    if (!contract || !selectedToken) return;
+    (async () => {
+      const metadata = await contract.metadata.getTokenMetadata(selectedToken);
+      setTokenMetadata(metadata);
+    })();
+  }, [contract, selectedToken]);
 
   return (
     <div>
@@ -142,7 +154,14 @@ const Home: NextPage = () => {
                 options={tokens.map((t) => String(t))}
               />
             </div>
-
+            {tokenMetadata?.metadata?.image && (
+              <img
+                src={tokenMetadata.metadata.image}
+                alt={tokenMetadata.metadata.name}
+                width="400"
+                height="400"
+              />
+            )}
             <LoadClaimConditions
               userClaimConditions={userClaimConditions}
               userClaimRestrictions={userClaimRestrictions}
