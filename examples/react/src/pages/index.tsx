@@ -79,16 +79,27 @@ const Home: NextPage = () => {
         return;
       }
       setUserClaimConditions(userConditions);
+      const { proofs, proofMaxQuantityPerTransaction } =
+        await ContractService.getMerkleProofsFromContract({
+          contractAddress,
+          walletAddress: account ? account : "",
+          chainName: Chain.MUMBAI,
+          tokenId: parseInt(selectedToken),
+        });
 
+      if (!proofs || proofs.length === 0 || !proofMaxQuantityPerTransaction) {
+        setError(`Merkle proof not retrieved from API for ${account}`);
+        return;
+      }
       const restrictions = await contract.issuance.getUserClaimRestrictions(
         userConditions,
         activeConditions,
-        [],
-        0
+        proofs,
+        proofMaxQuantityPerTransaction
       );
       setUserClaimRestrictions(restrictions);
     }
-  }, [account, contract, selectedToken, setError]);
+  }, [account, contract, contractAddress, selectedToken, setError]);
 
   useEffect(() => {
     loadClaimConditions();

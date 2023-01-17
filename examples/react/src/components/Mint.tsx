@@ -13,7 +13,10 @@ import { parse } from "@monaxlabs/aspen-sdk/dist/utils";
 import { useWeb3React } from "@web3-react/core";
 import { BigNumber } from "ethers";
 import { useEffect, useMemo, useState } from "react";
-import { Chain, ContractService } from "@monaxlabs/aspen-sdk/dist/apis/publishing";
+import {
+  Chain,
+  ContractService,
+} from "@monaxlabs/aspen-sdk/dist/apis/publishing";
 const network = {
   1: "Ethereum",
   137: "Polygon",
@@ -57,7 +60,18 @@ const Mint: React.FC<{
     setLoadingMintButton(true);
 
     await (async () => {
+      const { proofs, proofMaxQuantityPerTransaction } =
+        await ContractService.getMerkleProofsFromContract({
+          contractAddress,
+          walletAddress: account ? account : "",
+          chainName: Chain.MUMBAI,
+          tokenId: parseInt(tokenId),
+        });
 
+      if (!proofs || proofs.length === 0 || !proofMaxQuantityPerTransaction) {
+        onError(`Merkle proof not retrieved from API for ${account}`);
+        return;
+      }
       const verifyClaim = await contract.issuance.verifyClaim(
         activeClaimConditions?.activeClaimConditionId,
         parse(Address, account),
@@ -79,8 +93,8 @@ const Mint: React.FC<{
           BigNumber.from(1),
           activeClaimConditions.activeClaimCondition.currency,
           activeClaimConditions.activeClaimCondition.pricePerToken,
-          [],
-          0,
+          proofs,
+          proofMaxQuantityPerTransaction
         );
 
         if (tx) {
