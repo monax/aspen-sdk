@@ -7,8 +7,6 @@ export type Signerish = Signer | Provider;
 
 export type TokenStandard = 'ERC721' | 'ERC1155' | 'ERC20';
 
-export type ContractVerificationType = 'aspen-minted' | 'aspen-partner' | 'os-verified';
-
 export type MetadataKind = 'collection';
 
 export type CollectionMetadataPhase = {

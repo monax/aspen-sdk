@@ -2,22 +2,32 @@ import axios from 'axios';
 import { ethers } from 'ethers';
 import { CollectionContract, IPFS_GATEWAY_PREFIX } from '../..';
 import { resolveIpfsUrl } from '../../../utils';
-import { ICedarNFTMetadataV1, ICedarSFTMetadataV1, IPublicMetadataV0__factory } from '../../generated';
+import { IPublicMetadataV0__factory } from '../../generated';
 import { CollectionMetaImageType } from '../constants';
 import { FeatureSet } from '../features';
-import type { CollectionMetadata, ContractVerificationType, TokenMetadata } from '../types';
+import type { CollectionMetadata, TokenMetadata } from '../types';
 
-// TODO...
-const handledFeatures = ['metadata/IContractMetadata.sol:ICedarMetadataV1'] as const;
+export const MetadataFeatures = [
+  'metadata/IContractMetadata.sol:ICedarMetadataV1',
+  'metadata/IContractMetadata.sol:IPublicMetadataV0',
+  // 'metadata/IContractMetadata.sol:IRestrictedMetadataV0',
+  // 'metadata/IContractMetadata.sol:IRestrictedMetadataV1',
+  // 'metadata/IContractMetadata.sol:IRestrictedMetadataV2',
+  'metadata/INFTMetadata.sol:IAspenNFTMetadataV1',
+  'metadata/INFTMetadata.sol:ICedarNFTMetadataV1',
+  'metadata/ISFTMetadata.sol:IAspenSFTMetadataV1',
+  'metadata/ISFTMetadata.sol:ICedarSFTMetadataV1',
+] as const;
 
-type HandledFeature = (typeof handledFeatures)[number];
+export type MetadataFeatures = (typeof MetadataFeatures)[number];
 
-export class Metadata extends FeatureSet<HandledFeature> {
-  constructor(base: CollectionContract) {
-    super(base, handledFeatures);
-  }
+export class Metadata extends FeatureSet<MetadataFeatures> {
   private _uri: string | null = null;
   private _metadata: CollectionMetadata | null = null;
+
+  constructor(base: CollectionContract) {
+    super(base, MetadataFeatures);
+  }
 
   /**
    * @returns always returns true - very optimistic yay :)
@@ -26,8 +36,21 @@ export class Metadata extends FeatureSet<HandledFeature> {
     return true;
   }
 
+  protected readonly getPartition = this.makeGetPartition((partitioner) => {
+    const get = partitioner({
+      contractV0: [
+        'metadata/IContractMetadata.sol:ICedarMetadataV1',
+        'metadata/IContractMetadata.sol:IPublicMetadataV0',
+      ],
+      nftV0: ['metadata/INFTMetadata.sol:ICedarNFTMetadataV1', 'metadata/INFTMetadata.sol:IAspenNFTMetadataV1'],
+      sftV0: ['metadata/ISFTMetadata.sol:ICedarSFTMetadataV1', 'metadata/ISFTMetadata.sol:IAspenSFTMetadataV1'],
+    });
+
+    return { get };
+  });
+
   /**
-   * Get cached uri value
+   * Get cached contract URI value
    *
    * @returns If present, it should be either IPFS (99.99%) or normal URL
    */
@@ -36,7 +59,7 @@ export class Metadata extends FeatureSet<HandledFeature> {
   }
 
   /**
-   * Get cached metadata value
+   * Get cached contract metadata value
    */
   get metadata(): CollectionMetadata | null {
     return this._metadata;
@@ -45,11 +68,17 @@ export class Metadata extends FeatureSet<HandledFeature> {
   async loadContractMetadataUri(forceUpdate = false): Promise<string | null> {
     if (this._uri === null || forceUpdate) {
       try {
-        // NOTE: we don't want to explicitly check if the contract supports this interface
-        // because this way we can support contracts deployed by other parties
-        // as the signature is standardized across the community
-        const iMetadata = IPublicMetadataV0__factory.connect(this.base.address, this.base.provider);
-        this._uri = await iMetadata.contractURI();
+        const { contractV0 } = this.getPartition('get')(this.base.interfaces);
+        if (contractV0) {
+          const iMetadata = contractV0.connectReadOnly();
+          this._uri = await iMetadata.contractURI();
+        } else {
+          // NOTE: we don't want to explicitly check if the contract supports this interface
+          // because this way we can support contracts deployed by other parties
+          // as the signature is standardized across the community
+          const iMetadata = IPublicMetadataV0__factory.connect(this.base.address, this.base.provider);
+          this._uri = await iMetadata.contractURI();
+        }
       } catch {}
     }
 
@@ -133,17 +162,15 @@ export class Metadata extends FeatureSet<HandledFeature> {
 
   protected async getTokenUriERC1155(tokenId: string): Promise<string | null> {
     try {
-      const interfaces = this.base.interfaces;
-      let iSft: ICedarSFTMetadataV1 | ethers.Contract;
-
-      if (interfaces['metadata/IContractMetadata.sol:ICedarMetadataV1']) {
-        iSft = interfaces['metadata/IContractMetadata.sol:ICedarMetadataV1'].connectReadOnly();
+      const { sftV0 } = this.getPartition('get')(this.base.interfaces);
+      if (sftV0) {
+        const iSft = sftV0.connectReadOnly();
+        return await iSft.uri(tokenId);
       } else {
         const abi = ['function uri(uint256 _tokenId) external view returns (string memory)'];
-        iSft = new ethers.Contract(this.base.address, abi, this.base.provider);
+        const iSft = new ethers.Contract(this.base.address, abi, this.base.provider);
+        return await iSft.uri(tokenId);
       }
-
-      return await iSft.uri(tokenId);
     } catch (err) {
       this.base.error('Failed to get token metadata', err, 'getTokenUriERC1155', { tokenId });
     }
@@ -153,17 +180,15 @@ export class Metadata extends FeatureSet<HandledFeature> {
 
   protected async getTokenUriERC721(tokenId: string): Promise<string | null> {
     try {
-      const interfaces = this.base.interfaces;
-      let iNft: ICedarNFTMetadataV1 | ethers.Contract;
-
-      if (interfaces['metadata/IContractMetadata.sol:ICedarMetadataV1']) {
-        iNft = interfaces['metadata/IContractMetadata.sol:ICedarMetadataV1'].connectReadOnly();
+      const { nftV0 } = this.getPartition('get')(this.base.interfaces);
+      if (nftV0) {
+        const iNft = nftV0.connectReadOnly();
+        return await iNft.tokenURI(tokenId);
       } else {
         const abi = ['function tokenURI(uint256 _tokenId) external view returns (string memory)'];
-        iNft = new ethers.Contract(this.base.address, abi, this.base.provider);
+        const iNft = new ethers.Contract(this.base.address, abi, this.base.provider);
+        return await iNft.tokenURI(tokenId);
       }
-
-      return await iNft.tokenURI(tokenId);
     } catch (err) {
       this.base.error('Failed to get token metadata', err, 'getTokenUriERC721', { tokenId });
     }
@@ -191,15 +216,10 @@ export class Metadata extends FeatureSet<HandledFeature> {
     if (newMeta.image_ipfs) {
       newMeta.image_ipfs = resolveIpfsUrl(newMeta.image_ipfs, IPFS_GATEWAY_PREFIX);
     }
+    if (newMeta.animation_url) {
+      newMeta.animation_url = resolveIpfsUrl(newMeta.animation_url, IPFS_GATEWAY_PREFIX);
+    }
 
     return newMeta;
-  }
-
-  getVerifications(): ContractVerificationType[] {
-    const interfaces = this.base.interfaces;
-
-    return interfaces['IAspenFeatures.sol:ICedarFeaturesV0'] || interfaces['ICedarFeatures.sol:ICedarFeaturesV0']
-      ? ['aspen-minted']
-      : [];
   }
 }

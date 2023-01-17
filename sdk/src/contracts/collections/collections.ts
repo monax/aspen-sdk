@@ -10,6 +10,7 @@ import {
   TokensIssuedEventObject,
 } from '../generated/issuance/ICedarNFTIssuance.sol/IRestrictedNFTIssuanceV2';
 import { ChainId } from '../network';
+import { AspenContractInterfaces, ERC1155StandardInterfaces, ERC721StandardInterfaces } from './constants';
 import {
   extractKnownSupportedFeatures,
   FeatureContract,
@@ -60,6 +61,8 @@ export class CollectionContract {
   private static _debugHandler: DebugHandler | undefined;
   private static _errorHandler: ErrorHandler | undefined;
   private static _throwErrors = false;
+
+  private memos: Record<string, unknown> = {};
 
   readonly address: Address;
   // features
@@ -122,7 +125,7 @@ export class CollectionContract {
           } catch (err) {
             throw err;
           }
-          let issueEvents: NFTTokenIssuance[] = [];
+          const issueEvents: NFTTokenIssuance[] = [];
           if (!tokenIssued) {
             tokenIssued = this.assumeFeature('issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2');
           }
@@ -199,6 +202,10 @@ export class CollectionContract {
     return this._provider;
   }
 
+  get isAspenContract(): boolean {
+    return AspenContractInterfaces.some((i) => this._supportedFeatures.includes(i));
+  }
+
   async getChainId(): Promise<ChainId> {
     if (!this.chainId) {
       const { chainId } = await this.provider.getNetwork();
@@ -212,16 +219,22 @@ export class CollectionContract {
       try {
         // Preload chainId
         await this.getChainId();
+
+        // get supported features
         const contract = ICedarFeaturesV0__factory.connect(this.address, this._provider);
         this._supportedFeatures = extractKnownSupportedFeatures(await contract.supportedFeatures());
         this.debug('Loaded supported features', this._supportedFeatures);
 
-        this.buildInterface();
+        // build interfaces
+        this.buildInterfaces();
       } catch (err) {
         this._supportedFeatures = [];
         this._interfaces = null;
         this.error('Failed to load supported features', err, 'base.load', { forceUpdate });
       }
+
+      // clear memoised values
+      this.memos = {};
     }
 
     return this._interfaces != null;
@@ -231,7 +244,16 @@ export class CollectionContract {
     return FeatureInterface.fromFeature(feature, this.address, this._provider);
   }
 
-  protected buildInterface() {
+  public memoise<T>(key: string, thunk: () => T): () => T {
+    return () => {
+      if (!this.memos[key]) {
+        this.memos[key] = thunk();
+      }
+      return this.memos[key] as T;
+    };
+  }
+
+  protected buildInterfaces() {
     if (this._supportedFeatures.length == 0) {
       this._interfaces = null;
       this.debug('Interfaces set to null');
@@ -246,24 +268,14 @@ export class CollectionContract {
 
     this.debug('Interfaces initialized');
 
-    this.detectTokenStandards();
+    this.detectTokenStandard();
   }
 
-  protected detectTokenStandards() {
-    if (!this._interfaces) {
-      this._tokenStandard = null;
-    } else if (
-      this._interfaces['standard/IERC1155.sol:IERC1155V0'] ||
-      this._interfaces['standard/IERC1155.sol:IERC1155SupplyV0'] ||
-      this._interfaces['standard/IERC1155.sol:IERC1155SupplyV1'] ||
-      this._interfaces['issuance/ISFTSupply.sol:ISFTSupplyV0']
-    ) {
-      this._tokenStandard = 'ERC1155';
-    } else if (
-      this._interfaces['standard/IERC721.sol:IERC721V0'] ||
-      this._interfaces['issuance/INFTSupply.sol:INFTSupplyV0']
-    ) {
+  protected detectTokenStandard() {
+    if (ERC721StandardInterfaces.some((i) => this._supportedFeatures.includes(i))) {
       this._tokenStandard = 'ERC721';
+    } else if (ERC1155StandardInterfaces.some((i) => this._supportedFeatures.includes(i))) {
+      this._tokenStandard = 'ERC1155';
     } else {
       this._tokenStandard = null;
     }

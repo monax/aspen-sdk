@@ -3,7 +3,7 @@ import { Addressish, asAddress } from '../../address';
 import { CollectionContract } from '../collections';
 import { FeatureSet } from '../features';
 
-const handledFeatures = [
+export const Erc1155Features = [
   'standard/IERC1155.sol:IERC1155SupplyV0',
   'standard/IERC1155.sol:IERC1155SupplyV1',
   'standard/IERC1155.sol:IERC1155SupplyV2',
@@ -13,11 +13,11 @@ const handledFeatures = [
   'issuance/ISFTSupply.sol:ISFTSupplyV1',
 ] as const;
 
-type HandledFeature = (typeof handledFeatures)[number];
+export type Erc1155Feature = (typeof Erc1155Features)[number];
 
-export class Erc1155 extends FeatureSet<HandledFeature> {
+export class Erc1155 extends FeatureSet<Erc1155Feature> {
   constructor(base: CollectionContract) {
-    super(base, handledFeatures);
+    super(base, Erc1155Features);
   }
 
   getPartition = this.makeGetPartition((partitioner) => {

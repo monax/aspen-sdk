@@ -4,7 +4,7 @@ import { resolveIpfsUrl } from '../../../utils/ipfs';
 import { FeatureSet } from '../features';
 import type { Signerish, TermsUserAcceptanceState } from '../types';
 
-const handledFeatures = [
+export const AgreementsFeatures = [
   'agreement/IAgreement.sol:ICedarAgreementV0',
   'agreement/ICedarAgreement.sol:ICedarAgreementV0',
   'agreement/IAgreement.sol:ICedarAgreementV1',
@@ -14,42 +14,27 @@ const handledFeatures = [
   'agreement/IAgreement.sol:IPublicAgreementV1',
 ] as const;
 
-export class Agreements extends FeatureSet<(typeof handledFeatures)[number]> {
+export type AgreementsFeatures = (typeof AgreementsFeatures)[number];
+
+export class Agreements extends FeatureSet<AgreementsFeatures> {
   constructor(base: CollectionContract) {
-    super(base, handledFeatures);
+    super(base, AgreementsFeatures);
   }
+
   protected readonly getPartition = this.makeGetPartition((partitioner) => {
     // Split the handled features into groups that can be handled on the same path for each function
     // It is a compile-time error to omit a feature from handledFeatures in each partition
-    const getState = partitioner({
-      cedarAgreementV0: [
-        'agreement/ICedarAgreement.sol:ICedarAgreementV0',
-        'agreement/IAgreement.sol:ICedarAgreementV0',
-      ],
-      cedarAgreementV1: [
-        'agreement/IAgreement.sol:ICedarAgreementV1',
-        'agreement/ICedarAgreement.sol:ICedarAgreementV1',
-      ],
-      publicAgreement: [
-        'agreement/ICedarAgreement.sol:IPublicAgreementV0',
-        'agreement/IAgreement.sol:IPublicAgreementV0',
-        'agreement/IAgreement.sol:IPublicAgreementV1',
-      ],
-    });
     const acceptTerms = partitioner({
-      plainAccept: [
-        'agreement/ICedarAgreement.sol:ICedarAgreementV0',
-        'agreement/IAgreement.sol:ICedarAgreementV0',
+      v0: ['agreement/ICedarAgreement.sol:ICedarAgreementV0', 'agreement/IAgreement.sol:ICedarAgreementV0'],
+      v1: ['agreement/IAgreement.sol:ICedarAgreementV1', 'agreement/ICedarAgreement.sol:ICedarAgreementV1'],
+      v2: [
         'agreement/ICedarAgreement.sol:IPublicAgreementV0',
         'agreement/IAgreement.sol:IPublicAgreementV0',
         'agreement/IAgreement.sol:IPublicAgreementV1',
       ],
-      overloadedAccept: [
-        'agreement/IAgreement.sol:ICedarAgreementV1',
-        'agreement/ICedarAgreement.sol:ICedarAgreementV1',
-      ],
     });
-    return { getState, acceptTerms };
+
+    return { acceptTerms };
   });
 
   async getState(userAddress: Address): Promise<TermsUserAcceptanceState> {
@@ -58,40 +43,44 @@ export class Agreements extends FeatureSet<(typeof handledFeatures)[number]> {
     let termsURI = '';
     let termsVersion = 0;
 
-    const { cedarAgreementV0, cedarAgreementV1, publicAgreement } = this.getPartition('getState')(this.base.interfaces);
+    const acceptTerms = this.getPartition('acceptTerms')(this.base.interfaces);
 
-    if (publicAgreement) {
-      const agreement = await publicAgreement.connectReadOnly();
-      ({ termsActivated, termsVersion, termsURI } = await agreement.getTermsDetails());
-      termsAccepted = await agreement['hasAcceptedTerms(address)'](userAddress);
-    } else if (cedarAgreementV1) {
-      const agreement = await cedarAgreementV1.connectReadOnly();
-      ({ termsActivated, termsVersion, termsURI } = await agreement.getTermsDetails());
-      termsAccepted = await agreement.hasAcceptedTerms(userAddress);
-    } else if (cedarAgreementV0) {
-      const agreement = cedarAgreementV0.connectReadOnly();
-      termsActivated = await agreement.termsActivated();
-      termsAccepted = await agreement.getAgreementStatus(userAddress);
-      termsURI = await agreement.userAgreement();
-      termsActivated = await agreement.termsActivated();
+    if (acceptTerms.v2) {
+      const iAgreement = await acceptTerms.v2.connectReadOnly();
+      ({ termsActivated, termsVersion, termsURI } = await iAgreement.getTermsDetails());
+      termsAccepted = await iAgreement['hasAcceptedTerms(address)'](userAddress);
+    } else if (acceptTerms.v1) {
+      const iAgreement = await acceptTerms.v1.connectReadOnly();
+      ({ termsActivated, termsVersion, termsURI } = await iAgreement.getTermsDetails());
+      termsAccepted = await iAgreement.hasAcceptedTerms(userAddress);
+    } else if (acceptTerms.v0) {
+      const iAgreement = acceptTerms.v0.connectReadOnly();
+      termsActivated = await iAgreement.termsActivated();
+      termsAccepted = await iAgreement.getAgreementStatus(userAddress);
+      termsURI = await iAgreement.userAgreement();
+      termsActivated = await iAgreement.termsActivated();
     }
 
     const termsLink = resolveIpfsUrl(termsURI, IPFS_GATEWAY_PREFIX);
-    this.base.debug('Loaded terms state', { termsActivated, termsAccepted, termsLink });
-    return { termsActivated, termsAccepted, termsLink: termsLink, termsVersion };
+    this.base.debug('Loaded terms state', { termsActivated, termsAccepted, termsLink, termsVersion });
+
+    return { termsActivated, termsAccepted, termsLink, termsVersion };
   }
 
   async acceptTerms(signer: Signerish): Promise<ContractTransaction | null> {
-    const { plainAccept, overloadedAccept } = this.getPartition('acceptTerms')(this.base.interfaces);
+    const acceptTerms = this.getPartition('acceptTerms')(this.base.interfaces);
 
     let acceptTx: ContractTransaction | null = null;
     try {
-      if (plainAccept) {
-        const agreement = plainAccept.connectWith(signer);
-        acceptTx = await agreement.acceptTerms();
-      } else if (overloadedAccept) {
-        const agreement = overloadedAccept.connectWith(signer);
-        acceptTx = await agreement['acceptTerms()']();
+      if (acceptTerms.v2) {
+        const iAgreement = acceptTerms.v2.connectWith(signer);
+        acceptTx = await iAgreement.acceptTerms();
+      } else if (acceptTerms.v1) {
+        const iAgreement = acceptTerms.v1.connectWith(signer);
+        acceptTx = await iAgreement['acceptTerms()']();
+      } else if (acceptTerms.v0) {
+        const iAgreement = acceptTerms.v0.connectWith(signer);
+        acceptTx = await iAgreement.acceptTerms();
       } else {
         throw new Error(`Cannot accept terms because no supported feature on contract`);
       }
@@ -105,16 +94,19 @@ export class Agreements extends FeatureSet<(typeof handledFeatures)[number]> {
   }
 
   async estimateGasForAcceptTerms(signer: Signerish): Promise<BigNumber | null> {
-    const { plainAccept, overloadedAccept } = this.getPartition('acceptTerms')(this.base.interfaces);
+    const acceptTerms = this.getPartition('acceptTerms')(this.base.interfaces);
 
     let gas: BigNumber | null = null;
     try {
-      if (plainAccept) {
-        const agreement = plainAccept.connectWith(signer);
-        gas = await agreement.estimateGas.acceptTerms();
-      } else if (overloadedAccept) {
-        const agreement = overloadedAccept.connectWith(signer);
-        gas = await agreement.estimateGas['acceptTerms()']();
+      if (acceptTerms.v2) {
+        const iAgreement = acceptTerms.v2.connectWith(signer);
+        gas = await iAgreement.estimateGas.acceptTerms();
+      } else if (acceptTerms.v1) {
+        const iAgreement = acceptTerms.v1.connectWith(signer);
+        gas = await iAgreement.estimateGas['acceptTerms()']();
+      } else if (acceptTerms.v0) {
+        const iAgreement = acceptTerms.v0.connectWith(signer);
+        gas = await iAgreement.estimateGas.acceptTerms();
       } else {
         throw new Error(`Cannot accept terms because no supported feature on contract`);
       }

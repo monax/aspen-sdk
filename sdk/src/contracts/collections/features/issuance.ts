@@ -8,31 +8,18 @@ import {
   ethers,
   PayableOverrides,
 } from 'ethers';
+import { Address, CollectionContract, isSameAddress, NATIVE_TOKEN, ZERO_BYTES32 } from '../../';
 import {
   ICedarNFTIssuanceV0__factory,
-  ICedarNFTIssuanceV1,
-  ICedarNFTIssuanceV2,
-  ICedarNFTIssuanceV3,
-  ICedarNFTIssuanceV4,
   ICedarSFTIssuanceV0__factory,
-  ICedarSFTIssuanceV1,
-  ICedarSFTIssuanceV2,
-  ICedarSFTIssuanceV3,
-  IERC1155SupplyV0,
   IERC1155SupplyV1,
   IERC1155SupplyV2,
-  IPublicNFTIssuanceV0,
-  IPublicNFTIssuanceV1,
-  IPublicNFTIssuanceV2,
-  IPublicSFTIssuanceV0,
-  IPublicSFTIssuanceV1,
-  IPublicSFTIssuanceV2,
   ISFTSupplyV0,
 } from '../../generated';
 import type { TokensClaimedEventObject as ERC721TokensClaimedEventObject } from '../../generated/issuance/ICedarNFTIssuance.sol/ICedarNFTIssuanceV4';
 import type { TokensClaimedEventObject as ERC1155TokensClaimedEventObject } from '../../generated/issuance/ICedarSFTIssuance.sol/ICedarSFTIssuanceV2';
-import { Address, CollectionContract, isSameAddress, NATIVE_TOKEN, ZERO_BYTES32 } from '../../index';
 import { FeatureSet } from '../features';
+
 import { max, min } from '../number';
 import type {
   ActiveClaimConditions,
@@ -58,9 +45,10 @@ function ensureERC1155TokenId(tokenId: BigNumberish | null): BigNumberish {
 }
 
 // Reasonably large number to compare with
-const SUPPLY_THRESHOLD = constants.MaxInt256;
+export const SUPPLY_THRESHOLD = constants.MaxInt256;
 
-const handledFeatures = [
+export const IssuanceFeatures = [
+  'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV0',
   'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1',
   'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2',
   'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3',
@@ -68,18 +56,144 @@ const handledFeatures = [
   'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0',
   'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1',
   'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2',
+  // 'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV0',
+  // 'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV1',
+  // 'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2',
+  // 'issuance/ICedarPremint.sol:ICedarPremintV0',
+  'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV0',
   'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1',
   'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2',
   'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3',
   'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0',
   'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1',
   'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2',
+  // 'issuance/ICedarSFTIssuance.sol:IRestrictedSFTIssuanceV0',
+  // 'issuance/ICedarSFTIssuance.sol:IRestrictedSFTIssuanceV1',
+  // 'issuance/ICedarSFTIssuance.sol:IRestrictedSFTIssuanceV2',
+  // 'issuance/INFTLimitSupply.sol:IRestrictedNFTLimitSupplyV0',
+  // 'issuance/INFTLimitSupply.sol:IRestrictedNFTLimitSupplyV1',
+  'issuance/INFTSupply.sol:INFTSupplyV0',
+  'issuance/INFTSupply.sol:INFTSupplyV1',
+  // 'issuance/ISFTLimitSupply.sol:IRestrictedSFTLimitSupplyV0',
+  // 'issuance/ISFTLimitSupply.sol:IRestrictedSFTLimitSupplyV1',
+  'issuance/ISFTSupply.sol:ISFTSupplyV0',
+  'issuance/ISFTSupply.sol:ISFTSupplyV1',
+  'issuance/INFTLimitSupply.sol:INFTLimitSupplyV0',
+  'issuance/ISFTLimitSupply.sol:ISFTLimitSupplyV0',
+  // 'issuance/ICedarClaimable.sol:ICedarClaimableV0',
+  // 'issuance/ICedarERC20Payable.sol:ICedarERC20PayableV0',
+  'issuance/ICedarIssuance.sol:ICedarIssuanceV0',
+  'issuance/ICedarIssuance.sol:ICedarIssuanceV1',
+  // 'issuance/ICedarIssuer.sol:ICedarIssuerV0',
+  // 'issuance/ICedarNativePayable.sol:ICedarNativePayableV0',
+  // 'issuance/ICedarOrderFiller.sol:ICedarOrderFillerV0',
 ] as const;
 
-export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
+export type IssuanceFeatures = (typeof IssuanceFeatures)[number];
+
+export class Issuance extends FeatureSet<IssuanceFeatures> {
   constructor(base: CollectionContract) {
-    super(base, handledFeatures);
+    super(base, IssuanceFeatures);
   }
+
+  protected readonly getPartition = this.makeGetPartition((partitioner) => {
+    const claim = partitioner({
+      nft: [
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1',
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2',
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3',
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4',
+        'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0',
+        'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1',
+        'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2',
+      ],
+      sft: [
+        'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1',
+        'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2',
+        'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3',
+        'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0',
+        'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1',
+        'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2',
+      ],
+      _: [...IssuanceFeatures],
+    });
+
+    const tokenCount = partitioner({
+      nftV0: [
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1',
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2',
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3',
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4',
+        'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0',
+        'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1',
+        'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2',
+      ],
+      nftV1: ['issuance/INFTSupply.sol:INFTSupplyV0'],
+      sft: [
+        'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1',
+        'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2',
+        'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3',
+        'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0',
+        'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1',
+        'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2',
+      ],
+      _: [...IssuanceFeatures],
+    });
+
+    const getActiveConditions = partitioner({
+      nftV0: [
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1',
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2',
+      ],
+      nftV1: ['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3'],
+      nftV2: [
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4',
+        'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0',
+        'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1',
+        'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2',
+      ],
+      sftV0: ['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1'],
+      sftV1: ['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2'],
+      sftV2: [
+        'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3',
+        'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0',
+        'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1',
+        'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2',
+      ],
+      _: [...IssuanceFeatures],
+    });
+
+    const getUserConditions = partitioner({
+      nftV0: [
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1',
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2',
+      ],
+      nftV1: ['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3'],
+      nftV2: [
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4',
+        'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0',
+        'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1',
+        'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2',
+      ],
+      sftV0: ['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1'],
+      sftV1: [
+        'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2',
+        'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3',
+        'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0',
+        'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1',
+        'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2',
+      ],
+      _: [...IssuanceFeatures],
+    });
+
+    const tokenSupply = partitioner({
+      sftV0: ['issuance/ISFTSupply.sol:ISFTSupplyV0'],
+      _: [...IssuanceFeatures],
+    });
+
+    return { claim, tokenCount, getActiveConditions, getUserConditions, tokenSupply };
+  });
+
   /**
    * Get the metadata for all claimed tokens from the events in a contract receipt
    *
@@ -222,38 +336,16 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
     proofMaxQuantityPerTransaction: BigNumberish,
   ): Promise<ContractTransaction | null> {
     try {
-      const interfaces = this.base.interfaces;
-
-      let iSftIssuance:
-        | ICedarSFTIssuanceV1
-        | ICedarSFTIssuanceV2
-        | ICedarSFTIssuanceV3
-        | IPublicSFTIssuanceV0
-        | IPublicSFTIssuanceV1
-        | IPublicSFTIssuanceV2
-        | null = null;
-      if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1']) {
-        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1'].connectWith(signer);
-      } else if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2']) {
-        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2'].connectWith(signer);
-      } else if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3']) {
-        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3'].connectWith(signer);
-      } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0']) {
-        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0'].connectWith(signer);
-      } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1']) {
-        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1'].connectWith(signer);
-      } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2']) {
-        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2'].connectWith(signer);
-      }
-
-      if (!iSftIssuance) return null;
+      const { sft } = this.getPartition('claim')(this.base.interfaces);
+      if (!sft) return null;
 
       const overrides: PayableOverrides = {};
       if (isSameAddress(currency, NATIVE_TOKEN)) {
         overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
-      const tx = await iSftIssuance.claim(
+      const iSft = await sft.connectWith(signer);
+      const tx = await iSft.claim(
         receiver,
         BigNumber.from(tokenId),
         quantity,
@@ -272,67 +364,6 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
     return null;
   }
 
-  protected getNftIssuance(signer: Signerish) {
-    const interfaces = this.base.interfaces;
-
-    let iNftIssuance:
-      | ICedarNFTIssuanceV1
-      | ICedarNFTIssuanceV2
-      | ICedarNFTIssuanceV3
-      | ICedarNFTIssuanceV4
-      | IPublicNFTIssuanceV0
-      | IPublicNFTIssuanceV1
-      | IPublicNFTIssuanceV2
-      | null = null;
-
-    if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1']) {
-      iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1'].connectWith(signer);
-    } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2']) {
-      iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2'].connectWith(signer);
-    } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3']) {
-      iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3'].connectWith(signer);
-    } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4']) {
-      iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4'].connectWith(signer);
-    } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0']) {
-      iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0'].connectWith(signer);
-    } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1']) {
-      iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1'].connectWith(signer);
-    } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2']) {
-      iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2'].connectWith(signer);
-    }
-
-    return iNftIssuance;
-  }
-
-  protected getSftIssuance(signer: Signerish) {
-    const interfaces = this.base.interfaces;
-
-    let iSftIssuance:
-      | ICedarSFTIssuanceV1
-      | ICedarSFTIssuanceV2
-      | ICedarSFTIssuanceV3
-      | IPublicSFTIssuanceV0
-      | IPublicSFTIssuanceV1
-      | IPublicSFTIssuanceV2
-      | null = null;
-
-    if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1']) {
-      iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1'].connectWith(signer);
-    } else if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2']) {
-      iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2'].connectWith(signer);
-    } else if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3']) {
-      iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3'].connectWith(signer);
-    } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0']) {
-      iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0'].connectWith(signer);
-    } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1']) {
-      iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1'].connectWith(signer);
-    } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2']) {
-      iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2'].connectWith(signer);
-    }
-
-    return iSftIssuance;
-  }
-
   protected async claimERC721(
     signer: Signerish,
     receiver: Address,
@@ -343,15 +374,16 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
     proofMaxQuantityPerTransaction: BigNumberish,
   ): Promise<ContractTransaction | null> {
     try {
-      const iNftIssuance = this.getNftIssuance(signer);
-      if (!iNftIssuance) return null;
+      const { nft } = this.getPartition('claim')(this.base.interfaces);
+      if (!nft) return null;
 
       const overrides: PayableOverrides = {};
       if (isSameAddress(currency, NATIVE_TOKEN)) {
         overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
-      const tx = await iNftIssuance.claim(
+      const iNft = nft.connectWith(signer);
+      const tx = await iNft.claim(
         receiver,
         quantity,
         currency,
@@ -424,15 +456,16 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
     try {
       tokenId = ensureERC1155TokenId(tokenId);
 
-      const iSftIssuance = this.getSftIssuance(signer);
-      if (!iSftIssuance) return null;
+      const { sft } = this.getPartition('claim')(this.base.interfaces);
+      if (!sft) return null;
 
       const overrides: PayableOverrides = {};
       if (isSameAddress(currency, NATIVE_TOKEN)) {
         overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
-      return await iSftIssuance.estimateGas.claim(
+      const iSft = sft.connectWith(signer);
+      return await iSft.estimateGas.claim(
         receiver,
         BigNumber.from(tokenId),
         quantity,
@@ -459,15 +492,16 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
     proofMaxQuantityPerTransaction: BigNumberish,
   ): Promise<BigNumber | null> {
     try {
-      const iNftIssuance = this.getNftIssuance(signer);
-      if (!iNftIssuance) return null;
+      const { nft } = this.getPartition('claim')(this.base.interfaces);
+      if (!nft) return null;
 
       const overrides: PayableOverrides = {};
       if (isSameAddress(currency, NATIVE_TOKEN)) {
         overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
-      return await iNftIssuance.estimateGas.claim(
+      const iNft = nft.connectWith(signer);
+      return await iNft.estimateGas.claim(
         receiver,
         quantity,
         currency,
@@ -545,37 +579,14 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
     verifyMaxQuantityPerTransaction: boolean,
   ): Promise<boolean> {
     try {
-      const interfaces = this.base.interfaces;
-
-      let iSftIssuance:
-        | ICedarSFTIssuanceV1
-        | ICedarSFTIssuanceV2
-        | ICedarSFTIssuanceV3
-        | IPublicSFTIssuanceV0
-        | IPublicSFTIssuanceV1
-        | IPublicSFTIssuanceV2
-        | null = null;
-
-      if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1']) {
-        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1'].connectReadOnly();
-      } else if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2']) {
-        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2'].connectReadOnly();
-      } else if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3']) {
-        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3'].connectReadOnly();
-      } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0']) {
-        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0'].connectReadOnly();
-      } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1']) {
-        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1'].connectReadOnly();
-      } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2']) {
-        iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2'].connectReadOnly();
-      }
-
-      if (!iSftIssuance) return false;
+      const { sft } = this.getPartition('claim')(this.base.interfaces);
+      if (!sft) return false;
 
       // this internal try catches the revert error
       // which is a signal that the claim conditions aren't met
       try {
-        await iSftIssuance.verifyClaim(
+        const iSft = sft.connectReadOnly();
+        await iSft.verifyClaim(
           conditionId,
           receiver,
           tokenId,
@@ -611,42 +622,16 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
     verifyMaxQuantityPerTransaction: boolean,
   ): Promise<boolean> {
     try {
-      const interfaces = this.base.interfaces;
-
-      let iNftIssuance:
-        | ICedarNFTIssuanceV1
-        | ICedarNFTIssuanceV2
-        | ICedarNFTIssuanceV3
-        | ICedarNFTIssuanceV4
-        | IPublicNFTIssuanceV0
-        | IPublicNFTIssuanceV1
-        | IPublicNFTIssuanceV2
-        | null = null;
-
-      if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1']) {
-        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1'].connectReadOnly();
-      } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2']) {
-        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2'].connectReadOnly();
-      } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3']) {
-        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3'].connectReadOnly();
-      } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4']) {
-        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4'].connectReadOnly();
-      } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0']) {
-        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0'].connectReadOnly();
-      } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1']) {
-        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1'].connectReadOnly();
-      } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2']) {
-        iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2'].connectReadOnly();
-      }
-
-      if (!iNftIssuance) return false;
+      const { nft } = this.getPartition('claim')(this.base.interfaces);
+      if (!nft) return false;
 
       // this internal try catches the revert error
       // which is a signal that the claim conditions aren't met
       // FIXME[Silas]: This is throwing away the custom errors. They should be decoded and returned using `decodeCustomError`
       //  from errors.ts.
       try {
-        await iNftIssuance.verifyClaim(
+        const iNft = nft.connectReadOnly();
+        await iNft.verifyClaim(
           conditionId,
           receiver,
           quantity,
@@ -812,20 +797,10 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
 
   protected async getActiveClaimConditionsERC721(): Promise<ActiveClaimConditions | null> {
     try {
-      const interfaces = this.base.interfaces;
+      const { nftV0, nftV1, nftV2 } = this.getPartition('getActiveConditions')(this.base.interfaces);
 
-      if (
-        interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1'] ||
-        interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2']
-      ) {
-        let iNftIssuance: ICedarNFTIssuanceV1 | ICedarNFTIssuanceV2 | null = null;
-        if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1']) {
-          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1'].connectReadOnly();
-        } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2']) {
-          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2'].connectReadOnly();
-        }
-
-        if (!iNftIssuance) return null;
+      if (nftV0) {
+        const iNftIssuance = nftV0.connectReadOnly();
 
         const { condition, conditionId, walletMaxClaimCount, remainingSupply } =
           await iNftIssuance.getActiveClaimConditions();
@@ -858,8 +833,8 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
             isClaimingPaused: false,
           },
         };
-      } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3']) {
-        const iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3'].connectReadOnly();
+      } else if (nftV1) {
+        const iNftIssuance = nftV1.connectReadOnly();
 
         const { condition, conditionId, walletMaxClaimCount, remainingSupply, isClaimPaused } =
           await iNftIssuance.getActiveClaimConditions();
@@ -892,30 +867,8 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
             isClaimingPaused: isClaimPaused,
           },
         };
-      } else if (
-        interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4'] ||
-        interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0'] ||
-        interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1'] ||
-        interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2']
-      ) {
-        let iNftIssuance:
-          | ICedarNFTIssuanceV4
-          | IPublicNFTIssuanceV0
-          | IPublicNFTIssuanceV1
-          | IPublicNFTIssuanceV2
-          | null = null;
-
-        if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4']) {
-          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4'].connectReadOnly();
-        } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0']) {
-          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0'].connectReadOnly();
-        } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1']) {
-          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1'].connectReadOnly();
-        } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2']) {
-          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2'].connectReadOnly();
-        }
-
-        if (!iNftIssuance) return null;
+      } else if (nftV2) {
+        const iNftIssuance = nftV2.connectReadOnly();
 
         const {
           condition,
@@ -963,21 +916,10 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
 
   protected async getUserClaimConditionsERC721(userAddress: Address): Promise<UserClaimConditions | null> {
     try {
-      const interfaces = this.base.interfaces;
+      const { nftV0, nftV1, nftV2 } = this.getPartition('getUserConditions')(this.base.interfaces);
 
-      if (
-        interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1'] ||
-        interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2']
-      ) {
-        let iNftIssuance: ICedarNFTIssuanceV1 | ICedarNFTIssuanceV2 | null = null;
-
-        if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1']) {
-          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1'].connectReadOnly();
-        } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2']) {
-          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2'].connectReadOnly();
-        }
-
-        if (!iNftIssuance) return null;
+      if (nftV0) {
+        const iNftIssuance = nftV0.connectReadOnly();
 
         const { conditionId, walletClaimedCount, lastClaimTimestamp, nextValidClaimTimestamp } =
           await iNftIssuance.getUserClaimConditions(userAddress);
@@ -989,8 +931,8 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
           lastClaimTimestamp: lastClaimTimestamp.toNumber(),
           nextClaimTimestamp: nextValidClaimTimestamp.toNumber(),
         };
-      } else if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3']) {
-        const iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3'].connectReadOnly();
+      } else if (nftV1) {
+        const iNftIssuance = nftV1.connectReadOnly();
 
         const {
           conditionId,
@@ -1007,30 +949,8 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
           lastClaimTimestamp: lastClaimTimestamp.toNumber(),
           nextClaimTimestamp: nextValidClaimTimestamp.toNumber(),
         };
-      } else if (
-        interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4'] ||
-        interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0'] ||
-        interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1'] ||
-        interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2']
-      ) {
-        let iNftIssuance:
-          | ICedarNFTIssuanceV4
-          | IPublicNFTIssuanceV0
-          | IPublicNFTIssuanceV1
-          | IPublicNFTIssuanceV2
-          | null = null;
-
-        if (interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4']) {
-          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4'].connectReadOnly();
-        } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0']) {
-          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0'].connectReadOnly();
-        } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1']) {
-          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1'].connectReadOnly();
-        } else if (interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2']) {
-          iNftIssuance = interfaces['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2'].connectReadOnly();
-        }
-
-        if (!iNftIssuance) return null;
+      } else if (nftV2) {
+        const iNftIssuance = nftV2.connectReadOnly();
 
         const {
           conditionId,
@@ -1057,11 +977,11 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
 
   protected async getActiveClaimConditionsERC1155(tokenId: BigNumberish): Promise<ActiveClaimConditions | null> {
     try {
-      const interfaces = this.base.interfaces;
       const tokenIdBn = BigNumber.from(tokenId);
+      const { sftV0, sftV1, sftV2 } = this.getPartition('getActiveConditions')(this.base.interfaces);
 
-      if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1']) {
-        const iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1'].connectReadOnly();
+      if (sftV0) {
+        const iSftIssuance = sftV0.connectReadOnly();
 
         const { condition, conditionId, walletMaxClaimCount, remainingSupply } =
           await iSftIssuance.getActiveClaimConditions(tokenIdBn);
@@ -1094,8 +1014,8 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
             isClaimingPaused: false,
           },
         };
-      } else if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2']) {
-        const iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2'].connectReadOnly();
+      } else if (sftV1) {
+        const iSftIssuance = sftV1.connectReadOnly();
 
         const { condition, conditionId, walletMaxClaimCount, remainingSupply, isClaimPaused } =
           await iSftIssuance.getActiveClaimConditions(tokenIdBn);
@@ -1128,29 +1048,8 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
             isClaimingPaused: isClaimPaused,
           },
         };
-      } else if (
-        interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3'] ||
-        interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0'] ||
-        interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1'] ||
-        interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2']
-      ) {
-        let iSftIssuance:
-          | ICedarSFTIssuanceV3
-          | IPublicSFTIssuanceV0
-          | IPublicSFTIssuanceV1
-          | IPublicSFTIssuanceV2
-          | null = null;
-        if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3']) {
-          iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3'].connectReadOnly();
-        } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0']) {
-          iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0'].connectReadOnly();
-        } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1']) {
-          iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1'].connectReadOnly();
-        } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2']) {
-          iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2'].connectReadOnly();
-        }
-
-        if (!iSftIssuance) return null;
+      } else if (sftV2) {
+        const iSftIssuance = sftV2.connectReadOnly();
 
         const { condition, conditionId, walletMaxClaimCount, isClaimPaused, tokenSupply, maxTotalSupply } =
           await iSftIssuance.getActiveClaimConditions(tokenIdBn);
@@ -1194,11 +1093,11 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
     if (this.base.tokenStandard != 'ERC1155') return null;
 
     try {
-      const interfaces = this.base.interfaces;
       const tokenIdBn = BigNumber.from(tokenId);
+      const { sftV0, sftV1 } = this.getPartition('getUserConditions')(this.base.interfaces);
 
-      if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1']) {
-        const iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1'].connectReadOnly();
+      if (sftV0) {
+        const iSftIssuance = sftV0.connectReadOnly();
 
         const { conditionId, walletClaimedCount, lastClaimTimestamp, nextValidClaimTimestamp } =
           await iSftIssuance.getUserClaimConditions(tokenIdBn, userAddress);
@@ -1210,33 +1109,8 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
           lastClaimTimestamp: lastClaimTimestamp.toNumber(),
           nextClaimTimestamp: nextValidClaimTimestamp.toNumber(),
         };
-      } else if (
-        interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2'] ||
-        interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3'] ||
-        interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0'] ||
-        interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1'] ||
-        interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2']
-      ) {
-        let iSftIssuance:
-          | ICedarSFTIssuanceV2
-          | ICedarSFTIssuanceV3
-          | IPublicSFTIssuanceV0
-          | IPublicSFTIssuanceV1
-          | IPublicSFTIssuanceV2
-          | null = null;
-        if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2']) {
-          iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2'].connectReadOnly();
-        } else if (interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3']) {
-          iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3'].connectReadOnly();
-        } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0']) {
-          iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0'].connectReadOnly();
-        } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1']) {
-          iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1'].connectReadOnly();
-        } else if (interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2']) {
-          iSftIssuance = interfaces['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2'].connectReadOnly();
-        }
-
-        if (!iSftIssuance) return null;
+      } else if (sftV1) {
+        const iSftIssuance = sftV1.connectReadOnly();
 
         const {
           conditionId,
@@ -1279,23 +1153,16 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
     if (!this.supported || this.base.tokenStandard !== 'ERC1155') return BigNumber.from(0);
 
     try {
-      const interfaces = this.base.interfaces;
-      let iSft: ISFTSupplyV0 | IERC1155SupplyV0 | IERC1155SupplyV1 | IERC1155SupplyV2 | ethers.Contract;
+      const { sftV0 } = this.getPartition('tokenSupply')(this.base.interfaces);
 
-      if (interfaces['issuance/ISFTSupply.sol:ISFTSupplyV0']) {
-        iSft = interfaces['issuance/ISFTSupply.sol:ISFTSupplyV0'].connectReadOnly();
-      } else if (interfaces['standard/IERC1155.sol:IERC1155SupplyV0']) {
-        iSft = interfaces['standard/IERC1155.sol:IERC1155SupplyV0'].connectReadOnly();
-      } else if (interfaces['standard/IERC1155.sol:IERC1155SupplyV1']) {
-        iSft = interfaces['standard/IERC1155.sol:IERC1155SupplyV1'].connectReadOnly();
-      } else if (interfaces['standard/IERC1155.sol:IERC1155SupplyV2']) {
-        iSft = interfaces['standard/IERC1155.sol:IERC1155SupplyV2'].connectReadOnly();
+      if (sftV0) {
+        const iSft = sftV0.connectReadOnly();
+        return await iSft.totalSupply(tokenId);
       } else {
         const abi = ['function totalSupply(uint256 _tokenId) public view returns (uint256)'];
-        iSft = new ethers.Contract(this.base.address, abi, this.base.provider);
+        const iSft = new ethers.Contract(this.base.address, abi, this.base.provider);
+        return await iSft.totalSupply(tokenId);
       }
-
-      return await iSft.totalSupply(tokenId);
     } catch (err) {
       this.base.error('Failed to get token supply', err, 'getERC1155TokenSupply', { tokenId });
     }
@@ -1319,6 +1186,7 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
     return BigNumber.from(0);
   }
 
+  // TODO
   protected async getERC1155TokensCount(): Promise<BigNumber> {
     if (this.base.tokenStandard !== 'ERC1155') return BigNumber.from(0);
 
@@ -1345,6 +1213,7 @@ export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
     return BigNumber.from(0);
   }
 
+  // TODO
   protected async getERC721TokensCount(): Promise<BigNumber> {
     if (this.base.tokenStandard !== 'ERC721') return BigNumber.from(0);
 

@@ -7,38 +7,39 @@ export type RoyaltyInfo = {
   basisPoints: number;
 };
 
-const handledFeatures = ['royalties/IRoyalty.sol:IRoyaltyV0', 'royalties/IRoyalty.sol:IPublicRoyaltyV0'] as const;
+export const RoyaltiesFeatures = [
+  'royalties/IRoyalty.sol:IPublicRoyaltyV0',
+  // 'royalties/IRoyalty.sol:IRestrictedRoyaltyV0',
+  // 'royalties/IRoyalty.sol:IRestrictedRoyaltyV1',
+  // 'royalties/IRoyalty.sol:IRestrictedRoyaltyV2',
+  'royalties/IRoyalty.sol:IRoyaltyV0',
+] as const;
 
-type HandledFeature = (typeof handledFeatures)[number];
-export class Royalties extends FeatureSet<HandledFeature> {
+export type RoyaltiesFeatures = (typeof RoyaltiesFeatures)[number];
+
+export class Royalties extends FeatureSet<RoyaltiesFeatures> {
   constructor(base: CollectionContract) {
-    super(base, handledFeatures);
+    super(base, RoyaltiesFeatures);
   }
-  /**
-   * @returns True if the contract supports royalties interface
-   */
-  get supported(): boolean {
-    const features = this.base.interfaces;
 
-    return !!(features['royalties/IRoyalty.sol:IRoyaltyV0'] || features['royalties/IRoyalty.sol:IPublicRoyaltyV0']);
-  }
+  protected readonly getPartition = this.makeGetPartition((partitioner) => {
+    const getInfo = partitioner({
+      v0: ['royalties/IRoyalty.sol:IRoyaltyV0', 'royalties/IRoyalty.sol:IPublicRoyaltyV0'],
+    });
+
+    return { getInfo };
+  });
 
   /**
    * This function returns the default royalty info on a contract
    * @returns RoyaltyInfo | null
    */
   async getDefaultRoyaltyInfo(): Promise<RoyaltyInfo | null> {
-    const interfaces = this.base.interfaces;
+    const getInfo = this.getPartition('getInfo')(this.base.interfaces);
 
-    if (interfaces['royalties/IRoyalty.sol:IRoyaltyV0']) {
+    if (getInfo.v0) {
       try {
-        const iRoyalty = interfaces['royalties/IRoyalty.sol:IRoyaltyV0'].connectReadOnly();
-        const [recipient, basisPoints] = await iRoyalty.getDefaultRoyaltyInfo();
-        return { recipient: parse(Address, recipient), basisPoints };
-      } catch {}
-    } else if (interfaces['royalties/IRoyalty.sol:IPublicRoyaltyV0']) {
-      try {
-        const iRoyalty = interfaces['royalties/IRoyalty.sol:IPublicRoyaltyV0'].connectReadOnly();
+        const iRoyalty = getInfo.v0.connectReadOnly();
         const [recipient, basisPoints] = await iRoyalty.getDefaultRoyaltyInfo();
         return { recipient: parse(Address, recipient), basisPoints };
       } catch {}
