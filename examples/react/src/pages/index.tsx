@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import type { NextPage } from "next";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import styles from "../styles/Home.module.css";
 import { Web3Provider } from "@ethersproject/providers";
 import {
@@ -19,13 +19,14 @@ import Select from "components/common/Select";
 import ConnectWallet from "components/ConnectWallet";
 import LoadClaimConditions from "components/LoadClaimConditions";
 import Mint from "components/Mint";
-import { loadStripe } from "@stripe/stripe-js";
 import Error from "components/common/Error";
 import { useError } from "hooks/useError";
-import Image from "next/image";
 import {
+  AllowlistStatus,
   Chain,
   ContractService,
+  getAllowlistStatus,
+  MerkleProofResponse,
 } from "@monaxlabs/aspen-sdk/dist/apis/publishing";
 
 type Metadata = {
@@ -33,18 +34,19 @@ type Metadata = {
   metadata: TokenMetadata | null;
 };
 
-const DELAY = 30000;
+const DELAY = 10000;
 
 const Home: NextPage = () => {
   const [contractAddress, setContractAddress] = useState(
     process.env.NEXT_PUBLIC_TEST_CONTRACT ||
-      "0xfe66131bF7f81bE9aeDf1ae58284ec17484E5Da9"
+      "0x8AC3e9b7D377526Da1f81f60d03e006ADd5A606b"
   );
 
   const [contract, setContract] = useState<CollectionContract | null>(null);
   const [tokens, setTokens] = useState<number[]>([]);
   const [selectedToken, setSelectedToken] = useState("0");
   const [tokenMetadata, setTokenMetadata] = useState<Metadata | null>(null);
+  const [tokenBalance, setTokenBalance] = useState<string>("0");
   const [termsInfo, setTermsInfo] = useState<TermsUserAcceptanceState | null>(
     null
   );
@@ -56,6 +58,11 @@ const Home: NextPage = () => {
     useState<CollectionUserClaimConditions | null>(null);
   const [activeClaimConditions, setActiveClaimConditions] =
     useState<ActiveClaimConditions | null>(null);
+  const [allowlistStatus, setAllowlistStatus] = useState<AllowlistStatus>({
+    status: "no-allowlist",
+    proofs: [],
+    proofMaxQuantityPerTransaction: 0,
+  });
 
   const loadClaimConditions = useCallback(async () => {
     if (!contract) return;
@@ -79,18 +86,15 @@ const Home: NextPage = () => {
         return;
       }
       setUserClaimConditions(userConditions);
-      const { proofs, proofMaxQuantityPerTransaction } =
-        await ContractService.getMerkleProofsFromContract({
-          contractAddress,
-          walletAddress: account ? account : "",
-          chainName: Chain.MUMBAI,
-          tokenId: parseInt(selectedToken),
-        });
+      const allowlistStatus = await getAllowlistStatus(
+        contractAddress,
+        account,
+        Chain.MUMBAI,
+        selectedToken
+      );
+      setAllowlistStatus(allowlistStatus);
 
-      if (!proofs || proofs.length === 0 || !proofMaxQuantityPerTransaction) {
-        setError(`Merkle proof not retrieved from API for ${account}`);
-        return;
-      }
+      const { proofs, proofMaxQuantityPerTransaction } = allowlistStatus;
       const restrictions = await contract.issuance.getUserClaimRestrictions(
         userConditions,
         activeConditions,
@@ -98,6 +102,8 @@ const Home: NextPage = () => {
         proofMaxQuantityPerTransaction
       );
       setUserClaimRestrictions(restrictions);
+      const balance = await contract.erc1155.balanceOf(account, selectedToken);
+      setTokenBalance(balance.toString());
     }
   }, [account, contract, contractAddress, selectedToken, setError]);
 
@@ -170,6 +176,9 @@ const Home: NextPage = () => {
                 options={tokens.map((t) => String(t))}
               />
             </div>
+            <div className={styles.flex}>
+              <p>Token Balance: {tokenBalance}</p>
+            </div>
             {tokenMetadata?.metadata?.image && (
               <img
                 src={tokenMetadata.metadata.image}
@@ -182,6 +191,7 @@ const Home: NextPage = () => {
               userClaimConditions={userClaimConditions}
               userClaimRestrictions={userClaimRestrictions}
               activeClaimConditions={activeClaimConditions}
+              allowlistStatus={allowlistStatus}
             />
             <AcceptTerms
               contract={contract}
@@ -192,6 +202,7 @@ const Home: NextPage = () => {
               contractAddress={contractAddress}
               userClaimRestrictions={userClaimRestrictions}
               activeClaimConditions={activeClaimConditions}
+              allowlistStatus={allowlistStatus}
               contract={contract}
               tokenId={selectedToken}
               termsInfo={termsInfo}

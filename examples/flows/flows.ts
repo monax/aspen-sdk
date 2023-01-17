@@ -1,37 +1,37 @@
 import {
-  AspenEnvironment,
-  authenticateAllFromFile,
-  authenticateForGate,
-  configureGate,
-  extractCustomError,
-  GatingAPI,
-  generateAccounts,
-  getProvider,
-  getProviderConfig,
-  getSigner,
-  issueToken,
-  parseAndVerifyJWT,
-  PostFileResponse,
-  ProviderConfig,
-  PublishingAPI,
-  publishingChainFromNetwork,
-  SupportedNetwork,
-  uploadFile,
+AspenEnvironment,
+authenticateAllFromFile,
+authenticateForGate,
+configureGate,
+extractCustomError,
+GatingAPI,
+generateAccounts,
+getProvider,
+getProviderConfig,
+getSigner,
+issueToken,
+parseAndVerifyJWT,
+PostFileResponse,
+ProviderConfig,
+PublishingAPI,
+publishingChainFromNetwork,
+SupportedNetwork,
+uploadFile
 } from '@monaxlabs/aspen-sdk/dist/apis';
-import { ContractService, Currency } from '@monaxlabs/aspen-sdk/dist/apis/publishing';
-import { ClaimBalance, getClaimBalances } from '@monaxlabs/aspen-sdk/dist/claimgraph';
+import { ContractService,Currency } from '@monaxlabs/aspen-sdk/dist/apis/publishing';
+import { ClaimBalance,getClaimBalances } from '@monaxlabs/aspen-sdk/dist/claimgraph';
 import {
-  Address,
-  CollectionContract,
-  GasStrategy,
-  getGasStrategy,
-  ICedarERC1155DropV5,
-  ICedarERC1155DropV5__factory,
-  ICedarERC721DropV7,
-  ICedarERC721DropV7__factory,
+Address,
+CollectionContract,
+GasStrategy,
+getGasStrategy,
+ICedarERC1155DropV5,
+ICedarERC1155DropV5__factory,
+ICedarERC721DropV7,
+ICedarERC721DropV7__factory
 } from '@monaxlabs/aspen-sdk/dist/contracts';
 import { parse } from '@monaxlabs/aspen-sdk/dist/utils';
-import { BigNumber, BigNumberish, Signer } from 'ethers';
+import { BigNumber,BigNumberish,Signer } from 'ethers';
 import { providers } from 'ethers/lib/ethers';
 import { formatEther } from 'ethers/lib/utils';
 import { createReadStream } from 'fs';
@@ -39,16 +39,16 @@ import { GraphQLClient } from 'graphql-request';
 import { URL } from 'url';
 import { format } from 'util';
 import { demoMnemonic } from './keys';
-import { credentialsFile, providersFile } from './secrets';
+import { credentialsFile,providersFile } from './secrets';
 import {
-  collectionInfoFile,
-  CollectionPair,
-  readCollectionInfo,
-  readIssuanceInfo,
-  writeCollectionInfo,
-  writeIssuanceInfo,
+collectionInfoFile,
+CollectionPair,
+readCollectionInfo,
+readIssuanceInfo,
+writeCollectionInfo,
+writeIssuanceInfo
 } from './state';
-import { deployERC1155, deployERC721, wait } from './utils/collection';
+import { deployERC1155,deployERC721,wait } from './utils/collection';
 
 // Global config for flows
 const network: SupportedNetwork = 'Mumbai';
@@ -226,7 +226,6 @@ async function cmdDeployAllowlistAndClaim(): Promise<void> {
   const provider = await getProvider(network, providerConfig);
   const accounts = generateAccounts(4, { mnemonic: demoMnemonic, provider });
   const allowlist = Object.fromEntries(accounts.slice(0, 2).map((w) => [parse(Address, w.address), 3]));
-
   const contractAddress = await deployERC1155WithAllowlist(allowlist);
   // TODO: test address, can be removed
   // const contractAddress = parse(Address, '0xf098f440273037097bFA258e7A6D52125F3C1a5d');
@@ -296,6 +295,17 @@ async function cmdDeployAllowlistAndClaim(): Promise<void> {
         proofMaxQuantityPerTransaction,
       );
       console.error(`Allowlist claim successful for ${receiver}`);
+    } else {
+      try {
+        const { proofs, proofMaxQuantityPerTransaction } = await ContractService.getMerkleProofsFromContract({
+          contractAddress,
+          walletAddress: receiver,
+          chainName: publishingChainFromNetwork(network),
+          tokenId,
+        });
+      } catch (err) {
+        console.error(err);
+      }
     }
   }
 }

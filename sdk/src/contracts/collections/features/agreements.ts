@@ -1,22 +1,24 @@
 import { BigNumber, ContractTransaction } from 'ethers';
-import { Address, IPFS_GATEWAY_PREFIX } from '../..';
+import { Address, CollectionContract, IPFS_GATEWAY_PREFIX } from '../..';
 import { resolveIpfsUrl } from '../../../utils/ipfs.js';
-import { exhaustiveUnionPartitioner, Features, memoise } from '../features';
+import { Features } from '../features';
 import type { Signerish, TermsUserAcceptanceState } from '../types';
 
-export class Agreements extends Features {
-  public static readonly handledFeatures = [
-    'agreement/IAgreement.sol:ICedarAgreementV0',
-    'agreement/ICedarAgreement.sol:ICedarAgreementV0',
-    'agreement/IAgreement.sol:ICedarAgreementV1',
-    'agreement/ICedarAgreement.sol:ICedarAgreementV1',
-    'agreement/ICedarAgreement.sol:IPublicAgreementV0',
-    'agreement/IAgreement.sol:IPublicAgreementV0',
-    'agreement/IAgreement.sol:IPublicAgreementV1',
-  ] as const;
+const handledFeatures = [
+  'agreement/IAgreement.sol:ICedarAgreementV0',
+  'agreement/ICedarAgreement.sol:ICedarAgreementV0',
+  'agreement/IAgreement.sol:ICedarAgreementV1',
+  'agreement/ICedarAgreement.sol:ICedarAgreementV1',
+  'agreement/ICedarAgreement.sol:IPublicAgreementV0',
+  'agreement/IAgreement.sol:IPublicAgreementV0',
+  'agreement/IAgreement.sol:IPublicAgreementV1',
+] as const;
 
-  protected readonly _partitions = memoise(() => {
-    const partitioner = exhaustiveUnionPartitioner(this.base.interfaces, ...Agreements.handledFeatures);
+export class Agreements extends Features<(typeof handledFeatures)[number]> {
+  constructor(base: CollectionContract) {
+    super(base, handledFeatures);
+  }
+  protected readonly getPartition = this.makeGetPartition((partitioner) => {
     // Split the handled features into groups that can be handled on the same path for each function
     // It is a compile-time error to omit a feature from handledFeatures in each partition
     const getState = partitioner({
@@ -49,18 +51,6 @@ export class Agreements extends Features {
     });
     return { getState, acceptTerms };
   });
-
-  protected getPartition<T extends keyof ReturnType<typeof this._partitions>>(key: T) {
-    return this._partitions()[key];
-  }
-
-  /**
-   * @returns True if the contract supports Agreement interface
-   */
-  get supported(): boolean {
-    // The contract must implement at least one handled feature
-    return Agreements.handledFeatures.reduce((acc, f) => acc || Boolean(this.base.interfaces[f]), false);
-  }
 
   async getState(userAddress: Address): Promise<TermsUserAcceptanceState> {
     let termsActivated = false;

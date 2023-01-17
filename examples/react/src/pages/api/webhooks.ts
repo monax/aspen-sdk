@@ -14,7 +14,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 const webhookSecret: string = process.env.STRIPE_WEBHOOK_SECRET!;
-const PUBLISHING_API_BASEURI = process.env.PUBLISHING_API_BASEURI!;
+const PUBLISHING_API_BASEURI = process.env.NEXT_PUBLIC_PUBLISHING_API_BASEURI!;
 const PUBLISHING_API_USERNAME = process.env.PUBLISHING_API_USERNAME!;
 const PUBLISHING_API_PASSWORD = process.env.PUBLISHING_API_PASSWORD!;
 

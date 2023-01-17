@@ -1,4 +1,4 @@
-import { Address } from '../..';
+import { Address, CollectionContract } from '../..';
 import { parse } from '../../../utils';
 import { Features } from '../features';
 
@@ -7,7 +7,13 @@ export type RoyaltyInfo = {
   basisPoints: number;
 };
 
-export class Royalties extends Features {
+const handledFeatures = ['royalties/IRoyalty.sol:IRoyaltyV0', 'royalties/IRoyalty.sol:IPublicRoyaltyV0'] as const;
+
+type HandledFeature = (typeof handledFeatures)[number];
+export class Royalties extends Features<HandledFeature> {
+  constructor(base: CollectionContract) {
+    super(base, handledFeatures);
+  }
   /**
    * @returns True if the contract supports royalties interface
    */

@@ -27,7 +27,7 @@ async function main(): Promise<void> {
         maxClaimableSupply: 0,
         quantityLimitPerTransaction: 100,
         waitTimeInSecondsBetweenClaims: 1,
-        // allowlist,
+        allowlist,
       },
       {
         name: 'Medium Mint',
@@ -37,7 +37,7 @@ async function main(): Promise<void> {
         maxClaimableSupply: 0,
         quantityLimitPerTransaction: 100,
         waitTimeInSecondsBetweenClaims: 1,
-        // allowlist,
+        allowlist,
       },
       {
         name: 'Expensive Mint',

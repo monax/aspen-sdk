@@ -1,13 +1,21 @@
 import axios from 'axios';
 import { ethers } from 'ethers';
-import { IPFS_GATEWAY_PREFIX } from '../..';
+import { CollectionContract, IPFS_GATEWAY_PREFIX } from '../..';
 import { resolveIpfsUrl } from '../../../utils';
 import { ICedarNFTMetadataV1, ICedarSFTMetadataV1, IPublicMetadataV0__factory } from '../../generated';
 import { CollectionMetaImageType } from '../constants';
 import { Features } from '../features';
 import type { CollectionMetadata, ContractVerificationType, TokenMetadata } from '../types';
 
-export class Metadata extends Features {
+// TODO...
+const handledFeatures = ['metadata/IContractMetadata.sol:ICedarMetadataV1'] as const;
+
+type HandledFeature = (typeof handledFeatures)[number];
+
+export class Metadata extends Features<HandledFeature> {
+  constructor(base: CollectionContract) {
+    super(base, handledFeatures);
+  }
   private _uri: string | null = null;
   private _metadata: CollectionMetadata | null = null;
 

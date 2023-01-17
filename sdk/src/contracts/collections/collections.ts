@@ -3,15 +3,9 @@ import { parse } from '../../utils';
 import { Address } from '../address';
 import { ICedarFeaturesV0__factory } from '../generated';
 import { ChainId } from '../network';
-import { InterfaceNotLoadedError } from './constants';
-import {
-  extractKnownSupportedFeatures,
-  FeatureContract,
-  FeatureFactories,
-  FeatureInterface,
-  FeatureInterfaceId,
-} from './features';
+import { extractKnownSupportedFeatures, FeatureContract, FeatureInterface, FeatureInterfaceId } from './features';
 import { Agreements } from './features/agreements';
+import { Erc1155 } from './features/erc1155';
 import { Issuance } from './features/issuance';
 import { Metadata } from './features/metadata';
 import { Ownable } from './features/ownable';
@@ -32,7 +26,7 @@ export const DefaultErrorHandler = (
   console.error(error);
 };
 
-export type FeatureInterfaces = { -readonly [K in keyof FeatureFactories]: FeatureInterface<FeatureContract<K>> };
+export type FeatureInterfaces = { -readonly [K in FeatureInterfaceId]: FeatureInterface<FeatureContract<K>> };
 
 export class CollectionContract {
   private _supportedFeatures: FeatureInterfaceId[] = [];
@@ -45,13 +39,13 @@ export class CollectionContract {
   private static _throwErrors = false;
 
   readonly address: Address;
-
   // features
   readonly metadata: Metadata;
   readonly agreements: Agreements;
   readonly royalties: Royalties;
   readonly issuance: Issuance;
   readonly ownable: Ownable;
+  readonly erc1155: Erc1155;
 
   static setDebugHandler(handler: DebugHandler | undefined) {
     CollectionContract._debugHandler = handler;
@@ -74,6 +68,7 @@ export class CollectionContract {
     this.royalties = new Royalties(this);
     this.issuance = new Issuance(this);
     this.ownable = new Ownable(this);
+    this.erc1155 = new Erc1155(this);
   }
 
   get supportedFeatures(): string[] {
@@ -85,7 +80,7 @@ export class CollectionContract {
    * @returns An object with mapped interface factories
    */
   get interfaces(): Partial<FeatureInterfaces> {
-    if (!this._interfaces) throw InterfaceNotLoadedError;
+    if (!this._interfaces) throw new Error('Interface is not loaded');
     return this._interfaces;
   }
 
@@ -125,6 +120,10 @@ export class CollectionContract {
     return this._interfaces != null;
   }
 
+  assumeFeature<T extends FeatureInterfaceId>(feature: T): FeatureInterface<FeatureContract<T>> {
+    return FeatureInterface.fromFeature(feature, this.address, this._provider);
+  }
+
   protected buildInterface() {
     if (this._supportedFeatures.length == 0) {
       this._interfaces = null;
@@ -134,7 +133,7 @@ export class CollectionContract {
     // Note: we are forced to subvert the type system since it cannot invert that the keys and values are correlated
     const interfaces = {} as Record<FeatureInterfaceId, FeatureInterface<unknown>>;
     for (const feature of this._supportedFeatures) {
-      interfaces[feature] = FeatureInterface.fromFeature(feature, this.address, this._provider);
+      interfaces[feature] = this.assumeFeature(feature);
     }
     this._interfaces = interfaces as Partial<FeatureInterfaces>;
 

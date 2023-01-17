@@ -1,7 +1,18 @@
+import { BigNumber, BigNumberish } from 'ethers';
 import * as stream from 'stream';
 import * as gen from './generated';
-import { CancelablePromise, FileResponse, FileType, OpenAPI, UserTermsResponse } from './generated';
+import {
+  CancelablePromise,
+  FileResponse,
+  FileType,
+  MerkleProofResponse,
+  OpenAPI,
+  UserTermsResponse,
+} from './generated';
 import { request as __request } from './generated/core/request';
+
+// Sensible default
+OpenAPI.BASE = 'https://publishing.aspenft.io';
 
 const probablyNode = typeof process !== 'undefined';
 
@@ -76,4 +87,65 @@ gen.UtilityService.postUtilityFiles = ({
   });
 };
 
+export type AllowlistStatus =
+  | {
+      status: 'included';
+      proofs: string[];
+      proofMaxQuantityPerTransaction: number;
+    }
+  | {
+      status: 'excluded';
+      proofs: [];
+      proofMaxQuantityPerTransaction: 0;
+    }
+  | {
+      status: 'no-active-phase';
+      proofs: [];
+      proofMaxQuantityPerTransaction: 0;
+    }
+  | {
+      status: 'no-allowlist';
+      proofs: [];
+      proofMaxQuantityPerTransaction: 0;
+    };
+
+export async function getAllowlistStatus(
+  contractAddress: string,
+  walletAddress: string,
+  chain: gen.Chain,
+  tokenId: BigNumberish | null = null,
+): Promise<AllowlistStatus> {
+  // Ugh. This goes away.
+  const excludedBodyText = 'Address not whitelisted';
+  const noActivePhaseBodyText = 'Phase not found';
+
+  const { proofs, proofMaxQuantityPerTransaction, err }: MerkleProofResponse & { err?: any } =
+    await gen.ContractService.getMerkleProofsFromContract({
+      contractAddress,
+      walletAddress,
+      chainName: chain,
+      tokenId: tokenId ? BigNumber.from(tokenId).toNumber() : undefined,
+    }).catch((err) => ({
+      err,
+      proofs: [],
+      proofMaxQuantityPerTransaction: 0,
+    }));
+  if (err) {
+    // Handle some 404s as non-error states
+    if (err.status === 404) {
+      if (err.body === excludedBodyText) {
+        return { status: 'excluded', proofs: [], proofMaxQuantityPerTransaction: 0 };
+      }
+      if (err.body === noActivePhaseBodyText) {
+        return { status: 'no-active-phase', proofs: [], proofMaxQuantityPerTransaction: 0 };
+      }
+    }
+    // Throw other errors
+    throw err;
+  }
+  if (!proofs || !proofMaxQuantityPerTransaction || (!proofs.length && !proofMaxQuantityPerTransaction)) {
+    return { status: 'no-allowlist', proofs: [], proofMaxQuantityPerTransaction: 0 };
+  }
+  return { status: 'included', proofs, proofMaxQuantityPerTransaction };
+}
 export * from './generated';

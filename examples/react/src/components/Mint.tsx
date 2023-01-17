@@ -7,6 +7,7 @@ import {
   Address,
   CollectionContract,
   CollectionUserClaimConditions,
+  NATIVE_TOKEN,
   TermsUserAcceptanceState,
 } from "@monaxlabs/aspen-sdk/dist/contracts";
 import { parse } from "@monaxlabs/aspen-sdk/dist/utils";
@@ -14,8 +15,10 @@ import { useWeb3React } from "@web3-react/core";
 import { BigNumber } from "ethers";
 import { useEffect, useMemo, useState } from "react";
 import {
+  AllowlistStatus,
   Chain,
   ContractService,
+  getAllowlistStatus,
 } from "@monaxlabs/aspen-sdk/dist/apis/publishing";
 const network = {
   1: "Ethereum",
@@ -32,6 +35,7 @@ const Mint: React.FC<{
   tokenId: string;
   userClaimRestrictions: CollectionUserClaimConditions | null;
   activeClaimConditions: ActiveClaimConditions | null;
+  allowlistStatus: AllowlistStatus;
   termsInfo: TermsUserAcceptanceState | null;
   onUpdate: () => void;
   onError: (error: string) => void;
@@ -41,6 +45,7 @@ const Mint: React.FC<{
   tokenId,
   activeClaimConditions,
   userClaimRestrictions,
+  allowlistStatus,
   termsInfo,
   onUpdate,
   onError,
@@ -60,18 +65,6 @@ const Mint: React.FC<{
     setLoadingMintButton(true);
 
     await (async () => {
-      const { proofs, proofMaxQuantityPerTransaction } =
-        await ContractService.getMerkleProofsFromContract({
-          contractAddress,
-          walletAddress: account ? account : "",
-          chainName: Chain.MUMBAI,
-          tokenId: parseInt(tokenId),
-        });
-
-      if (!proofs || proofs.length === 0 || !proofMaxQuantityPerTransaction) {
-        onError(`Merkle proof not retrieved from API for ${account}`);
-        return;
-      }
       const verifyClaim = await contract.issuance.verifyClaim(
         activeClaimConditions?.activeClaimConditionId,
         parse(Address, account),
@@ -86,6 +79,7 @@ const Mint: React.FC<{
         return;
       }
       try {
+        const { proofs, proofMaxQuantityPerTransaction } = allowlistStatus;
         const tx = await contract.issuance.claim(
           library.getSigner(),
           parse(Address, account),

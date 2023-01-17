@@ -1,17 +1,16 @@
 import { parse } from '../../../utils/schema.js';
 import { Address } from '../../address.js';
+import { CollectionContract } from '../collections';
 import { Features } from '../features.js';
 
 // TODO: reinstate when released
-export class Ownable extends Features {
-  /**
-   * @returns True if the contract supports royalties interface
-   */
-  get supported(): boolean {
-    const features = this.base.interfaces;
-    return !!features['ownable/IOwnable.sol:IPublicOwnableV0'];
-  }
+const handledFeatures = ['ownable/IOwnable.sol:IPublicOwnableV0'] as const;
 
+type HandledFeature = (typeof handledFeatures)[number];
+export class Ownable extends Features<HandledFeature> {
+  constructor(base: CollectionContract) {
+    super(base, handledFeatures);
+  }
   /**
    * This function returns the owner of the contract.
    * @returns Address | null

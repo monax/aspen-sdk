@@ -31,7 +31,7 @@ import {
 } from '../../generated';
 import type { TokensClaimedEventObject as ERC721TokensClaimedEventObject } from '../../generated/issuance/ICedarNFTIssuance.sol/ICedarNFTIssuanceV4.js';
 import type { TokensClaimedEventObject as ERC1155TokensClaimedEventObject } from '../../generated/issuance/ICedarSFTIssuance.sol/ICedarSFTIssuanceV2.js';
-import { Address, isSameAddress, NATIVE_TOKEN, ZERO_BYTES32 } from '../../index.js';
+import { Address, CollectionContract, isSameAddress, NATIVE_TOKEN, ZERO_BYTES32 } from '../../index.js';
 import { Features } from '../features.js';
 import { max, min } from '../number.js';
 import type {
@@ -60,30 +60,26 @@ function ensureERC1155TokenId(tokenId: BigNumberish | null): BigNumberish {
 // Reasonably large number to compare with
 const SUPPLY_THRESHOLD = constants.MaxInt256;
 
-export class Issuance extends Features {
-  /**
-   * @returns True if the contract supports Issuance interface
-   */
+const handledFeatures = [
+  'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1',
+  'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2',
+  'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3',
+  'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4',
+  'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0',
+  'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1',
+  'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2',
+  'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1',
+  'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2',
+  'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3',
+  'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0',
+  'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1',
+  'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2',
+] as const
 
-  get supported(): boolean {
-    const features = this.base.interfaces;
-    return !!(
-      features['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1'] ||
-      features['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2'] ||
-      features['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3'] ||
-      features['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4'] ||
-      features['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0'] ||
-      features['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1'] ||
-      features['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2'] ||
-      features['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1'] ||
-      features['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2'] ||
-      features['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3'] ||
-      features['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0'] ||
-      features['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1'] ||
-      features['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2']
-    );
+export class Issuance extends Features<typeof handledFeatures[number]> {
+  constructor(base: CollectionContract) {
+    super(base, handledFeatures);
   }
-
   /**
    * Get the metadata for all claimed tokens from the events in a contract receipt
    *
