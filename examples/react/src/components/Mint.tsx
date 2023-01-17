@@ -13,8 +13,18 @@ import { parse } from "@monaxlabs/aspen-sdk/dist/utils";
 import { useWeb3React } from "@web3-react/core";
 import { BigNumber } from "ethers";
 import { useEffect, useMemo, useState } from "react";
+import { Chain, ContractService } from "@monaxlabs/aspen-sdk/dist/apis/publishing";
+const network = {
+  1: "Ethereum",
+  137: "Polygon",
+  80001: "Mumbai",
+  11297108109: "Palm",
+  11297108099: "PalmTestnet",
+  7700: "Canto",
+};
 
 const Mint: React.FC<{
+  contractAddress: string;
   contract: CollectionContract;
   tokenId: string;
   userClaimRestrictions: CollectionUserClaimConditions | null;
@@ -23,6 +33,7 @@ const Mint: React.FC<{
   onUpdate: () => void;
   onError: (error: string) => void;
 }> = ({
+  contractAddress,
   contract,
   tokenId,
   activeClaimConditions,
@@ -31,7 +42,7 @@ const Mint: React.FC<{
   onUpdate,
   onError,
 }) => {
-  const { account, library } = useWeb3React<Web3Provider>();
+  const { account, library, chainId } = useWeb3React<Web3Provider>();
   const [canMint, setCanMint] = useState(false);
   const [loadingMintButton, setLoadingMintButton] = useState(false);
 
@@ -46,6 +57,19 @@ const Mint: React.FC<{
     setLoadingMintButton(true);
 
     await (async () => {
+      
+      const { proofs, proofMaxQuantityPerTransaction = 0 } =
+        await ContractService.getMerkleProofsFromContract({
+          contractAddress,
+          walletAddress: account ? account : "",
+          chainName: Chain.MUMBAI,
+          tokenId: parseInt(tokenId),
+        });
+
+        if (!proofs || !proofMaxQuantityPerTransaction) {
+          onError(`Merkle proof not retrieved from API for ${account}`);
+          return;
+        }
       const verifyClaim = await contract.issuance.verifyClaim(
         activeClaimConditions?.activeClaimConditionId,
         parse(Address, account),
@@ -55,7 +79,10 @@ const Mint: React.FC<{
         activeClaimConditions.activeClaimCondition.pricePerToken,
         true
       );
-      if (!verifyClaim) return;
+      if (!verifyClaim) {
+        onError("Claim did not verify!");
+        return;
+      }
       try {
         const tx = await contract.issuance.claim(
           library.getSigner(),
@@ -64,8 +91,8 @@ const Mint: React.FC<{
           BigNumber.from(1),
           activeClaimConditions.activeClaimCondition.currency,
           activeClaimConditions.activeClaimCondition.pricePerToken,
-          [],
-          BigNumber.from(0)
+          proofs,
+          proofMaxQuantityPerTransaction,
         );
 
         if (tx) {

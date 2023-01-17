@@ -173,6 +173,7 @@ const Home: NextPage = () => {
               onError={setError}
             />
             <Mint
+              contractAddress={contractAddress}
               userClaimRestrictions={userClaimRestrictions}
               activeClaimConditions={activeClaimConditions}
               contract={contract}
