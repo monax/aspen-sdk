@@ -23,6 +23,10 @@ import { loadStripe } from "@stripe/stripe-js";
 import Error from "components/common/Error";
 import { useError } from "hooks/useError";
 import Image from "next/image";
+import {
+  Chain,
+  ContractService,
+} from "@monaxlabs/aspen-sdk/dist/apis/publishing";
 
 type Metadata = {
   uri: string | null;
@@ -75,6 +79,7 @@ const Home: NextPage = () => {
         return;
       }
       setUserClaimConditions(userConditions);
+
       const restrictions = await contract.issuance.getUserClaimRestrictions(
         userConditions,
         activeConditions,

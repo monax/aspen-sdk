@@ -57,19 +57,7 @@ const Mint: React.FC<{
     setLoadingMintButton(true);
 
     await (async () => {
-      
-      const { proofs, proofMaxQuantityPerTransaction = 0 } =
-        await ContractService.getMerkleProofsFromContract({
-          contractAddress,
-          walletAddress: account ? account : "",
-          chainName: Chain.MUMBAI,
-          tokenId: parseInt(tokenId),
-        });
 
-        if (!proofs || !proofMaxQuantityPerTransaction) {
-          onError(`Merkle proof not retrieved from API for ${account}`);
-          return;
-        }
       const verifyClaim = await contract.issuance.verifyClaim(
         activeClaimConditions?.activeClaimConditionId,
         parse(Address, account),
@@ -91,8 +79,8 @@ const Mint: React.FC<{
           BigNumber.from(1),
           activeClaimConditions.activeClaimCondition.currency,
           activeClaimConditions.activeClaimCondition.pricePerToken,
-          proofs,
-          proofMaxQuantityPerTransaction,
+          [],
+          0,
         );
 
         if (tx) {

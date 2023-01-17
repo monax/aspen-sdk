@@ -27,7 +27,7 @@ async function main(): Promise<void> {
         maxClaimableSupply: 0,
         quantityLimitPerTransaction: 100,
         waitTimeInSecondsBetweenClaims: 1,
-        allowlist
+        // allowlist,
       },
       {
         name: 'Medium Mint',
@@ -37,7 +37,7 @@ async function main(): Promise<void> {
         maxClaimableSupply: 0,
         quantityLimitPerTransaction: 100,
         waitTimeInSecondsBetweenClaims: 1,
-        allowlist
+        // allowlist,
       },
       {
         name: 'Expensive Mint',
@@ -47,12 +47,13 @@ async function main(): Promise<void> {
         maxClaimableSupply: 0,
         quantityLimitPerTransaction: 100,
         waitTimeInSecondsBetweenClaims: 1,
-        allowlist
+        allowlist,
       },
     ],
     {
       name: 'React Test',
-      maxTokens: 2000,
+      maxTokens: 200,
+      tokenCount: 2,
     },
   );
   console.log(`NEXT_PUBLIC_TEST_CONTRACT=${collection.address}`);
