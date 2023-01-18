@@ -1,4 +1,3 @@
-export const InterfaceNotLoadedError = new Error('Interface is not loaded');
 
 export const CollectionMetaImageType = {
   banner: 'banner',

@@ -1,10 +1,18 @@
 import { utils } from 'ethers';
 import { tryCatch } from 'fp-ts/lib/Either';
 import * as t from 'io-ts';
+import { parse } from '../utils';
 import { ZERO_ADDRESS } from './constants';
 
 export interface AddressBrand {
   readonly Address: unique symbol;
+}
+
+// Signal an address is wanted but be willing to parse it later
+export type Addressish = Address | string;
+
+export function asAddress(address: Addressish): Address {
+  return parse(Address, address);
 }
 
 export const Address = t.string

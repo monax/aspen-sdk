@@ -14,7 +14,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 const webhookSecret: string = process.env.STRIPE_WEBHOOK_SECRET!;
-const PUBLISHING_API_BASEURI = process.env.PUBLISHING_API_BASEURI!;
+const PUBLISHING_API_BASEURI = process.env.NEXT_PUBLIC_PUBLISHING_API_BASEURI!;
 const PUBLISHING_API_USERNAME = process.env.PUBLISHING_API_USERNAME!;
 const PUBLISHING_API_PASSWORD = process.env.PUBLISHING_API_PASSWORD!;
 
@@ -79,12 +79,12 @@ const webhookHandler = async (req: NextApiRequest, res: NextApiResponse) => {
           });
         } catch (err) {
           console.log(`Error issuing token: ${err}`);
-          res.status(500).send(`Issuance error: ${err}`);
+          return res.status(500).send(`Issuance error: ${err}`);
         }
       } else {
         console.log(`Payment validation failed`);
         console.log("Event id:", event.id);
-        res.status(400).send("Payment validation failed.");
+        return res.status(400).send("Payment validation failed.");
       }
     }
 

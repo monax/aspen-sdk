@@ -17,5 +17,6 @@
         "explicitTypes": "always"
       }
     }
-  ]
+  ],
+  "plugins": ["prettier-plugin-organize-imports"]
 }

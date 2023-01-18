@@ -54,14 +54,31 @@ export class FeatureInterface<T> {
   }
 }
 
-export abstract class Features {
-  readonly base: CollectionContract;
+export abstract class Features<T extends FeatureInterfaceId> {
+  protected constructor(readonly base: CollectionContract, readonly handledFeatures: readonly T[]) {}
 
-  constructor(base: CollectionContract) {
-    this.base = base;
+  // Late-bound because it must be called after load()
+  private getPartitioner = () => exhaustiveUnionPartitioner(this.base.interfaces, ...this.handledFeatures);
+
+  makeGetPartition<P>(
+    partitionsThunk: (p: ReturnType<Features<T>['getPartitioner']>) => P,
+  ): <K extends keyof P>(k: K) => P[K] {
+    let t: P;
+    return (k) => {
+      if (!t) {
+        t = partitionsThunk(this.getPartitioner());
+      }
+      return t[k];
+    };
   }
 
-  abstract get supported(): boolean;
+  /**
+   * @returns True if the contract supports Agreement interface
+   */
+  get supported(): boolean {
+    // The contract must implement at least one handled feature
+    return this.handledFeatures.reduce((acc, f) => acc || Boolean(this.base.interfaces[f]), false);
+  }
 }
 
 export function extractKnownSupportedFeatures(supportedFeaturesFromContract: string[]): FeatureInterfaceId[] {
@@ -107,13 +124,3 @@ export const exhaustiveUnionPartitioner =
     }
     return ret;
   };
-
-export function memoise<T>(thunk: () => T): () => T {
-  let t: T;
-  return () => {
-    if (!t) {
-      t = thunk();
-    }
-    return t;
-  };
-}

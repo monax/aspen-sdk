@@ -7,31 +7,50 @@ import {
   Address,
   CollectionContract,
   CollectionUserClaimConditions,
+  NATIVE_TOKEN,
   TermsUserAcceptanceState,
 } from "@monaxlabs/aspen-sdk/dist/contracts";
 import { parse } from "@monaxlabs/aspen-sdk/dist/utils";
 import { useWeb3React } from "@web3-react/core";
 import { BigNumber } from "ethers";
 import { useEffect, useMemo, useState } from "react";
+import {
+  AllowlistStatus,
+  Chain,
+  ContractService,
+  getAllowlistStatus,
+} from "@monaxlabs/aspen-sdk/dist/apis/publishing";
+const network = {
+  1: "Ethereum",
+  137: "Polygon",
+  80001: "Mumbai",
+  11297108109: "Palm",
+  11297108099: "PalmTestnet",
+  7700: "Canto",
+};
 
 const Mint: React.FC<{
+  contractAddress: string;
   contract: CollectionContract;
   tokenId: string;
   userClaimRestrictions: CollectionUserClaimConditions | null;
   activeClaimConditions: ActiveClaimConditions | null;
+  allowlistStatus: AllowlistStatus;
   termsInfo: TermsUserAcceptanceState | null;
   onUpdate: () => void;
   onError: (error: string) => void;
 }> = ({
+  contractAddress,
   contract,
   tokenId,
   activeClaimConditions,
   userClaimRestrictions,
+  allowlistStatus,
   termsInfo,
   onUpdate,
   onError,
 }) => {
-  const { account, library } = useWeb3React<Web3Provider>();
+  const { account, library, chainId } = useWeb3React<Web3Provider>();
   const [canMint, setCanMint] = useState(false);
   const [loadingMintButton, setLoadingMintButton] = useState(false);
 
@@ -55,8 +74,12 @@ const Mint: React.FC<{
         activeClaimConditions.activeClaimCondition.pricePerToken,
         true
       );
-      if (!verifyClaim) return;
+      if (!verifyClaim) {
+        onError("Claim did not verify!");
+        return;
+      }
       try {
+        const { proofs, proofMaxQuantityPerTransaction } = allowlistStatus;
         const tx = await contract.issuance.claim(
           library.getSigner(),
           parse(Address, account),
@@ -64,8 +87,8 @@ const Mint: React.FC<{
           BigNumber.from(1),
           activeClaimConditions.activeClaimCondition.currency,
           activeClaimConditions.activeClaimCondition.pricePerToken,
-          [],
-          BigNumber.from(0)
+          proofs,
+          proofMaxQuantityPerTransaction
         );
 
         if (tx) {

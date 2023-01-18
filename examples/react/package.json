@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "stripe:secret": "stripe listen --api-key ${STRIPE_SECRET_KEY} --print-secret",
+    "stripe:proxy": "stripe listen --api-key ${STRIPE_SECRET_KEY} --forward-to http://localhost:3000/api/webhooks",
+    "stripe:silas:proxy": "sops exec-env silas-secrets.env 'pnpm stripe:proxy'",
+    "stripe:silas:dev": "sops exec-env silas-secrets.env 'pnpm dev'"
   },
   "type": "module",
   "dependencies": {

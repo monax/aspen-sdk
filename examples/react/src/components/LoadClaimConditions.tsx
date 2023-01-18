@@ -5,15 +5,18 @@ import {
 } from "@monaxlabs/aspen-sdk/dist/contracts";
 import { ethers } from "ethers";
 import styles from "../styles/Home.module.css";
+import { AllowlistStatus } from "@monaxlabs/aspen-sdk/dist/apis/publishing";
 
 const LoadClaimConditions: React.FC<{
   userClaimConditions: UserClaimConditions | null;
   userClaimRestrictions: CollectionUserClaimConditions | null;
   activeClaimConditions: ActiveClaimConditions | null;
+  allowlistStatus: AllowlistStatus;
 }> = ({
   userClaimConditions,
   userClaimRestrictions,
   activeClaimConditions,
+  allowlistStatus,
 }) => {
   const maxClaimableSupply =
     activeClaimConditions?.activeClaimCondition.maxClaimableSupply.gt(1e9)
@@ -25,7 +28,10 @@ const LoadClaimConditions: React.FC<{
       {activeClaimConditions && (
         <div className={styles.card}>
           <h4>Active Claim Conditions : </h4>
-          <p>Max Claimable Supply : {maxClaimableSupply === Infinity ? '∞' : maxClaimableSupply}</p>
+          <p>
+            Max Claimable Supply :{" "}
+            {maxClaimableSupply === Infinity ? "∞" : maxClaimableSupply}
+          </p>
           {activeClaimConditions.activeClaimCondition.pricePerToken && (
             <p>
               Price Per Token :{" "}
@@ -60,11 +66,14 @@ const LoadClaimConditions: React.FC<{
           </p>
           <p>
             Can Claim Tokens :{" "}
-            {userClaimRestrictions.canClaimTokens ? "YES" : "NO"}
+            {userClaimRestrictions.canClaimTokens
+              ? "YES"
+              : `NO (${userClaimRestrictions.claimState})`}
           </p>
           <p>
             Can Mint After : {userClaimRestrictions.canMintAfter.toDateString()}
           </p>
+          <p>Wallet Allow List Status : {allowlistStatus.status}</p>
         </div>
       )}
     </>

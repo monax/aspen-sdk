@@ -21,12 +21,18 @@ import { waitForCompletion } from './waiter';
 
 let mutex = false;
 
-export type PhaseTemplate = Omit<PhaseRequest, 'tokenGuid'>;
+export type Phase = Omit<PhaseRequest, 'tokenGuid'> & { allowlist?: Record<string, number> };
+
+export type CollectionOptions = CreateCollectionRequest & {
+  maxSupplyPerToken?: number;
+  tokenCount?: number;
+  terms?: string;
+};
 
 export async function deployERC1155(
   network: SupportedNetwork,
-  phases: PhaseRequest[],
-  collectionOverrides?: Partial<CreateCollectionRequest>,
+  phases: Phase[],
+  opts?: Partial<CollectionOptions>,
 ): Promise<CollectionResponse> {
   const createCollectionRequest: CreateCollectionRequest = {
     name: 'AccessPass',
@@ -37,7 +43,7 @@ export async function deployERC1155(
     visibility: CollectionVisibility.REVEALED,
     royaltyPercentage: 2,
     fileSource: FileSource.WEB2,
-    ...collectionOverrides,
+    ...opts,
   };
   const collection = await CollectionService.postCollection({
     requestBody: createCollectionRequest,
@@ -49,10 +55,10 @@ export async function deployERC1155(
   }
   // throw new Error('wait');
   console.error(`Created collection id ${collectionGuid}`);
-  const tokenRequests = new Array(4).fill(null).map<CreateTokenRequest>((_, i) => ({
+  const tokenRequests = new Array(opts?.tokenCount || 4).fill(null).map<CreateTokenRequest>((_, i) => ({
     collectionGuid,
     name: String(i),
-    maxSupply: maxTokens,
+    maxSupply: opts?.maxSupplyPerToken || maxTokens,
     description: 'foo',
     externalUrl: `https://foo.bar/${i}`,
   }));
@@ -61,27 +67,43 @@ export async function deployERC1155(
     const token = await TokenService.postToken({ requestBody: tokenRequest });
     console.error(`Created token guid: ${token.guid} tokenId: ${token.tokenId}`);
     for (const phase of phases) {
-      CollectionTokenPhasesService.postCollectionPhases({
+      const { guid: phaseGuid } = await CollectionTokenPhasesService.postCollectionPhases({
         collectionGuid,
         requestBody: {
           ...phase,
           tokenGuid: token.guid,
         },
       });
+      if (!phaseGuid) {
+        throw new Error(`Unexpectedly no phaseGuid in response when creating ${phase}`);
+      }
+      const allowlist = phase.allowlist;
+      if (allowlist) {
+        const allowlistLength = Object.keys(allowlist).length;
+        console.error(`Pushing allowlist of length ${allowlistLength} to ${collectionGuid} for phase ${phaseGuid}`);
+        await CollectionTokenPhasesService.postPhaseWhitelistJson({
+          collectionGuid,
+          phaseGuid,
+          requestBody: allowlist,
+        });
+      }
     }
   }
-  CollectionService.postCollectionRoyaltyrecipients({
+  await CollectionService.postCollectionRoyaltyrecipients({
     guid: collectionGuid,
     requestBody: [
       { address: '0x92380354B9F2334A9c78C0686645db04D52972bc', share: 50 },
       { address: '0xf8A07e6d45DdDE15252D6e22A0105910e7f1e527', share: 50 },
     ],
   });
-  const { web2Url } = await CollectionService.postCollectionTerms({
-    guid: collectionGuid,
-    formData: { file: coerceToBlob(Buffer.from('Thou shalt mint'), 'terms.txt') },
-  });
-  console.error(`Collection ${collectionGuid} has terms ${web2Url}`);
+  const terms = opts?.terms;
+  if (terms) {
+    const { web2Url } = await CollectionService.postCollectionTerms({
+      guid: collectionGuid,
+      formData: { file: coerceToBlob(Buffer.from(terms), 'terms.txt') },
+    });
+    console.error(`Collection ${collectionGuid} has terms ${web2Url}`);
+  }
 
   await CollectionService.postCollectionTermsEnable({ guid: collectionGuid, status: true });
 
@@ -127,6 +149,7 @@ export async function deployERC721(
     name: 'MusicNFT',
     symbol: 'BBB',
     maxTokens: 10,
+
     chain: networkToChain[network],
     contractName: 'CedarERC721Drop',
     visibility: CollectionVisibility.REVEALED,
