@@ -102,8 +102,13 @@ const Home: NextPage = () => {
         proofMaxQuantityPerTransaction
       );
       setUserClaimRestrictions(restrictions);
-      const balance = await contract.erc1155.balanceOf(account, selectedToken);
-      setTokenBalance(balance.toString());
+      if (contract.erc1155.supported) {
+        const balance = await contract.erc1155.balanceOf(
+          account,
+          selectedToken
+        );
+        setTokenBalance(balance.toString());
+      }
     }
   }, [account, contract, contractAddress, selectedToken, setError]);
 
