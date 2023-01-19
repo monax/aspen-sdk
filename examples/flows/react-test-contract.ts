@@ -2,7 +2,7 @@ import { AspenEnvironment, authenticateAllFromFile, SupportedNetwork } from '@mo
 import { Currency } from '@monaxlabs/aspen-sdk/dist/apis/publishing';
 import { addHours, addMinutes } from 'date-fns';
 import { credentialsFile } from './secrets';
-import { deployERC1155 } from './utils/collection';
+import { deployERC721 } from './utils/collection';
 
 const network: SupportedNetwork = 'Mumbai';
 const environment: AspenEnvironment = 'production';
@@ -16,7 +16,7 @@ async function main(): Promise<void> {
     '0x92380354B9F2334A9c78C0686645db04D52972bc': 101,
   };
   const now = new Date();
-  const collection = await deployERC1155(
+  const collection = await deployERC721(
     network,
     [
       {
@@ -53,7 +53,6 @@ async function main(): Promise<void> {
     {
       name: 'React Test',
       maxTokens: 200,
-      tokenCount: 2,
     },
   );
   console.log(`NEXT_PUBLIC_TEST_CONTRACT=${collection.address}`);

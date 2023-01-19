@@ -143,7 +143,8 @@ const networkToChain: Record<SupportedNetwork, Chain> = {
 
 export async function deployERC721(
   network: SupportedNetwork,
-  overrides?: Partial<CreateCollectionRequest>,
+  phases?: Phase[],
+  opts?: Partial<CollectionOptions>,
 ): Promise<{ guid: string; address: string }> {
   const createCollectionRequest: CreateCollectionRequest = {
     name: 'MusicNFT',
@@ -155,7 +156,7 @@ export async function deployERC721(
     visibility: CollectionVisibility.REVEALED,
     royaltyPercentage: 2,
     fileSource: FileSource.WEB2,
-    ...overrides,
+    ...opts,
   };
   const collection = await CollectionService.postCollection({
     requestBody: createCollectionRequest,
@@ -177,6 +178,40 @@ export async function deployERC721(
     const token = await TokenService.postToken({ requestBody: tokenRequest });
     console.error(`Created token: ${token.guid} (tokenId: ${token.tokenId})`);
   }
+  if (!phases) {
+    phases = [
+      {
+        name: 'Public Mint',
+        currency: Currency.NATIVE_COIN,
+        pricePerToken: 0.00001,
+        startTimestamp: new Date().toISOString(),
+        maxClaimableSupply: 0,
+        quantityLimitPerTransaction: 100,
+        waitTimeInSecondsBetweenClaims: 1,
+      },
+    ];
+  }
+  for (const phase of phases) {
+    const { guid: phaseGuid } = await CollectionTokenPhasesService.postCollectionPhases({
+      collectionGuid,
+      requestBody: {
+        ...phase,
+      },
+    });
+    if (!phaseGuid) {
+      throw new Error(`Unexpectedly no phaseGuid in response when creating ${phase}`);
+    }
+    const allowlist = phase.allowlist;
+    if (allowlist) {
+      const allowlistLength = Object.keys(allowlist).length;
+      console.error(`Pushing allowlist of length ${allowlistLength} to ${collectionGuid} for phase ${phaseGuid}`);
+      await CollectionTokenPhasesService.postPhaseWhitelistJson({
+        collectionGuid,
+        phaseGuid,
+        requestBody: allowlist,
+      });
+    }
+  }
   CollectionService.postCollectionRoyaltyrecipients({
     guid: collectionGuid,
     requestBody: [
@@ -184,25 +219,16 @@ export async function deployERC721(
       { address: '0xf8A07e6d45DdDE15252D6e22A0105910e7f1e527', share: 50 },
     ],
   });
-  const { web2Url } = await CollectionService.postCollectionTerms({
-    guid: collectionGuid,
-    formData: { file: coerceToBlob(Buffer.from('Thou shalt mint'), 'terms.txt') },
-  });
-  console.error(`Collection ${collectionGuid} has terms ${web2Url}`);
+  const terms = opts?.terms;
+  if (terms) {
+    const { web2Url } = await CollectionService.postCollectionTerms({
+      guid: collectionGuid,
+      formData: { file: coerceToBlob(Buffer.from(terms), 'terms.txt') },
+    });
+    console.error(`Collection ${collectionGuid} has terms ${web2Url}`);
+  }
 
   await CollectionService.postCollectionTermsEnable({ guid: collectionGuid, status: true });
-  CollectionTokenPhasesService.postCollectionPhases({
-    collectionGuid,
-    requestBody: {
-      name: 'Public Mint',
-      currency: Currency.NATIVE_COIN,
-      pricePerToken: 0.00001,
-      startTimestamp: new Date().toISOString(),
-      maxClaimableSupply: 0,
-      quantityLimitPerTransaction: 100,
-      waitTimeInSecondsBetweenClaims: 1,
-    },
-  });
 
   await CollectionInfoService.postCollectionInfo({
     guid: collectionGuid,
