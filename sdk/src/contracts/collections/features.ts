@@ -77,7 +77,7 @@ export abstract class Features<T extends FeatureInterfaceId> {
    */
   get supported(): boolean {
     // The contract must implement at least one handled feature
-    return this.handledFeatures.reduce((acc, f) => acc || Boolean(this.base.interfaces[f]), false);
+    return this.handledFeatures.some((f) => Boolean(this.base.interfaces[f]));
   }
 }
 
