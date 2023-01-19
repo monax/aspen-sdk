@@ -38,15 +38,10 @@ export class Erc1155 extends Features<HandledFeature> {
 
   async balanceOf(address: Addressish, tokenId: BigNumberish): Promise<BigNumber> {
     const { standard, supply } = this.getPartition('erc1155');
-    const contract = standard
-      ? standard.connectReadOnly()
-      : // Use supply as a marker interface then assume standard 1155
-      supply
-      ? this.base.assumeFeature('standard/IERC1155.sol:IERC1155V0').connectReadOnly()
-      : null;
-
-    if (contract) {
-      return contract.balanceOf(asAddress(address), tokenId);
+    // Use supply as a marker interface then assume standard 1155
+    const factory = standard ? standard : supply ? this.base.assumeFeature('standard/IERC1155.sol:IERC1155V0') : null;
+    if (factory) {
+      return factory.connectReadOnly().balanceOf(asAddress(address), tokenId);
     }
     throw new Error(`Contract does not appear to be an ERC1155`);
   }
