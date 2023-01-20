@@ -19,15 +19,13 @@ import Select from "components/common/Select";
 import ConnectWallet from "components/ConnectWallet";
 import LoadClaimConditions from "components/LoadClaimConditions";
 import Mint from "components/Mint";
-import Error from "components/common/Error";
-import { useError } from "hooks/useError";
+
 import {
   AllowlistStatus,
   Chain,
-  ContractService,
   getAllowlistStatus,
-  MerkleProofResponse,
 } from "@monaxlabs/aspen-sdk/dist/apis/publishing";
+import { useToasts } from "react-toast-notifications";
 
 type Metadata = {
   uri: string | null;
@@ -50,7 +48,7 @@ const Home: NextPage = () => {
   const [termsInfo, setTermsInfo] = useState<TermsUserAcceptanceState | null>(
     null
   );
-  const { error, setError } = useError();
+  const { addToast } = useToasts();
   const { account, active, library } = useWeb3React<Web3Provider>();
   const [userClaimConditions, setUserClaimConditions] =
     useState<UserClaimConditions | null>(null);
@@ -78,30 +76,44 @@ const Home: NextPage = () => {
       );
 
       if (!activeConditions) {
-        setError("No active claim conditions");
+        addToast("No active claim conditions", {
+          appearance: "error",
+          autoDismiss: true,
+        });
         return;
       }
       if (!userConditions) {
-        setError("No user claim condition");
+        addToast("No user claim condition", {
+          appearance: "error",
+          autoDismiss: true,
+        });
         return;
       }
       setUserClaimConditions(userConditions);
-      const allowlistStatus = await getAllowlistStatus(
-        contractAddress,
-        account,
-        Chain.MUMBAI,
-        selectedToken
-      );
-      setAllowlistStatus(allowlistStatus);
 
-      const { proofs, proofMaxQuantityPerTransaction } = allowlistStatus;
-      const restrictions = await contract.issuance.getUserClaimRestrictions(
-        userConditions,
-        activeConditions,
-        proofs,
-        proofMaxQuantityPerTransaction
-      );
-      setUserClaimRestrictions(restrictions);
+      try {
+        const allowlistStatusValue = await getAllowlistStatus(
+          contractAddress,
+          account,
+          Chain.MUMBAI,
+          selectedToken
+        );
+        setAllowlistStatus(allowlistStatusValue);
+        const { proofs, proofMaxQuantityPerTransaction } = allowlistStatusValue;
+        const restrictions = await contract.issuance.getUserClaimRestrictions(
+          userConditions,
+          activeConditions,
+          proofs,
+          proofMaxQuantityPerTransaction
+        );
+        setUserClaimRestrictions(restrictions);
+      } catch (error: any) {
+        addToast(error?.message, {
+          appearance: "error",
+          autoDismiss: true,
+        });
+      }
+
       if (contract.erc1155.supported) {
         const balance = await contract.erc1155.balanceOf(
           account,
@@ -110,7 +122,7 @@ const Home: NextPage = () => {
         setTokenBalance(balance.toString());
       }
     }
-  }, [account, contract, contractAddress, selectedToken, setError]);
+  }, [account, addToast, contract, contractAddress, selectedToken]);
 
   useEffect(() => {
     loadClaimConditions();
@@ -154,7 +166,6 @@ const Home: NextPage = () => {
 
   return (
     <div>
-      <Error error={error} />
       <main className={styles.main}>
         <h2>Aspen SDK Example </h2>
         <p>
@@ -198,13 +209,8 @@ const Home: NextPage = () => {
               activeClaimConditions={activeClaimConditions}
               allowlistStatus={allowlistStatus}
             />
-            <AcceptTerms
-              contract={contract}
-              termsInfo={termsInfo}
-              onError={setError}
-            />
+            <AcceptTerms contract={contract} termsInfo={termsInfo} />
             <Mint
-              contractAddress={contractAddress}
               userClaimRestrictions={userClaimRestrictions}
               activeClaimConditions={activeClaimConditions}
               allowlistStatus={allowlistStatus}
@@ -212,7 +218,6 @@ const Home: NextPage = () => {
               tokenId={selectedToken}
               termsInfo={termsInfo}
               onUpdate={loadClaimConditions}
-              onError={setError}
             />
           </div>
         )}

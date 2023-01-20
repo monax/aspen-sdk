@@ -1,6 +1,7 @@
 import { Web3Provider } from "@ethersproject/providers";
 import { useWeb3React } from "@web3-react/core";
 import { InjectedConnector } from "@web3-react/injected-connector";
+import { useEffect, useMemo } from "react";
 import styles from "../styles/Home.module.css";
 
 const network = {
@@ -12,11 +13,24 @@ const network = {
   7700: "Canto",
 };
 const ConnectWallet: React.FC = () => {
-  const injectedConnector = new InjectedConnector({
-    supportedChainIds: Object.keys(network).map(Number),
-  });
+  const injectedConnector = useMemo(
+    () =>
+      new InjectedConnector({
+        supportedChainIds: Object.keys(network).map(Number),
+      }),
+    []
+  );
   const { chainId, account, activate, active } = useWeb3React<Web3Provider>();
   const onClick = () => activate(injectedConnector);
+
+  useEffect(() => {
+    (async () => {
+      const autorized = await injectedConnector.isAuthorized();
+      if (autorized) {
+        activate(injectedConnector);
+      }
+    })();
+  }, [activate, injectedConnector]);
   return (
     <div>
       {active ? (

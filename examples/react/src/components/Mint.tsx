@@ -16,21 +16,10 @@ import { BigNumber } from "ethers";
 import { useEffect, useMemo, useState } from "react";
 import {
   AllowlistStatus,
-  Chain,
-  ContractService,
-  getAllowlistStatus,
 } from "@monaxlabs/aspen-sdk/dist/apis/publishing";
-const network = {
-  1: "Ethereum",
-  137: "Polygon",
-  80001: "Mumbai",
-  11297108109: "Palm",
-  11297108099: "PalmTestnet",
-  7700: "Canto",
-};
+import { useToasts } from "react-toast-notifications";
 
 const Mint: React.FC<{
-  contractAddress: string;
   contract: CollectionContract;
   tokenId: string;
   userClaimRestrictions: CollectionUserClaimConditions | null;
@@ -38,9 +27,7 @@ const Mint: React.FC<{
   allowlistStatus: AllowlistStatus;
   termsInfo: TermsUserAcceptanceState | null;
   onUpdate: () => void;
-  onError: (error: string) => void;
 }> = ({
-  contractAddress,
   contract,
   tokenId,
   activeClaimConditions,
@@ -48,17 +35,20 @@ const Mint: React.FC<{
   allowlistStatus,
   termsInfo,
   onUpdate,
-  onError,
 }) => {
-  const { account, library, chainId } = useWeb3React<Web3Provider>();
+  const { account, library } = useWeb3React<Web3Provider>();
   const [canMint, setCanMint] = useState(false);
   const [loadingMintButton, setLoadingMintButton] = useState(false);
+  const { addToast } = useToasts();
 
   const onMint = async () => {
     if (!library || loadingMintButton) return;
 
     if (!activeClaimConditions) {
-      onError("No active claim condition");
+      addToast("No active claim condition", {
+        appearance: "error",
+        autoDismiss: true,
+      });
       return;
     }
 
@@ -75,7 +65,10 @@ const Mint: React.FC<{
         true
       );
       if (!verifyClaim) {
-        onError("Claim did not verify!");
+        addToast("Claim did not verify!", {
+          appearance: "error",
+          autoDismiss: true,
+        });
         return;
       }
       try {
@@ -95,6 +88,10 @@ const Mint: React.FC<{
           const receipt = await tx.wait();
           if (receipt.status === 1) {
             onUpdate();
+            addToast("Claim Successful!", {
+              appearance: "success",
+              autoDismiss: true,
+            });
           }
         }
       } catch (error) {

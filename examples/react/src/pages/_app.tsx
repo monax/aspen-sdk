@@ -8,6 +8,7 @@ import {
   DefaultDebugHandler,
   DefaultErrorHandler,
 } from "@monaxlabs/aspen-sdk/dist/contracts";
+import { ToastProvider } from "react-toast-notifications";
 
 CollectionContract.setDebugHandler(DefaultDebugHandler);
 CollectionContract.setErrorHandler(DefaultErrorHandler);
@@ -21,7 +22,9 @@ function getLibrary(provider: any): Web3Provider {
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <Web3ReactProvider getLibrary={getLibrary}>
-      <Component {...pageProps} />
+      <ToastProvider>
+        <Component {...pageProps} />
+      </ToastProvider>
     </Web3ReactProvider>
   );
 }
