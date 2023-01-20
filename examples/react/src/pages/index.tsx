@@ -42,7 +42,7 @@ const Home: NextPage = () => {
 
   const [contract, setContract] = useState<CollectionContract | null>(null);
   const [tokens, setTokens] = useState<number[]>([]);
-  const [selectedToken, setSelectedToken] = useState("0");
+  const [selectedToken, setSelectedToken] = useState<string | null>(null);
   const [tokenMetadata, setTokenMetadata] = useState<Metadata | null>(null);
   const [tokenBalance, setTokenBalance] = useState<string>("0");
   const [termsInfo, setTermsInfo] = useState<TermsUserAcceptanceState | null>(
@@ -114,7 +114,7 @@ const Home: NextPage = () => {
         });
       }
 
-      if (contract.erc1155.supported) {
+      if (contract.erc1155.supported && selectedToken) {
         const balance = await contract.erc1155.balanceOf(
           account,
           selectedToken
@@ -187,7 +187,7 @@ const Home: NextPage = () => {
             <div className={styles.flex}>
               <p>Select Token : </p>
               <Select
-                value={selectedToken}
+                value={selectedToken || 'none'}
                 onChange={(e) => setSelectedToken(e.target.value)}
                 options={tokens.map((t) => String(t))}
               />
@@ -215,7 +215,7 @@ const Home: NextPage = () => {
               activeClaimConditions={activeClaimConditions}
               allowlistStatus={allowlistStatus}
               contract={contract}
-              tokenId={selectedToken}
+              tokenId={selectedToken || 'none'}
               termsInfo={termsInfo}
               onUpdate={loadClaimConditions}
             />

@@ -63,7 +63,9 @@ const webhookHandler = async (req: NextApiRequest, res: NextApiResponse) => {
         const { tokenId, collectionGuid } = checkoutSession.metadata!;
         const wallet = checkoutSession.client_reference_id!;
         console.log(
-          `✅ Checkout complete for token ${tokenId} on collecton ${collectionGuid} to wallet ${wallet}`
+          `✅ Checkout complete for token ${
+            tokenId || "allocated"
+          } on collecton ${collectionGuid} to wallet ${wallet}`
         );
         console.log("Event id:", event.id);
 
@@ -73,10 +75,11 @@ const webhookHandler = async (req: NextApiRequest, res: NextApiResponse) => {
             name: PUBLISHING_API_USERNAME,
             password: PUBLISHING_API_PASSWORD,
           });
-          await issueToken(collectionGuid, {
+          const {tokenId: tokenIdIssued} = await issueToken(collectionGuid, {
             to: wallet,
-            tokenId: Number.parseInt(tokenId),
+            tokenId: tokenId ? Number.parseInt(tokenId) : undefined,
           });
+          console.log(`Issued token ${tokenIdIssued}`)
         } catch (err) {
           console.log(`Error issuing token: ${err}`);
           return res.status(500).send(`Issuance error: ${err}`);
