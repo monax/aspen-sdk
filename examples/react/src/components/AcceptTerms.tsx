@@ -7,17 +7,20 @@ import {
   TermsUserAcceptanceState,
 } from "@monaxlabs/aspen-sdk/dist/contracts";
 import { useWeb3React } from "@web3-react/core";
+import { useToasts } from "react-toast-notifications";
 
 const AcceptTerms: React.FC<{
   contract: CollectionContract;
   termsInfo: TermsUserAcceptanceState | null;
-  onError: (error: string) => void;
-}> = ({ contract, termsInfo, onError }) => {
+}> = ({ contract, termsInfo }) => {
   const { library } = useWeb3React<Web3Provider>();
+  const { addToast } = useToasts();
 
   if (!library) {
-    // FIXME: can we do better than this?
-    onError(`web3React library unexpectedly null`);
+    addToast("web3React library unexpectedly nulln", {
+      appearance: "error",
+      autoDismiss: true,
+    });
     return null;
   }
 

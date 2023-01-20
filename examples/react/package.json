@@ -26,6 +26,7 @@
     "next": "latest",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-toast-notifications": "^2.5.1",
     "stripe": "^11.6.0"
   },
   "devDependencies": {
