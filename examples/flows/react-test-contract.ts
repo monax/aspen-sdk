@@ -14,6 +14,9 @@ async function main(): Promise<void> {
   const allowlist = {
     '0x9C23C5DF854318037D10eD0B4e5A214b162D3F26': 100,
     '0x92380354B9F2334A9c78C0686645db04D52972bc': 101,
+    '0xDF7159A4576dEc89b681E4F3404F9FE3133f05F4': 1000,
+    '0xcDddF2E7B8AC90Bc03c56BfB4e859a23820040c1': 1001,
+    '0xF98CAabDC2aAD7A01b53459730FF969134aCF490': 1002,
   };
   const now = new Date();
   const collection = await deployERC721(
