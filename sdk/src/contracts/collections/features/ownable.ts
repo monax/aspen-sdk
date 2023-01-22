@@ -1,13 +1,13 @@
-import { parse } from '../../../utils/schema.js';
-import { Address } from '../../address.js';
+import { parse } from '../../../utils/schema';
+import { Address } from '../../address';
 import { CollectionContract } from '../collections';
-import { Features } from '../features.js';
+import { FeatureSet } from '../features';
 
 // TODO: reinstate when released
 const handledFeatures = ['ownable/IOwnable.sol:IPublicOwnableV0'] as const;
 
 type HandledFeature = (typeof handledFeatures)[number];
-export class Ownable extends Features<HandledFeature> {
+export class Ownable extends FeatureSet<HandledFeature> {
   constructor(base: CollectionContract) {
     super(base, handledFeatures);
   }

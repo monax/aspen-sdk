@@ -1,7 +1,7 @@
 import { BigNumber, BigNumberish } from 'ethers';
 import { Addressish, asAddress } from '../../address';
 import { CollectionContract } from '../collections';
-import { Features } from '../features';
+import { FeatureSet } from '../features';
 
 const handledFeatures = [
   'standard/IERC1155.sol:IERC1155SupplyV0',
@@ -15,7 +15,7 @@ const handledFeatures = [
 
 type HandledFeature = (typeof handledFeatures)[number];
 
-export class Erc1155 extends Features<HandledFeature> {
+export class Erc1155 extends FeatureSet<HandledFeature> {
   constructor(base: CollectionContract) {
     super(base, handledFeatures);
   }
@@ -37,11 +37,11 @@ export class Erc1155 extends Features<HandledFeature> {
   });
 
   async balanceOf(address: Addressish, tokenId: BigNumberish): Promise<BigNumber> {
-    const { standard, supply } = this.getPartition('erc1155');
+    const { standard, supply } = this.getPartition('erc1155')(this.base.interfaces);
     // Use supply as a marker interface then assume standard 1155
     const factory = standard ? standard : supply ? this.base.assumeFeature('standard/IERC1155.sol:IERC1155V0') : null;
     if (factory) {
-      return factory.connectReadOnly().balanceOf(asAddress(address), tokenId);
+      return factory.connectReadOnly().balanceOf(await asAddress(address), tokenId);
     }
     throw new Error(`Contract does not appear to be an ERC1155`);
   }

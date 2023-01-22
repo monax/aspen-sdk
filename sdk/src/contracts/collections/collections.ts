@@ -1,9 +1,22 @@
 import { Provider } from '@ethersproject/providers';
+import { BigNumber, BigNumberish, ContractReceipt, Overrides } from 'ethers';
 import { parse } from '../../utils';
-import { Address } from '../address';
+import { Address, Addressish, asAddress } from '../address';
+import { extractEventsFromLogs } from '../events';
 import { ICedarFeaturesV0__factory } from '../generated';
+import { PromiseOrValue } from '../generated/common';
+import {
+  TokenIssuedEventObject,
+  TokensIssuedEventObject,
+} from '../generated/issuance/ICedarNFTIssuance.sol/IRestrictedNFTIssuanceV2';
 import { ChainId } from '../network';
-import { extractKnownSupportedFeatures, FeatureContract, FeatureInterface, FeatureInterfaceId } from './features';
+import {
+  extractKnownSupportedFeatures,
+  FeatureContract,
+  FeatureFunction,
+  FeatureInterface,
+  FeatureInterfaceId,
+} from './features';
 import { Agreements } from './features/agreements';
 import { Erc1155 } from './features/erc1155';
 import { Issuance } from './features/issuance';
@@ -28,6 +41,16 @@ export const DefaultErrorHandler = (
 
 export type FeatureInterfaces = { -readonly [K in FeatureInterfaceId]: FeatureInterface<FeatureContract<K>> };
 
+export type NFTTokenIssueArgs = {
+  to: Addressish;
+  quantity: BigNumberish;
+  tokenURI?: string;
+};
+
+export type NFTTokenIssuance =
+  | ({ withTokenURI: true } & TokenIssuedEventObject)
+  | ({ withTokenURI: false } & TokensIssuedEventObject);
+
 export class CollectionContract {
   private _supportedFeatures: FeatureInterfaceId[] = [];
   private _interfaces: Partial<FeatureInterfaces> | null = null;
@@ -47,6 +70,85 @@ export class CollectionContract {
   readonly ownable: Ownable;
   readonly erc1155: Erc1155;
 
+  readonly issueNFT = FeatureFunction.fromFeaturePartition(
+    'issueNFT',
+    this,
+    [
+      'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2',
+      'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3',
+      'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4',
+      'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV0',
+      'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV1',
+      'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2',
+    ],
+    {
+      factory: [
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2',
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3',
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4',
+        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV0',
+        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV1',
+        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2',
+      ],
+      tokenIssued: [
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2',
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3',
+        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4',
+        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV1',
+        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2',
+      ],
+    },
+    ({ factory, tokenIssued }) =>
+      async (
+        signer: Signerish,
+        { to, quantity, tokenURI }: NFTTokenIssueArgs,
+        overrides?: Overrides & { from?: PromiseOrValue<string> },
+      ): Promise<NFTTokenIssuance[]> => {
+        if (factory) {
+          const contract = factory.connectWith(signer);
+          const receiver = await asAddress(to);
+          const receipts: ContractReceipt[] = [];
+          try {
+            if (tokenURI === undefined) {
+              const tx = await contract.issue(receiver, quantity, overrides);
+              receipts.push(await tx.wait());
+            } else {
+              const sup = BigNumber.from(quantity);
+              for (let i = 0; sup.gt(i); i++) {
+                const tx = await contract.issueWithTokenURI(receiver, tokenURI, overrides);
+                receipts.push(await tx.wait());
+              }
+            }
+          } catch (err) {
+            throw err;
+          }
+          let issueEvents: NFTTokenIssuance[] = [];
+          if (!tokenIssued) {
+            tokenIssued = this.assumeFeature('issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2');
+          }
+          if (tokenIssued) {
+            const contract = tokenIssued.connectReadOnly();
+            issueEvents.push(
+              ...extractEventsFromLogs(
+                contract.filters.TokensIssued(),
+                tokenIssued.interface,
+                receipts.flatMap((r) => r.logs),
+              ).map((e) => ({ withTokenURI: false as const, ...e })),
+            );
+            issueEvents.push(
+              ...extractEventsFromLogs(
+                contract.filters.TokenIssued(),
+                tokenIssued.interface,
+                receipts.flatMap((r) => r.logs),
+              ).map((e) => ({ withTokenURI: true as const, ...e })),
+            );
+          }
+          return issueEvents;
+        }
+        throw new Error();
+      },
+  );
+
   static setDebugHandler(handler: DebugHandler | undefined) {
     CollectionContract._debugHandler = handler;
   }
@@ -59,10 +161,15 @@ export class CollectionContract {
     CollectionContract._throwErrors = shouldThrowErrors;
   }
 
+  static async from(provider: Provider, collectionAddress: Addressish): Promise<CollectionContract> {
+    const contract = new CollectionContract(provider, await asAddress(collectionAddress));
+    await contract.load();
+    return contract;
+  }
+
   constructor(provider: Provider, collectionAddress: Address) {
     this.address = collectionAddress;
     this._provider = provider;
-
     this.metadata = new Metadata(this);
     this.agreements = new Agreements(this);
     this.royalties = new Royalties(this);

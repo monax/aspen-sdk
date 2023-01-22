@@ -1,7 +1,7 @@
 import { Provider } from '@ethersproject/providers';
 import { createHash, randomBytes } from 'crypto';
 import { Wallet } from 'ethers';
-import { HDNode } from 'ethers/lib/utils';
+import { HDNode } from 'ethers/lib/utils.js';
 
 // BIP-44 standard HD wallet path
 const purpose = `44'`;

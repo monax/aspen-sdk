@@ -1,5 +1,5 @@
 import { getProviderConfig, getSigner } from '../../apis';
-import { parse, parseFromString } from '../../utils/schema.js';
+import { parse, parseFromString } from '../../utils/schema';
 import { Address } from '../address';
 import { CollectionContract } from './collections';
 import { beforeAll, describe, test } from '@jest/globals';
