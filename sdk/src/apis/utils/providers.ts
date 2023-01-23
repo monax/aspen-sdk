@@ -2,6 +2,7 @@ import { Provider } from '@ethersproject/providers';
 import { providers, Signer, Wallet } from 'ethers';
 import * as t from 'io-ts';
 import { JsonFromString } from 'io-ts-types';
+import { ChainId } from '../../contracts';
 import { Chain } from '../publishing';
 import { parseFromEnvOrFile } from './environment';
 
@@ -62,12 +63,37 @@ export async function getProviderConfig(
   return parseFromEnvOrFile(JsonFromString.pipe(ProviderConfig), configFile, configEnvVarName);
 }
 
-export function publishingChainFromNetwork(network: SupportedNetwork): Chain {
-  // FIXME: single network definition, double-sided mapping, use const object instead of enum for lookup
-  if (network === 'Mainnet') return Chain.ETHEREUM;
-  if (network === 'Goerli') return Chain.GOERLI;
-  if (network === 'Polygon') return Chain.POLYGON;
-  if (network === 'Mumbai') return Chain.MUMBAI;
+type ChainMapEntry = {
+  network: SupportedNetwork;
+  chain: Chain;
+  chainId: ChainId;
+};
 
-  throw new Error(`Missing case in SupportedNetwork selection`);
+const ChainMap: Array<ChainMapEntry> = [
+  { network: 'Mainnet', chain: Chain.ETHEREUM, chainId: 1 },
+  { network: 'Goerli', chain: Chain.GOERLI, chainId: 5 },
+  { network: 'Polygon', chain: Chain.POLYGON, chainId: 137 },
+  { network: 'Mumbai', chain: Chain.MUMBAI, chainId: 80001 },
+];
+
+function getChainMap<T extends keyof ChainMapEntry, K extends keyof ChainMapEntry>(
+  val: ChainMapEntry[T],
+  source: T,
+  target: K,
+): ChainMapEntry[K] {
+  const entry = ChainMap.find((c) => c[source] === val);
+  if (!entry) {
+    throw new Error(`Missing ${target}`);
+  }
+  return entry[target];
 }
+
+export const publishingChainFromNetwork = (network: SupportedNetwork): Chain => {
+  return getChainMap(network, 'network', 'chain');
+};
+export const networkFromPublishingChain = (chain: Chain): SupportedNetwork => {
+  return getChainMap(chain, 'chain', 'network');
+};
+export const publishingChainFromChainId = (chainId: ChainId): Chain => {
+  return getChainMap(chainId, 'chainId', 'chain');
+};

@@ -1,6 +1,9 @@
 import { Address, CollectionContract } from '../..';
 import { parse } from '../../../utils';
+
 import { FeatureSet } from '../features';
+
+import { SdkError, SdkErrorCode } from '../errors';
 
 export type RoyaltyInfo = {
   recipient: Address;
@@ -32,9 +35,9 @@ export class Royalties extends FeatureSet<RoyaltiesFeatures> {
 
   /**
    * This function returns the default royalty info on a contract
-   * @returns RoyaltyInfo | null
+   * @returns RoyaltyInfo
    */
-  async getDefaultRoyaltyInfo(): Promise<RoyaltyInfo | null> {
+  async getDefaultRoyaltyInfo(): Promise<RoyaltyInfo> {
     const getInfo = this.getPartition('getInfo')(this.base.interfaces);
 
     if (getInfo.v0) {
@@ -42,9 +45,11 @@ export class Royalties extends FeatureSet<RoyaltiesFeatures> {
         const iRoyalty = getInfo.v0.connectReadOnly();
         const [recipient, basisPoints] = await iRoyalty.getDefaultRoyaltyInfo();
         return { recipient: parse(Address, recipient), basisPoints };
-      } catch {}
+      } catch (err) {
+        throw new SdkError(SdkErrorCode.CHAIN_ERROR, 'chain', {}, err as Error);
+      }
+    } else {
+      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, 'feature', { feature: 'royalties' });
     }
-
-    return null;
   }
 }

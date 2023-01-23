@@ -1,17 +1,24 @@
 import { BigNumber, ContractTransaction } from 'ethers';
 import { Address, CollectionContract, IPFS_GATEWAY_PREFIX } from '../..';
-import { resolveIpfsUrl } from '../../../utils/ipfs';
+import { resolveIpfsUrl } from '../../../utils/ipfs.js';
+import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureSet } from '../features';
 import type { Signerish, TermsUserAcceptanceState } from '../types';
 
 export const AgreementsFeatures = [
   'agreement/IAgreement.sol:ICedarAgreementV0',
-  'agreement/ICedarAgreement.sol:ICedarAgreementV0',
   'agreement/IAgreement.sol:ICedarAgreementV1',
+  'agreement/ICedarAgreement.sol:ICedarAgreementV0',
   'agreement/ICedarAgreement.sol:ICedarAgreementV1',
   'agreement/ICedarAgreement.sol:IPublicAgreementV0',
   'agreement/IAgreement.sol:IPublicAgreementV0',
   'agreement/IAgreement.sol:IPublicAgreementV1',
+  // 'agreement/IAgreement.sol:IRestrictedAgreementV0',
+  // 'agreement/IAgreement.sol:IRestrictedAgreementV1',
+  // 'agreement/IAgreement.sol:IRestrictedAgreementV2',
+  // @todo are the following in use?
+  // 'agreement/IAgreementsRegistry.sol:IAgreementsRegistryV0',
+  // 'agreement/IAgreementsRegistry.sol:IAgreementsRegistryV1',
 ] as const;
 
 export type AgreementsFeatures = (typeof AgreementsFeatures)[number];
@@ -43,18 +50,18 @@ export class Agreements extends FeatureSet<AgreementsFeatures> {
     let termsURI = '';
     let termsVersion = 0;
 
-    const acceptTerms = this.getPartition('acceptTerms')(this.base.interfaces);
+    const { v0, v1, v2 } = this.getPartition('acceptTerms')(this.base.interfaces);
 
-    if (acceptTerms.v2) {
-      const iAgreement = await acceptTerms.v2.connectReadOnly();
+    if (v2) {
+      const iAgreement = await v2.connectReadOnly();
       ({ termsActivated, termsVersion, termsURI } = await iAgreement.getTermsDetails());
       termsAccepted = await iAgreement['hasAcceptedTerms(address)'](userAddress);
-    } else if (acceptTerms.v1) {
-      const iAgreement = await acceptTerms.v1.connectReadOnly();
+    } else if (v1) {
+      const iAgreement = await v1.connectReadOnly();
       ({ termsActivated, termsVersion, termsURI } = await iAgreement.getTermsDetails());
       termsAccepted = await iAgreement.hasAcceptedTerms(userAddress);
-    } else if (acceptTerms.v0) {
-      const iAgreement = acceptTerms.v0.connectReadOnly();
+    } else if (v0) {
+      const iAgreement = v0.connectReadOnly();
       termsActivated = await iAgreement.termsActivated();
       termsAccepted = await iAgreement.getAgreementStatus(userAddress);
       termsURI = await iAgreement.userAgreement();
@@ -67,52 +74,53 @@ export class Agreements extends FeatureSet<AgreementsFeatures> {
     return { termsActivated, termsAccepted, termsLink, termsVersion };
   }
 
-  async acceptTerms(signer: Signerish): Promise<ContractTransaction | null> {
-    const acceptTerms = this.getPartition('acceptTerms')(this.base.interfaces);
+  async acceptTerms(signer: Signerish): Promise<ContractTransaction> {
+    const { v0, v1, v2 } = this.getPartition('acceptTerms')(this.base.interfaces);
 
-    let acceptTx: ContractTransaction | null = null;
     try {
-      if (acceptTerms.v2) {
-        const iAgreement = acceptTerms.v2.connectWith(signer);
-        acceptTx = await iAgreement.acceptTerms();
-      } else if (acceptTerms.v1) {
-        const iAgreement = acceptTerms.v1.connectWith(signer);
-        acceptTx = await iAgreement['acceptTerms()']();
-      } else if (acceptTerms.v0) {
-        const iAgreement = acceptTerms.v0.connectWith(signer);
-        acceptTx = await iAgreement.acceptTerms();
+      if (v2) {
+        const iAgreement = v2.connectWith(signer);
+        return await iAgreement.acceptTerms();
+      } else if (v1) {
+        const iAgreement = v1.connectWith(signer);
+        return await iAgreement['acceptTerms()']();
+      } else if (v0) {
+        const iAgreement = v0.connectWith(signer);
+        return await iAgreement.acceptTerms();
       } else {
-        throw new Error(`Cannot accept terms because no supported feature on contract`);
+        throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, 'feature', { feature: 'agreements' });
       }
     } catch (err) {
-      this.base.error('Failed to accept terms', err, 'agreements.acceptTerms', undefined, signer);
+      if (SdkError.is(err)) {
+        throw err;
+      } else {
+        throw new SdkError(SdkErrorCode.CHAIN_ERROR, 'chain', {}, err as Error);
+      }
     }
-    if (acceptTx) {
-      this.base.debug('Terms accepted', acceptTx);
-    }
-    return acceptTx;
   }
 
-  async estimateGasForAcceptTerms(signer: Signerish): Promise<BigNumber | null> {
-    const acceptTerms = this.getPartition('acceptTerms')(this.base.interfaces);
+  async estimateGasForAcceptTerms(signer: Signerish): Promise<BigNumber> {
+    const { v0, v1, v2 } = this.getPartition('acceptTerms')(this.base.interfaces);
 
-    let gas: BigNumber | null = null;
     try {
-      if (acceptTerms.v2) {
-        const iAgreement = acceptTerms.v2.connectWith(signer);
-        gas = await iAgreement.estimateGas.acceptTerms();
-      } else if (acceptTerms.v1) {
-        const iAgreement = acceptTerms.v1.connectWith(signer);
-        gas = await iAgreement.estimateGas['acceptTerms()']();
-      } else if (acceptTerms.v0) {
-        const iAgreement = acceptTerms.v0.connectWith(signer);
-        gas = await iAgreement.estimateGas.acceptTerms();
+      if (v2) {
+        const iAgreement = v2.connectWith(signer);
+        return await iAgreement.estimateGas.acceptTerms();
+      } else if (v1) {
+        const iAgreement = v1.connectWith(signer);
+        return await iAgreement.estimateGas['acceptTerms()']();
+      } else if (v0) {
+        const iAgreement = v0.connectWith(signer);
+        return await iAgreement.estimateGas.acceptTerms();
       } else {
-        throw new Error(`Cannot accept terms because no supported feature on contract`);
+        throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, 'feature', { feature: 'agreements' });
       }
     } catch (err) {
-      this.base.error('Failed to accept terms', err, 'agreements.acceptTerms', undefined, signer);
+      if (SdkError.is(err)) {
+        throw err;
+      } else {
+        throw new SdkError(SdkErrorCode.CHAIN_ERROR, 'chain', {}, err as Error);
+      }
     }
-    return gas;
   }
 }

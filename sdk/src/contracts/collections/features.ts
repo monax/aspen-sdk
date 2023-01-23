@@ -63,7 +63,10 @@ export class FeatureInterface<T> {
 }
 
 export abstract class FeatureSet<T extends FeatureInterfaceId> {
-  protected constructor(readonly base: CollectionContract, readonly handledFeatures: readonly T[]) {}
+  protected constructor(
+    protected readonly base: CollectionContract,
+    protected readonly handledFeatures: readonly T[],
+  ) {}
 
   // Late-bound because it must be called after load()
   private getPartitioner = () => exhaustiveUnionPartitioner(...this.handledFeatures);

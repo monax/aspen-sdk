@@ -1,4 +1,5 @@
 import { Provider } from '@ethersproject/providers';
+
 import { BigNumber, BigNumberish, ContractReceipt, Overrides } from 'ethers';
 import { parse } from '../../utils';
 import { Address, Addressish, asAddress } from '../address';
@@ -10,7 +11,7 @@ import {
   TokensIssuedEventObject,
 } from '../generated/issuance/ICedarNFTIssuance.sol/IRestrictedNFTIssuanceV2';
 import { ChainId } from '../network';
-import { AspenContractInterfaces, ERC1155StandardInterfaces, ERC721StandardInterfaces } from './constants';
+import { AspenContractInterfaces } from './constants';
 import {
   extractKnownSupportedFeatures,
   FeatureContract,
@@ -19,11 +20,12 @@ import {
   FeatureInterfaceId,
 } from './features';
 import { Agreements } from './features/agreements';
-import { Erc1155 } from './features/erc1155';
-import { Issuance } from './features/issuance';
+import { Claim } from './features/claim';
+import { Conditions } from './features/conditions';
 import { Metadata } from './features/metadata';
 import { Ownable } from './features/ownable';
 import { Royalties } from './features/royalties';
+import { Standard } from './features/standard';
 import type { CollectionCallData, CollectionInfo, DebugHandler, ErrorHandler, Signerish, TokenStandard } from './types';
 
 export const DefaultDebugHandler = (collection: CollectionInfo, action: string, ...data: unknown[]) => {
@@ -62,16 +64,15 @@ export class CollectionContract {
   private static _errorHandler: ErrorHandler | undefined;
   private static _throwErrors = false;
 
-  private memos: Record<string, unknown> = {};
-
   readonly address: Address;
   // features
   readonly metadata: Metadata;
   readonly agreements: Agreements;
   readonly royalties: Royalties;
-  readonly issuance: Issuance;
   readonly ownable: Ownable;
-  readonly erc1155: Erc1155;
+  readonly claim: Claim;
+  readonly conditions: Conditions;
+  readonly standard: Standard;
 
   readonly issueNFT = FeatureFunction.fromFeaturePartition(
     'issueNFT',
@@ -176,9 +177,10 @@ export class CollectionContract {
     this.metadata = new Metadata(this);
     this.agreements = new Agreements(this);
     this.royalties = new Royalties(this);
-    this.issuance = new Issuance(this);
     this.ownable = new Ownable(this);
-    this.erc1155 = new Erc1155(this);
+    this.claim = new Claim(this);
+    this.conditions = new Conditions(this);
+    this.standard = new Standard(this);
   }
 
   get supportedFeatures(): string[] {
@@ -214,8 +216,8 @@ export class CollectionContract {
     return this.chainId;
   }
 
-  async load(forceUpdate = false): Promise<boolean> {
-    if (this._interfaces == null || forceUpdate) {
+  async load(): Promise<boolean> {
+    if (this._interfaces == null) {
       try {
         // Preload chainId
         await this.getChainId();
@@ -230,11 +232,8 @@ export class CollectionContract {
       } catch (err) {
         this._supportedFeatures = [];
         this._interfaces = null;
-        this.error('Failed to load supported features', err, 'base.load', { forceUpdate });
+        this.error('Failed to load supported features', err, 'base.load');
       }
-
-      // clear memoised values
-      this.memos = {};
     }
 
     return this._interfaces != null;
@@ -242,15 +241,6 @@ export class CollectionContract {
 
   assumeFeature<T extends FeatureInterfaceId>(feature: T): FeatureInterface<FeatureContract<T>> {
     return FeatureInterface.fromFeature(feature, this.address, this._provider);
-  }
-
-  public memoise<T>(key: string, thunk: () => T): () => T {
-    return () => {
-      if (!this.memos[key]) {
-        this.memos[key] = thunk();
-      }
-      return this.memos[key] as T;
-    };
   }
 
   protected buildInterfaces() {
@@ -268,18 +258,7 @@ export class CollectionContract {
 
     this.debug('Interfaces initialized');
 
-    this.detectTokenStandard();
-  }
-
-  protected detectTokenStandard() {
-    if (ERC721StandardInterfaces.some((i) => this._supportedFeatures.includes(i))) {
-      this._tokenStandard = 'ERC721';
-    } else if (ERC1155StandardInterfaces.some((i) => this._supportedFeatures.includes(i))) {
-      this._tokenStandard = 'ERC1155';
-    } else {
-      this._tokenStandard = null;
-    }
-
+    this._tokenStandard = this.standard.getStandard();
     this.debug('Token standard set to', this.tokenStandard);
   }
 
@@ -322,5 +301,14 @@ export class CollectionContract {
     if (CollectionContract._throwErrors) {
       throw error;
     }
+  }
+
+  requireTokenId(tokenId: BigNumberish | null): BigNumber {
+    if (tokenId === null) {
+      // @todo make an SDK error
+      throw new Error('Token is required for ERC1155 contracts!');
+    }
+
+    return BigNumber.from(tokenId);
   }
 }

@@ -1,5 +1,6 @@
 import { Provider } from '@ethersproject/abstract-provider';
 import type { BigNumber, Signer } from 'ethers';
+import { AllowlistStatus } from '../../apis/publishing/index';
 import { Address, ChainId } from '../index';
 import type { CollectionMetaImageType, CollectionMetaLinkType } from './constants';
 
@@ -122,6 +123,11 @@ export type UserClaimConditions = {
   lastClaimTimestamp: number;
   nextClaimTimestamp: number;
 };
+
+// Combines all conditions
+export type ClaimConditionsState = UserClaimConditions &
+  Omit<ActiveClaimConditions, 'activeClaimCondition'> &
+  CollectionContractClaimCondition & { allowlistStatus: AllowlistStatus };
 
 export type CollectionUserClaimState =
   | 'ok'
