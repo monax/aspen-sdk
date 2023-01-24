@@ -1,7 +1,7 @@
 import { BigNumber, ContractTransaction } from 'ethers';
 import { Address, CollectionContract, IPFS_GATEWAY_PREFIX } from '../..';
-import { resolveIpfsUrl } from '../../../utils/ipfs.js';
-import { Features } from '../features';
+import { resolveIpfsUrl } from '../../../utils/ipfs';
+import { FeatureSet } from '../features';
 import type { Signerish, TermsUserAcceptanceState } from '../types';
 
 const handledFeatures = [
@@ -14,7 +14,7 @@ const handledFeatures = [
   'agreement/IAgreement.sol:IPublicAgreementV1',
 ] as const;
 
-export class Agreements extends Features<(typeof handledFeatures)[number]> {
+export class Agreements extends FeatureSet<(typeof handledFeatures)[number]> {
   constructor(base: CollectionContract) {
     super(base, handledFeatures);
   }
@@ -58,7 +58,7 @@ export class Agreements extends Features<(typeof handledFeatures)[number]> {
     let termsURI = '';
     let termsVersion = 0;
 
-    const { cedarAgreementV0, cedarAgreementV1, publicAgreement } = this.getPartition('getState');
+    const { cedarAgreementV0, cedarAgreementV1, publicAgreement } = this.getPartition('getState')(this.base.interfaces);
 
     if (publicAgreement) {
       const agreement = await publicAgreement.connectReadOnly();
@@ -82,7 +82,7 @@ export class Agreements extends Features<(typeof handledFeatures)[number]> {
   }
 
   async acceptTerms(signer: Signerish): Promise<ContractTransaction | null> {
-    const { plainAccept, overloadedAccept } = this.getPartition('acceptTerms');
+    const { plainAccept, overloadedAccept } = this.getPartition('acceptTerms')(this.base.interfaces);
 
     let acceptTx: ContractTransaction | null = null;
     try {
@@ -105,7 +105,7 @@ export class Agreements extends Features<(typeof handledFeatures)[number]> {
   }
 
   async estimateGasForAcceptTerms(signer: Signerish): Promise<BigNumber | null> {
-    const { plainAccept, overloadedAccept } = this.getPartition('acceptTerms');
+    const { plainAccept, overloadedAccept } = this.getPartition('acceptTerms')(this.base.interfaces);
 
     let gas: BigNumber | null = null;
     try {

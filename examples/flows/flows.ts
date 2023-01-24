@@ -19,6 +19,7 @@ import {
   uploadFile,
 } from '@monaxlabs/aspen-sdk/dist/apis';
 import { ContractService, Currency } from '@monaxlabs/aspen-sdk/dist/apis/publishing';
+import { asyncYield, ISSUER_ROLE, SigningPool } from '@monaxlabs/aspen-sdk/dist/apis/utils/signing-pool';
 import { ClaimBalance, getClaimBalances } from '@monaxlabs/aspen-sdk/dist/claimgraph';
 import {
   Address,
@@ -29,11 +30,12 @@ import {
   ICedarERC1155DropV5__factory,
   ICedarERC721DropV7,
   ICedarERC721DropV7__factory,
+  NFTTokenIssuance,
 } from '@monaxlabs/aspen-sdk/dist/contracts';
 import { parse } from '@monaxlabs/aspen-sdk/dist/utils';
 import { BigNumber, BigNumberish, Signer } from 'ethers';
 import { providers } from 'ethers/lib/ethers';
-import { formatEther } from 'ethers/lib/utils';
+import { formatEther, parseEther } from 'ethers/lib/utils';
 import { createReadStream } from 'fs';
 import { GraphQLClient } from 'graphql-request';
 import { URL } from 'url';
@@ -68,13 +70,14 @@ const flows = {
   1: { cmd: cmdDeployCollections, desc: 'Contract creation via API of collections A and B (done once on our end)' },
   2: { cmd: cmdClaimA, desc: 'Claiming some A tokens to some different addresses (client-side flow)' },
   3: { cmd: cmdIssueB, desc: 'Issue B based on looking up claims on A from claimgraph (server-side flow)' },
-  4: { cmd: cmdGateA, desc: 'Gating something on A/B (server-side flow)' },
-  5: { cmd: cmdDeployAllowlistAndClaim, desc: 'Deploy collection with allowlist and claim' },
+  4: { cmd: cmdDirectIssueB, desc: 'Issue B directly from contract' },
+  5: { cmd: cmdGateA, desc: 'Gating something on A/B (server-side flow)' },
+  6: { cmd: cmdDeployAllowlistAndClaim, desc: 'Deploy collection with allowlist and claim' },
 } as const;
 
 // Change this to perform a different run
 // const flowToRun: (keyof typeof flows)[] = [1, 2, 3, 4];
-const flowToRun: (keyof typeof flows)[] = [5];
+const flowToRun: (keyof typeof flows)[] = [1, 4];
 
 let providerConfig: ProviderConfig;
 
@@ -188,6 +191,62 @@ async function cmdIssueB(): Promise<void> {
   console.error(`The following token Bs have been issued:\n${JSON.stringify(issuanceInfo, null, 2)}`);
   console.error(`Total tokens issued: ${Object.values(issuanceInfo ?? []).reduce((sum, v) => sum + v, 0)}`);
   console.error(tokenURIs);
+}
+
+async function cmdDirectIssueB(): Promise<void> {
+  const {
+    collections: [{ b }],
+  } = await readCollectionInfo();
+  const signer = await getSigner(network, providerConfig);
+  const provider = signer.provider;
+  const contract = await CollectionContract.from(signer.provider, b.address);
+
+  const maxSize = 50;
+  const accounts = generateAccounts(maxSize, { mnemonic: demoMnemonic, provider });
+
+  const gasStrategy = await getGasStrategy(provider);
+  const pool = await SigningPool.fromAccessControlContract(
+    signer.privateKey,
+    contract.address,
+    {
+      maxSize: maxSize,
+      provider,
+      seed: '0x303af788d4200da2c2918709ee3b6f871a108f0b42aaebb8b761077aa2c634c6',
+      replenish: {
+        reserve: signer,
+        topUp: parseEther('0.01'),
+        lowWater: parseEther('0.001'),
+        gasStrategy,
+      },
+      logger: console.error,
+    },
+    ISSUER_ROLE,
+  );
+
+  await pool.isInitialised();
+
+  const promises: Promise<NFTTokenIssuance[]>[] = [];
+  for (const account of accounts) {
+    await asyncYield();
+    promises.push(
+      pool.do(async (signer) => {
+        const signerAddress = await signer.getAddress();
+        console.error(`Calling issue to receiver ${account.address} with signer ${signerAddress}`);
+        return contract.issueNFT.must(signer, { to: account.address, quantity: 1 }, gasStrategy);
+      }),
+    );
+  }
+  const issues = (await Promise.all(promises)).flat();
+
+  console.error(
+    `Issued tokens ${issues
+      .map((i) =>
+        i.withTokenURI
+          ? `tokenId: ${i.tokenId}`
+          : `startTokenId: ${i.startTokenId}, quantity: ${i.quantity}` + `, receiver: ${i.receiver}`,
+      )
+      .join(', ')} on contract ${contract.address}`,
+  );
 }
 
 async function cmdGateA(): Promise<void> {

@@ -29,11 +29,11 @@ import {
   IPublicSFTIssuanceV2,
   ISFTSupplyV0,
 } from '../../generated';
-import type { TokensClaimedEventObject as ERC721TokensClaimedEventObject } from '../../generated/issuance/ICedarNFTIssuance.sol/ICedarNFTIssuanceV4.js';
-import type { TokensClaimedEventObject as ERC1155TokensClaimedEventObject } from '../../generated/issuance/ICedarSFTIssuance.sol/ICedarSFTIssuanceV2.js';
-import { Address, CollectionContract, isSameAddress, NATIVE_TOKEN, ZERO_BYTES32 } from '../../index.js';
-import { Features } from '../features.js';
-import { max, min } from '../number.js';
+import type { TokensClaimedEventObject as ERC721TokensClaimedEventObject } from '../../generated/issuance/ICedarNFTIssuance.sol/ICedarNFTIssuanceV4';
+import type { TokensClaimedEventObject as ERC1155TokensClaimedEventObject } from '../../generated/issuance/ICedarSFTIssuance.sol/ICedarSFTIssuanceV2';
+import { Address, CollectionContract, isSameAddress, NATIVE_TOKEN, ZERO_BYTES32 } from '../../index';
+import { FeatureSet } from '../features';
+import { max, min } from '../number';
 import type {
   ActiveClaimConditions,
   CollectionUserClaimConditions,
@@ -42,7 +42,7 @@ import type {
   TokenAsset,
   TokenAssetMetadata,
   UserClaimConditions,
-} from '../types.js';
+} from '../types';
 
 // FIXME[Silas]: global constant errors break stack traces. Subclass Error with a string constant code instead.
 //   Also makes it easier to add error context. Possible inspiration: https://github.com/monax/platform/blob/main/pkg/api/src/services/errors.ts
@@ -74,9 +74,9 @@ const handledFeatures = [
   'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0',
   'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1',
   'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2',
-] as const
+] as const;
 
-export class Issuance extends Features<typeof handledFeatures[number]> {
+export class Issuance extends FeatureSet<(typeof handledFeatures)[number]> {
   constructor(base: CollectionContract) {
     super(base, handledFeatures);
   }

@@ -3,6 +3,7 @@ import * as path from 'path';
 import prettier from 'prettier';
 import ts from 'typescript';
 import { parse } from '../utils';
+import { AdditionalABIs } from './abis';
 import { ContractManifest, ContractsManifest } from './manifest';
 
 const nonFeatureDirs = new Set(['deploy', 'impl']);
@@ -81,9 +82,13 @@ export async function dumpLatestABIs(abiDir: string, pathToManifestJson: string)
   for (const m of Object.values(manifest)) {
     writeABI(abiDir, m);
   }
+  const additionalDir = path.join(abiDir, 'additional');
+  for (const [name, abi] of Object.entries(AdditionalABIs)) {
+    writeABI(additionalDir, { name, abi, file: name + '.sol' });
+  }
 }
 
-function writeABI(abiDir: string, manifest: ContractManifest) {
+function writeABI(abiDir: string, manifest: { name: string; abi: unknown; file: string }) {
   const dir = path.join(abiDir, manifest.file);
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, manifest.name + '.json'), JSON.stringify(manifest.abi, null, 2));

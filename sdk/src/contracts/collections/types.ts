@@ -1,6 +1,6 @@
 import { Provider } from '@ethersproject/abstract-provider';
 import type { BigNumber, Signer } from 'ethers';
-import { Address, ChainId } from '../index.js';
+import { Address, ChainId } from '../index';
 import type { CollectionMetaImageType, CollectionMetaLinkType } from './constants';
 
 export type Signerish = Signer | Provider;

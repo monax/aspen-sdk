@@ -1,18 +1,18 @@
 import { utils } from 'ethers';
-import { tryCatch } from 'fp-ts/lib/Either';
+import { tryCatch } from 'fp-ts/lib/Either.js';
 import * as t from 'io-ts';
-import { parse } from '../utils';
-import { ZERO_ADDRESS } from './constants';
+import { parse } from '../utils/schema.js';
+import { ZERO_ADDRESS } from './constants.js';
 
 export interface AddressBrand {
   readonly Address: unique symbol;
 }
 
 // Signal an address is wanted but be willing to parse it later
-export type Addressish = Address | string;
+export type Addressish = { getAddress(): Promise<string> } | Address | string;
 
-export function asAddress(address: Addressish): Address {
-  return parse(Address, address);
+export async function asAddress(addressish: Addressish): Promise<Address> {
+  return parse(Address, typeof addressish === 'string' ? addressish : await addressish.getAddress());
 }
 
 export const Address = t.string

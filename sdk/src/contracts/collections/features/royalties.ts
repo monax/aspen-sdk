@@ -1,6 +1,6 @@
 import { Address, CollectionContract } from '../..';
 import { parse } from '../../../utils';
-import { Features } from '../features';
+import { FeatureSet } from '../features';
 
 export type RoyaltyInfo = {
   recipient: Address;
@@ -10,7 +10,7 @@ export type RoyaltyInfo = {
 const handledFeatures = ['royalties/IRoyalty.sol:IRoyaltyV0', 'royalties/IRoyalty.sol:IPublicRoyaltyV0'] as const;
 
 type HandledFeature = (typeof handledFeatures)[number];
-export class Royalties extends Features<HandledFeature> {
+export class Royalties extends FeatureSet<HandledFeature> {
   constructor(base: CollectionContract) {
     super(base, handledFeatures);
   }

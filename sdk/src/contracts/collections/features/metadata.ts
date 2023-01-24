@@ -4,7 +4,7 @@ import { CollectionContract, IPFS_GATEWAY_PREFIX } from '../..';
 import { resolveIpfsUrl } from '../../../utils';
 import { ICedarNFTMetadataV1, ICedarSFTMetadataV1, IPublicMetadataV0__factory } from '../../generated';
 import { CollectionMetaImageType } from '../constants';
-import { Features } from '../features';
+import { FeatureSet } from '../features';
 import type { CollectionMetadata, ContractVerificationType, TokenMetadata } from '../types';
 
 // TODO...
@@ -12,7 +12,7 @@ const handledFeatures = ['metadata/IContractMetadata.sol:ICedarMetadataV1'] as c
 
 type HandledFeature = (typeof handledFeatures)[number];
 
-export class Metadata extends Features<HandledFeature> {
+export class Metadata extends FeatureSet<HandledFeature> {
   constructor(base: CollectionContract) {
     super(base, handledFeatures);
   }

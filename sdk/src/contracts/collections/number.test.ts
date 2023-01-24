@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 import { BigNumber, constants } from 'ethers';
-import { max, min } from './number.js';
+import { max, min } from './number';
 
 describe('Number', () => {
   test('min/max', () => {

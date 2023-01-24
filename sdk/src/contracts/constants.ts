@@ -1,4 +1,4 @@
-import { Address } from './address.js';
+import { Address } from './address';
 
 export const NATIVE_TOKEN = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
