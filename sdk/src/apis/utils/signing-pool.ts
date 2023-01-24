@@ -149,33 +149,34 @@ export class SigningPool {
     try {
       const balance = await wallet.getBalance();
       this.log(`Recycling ${wallet.address} which has a balance of ${balance.toString()}`);
-      if (this.replenish && balance.lte(this.replenish.lowWater)) {
-        if (this.recycleLocked) {
-          const waitMs = RECYCLE_WAIT_MS + (Math.random() * RECYCLE_WAIT_MS) / 10;
-          this.log(`Waiting on recycle lock for ${waitMs}ms`);
-          await wait(waitMs);
-          return this.recycle(wallet);
-        }
-        this.recycleLocked = true;
-        const walletAddress = await wallet.getAddress();
-        const reserveBalance = await this.replenish.reserve.getBalance();
-        this.log(`Topping up ${wallet.address} from reserve (reserve balance: ${reserveBalance.toString()})`);
-        if (reserveBalance.lt(this.replenish.topUp)) {
-          const reserveAddress = await this.replenish.reserve.getAddress();
-          throw new Error(
-            `could not top up SigningPool wallet at ${walletAddress}, reserve account (${reserveAddress}) only has ${reserveBalance.toString()} but topup amount is ${this.replenish.topUp.toString()}`,
-          );
-        }
-        const topUp = BigNumber.from(this.replenish.topUp);
-        const topUpJitter = Math.floor(Math.random() * 100);
-        const receipt = await this.replenish.reserve.sendTransaction({
-          to: walletAddress,
-          // Add some jitter to transaction value to help evade stuck transactions
-          value: topUp.add(topUpJitter),
-          ...(this.replenish.gasStrategy || {}),
-        });
-        await receipt.wait();
+      if (!this.replenish || balance.gt(this.replenish.lowWater)) {
+        return;
       }
+      if (this.recycleLocked) {
+        const waitMs = RECYCLE_WAIT_MS + (Math.random() * RECYCLE_WAIT_MS) / 10;
+        this.log(`Waiting on recycle lock for ${waitMs}ms`);
+        await wait(waitMs);
+        return this.recycle(wallet);
+      }
+      this.recycleLocked = true;
+      const walletAddress = await wallet.getAddress();
+      const reserveBalance = await this.replenish.reserve.getBalance();
+      this.log(`Topping up ${wallet.address} from reserve (reserve balance: ${reserveBalance.toString()})`);
+      if (reserveBalance.lt(this.replenish.topUp)) {
+        const reserveAddress = await this.replenish.reserve.getAddress();
+        throw new Error(
+          `could not top up SigningPool wallet at ${walletAddress}, reserve account (${reserveAddress}) only has ${reserveBalance.toString()} but topup amount is ${this.replenish.topUp.toString()}`,
+        );
+      }
+      const topUp = BigNumber.from(this.replenish.topUp);
+      const topUpJitter = Math.floor(Math.random() * 100);
+      const receipt = await this.replenish.reserve.sendTransaction({
+        to: walletAddress,
+        // Add some jitter to transaction value to help evade duplicate stuck transactions
+        value: topUp.add(topUpJitter),
+        ...(this.replenish.gasStrategy || {}),
+      });
+      await receipt.wait();
     } catch (err: any) {
       const address = await wallet.getAddress().catch(() => `[could not get wallet address]`);
       throw new Error(`could not recycle SigningPool wallet '${address}': ${formatError(err)}`);

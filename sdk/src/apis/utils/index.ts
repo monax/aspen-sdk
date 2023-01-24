@@ -1,7 +1,6 @@
 export * from './accounts';
 export * from './auth';
 export * from './environment';
-export * from './errors';
 export * from './files';
 export * from './gating';
 export * from './issue';

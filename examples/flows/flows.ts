@@ -3,7 +3,6 @@ import {
   authenticateAllFromFile,
   authenticateForGate,
   configureGate,
-  extractCustomError,
   GatingAPI,
   generateAccounts,
   getProvider,
@@ -24,6 +23,7 @@ import { ClaimBalance, getClaimBalances } from '@monaxlabs/aspen-sdk/dist/claimg
 import {
   Address,
   CollectionContract,
+  extractCustomError,
   GasStrategy,
   getGasStrategy,
   ICedarERC1155DropV5,
@@ -53,7 +53,7 @@ import {
 import { deployERC1155, deployERC721, wait } from './utils/collection';
 
 // Global config for flows
-const network: SupportedNetwork = 'Mumbai';
+const network: SupportedNetwork = 'Goerli';
 const environment: AspenEnvironment = 'production';
 const claimGraphUrl = `https://api.thegraph.com/subgraphs/name/silasdavis/claimgraph-${network.toLowerCase()}`;
 const numberOfCollectionPairs = 1;
@@ -201,7 +201,7 @@ async function cmdDirectIssueB(): Promise<void> {
   const provider = signer.provider;
   const contract = await CollectionContract.from(signer.provider, b.address);
 
-  const maxSize = 50;
+  const maxSize = 10;
   const accounts = generateAccounts(maxSize, { mnemonic: demoMnemonic, provider });
 
   const gasStrategy = await getGasStrategy(provider);

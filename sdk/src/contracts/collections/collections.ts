@@ -1,7 +1,8 @@
 import { Provider } from '@ethersproject/providers';
 import { BigNumber, BigNumberish, ContractReceipt, Overrides } from 'ethers';
-import { parse } from '../../utils';
+import { parse } from '../../utils/index.js';
 import { Address, Addressish, asAddress } from '../address';
+import { extractCustomError } from '../errors';
 import { extractEventsFromLogs } from '../events';
 import { ICedarFeaturesV0__factory } from '../generated';
 import { PromiseOrValue } from '../generated/common';
@@ -120,7 +121,7 @@ export class CollectionContract {
               }
             }
           } catch (err) {
-            throw err;
+            throw extractCustomError(factory.interface, err);
           }
           let issueEvents: NFTTokenIssuance[] = [];
           if (!tokenIssued) {
