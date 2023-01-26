@@ -3,7 +3,7 @@ import { TokenStandard } from '..';
 import { Addressish, asAddress } from '../../address';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import { Features } from '../features';
+import { FeatureSet } from '../features';
 
 export const StandardFeatures = [
   // ERC1155
@@ -23,7 +23,7 @@ export const StandardFeatures = [
 
 export type StandardFeatures = (typeof StandardFeatures)[number];
 
-export class Standard extends Features<StandardFeatures> {
+export class Standard extends FeatureSet<StandardFeatures> {
   constructor(base: CollectionContract) {
     super(base, StandardFeatures);
   }
@@ -45,13 +45,13 @@ export class Standard extends Features<StandardFeatures> {
     return { standard };
   });
 
-  getStandard(): TokenStandard | null {
-    const { sft, sftSupply, nft, nftSupply } = this.getPartition('standard');
+  getStandard(): TokenStandard {
+    const { sft, sftSupply, nft, nftSupply } = this.getPartition('standard')(this.base.interfaces);
 
     if (nft || nftSupply) return 'ERC721';
     if (sft || sftSupply) return 'ERC1155';
 
-    return null;
+    throw new SdkError(SdkErrorCode.EMPTY_TOKEN_STANDARD);
   }
 
   // Silas, do we want to keep this function?
@@ -60,14 +60,14 @@ export class Standard extends Features<StandardFeatures> {
   // }
 
   async balanceOf(address: Addressish, tokenId: BigNumberish): Promise<BigNumber> {
-    const { sft, sftSupply } = this.getPartition('standard');
+    const { sft, sftSupply } = this.getPartition('standard')(this.base.interfaces);
     tokenId = this.base.requireTokenId(tokenId);
 
     // Use supply as a marker interface then assume standard 1155
     const factory = sft ? sft : sftSupply ? this.base.assumeFeature('standard/IERC1155.sol:IERC1155V0') : null;
 
     if (!factory) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, 'feature', { feature: 'standard' });
+      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
       // throw new Error(`Contract does not appear to be an ERC1155`);
     }
 
@@ -77,7 +77,7 @@ export class Standard extends Features<StandardFeatures> {
   async exists(tokenId: BigNumberish | null) {
     tokenId = this.base.requireTokenId(tokenId);
 
-    const { sftSupply, nftSupply } = this.getPartition('standard');
+    const { sftSupply, nftSupply } = this.getPartition('standard')(this.base.interfaces);
     if (this.base.tokenStandard === 'ERC1155' && sftSupply) {
       const iSft = sftSupply.connectReadOnly();
       return iSft.exists(tokenId);
@@ -87,27 +87,27 @@ export class Standard extends Features<StandardFeatures> {
       return iNft.exists(tokenId);
     }
 
-    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, 'feature', { feature: 'standard' });
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
   }
 
   /**
    * @returns Number of unique token ids (doesn't take into consideration burnt tokens)
    */
-  async getUniqueCount(): Promise<BigNumber> {
+  async getTokensCount(): Promise<BigNumber> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return this.getUniqueERC1155Count();
+        return this.getERC1155TokensCount();
       case 'ERC721':
-        return this.getUniqueERC721Count();
+        return this.getERC721TokensCount();
     }
 
-    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, 'feature', { feature: 'standard' });
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
   }
 
-  protected async getUniqueERC1155Count(): Promise<BigNumber> {
-    const { sftSupply } = this.getPartition('standard');
+  protected async getERC1155TokensCount(): Promise<BigNumber> {
+    const { sftSupply } = this.getPartition('standard')(this.base.interfaces);
     if (!sftSupply) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, 'feature', { feature: 'standard' });
+      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
     }
 
     try {
@@ -115,22 +115,22 @@ export class Standard extends Features<StandardFeatures> {
       // @todo don't add 1 when getSmallestTokenId != 0
       return (await iSft.getLargestTokenId()).add(1);
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, 'chain', {}, err as Error);
+      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
     }
   }
 
   // @todo test against WoT
-  protected async getUniqueERC721Count(): Promise<BigNumber> {
-    const { nftSupply } = this.getPartition('standard');
+  protected async getERC721TokensCount(): Promise<BigNumber> {
+    const { nftSupply } = this.getPartition('standard')(this.base.interfaces);
     if (!nftSupply) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, 'feature', { feature: 'standard' });
+      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
     }
 
     try {
       const iNft = nftSupply.connectReadOnly();
       return await iNft.totalSupply();
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, 'chain', {}, err as Error);
+      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
     }
   }
 
@@ -144,21 +144,19 @@ export class Standard extends Features<StandardFeatures> {
       case 'ERC721':
         return BigNumber.from(0);
     }
-
-    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, 'feature', { feature: 'standard' });
   }
 
   protected async getERC1155TokenSupply(tokenId: BigNumberish): Promise<BigNumber> {
-    const { sftSupply } = this.getPartition('standard');
+    const { sftSupply } = this.getPartition('standard')(this.base.interfaces);
     if (!sftSupply) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, 'feature', { feature: 'standard' });
+      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
     }
 
     try {
       const iSft = sftSupply.connectReadOnly();
       return await iSft.totalSupply(tokenId);
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, 'chain', {}, err as Error);
+      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
     }
   }
 }

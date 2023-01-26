@@ -4,6 +4,7 @@ import { CollectionContract, IPFS_GATEWAY_PREFIX } from '../..';
 import { resolveIpfsUrl } from '../../../utils';
 import { IPublicMetadataV0__factory } from '../../generated';
 import { CollectionMetaImageType } from '../constants';
+import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureSet } from '../features';
 import type { CollectionMetadata, TokenMetadata } from '../types';
 
@@ -154,7 +155,7 @@ export class Metadata extends FeatureSet<MetadataFeatures> {
         metadata = await Metadata.getTokenMetadataFromUri(uri);
       }
     } catch (err) {
-      this.base.error('Failed to get token metadata', err, 'getTokenMetadata', { tokenId });
+      throw new SdkError(SdkErrorCode.FAILED_TO_LOAD_METADATA, { tokenId }, err as Error);
     }
 
     return { uri, metadata };
@@ -172,7 +173,7 @@ export class Metadata extends FeatureSet<MetadataFeatures> {
         return await iSft.uri(tokenId);
       }
     } catch (err) {
-      this.base.error('Failed to get token metadata', err, 'getTokenUriERC1155', { tokenId });
+      throw new SdkError(SdkErrorCode.FAILED_TO_LOAD_METADATA, { tokenId }, err as Error);
     }
 
     return null;
@@ -190,7 +191,7 @@ export class Metadata extends FeatureSet<MetadataFeatures> {
         return await iNft.tokenURI(tokenId);
       }
     } catch (err) {
-      this.base.error('Failed to get token metadata', err, 'getTokenUriERC721', { tokenId });
+      throw new SdkError(SdkErrorCode.FAILED_TO_LOAD_METADATA, { tokenId }, err as Error);
     }
 
     return null;

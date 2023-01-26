@@ -6,12 +6,10 @@ import { Web3Provider } from "@ethersproject/providers";
 import {
   CollectionContract,
   DefaultDebugHandler,
-  DefaultErrorHandler,
 } from "@monaxlabs/aspen-sdk/dist/contracts";
 import { ToastProvider } from "react-toast-notifications";
 
 CollectionContract.setDebugHandler(DefaultDebugHandler);
-CollectionContract.setErrorHandler(DefaultErrorHandler);
 
 function getLibrary(provider: any): Web3Provider {
   const library = new Web3Provider(provider);

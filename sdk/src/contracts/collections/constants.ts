@@ -1,4 +1,4 @@
-import { FeatureInterfaceId } from './features';
+export const TokenStandards = ['ERC721', 'ERC1155'];
 
 export const CollectionMetaImageType = {
   banner: 'banner',
@@ -12,9 +12,3 @@ export const CollectionMetaLinkType = {
   telegram: 'telegram',
   linkedin: 'linkedin',
 };
-
-export const AspenContractInterfaces: FeatureInterfaceId[] = [
-  'ICedarFeatures.sol:ICedarFeaturesV0',
-  'IAspenFeatures.sol:ICedarFeaturesV0',
-  'IAspenFeatures.sol:IAspenFeaturesV0',
-];

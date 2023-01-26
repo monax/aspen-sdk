@@ -135,11 +135,10 @@ const Home: NextPage = () => {
   useEffect(() => {
     if (!active || !library) return;
     (async () => {
-      const collectionContract = new CollectionContract(
+      const collectionContract = await CollectionContract.from(
         library,
         parse(Address, contractAddress)
       );
-      await collectionContract.load();
       setContract(collectionContract);
       let tokensCount = await collectionContract.issuance.getTokensCount();
       setTokens(Array.from(Array(tokensCount.toNumber()).keys()));
@@ -187,7 +186,7 @@ const Home: NextPage = () => {
             <div className={styles.flex}>
               <p>Select Token : </p>
               <Select
-                value={selectedToken || 'none'}
+                value={selectedToken || "none"}
                 onChange={(e) => setSelectedToken(e.target.value)}
                 options={tokens.map((t) => String(t))}
               />
@@ -215,7 +214,7 @@ const Home: NextPage = () => {
               activeClaimConditions={activeClaimConditions}
               allowlistStatus={allowlistStatus}
               contract={contract}
-              tokenId={selectedToken || 'none'}
+              tokenId={selectedToken || "none"}
               termsInfo={termsInfo}
               onUpdate={loadClaimConditions}
             />

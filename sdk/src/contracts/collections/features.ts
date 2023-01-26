@@ -183,7 +183,6 @@ export class FeatureFunction<
   }
 
   async call(...args: A): Promise<R | Unsupported> {
-    await this.base.load();
     if (!this.supported) {
       return FeatureFunction.UNSUPPORTED;
     }

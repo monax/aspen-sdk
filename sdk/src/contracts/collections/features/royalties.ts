@@ -46,10 +46,10 @@ export class Royalties extends FeatureSet<RoyaltiesFeatures> {
         const [recipient, basisPoints] = await iRoyalty.getDefaultRoyaltyInfo();
         return { recipient: parse(Address, recipient), basisPoints };
       } catch (err) {
-        throw new SdkError(SdkErrorCode.CHAIN_ERROR, 'chain', {}, err as Error);
+        throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
       }
     } else {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, 'feature', { feature: 'royalties' });
+      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'royalties' });
     }
   }
 }

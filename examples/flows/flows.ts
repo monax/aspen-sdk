@@ -292,10 +292,9 @@ async function cmdDeployAllowlistAndClaim(): Promise<void> {
   // We have only defined a single token
   const tokenId = 0;
 
-  const contract = new CollectionContract(provider, contractAddress);
-  await contract.load();
+  const contract = await CollectionContract.from(provider, contractAddress);
   //
-  const phase = await contract.issuance.getActiveClaimConditions(tokenId);
+  const phase = await contract.conditions.getActiveClaimConditions(tokenId);
   if (!phase) {
     throw new Error(`No active phase`);
   }

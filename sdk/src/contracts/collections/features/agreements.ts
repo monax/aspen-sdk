@@ -88,13 +88,13 @@ export class Agreements extends FeatureSet<AgreementsFeatures> {
         const iAgreement = v0.connectWith(signer);
         return await iAgreement.acceptTerms();
       } else {
-        throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, 'feature', { feature: 'agreements' });
+        throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'agreements' });
       }
     } catch (err) {
       if (SdkError.is(err)) {
         throw err;
       } else {
-        throw new SdkError(SdkErrorCode.CHAIN_ERROR, 'chain', {}, err as Error);
+        throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
       }
     }
   }
@@ -113,13 +113,13 @@ export class Agreements extends FeatureSet<AgreementsFeatures> {
         const iAgreement = v0.connectWith(signer);
         return await iAgreement.estimateGas.acceptTerms();
       } else {
-        throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, 'feature', { feature: 'agreements' });
+        throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'agreements' });
       }
     } catch (err) {
       if (SdkError.is(err)) {
         throw err;
       } else {
-        throw new SdkError(SdkErrorCode.CHAIN_ERROR, 'chain', {}, err as Error);
+        throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
       }
     }
   }

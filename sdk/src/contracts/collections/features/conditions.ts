@@ -6,7 +6,7 @@ import { AllowlistStatus, getAllowlistStatus } from '../../../apis/publishing';
 import { publishingChainFromChainId } from '../../../apis/utils/providers';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import { Features } from '../features';
+import { FeatureSet } from '../features';
 import { max, min } from '../number';
 import type {
   ActiveClaimConditions,
@@ -41,7 +41,7 @@ export const ConditionsFeatures = [
 
 export type ConditionsFeatures = (typeof ConditionsFeatures)[number];
 
-export class Conditions extends Features<ConditionsFeatures> {
+export class Conditions extends FeatureSet<ConditionsFeatures> {
   constructor(base: CollectionContract) {
     super(base, ConditionsFeatures);
   }
@@ -109,7 +109,7 @@ export class Conditions extends Features<ConditionsFeatures> {
       ]);
 
       if (!activeClaimConditions || !userClaimConditions) {
-        throw new SdkError(SdkErrorCode.CHAIN_ERROR, 'chain');
+        throw new SdkError(SdkErrorCode.CHAIN_ERROR);
       }
 
       const { activeClaimCondition, ...otherActiveConditions } = activeClaimConditions;
@@ -124,7 +124,7 @@ export class Conditions extends Features<ConditionsFeatures> {
         allowlistStatus = await getAllowlistStatus(
           this.base.address,
           userAddress,
-          publishingChainFromChainId(await this.base.getChainId()),
+          publishingChainFromChainId(this.base.chainId),
           tokenId,
         );
       }
@@ -147,10 +147,10 @@ export class Conditions extends Features<ConditionsFeatures> {
       if (SdkError.is(err)) {
         throw err;
       } else if (axios.isAxiosError(err)) {
-        throw new SdkError(SdkErrorCode.WEB_REQUEST_FAILED, 'request', undefined, err);
+        throw new SdkError(SdkErrorCode.WEB_REQUEST_FAILED, undefined, err);
       } else {
         // @todo try to parse the chain error here
-        throw new SdkError(SdkErrorCode.CHAIN_ERROR, 'chain', err);
+        throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
       }
     }
   }
@@ -292,9 +292,9 @@ export class Conditions extends Features<ConditionsFeatures> {
   }
 
   protected async getActiveClaimConditionsERC721(): Promise<ActiveClaimConditions | null> {
-    const { nftV0, nftV1, nftV2 } = this.getPartition('getActiveConditions');
+    const { nftV0, nftV1, nftV2 } = this.getPartition('getActiveConditions')(this.base.interfaces);
     if (!nftV0 && !nftV1 && !nftV2) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, 'feature', { feature: 'getActiveConditions' });
+      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'getActiveConditions' });
     }
 
     try {
@@ -304,7 +304,7 @@ export class Conditions extends Features<ConditionsFeatures> {
         const { condition, conditionId, walletMaxClaimCount, remainingSupply } =
           await iNftIssuance.getActiveClaimConditions();
 
-        const tokenSupply = await this.base.issuance.getTokensCount();
+        const tokenSupply = await this.base.standard.getTokensCount();
         const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD)
           ? BigNumber.from(0)
           : remainingSupply.add(tokenSupply);
@@ -338,7 +338,7 @@ export class Conditions extends Features<ConditionsFeatures> {
         const { condition, conditionId, walletMaxClaimCount, remainingSupply, isClaimPaused } =
           await iNftIssuance.getActiveClaimConditions();
 
-        const tokenSupply = await this.base.issuance.getTokensCount();
+        const tokenSupply = await this.base.standard.getTokensCount();
         const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD)
           ? BigNumber.from(0)
           : remainingSupply.add(tokenSupply);
@@ -407,16 +407,16 @@ export class Conditions extends Features<ConditionsFeatures> {
         };
       }
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, 'chain', {}, err as Error);
+      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
     }
 
     return null;
   }
 
   protected async getUserClaimConditionsERC721(userAddress: Address): Promise<UserClaimConditions | null> {
-    const { nftV0, nftV1, nftV2 } = this.getPartition('getUserConditions');
+    const { nftV0, nftV1, nftV2 } = this.getPartition('getUserConditions')(this.base.interfaces);
     if (!nftV0 && !nftV1 && !nftV2) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, 'feature', { feature: 'getUserConditions' });
+      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'getUserConditions' });
     }
 
     try {
@@ -472,16 +472,16 @@ export class Conditions extends Features<ConditionsFeatures> {
       }
     } catch (err) {
       const args = { userAddress };
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, 'chain', args, err as Error);
+      throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
     }
 
     return null;
   }
 
   protected async getActiveClaimConditionsERC1155(tokenId: BigNumberish): Promise<ActiveClaimConditions | null> {
-    const { sftV0, sftV1, sftV2 } = this.getPartition('getActiveConditions');
+    const { sftV0, sftV1, sftV2 } = this.getPartition('getActiveConditions')(this.base.interfaces);
     if (!sftV0 && !sftV1 && !sftV2) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, 'feature', { feature: 'getActiveConditions' });
+      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'getActiveConditions' });
     }
 
     try {
@@ -493,7 +493,7 @@ export class Conditions extends Features<ConditionsFeatures> {
         const { condition, conditionId, walletMaxClaimCount, remainingSupply } =
           await iSftIssuance.getActiveClaimConditions(tokenIdBn);
 
-        const tokenSupply = await this.base.issuance.getTokenSupply(tokenId);
+        const tokenSupply = await this.base.standard.getTokenSupply(tokenId);
         const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD)
           ? BigNumber.from(0)
           : remainingSupply.add(tokenSupply);
@@ -527,7 +527,7 @@ export class Conditions extends Features<ConditionsFeatures> {
         const { condition, conditionId, walletMaxClaimCount, remainingSupply, isClaimPaused } =
           await iSftIssuance.getActiveClaimConditions(tokenIdBn);
 
-        const tokenSupply = await this.base.issuance.getTokenSupply(tokenId);
+        const tokenSupply = await this.base.standard.getTokenSupply(tokenId);
         const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD)
           ? BigNumber.from(0)
           : remainingSupply.add(tokenSupply);
@@ -588,7 +588,7 @@ export class Conditions extends Features<ConditionsFeatures> {
       }
     } catch (err) {
       const args = { tokenId };
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, 'chain', args, err as Error);
+      throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
     }
 
     return null;
@@ -598,9 +598,9 @@ export class Conditions extends Features<ConditionsFeatures> {
     userAddress: Address,
     tokenId: BigNumber,
   ): Promise<UserClaimConditions | null> {
-    const { sftV0, sftV1 } = this.getPartition('getUserConditions');
+    const { sftV0, sftV1 } = this.getPartition('getUserConditions')(this.base.interfaces);
     if (!sftV0 && !sftV1) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, 'feature', { feature: 'getUserConditions' });
+      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'getUserConditions' });
     }
 
     try {
@@ -640,7 +640,7 @@ export class Conditions extends Features<ConditionsFeatures> {
       }
     } catch (err) {
       const args = { userAddress, tokenId };
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, 'chain', args, err as Error);
+      throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
     }
 
     return null;

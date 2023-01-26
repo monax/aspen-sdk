@@ -1,12 +1,15 @@
 import { Provider } from '@ethersproject/abstract-provider';
-import type { BigNumber, Signer } from 'ethers';
+import type { BigNumber, BigNumberish, Signer } from 'ethers';
 import { AllowlistStatus } from '../../apis/publishing/index';
 import { Address, ChainId } from '../index';
 import type { CollectionMetaImageType, CollectionMetaLinkType } from './constants';
+import { SdkError } from './errors';
+
+export type TokenId = BigNumberish | null | undefined;
 
 export type Signerish = Signer | Provider;
 
-export type TokenStandard = 'ERC721' | 'ERC1155' | 'ERC20';
+export type TokenStandard = 'ERC721' | 'ERC1155';
 
 export type MetadataKind = 'collection';
 
@@ -160,18 +163,14 @@ export type CollectionInfo = {
   tokenStandard: TokenStandard | null;
 };
 
-export type CollectionCallData = {
-  method: string;
-  args?: { [key: string]: unknown };
-  signer: Signerish;
-  supportedFeatures: string[];
-};
-
 export type DebugHandler = (collection: CollectionInfo, message: string, ...optionalParams: unknown[]) => void;
 
-export type ErrorHandler = (
-  message: string,
-  error: Error,
-  collection: CollectionInfo,
-  callData: CollectionCallData,
-) => void;
+export type OperationStatus<T> =
+  | {
+      success: true;
+      result: T;
+    }
+  | {
+      success: false;
+      error: SdkError;
+    };

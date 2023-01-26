@@ -2,6 +2,7 @@ import { ContractTransaction } from 'ethers';
 import { parse } from '../../../utils/schema';
 import { Address } from '../../address.js';
 import { CollectionContract } from '../collections';
+import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureSet } from '../features.js';
 import { Signerish } from '../types.js';
 
@@ -46,7 +47,7 @@ export class Ownable extends FeatureSet<OwnableFeatures> {
         const ownerAddress = await iOwnable.owner();
         return parse(Address, ownerAddress);
       } catch (err) {
-        this.base.error('Failed to get owner', err, 'ownable.getOwner');
+        throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
       }
     }
 
@@ -65,7 +66,7 @@ export class Ownable extends FeatureSet<OwnableFeatures> {
         const iOwnable = setOwner.v0.connectWith(signer);
         return await iOwnable.setOwner(ownerAddress);
       } catch (err) {
-        this.base.error('Failed to set owner', err, 'ownable.setOwner');
+        throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
       }
     }
 

@@ -5,21 +5,15 @@ export enum SdkErrorCode {
   TOKEN_ID_REQUIRED_FOR_ERC1155 = 'Token is required for ERC1155 contracts!',
   WEB_REQUEST_FAILED = 'Web request failed!',
   INVALID_DATA = 'Invalid input data provided!',
+  UNKNOWN_ERROR = 'Unknown error.',
+  FAILED_TO_LOAD_FEATURES = 'Failed to load contract features.',
+  EMPTY_TOKEN_STANDARD = "Couldn't identify a token standard",
+  FAILED_TO_LOAD_METADATA = 'Failed to get metadata',
 }
-
-/**
- * Details:
- * - 'input' - errors thrown for invalid data input
- * - 'feature' - errors thrown when a feature is not available
- * - 'request' - errors thrown on HTTP(S) request errors
- * - 'chain' - errors thrown on chain errors
- */
-export type SdkErrorSource = 'input' | 'feature' | 'request' | 'chain';
 
 export class SdkError extends Error {
   constructor(
     code: SdkErrorCode,
-    public readonly source: SdkErrorSource,
     public readonly data: Record<string, unknown> = {},
     public readonly error: Error | null = null,
   ) {

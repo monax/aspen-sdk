@@ -1,20 +1,13 @@
-import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
-import { Address, ClaimConditionsState } from '../..';
+import { BigNumber } from 'ethers';
+import { Address, ClaimConditionsState, TokenId } from '../..';
 import { CollectionContract } from '../collections';
-import { SdkError, SdkErrorCode } from '../errors';
-import { Signerish } from '../types';
+import { ContractObject } from './object';
 
-export class Token {
-  public constructor(protected readonly base: CollectionContract, readonly tokenId: BigNumber | string | null = null) {
-    if (!this.base.tokenStandard || !['ERC721', 'ERC1155'].includes(this.base.tokenStandard)) {
-      throw new SdkError(SdkErrorCode.UNSUPPORTED_TOKEN_STANDARD, 'input', {
-        tokenStandard: this.base.tokenStandard,
-      });
-    }
+export class Token extends ContractObject {
+  public constructor(protected readonly base: CollectionContract, readonly tokenId: TokenId) {
+    super(base);
 
-    if (base.tokenStandard === 'ERC1155') {
-      this.tokenId = this.base.requireTokenId(tokenId);
-    }
+    this.tokenId = this.tokenId = this.base.tokenStandard === 'ERC1155' ? this.base.requireTokenId(tokenId) : tokenId;
   }
 
   // getUri() {
@@ -26,60 +19,12 @@ export class Token {
   }
 
   async exists(): Promise<boolean> {
-    return this.base.standard.exists(this.tokenId);
+    return this.base.standard.exists(this.tokenId || null);
   }
 
   // setMaxTotalSupply() {
   //   // @todo
   // }
-
-  async claim(
-    signer: Signerish,
-    receiver: Address,
-    quantity: BigNumberish,
-    conditions: ClaimConditionsState,
-  ): Promise<ContractTransaction> {
-    return this.base.claim.claim(
-      signer,
-      receiver,
-      this.tokenId,
-      quantity,
-      conditions.currency,
-      conditions.pricePerToken,
-      conditions.allowlistStatus.proofs,
-      conditions.allowlistStatus.proofMaxQuantityPerTransaction,
-    );
-  }
-
-  async verifyClaim(receiver: Address, quantity: number, conditions: ClaimConditionsState): Promise<boolean> {
-    return this.base.claim.verify(
-      conditions.activeClaimConditionId,
-      receiver,
-      this.tokenId,
-      quantity,
-      conditions.currency,
-      conditions.pricePerToken,
-      true,
-    );
-  }
-
-  async estimateGas(
-    signer: Signerish,
-    receiver: Address,
-    quantity: BigNumberish,
-    conditions: ClaimConditionsState,
-  ): Promise<BigNumber> {
-    return this.base.claim.estimateGas(
-      signer,
-      receiver,
-      this.tokenId,
-      quantity,
-      conditions.currency,
-      conditions.pricePerToken,
-      conditions.allowlistStatus.proofs,
-      conditions.allowlistStatus.proofMaxQuantityPerTransaction,
-    );
-  }
 
   async getClaimConditions(userAddress: Address): Promise<ClaimConditionsState> {
     const a = await this.base.conditions.getState(userAddress, this.tokenId);
