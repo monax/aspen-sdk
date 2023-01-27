@@ -12,13 +12,7 @@ import {
 } from '../generated/issuance/ICedarNFTIssuance.sol/IRestrictedNFTIssuanceV2';
 import { ChainId } from '../network';
 import { SdkError, SdkErrorCode } from './errors';
-import {
-  extractKnownSupportedFeatures,
-  FeatureContract,
-  FeatureFunction,
-  FeatureInterface,
-  FeatureInterfaceId,
-} from './features';
+import { extractKnownSupportedFeatures, FeatureFunction, FeatureInterface, FeatureInterfaceId } from './features';
 import { Agreements } from './features/agreements';
 import { Claims } from './features/claims';
 import { Conditions } from './features/conditions';
@@ -33,7 +27,7 @@ export const DefaultDebugHandler = (collection: CollectionInfo, action: string, 
   console.debug(`Collection Contract ${collection.chainId} # ${collection.address} -> ${action}`, ...data);
 };
 
-export type FeatureInterfaces = { -readonly [K in FeatureInterfaceId]: FeatureInterface<FeatureContract<K>> };
+export type FeatureInterfaces = { -readonly [K in FeatureInterfaceId]: FeatureInterface<K> };
 
 export type NFTTokenIssueArgs = {
   to: Addressish;
@@ -201,18 +195,17 @@ export class CollectionContract {
     return this._provider;
   }
 
-  assumeFeature<T extends FeatureInterfaceId>(feature: T): FeatureInterface<FeatureContract<T>> {
+  assumeFeature<T extends FeatureInterfaceId>(feature: T): FeatureInterface<T> {
     return FeatureInterface.fromFeature(feature, this.address, this._provider);
   }
 
   protected getInterfaces(): Partial<FeatureInterfaces> {
-    // Note: we are forced to subvert the type system since it cannot invert that the keys and values are correlated
-    const interfaces = {} as Record<FeatureInterfaceId, FeatureInterface<unknown>>;
+    const interfaces = {} as Record<FeatureInterfaceId, FeatureInterface<FeatureInterfaceId>>;
     for (const feature of this._supportedFeatures) {
       interfaces[feature] = this.assumeFeature(feature);
     }
 
-    return interfaces as Partial<FeatureInterfaces>;
+    return interfaces;
   }
 
   debug(message: string, ...data: unknown[]) {
@@ -243,7 +236,7 @@ export class CollectionContract {
     return new Token(this, tokenId);
   }
 
-  Claim(conditions: ClaimConditionsState, tokenId?: TokenId): PendingClaim {
-    return new PendingClaim(this, conditions, tokenId);
+  Claim(tokenId: TokenId, conditions: ClaimConditionsState): PendingClaim {
+    return new PendingClaim(this, tokenId, conditions);
   }
 }

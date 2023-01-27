@@ -7,7 +7,7 @@ export class Token extends ContractObject {
   public constructor(protected readonly base: CollectionContract, readonly tokenId: TokenId) {
     super(base);
 
-    this.tokenId = this.tokenId = this.base.tokenStandard === 'ERC1155' ? this.base.requireTokenId(tokenId) : tokenId;
+    this.tokenId = this.base.requireTokenId(tokenId);
   }
 
   // getUri() {
@@ -19,7 +19,8 @@ export class Token extends ContractObject {
   }
 
   async exists(): Promise<boolean> {
-    return this.base.standard.exists(this.tokenId || null);
+    const exists = await this.base.standard.exists(this.tokenId || null);
+    return exists;
   }
 
   // setMaxTotalSupply() {

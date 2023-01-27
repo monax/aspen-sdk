@@ -7,8 +7,8 @@ import { ContractObject } from './object';
 export class PendingClaim extends ContractObject {
   public constructor(
     protected readonly base: CollectionContract,
+    readonly tokenId: TokenId,
     readonly conditions: ClaimConditionsState,
-    readonly tokenId?: TokenId,
   ) {
     super(base);
 

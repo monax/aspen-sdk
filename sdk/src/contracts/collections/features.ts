@@ -1,18 +1,12 @@
 import { Provider } from '@ethersproject/providers';
-import { Signer, utils } from 'ethers';
+import { Signer } from 'ethers';
 import { NonEmptyArray } from 'fp-ts/NonEmptyArray';
 import * as t from 'io-ts';
 import { parseThenOrElse } from '../../utils/schema';
 import { Address } from '../address';
-import { AccessControlInterface } from '../generated/additional/AccessControl';
 import type { CollectionContract } from './collections';
 import { FeatureFactories } from './feature-factories.gen';
 import { Signerish } from './types';
-
-export interface FeatureInterfaceFactory<T> {
-  connect(address: string, signerOrProvider: Signer | Provider): T;
-  createInterface(): AccessControlInterface;
-}
 
 export const FeatureInterfaceId = t.keyof(FeatureFactories);
 export type FeatureInterfaceId = t.TypeOf<typeof FeatureInterfaceId>;
@@ -20,21 +14,26 @@ export type FeatureFactories = typeof FeatureFactories;
 export type FeatureFactory<T extends FeatureInterfaceId> = FeatureFactories[T];
 export type FeatureContract<T extends FeatureInterfaceId> = ReturnType<FeatureFactory<T>['connect']>;
 
-export class FeatureInterface<T> {
+export interface FeatureInterfaceFactory<T extends FeatureInterfaceId> {
+  connect(address: string, signerOrProvider: Signer | Provider): FeatureContract<T>;
+  // createInterface(): AccessControlInterface;
+}
+
+export class FeatureInterface<T extends FeatureInterfaceId> {
   private readonly _factory: FeatureInterfaceFactory<T>;
   private readonly _address: Address;
   private readonly _signer: Signerish;
-  private readonly _iface: AccessControlInterface;
-  private connection: T | null = null;
+  // private readonly _iface: AccessControlInterface;
+  private connection: FeatureContract<T> | null = null;
 
   constructor(factory: FeatureInterfaceFactory<T>, address: Address, signer: Signerish) {
     this._factory = factory;
     this._address = address;
     this._signer = signer;
-    this._iface = factory.createInterface();
+    // this._iface = factory.createInterface();
   }
 
-  connectReadOnly(): T {
+  connectReadOnly(): FeatureContract<T> {
     if (!this.connection) {
       this.connection = this._factory.connect(this._address, this._signer);
     }
@@ -42,23 +41,27 @@ export class FeatureInterface<T> {
     return this.connection;
   }
 
-  connectWith(signer: Signerish): T {
+  connectWith(signer: Signerish): FeatureContract<T> {
     return this._factory.connect(this._address, signer);
   }
 
-  get interface(): utils.Interface {
-    return this._iface;
+  // get iface(): utils.Interface {
+  //   return this._iface;
+  // }
+
+  get interface(): FeatureContract<T>['interface'] {
+    return this.connectReadOnly().interface;
   }
 
   static fromFeature<T extends FeatureInterfaceId>(
     feature: T,
     address: Address,
     signer: Signerish,
-  ): FeatureInterface<FeatureContract<T>> {
+  ): FeatureInterface<T> {
     const factory = FeatureFactories[feature];
     // FIXME[Silas]: this makes me sad but typescript is not smart enough to understand that the map key union
     //  is correlated with the map value union and narrow appropriately (even though this _does_ work with a literal key)
-    return new FeatureInterface(factory as unknown as FeatureInterfaceFactory<FeatureContract<T>>, address, signer);
+    return new FeatureInterface(factory as unknown as FeatureInterfaceFactory<T>, address, signer);
   }
 }
 

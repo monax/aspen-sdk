@@ -37,9 +37,22 @@ export class Standard extends FeatureSet<StandardFeatures> {
         'standard/IERC1155.sol:IERC1155V0',
         'standard/IERC1155.sol:IERC1155V1',
       ],
-      sftSupply: ['issuance/ISFTSupply.sol:ISFTSupplyV0', 'issuance/ISFTSupply.sol:ISFTSupplyV1'],
+      sftSupply: [
+        'issuance/ISFTSupply.sol:ISFTSupplyV0',
+        'issuance/ISFTSupply.sol:ISFTSupplyV1',
+        'standard/IERC1155.sol:IERC1155SupplyV0',
+        'standard/IERC1155.sol:IERC1155SupplyV1',
+        'standard/IERC1155.sol:IERC1155SupplyV2',
+      ],
       nft: ['standard/IERC721.sol:IERC721V0', 'standard/IERC721.sol:IERC721V1'],
       nftSupply: ['issuance/INFTSupply.sol:INFTSupplyV0', 'issuance/INFTSupply.sol:INFTSupplyV1'],
+      getLargestToken: [
+        // 'issuance/ISFTSupply.sol:ISFTSupplyV0',
+        'issuance/ISFTSupply.sol:ISFTSupplyV1',
+        // 'standard/IERC1155.sol:IERC1155SupplyV0',
+        'standard/IERC1155.sol:IERC1155SupplyV1',
+        'standard/IERC1155.sol:IERC1155SupplyV2',
+      ],
     });
 
     return { standard };
@@ -66,25 +79,33 @@ export class Standard extends FeatureSet<StandardFeatures> {
     // Use supply as a marker interface then assume standard 1155
     const factory = sft ? sft : sftSupply ? this.base.assumeFeature('standard/IERC1155.sol:IERC1155V0') : null;
 
-    if (!factory) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
-      // throw new Error(`Contract does not appear to be an ERC1155`);
+    if (factory) {
+      try {
+        const balance = factory.connectReadOnly().balanceOf(asAddress(address), tokenId);
+        return balance;
+      } catch (err) {
+        throw new SdkError(SdkErrorCode.CHAIN_ERROR, { tokenId }, err as Error);
+      }
     }
 
-    return factory.connectReadOnly().balanceOf(asAddress(address), tokenId);
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
+    // throw new Error(`Contract does not appear to be an ERC1155`);
   }
 
-  async exists(tokenId: BigNumberish | null) {
+  async exists(tokenId: BigNumberish | null): Promise<boolean> {
     tokenId = this.base.requireTokenId(tokenId);
 
-    const { sftSupply, nftSupply } = this.getPartition('standard')(this.base.interfaces);
-    if (this.base.tokenStandard === 'ERC1155' && sftSupply) {
-      const iSft = sftSupply.connectReadOnly();
-      return iSft.exists(tokenId);
-    }
-    if (this.base.tokenStandard === 'ERC721' && nftSupply) {
-      const iNft = nftSupply.connectReadOnly();
-      return iNft.exists(tokenId);
+    try {
+      const { sftSupply, nftSupply } = this.getPartition('standard')(this.base.interfaces);
+      if (sftSupply) {
+        const exists = await sftSupply.connectReadOnly().exists(tokenId);
+        return exists;
+      } else if (nftSupply) {
+        const exists = await nftSupply.connectReadOnly().exists(tokenId);
+        return exists;
+      }
+    } catch (err) {
+      throw new SdkError(SdkErrorCode.CHAIN_ERROR, { tokenId }, err as Error);
     }
 
     throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
@@ -100,18 +121,16 @@ export class Standard extends FeatureSet<StandardFeatures> {
       case 'ERC721':
         return this.getERC721TokensCount();
     }
-
-    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
   }
 
   protected async getERC1155TokensCount(): Promise<BigNumber> {
-    const { sftSupply } = this.getPartition('standard')(this.base.interfaces);
-    if (!sftSupply) {
+    const { getLargestToken } = this.getPartition('standard')(this.base.interfaces);
+    if (!getLargestToken) {
       throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
     }
 
     try {
-      const iSft = sftSupply.connectReadOnly();
+      const iSft = getLargestToken.connectReadOnly();
       // @todo don't add 1 when getSmallestTokenId != 0
       return (await iSft.getLargestTokenId()).add(1);
     } catch (err) {
@@ -142,7 +161,7 @@ export class Standard extends FeatureSet<StandardFeatures> {
       case 'ERC1155':
         return this.getERC1155TokenSupply(this.base.requireTokenId(tokenId));
       case 'ERC721':
-        return BigNumber.from(0);
+        return BigNumber.from(1); // ERC721 are unique so have a supply of 1
     }
   }
 
