@@ -26,14 +26,16 @@ const Form = () => {
     },
     reValidateMode: "onSubmit",
   });
-
+  const query = new URLSearchParams({
+    email: `${"email"}`,
+  });
   const onSubmit = (data: EmailFormData) => {
     console.log(data);
     localStorage.setItem("email", data.email);
     const query = new URLSearchParams({
       email: `${data.email}`,
     });
-    axios.post(`/api/mint-with-fiat?${query.toString()}`);
+    axios.post(`/api/pay-with-fiat?${query.toString()}`);
     // methods.reset({
     //   email: "",
     //   confirmEmail: "",
@@ -42,7 +44,11 @@ const Form = () => {
 
   return (
     <Card p={6} w={96}>
-      <form onSubmit={methods.handleSubmit(onSubmit)}>
+      <form
+        id="mintToken"
+        action={`/api/pay-with-fiat?${query.toString()}`}
+        method="POST"
+      >
         <FormProvider {...methods}>
           <FormInput name="email" />
           <FormInput name="confirmEmail" />
@@ -58,7 +64,6 @@ const Form = () => {
           </Button>
         </FormProvider>
       </form>
-      <a href="https://www.google.com" />
     </Card>
   );
 };
