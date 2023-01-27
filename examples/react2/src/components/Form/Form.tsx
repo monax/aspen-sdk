@@ -34,10 +34,10 @@ const Form = () => {
       email: `${data.email}`,
     });
     axios.post(`/api/mint-with-fiat?${query.toString()}`);
-    methods.reset({
-      email: "",
-      confirmEmail: "",
-    });
+    // methods.reset({
+    //   email: "",
+    //   confirmEmail: "",
+    // });
   };
 
   return (
