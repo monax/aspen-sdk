@@ -154,18 +154,18 @@ export class Standard extends FeatureSet<StandardFeatures> {
   }
 
   /**
-   * @returns Number of tokens in supply (ERC1155) (doesn't take into consideration burnt tokens)
+   * @returns Number of tokens in supply
    */
   async getTokenSupply(tokenId: BigNumberish | null = null): Promise<BigNumber> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
         return this.getERC1155TokenSupply(this.base.requireTokenId(tokenId));
       case 'ERC721':
-        return BigNumber.from(1); // ERC721 are unique so have a supply of 1
+        return this.getERC721TokenSupply(this.base.requireTokenId(tokenId));
     }
   }
 
-  protected async getERC1155TokenSupply(tokenId: BigNumberish): Promise<BigNumber> {
+  protected async getERC1155TokenSupply(tokenId: BigNumber): Promise<BigNumber> {
     const { sftSupply } = this.getPartition('standard')(this.base.interfaces);
     if (!sftSupply) {
       throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
@@ -177,5 +177,10 @@ export class Standard extends FeatureSet<StandardFeatures> {
     } catch (err) {
       throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
     }
+  }
+
+  protected async getERC721TokenSupply(tokenId: BigNumber): Promise<BigNumber> {
+    const exists = await this.exists(tokenId);
+    return exists ? BigNumber.from(1) : BigNumber.from(0);
   }
 }

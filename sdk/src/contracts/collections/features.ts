@@ -16,21 +16,19 @@ export type FeatureContract<T extends FeatureInterfaceId> = ReturnType<FeatureFa
 
 export interface FeatureInterfaceFactory<T extends FeatureInterfaceId> {
   connect(address: string, signerOrProvider: Signer | Provider): FeatureContract<T>;
-  // createInterface(): AccessControlInterface;
+  createInterface(): FeatureContract<T>['interface'];
 }
 
 export class FeatureInterface<T extends FeatureInterfaceId> {
   private readonly _factory: FeatureInterfaceFactory<T>;
   private readonly _address: Address;
   private readonly _signer: Signerish;
-  // private readonly _iface: AccessControlInterface;
   private connection: FeatureContract<T> | null = null;
 
   constructor(factory: FeatureInterfaceFactory<T>, address: Address, signer: Signerish) {
     this._factory = factory;
     this._address = address;
     this._signer = signer;
-    // this._iface = factory.createInterface();
   }
 
   connectReadOnly(): FeatureContract<T> {
@@ -45,12 +43,8 @@ export class FeatureInterface<T extends FeatureInterfaceId> {
     return this._factory.connect(this._address, signer);
   }
 
-  // get iface(): utils.Interface {
-  //   return this._iface;
-  // }
-
   get interface(): FeatureContract<T>['interface'] {
-    return this.connectReadOnly().interface;
+    return this._factory.createInterface();
   }
 
   static fromFeature<T extends FeatureInterfaceId>(

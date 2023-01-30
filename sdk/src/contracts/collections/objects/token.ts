@@ -10,17 +10,17 @@ export class Token extends ContractObject {
     this.tokenId = this.base.requireTokenId(tokenId);
   }
 
-  // getUri() {
-  //   // implement
-  // }
+  async getUri(): Promise<string> {
+    const id = this.base.requireTokenId(this.tokenId).toString();
+    return await this.base.metadata.getTokenUri(id);
+  }
 
   async totalSupply(): Promise<BigNumber> {
-    return this.base.standard.getTokenSupply(this.tokenId);
+    return await this.base.standard.getTokenSupply(this.tokenId);
   }
 
   async exists(): Promise<boolean> {
-    const exists = await this.base.standard.exists(this.tokenId || null);
-    return exists;
+    return await this.base.standard.exists(this.tokenId || null);
   }
 
   // setMaxTotalSupply() {
@@ -28,9 +28,7 @@ export class Token extends ContractObject {
   // }
 
   async getClaimConditions(userAddress: Address): Promise<ClaimConditionsState> {
-    const a = await this.base.conditions.getState(userAddress, this.tokenId);
-
-    return a;
+    return await this.base.conditions.getState(userAddress, this.tokenId);
   }
 
   // issue() {

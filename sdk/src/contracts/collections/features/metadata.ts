@@ -129,19 +129,13 @@ export class Metadata extends FeatureSet<MetadataFeatures> {
     return newMeta;
   }
 
-  async getTokenUri(tokenId: string): Promise<string | null> {
-    let uri: string | null = null;
-
+  async getTokenUri(tokenId: string): Promise<string> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        uri = await this.getTokenUriERC1155(tokenId);
-        break;
+        return await this.getTokenUriERC1155(tokenId);
       case 'ERC721':
-        uri = await this.getTokenUriERC721(tokenId);
-        break;
+        return await this.getTokenUriERC721(tokenId);
     }
-
-    return uri;
   }
 
   async getTokenMetadata(tokenId: string): Promise<{ uri: string | null; metadata: TokenMetadata | null }> {
@@ -161,7 +155,7 @@ export class Metadata extends FeatureSet<MetadataFeatures> {
     return { uri, metadata };
   }
 
-  protected async getTokenUriERC1155(tokenId: string): Promise<string | null> {
+  protected async getTokenUriERC1155(tokenId: string): Promise<string> {
     try {
       const { sftV0 } = this.getPartition('get')(this.base.interfaces);
       if (sftV0) {
@@ -175,11 +169,9 @@ export class Metadata extends FeatureSet<MetadataFeatures> {
     } catch (err) {
       throw new SdkError(SdkErrorCode.FAILED_TO_LOAD_METADATA, { tokenId }, err as Error);
     }
-
-    return null;
   }
 
-  protected async getTokenUriERC721(tokenId: string): Promise<string | null> {
+  protected async getTokenUriERC721(tokenId: string): Promise<string> {
     try {
       const { nftV0 } = this.getPartition('get')(this.base.interfaces);
       if (nftV0) {
@@ -193,8 +185,6 @@ export class Metadata extends FeatureSet<MetadataFeatures> {
     } catch (err) {
       throw new SdkError(SdkErrorCode.FAILED_TO_LOAD_METADATA, { tokenId }, err as Error);
     }
-
-    return null;
   }
 
   static async getTokenMetadataFromUri(tokenIpfsUri: string): Promise<TokenMetadata | null> {

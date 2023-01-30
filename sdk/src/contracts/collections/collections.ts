@@ -4,7 +4,6 @@ import { BigNumber, BigNumberish, ContractReceipt, Overrides } from 'ethers';
 import { parse } from '../../utils';
 import { Address, Addressish, asAddress } from '../address';
 import { extractEventsFromLogs } from '../events';
-import { ICedarFeaturesV0__factory } from '../generated';
 import { PromiseOrValue } from '../generated/common';
 import {
   TokenIssuedEventObject,
@@ -147,7 +146,9 @@ export class CollectionContract {
       const { chainId } = await provider.getNetwork();
       const chain = parse(ChainId, chainId);
       const address = await asAddress(collectionAddress);
-      const features = await ICedarFeaturesV0__factory.connect(address, provider).supportedFeatures();
+
+      const iFeatures = FeatureInterface.fromFeature('IAspenFeatures.sol:IAspenFeaturesV0', address, provider);
+      const features = await iFeatures.connectReadOnly().supportedFeatures();
 
       return new CollectionContract(provider, chain, address, features);
     } catch (err) {
