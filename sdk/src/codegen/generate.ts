@@ -1,3 +1,4 @@
+import { Contract, providers } from 'ethers';
 import * as fs from 'fs';
 import * as path from 'path';
 import prettier from 'prettier';
@@ -8,8 +9,8 @@ import { ContractManifest, ContractsManifest } from './manifest';
 
 const nonFeatureDirs = new Set(['deploy', 'impl']);
 
-export function isFeatureId(manifest: ContractsManifest, id: string): boolean {
-  return !!Object.values(manifest).find((c) => !nonFeatureDirs.has(c.dir) && c.id === id);
+export function isFeature(manifest: ContractManifest): boolean {
+  return manifest.abi.length > 0 && !nonFeatureDirs.has(manifest.dir);
 }
 
 export async function printJsonObjectAsTypescriptConst(
@@ -97,7 +98,7 @@ function writeABI(abiDir: string, manifest: { name: string; abi: unknown; file: 
 export function generateFeatureFactoriesMapTs(manifest: ContractsManifest): ts.Node[] {
   // Only include features with current Solidity code that Typechain will process and exclude
   // the cedar interfaces that are not features (those under impl, deploy, and standard)
-  const currentFeatures = Object.values(manifest).filter((m) => m.abi.length && isFeatureId(manifest, m.id));
+  const currentFeatures = Object.values(manifest).filter(isFeature);
 
   const featuresByFile = currentFeatures.reduce(
     (g, m) => ({ ...g, [m.file]: [...(g[m.file] || []), m] }),
@@ -115,7 +116,7 @@ export function generateFeatureFactoriesMapTs(manifest: ContractsManifest): ts.N
     ts.factory.createImportDeclaration(
       undefined,
       ts.factory.createImportClause(false, undefined, ts.factory.createNamespaceImport(ident)),
-      ts.factory.createStringLiteral(path.join('..', '..', 'contracts', 'generated', 'factories', file)),
+      ts.factory.createStringLiteral(path.join('..', '..', '..', 'contracts', 'generated', 'factories', file)),
       undefined,
     ),
   );
@@ -148,6 +149,51 @@ export async function writeFeaturesFactoriesMap(
   fs.writeFileSync(
     featureFactoryMapFile,
     prettier.format(printNodes(...generateFeatureFactoriesMapTs(manifest)), {
+      parser: 'typescript',
+      ...options,
+    }),
+  );
+}
+
+export function generateFeatureFactoriesFunctionsMapTs(manifest: ContractsManifest): ts.Node {
+  const currentFeatures = Object.values(manifest).filter(isFeature);
+  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+  const provider = new providers.JsonRpcProvider();
+
+  const map: Record<string, string[]> = {};
+  for (const feature of currentFeatures) {
+    const c = new Contract(ZERO_ADDRESS, feature.abi as unknown as string, provider);
+    for (const func of Object.keys(c.interface.functions)) {
+      if (!map[func]) map[func] = [];
+      map[func].push(feature.id);
+    }
+  }
+
+  const constNode = exportConst(
+    'FeatureFunctionsMap',
+    ts.factory.createObjectLiteralExpression(
+      Object.entries(map).map(([functionName, implementingInterfaces]) => {
+        return ts.factory.createPropertyAssignment(
+          ts.factory.createStringLiteral(functionName),
+          ts.factory.createArrayLiteralExpression(implementingInterfaces.map((i) => ts.factory.createStringLiteral(i))),
+        );
+      }),
+    ),
+  );
+
+  return constNode;
+}
+
+export async function writeFeaturesFactoriesFunctionsMap(
+  manifest: ContractsManifest,
+  prettierConfigFile: string,
+  functionsMapFile: string,
+): Promise<void> {
+  const options = await prettier.resolveConfig(prettierConfigFile);
+
+  fs.writeFileSync(
+    functionsMapFile,
+    prettier.format(printNodes(generateFeatureFactoriesFunctionsMapTs(manifest)), {
       parser: 'typescript',
       ...options,
     }),

@@ -1,7 +1,12 @@
 import * as path from 'path';
 import * as url from 'url';
 import { parse } from '../../utils';
-import { dumpLatestABIs, generateTsFile, writeFeaturesFactoriesMap } from '../generate';
+import {
+  dumpLatestABIs,
+  generateTsFile,
+  writeFeaturesFactoriesFunctionsMap,
+  writeFeaturesFactoriesMap,
+} from '../generate';
 import { ContractsManifest } from '../manifest';
 
 const dirname = url.fileURLToPath(new url.URL('.', import.meta.url));
@@ -13,6 +18,7 @@ const manifestFileTs = path.join(srcDir, 'codegen', 'manifest.gen.ts');
 const deployersFileTs = path.join(srcDir, 'contracts', 'deployers.gen.ts');
 const contractsAbiDir = path.join(srcDir, 'contracts', 'abis');
 const featureFactoriesTs = path.join(srcDir, 'contracts', 'collections', 'features', 'feature-factories.gen.ts');
+const featureFunctionsTs = path.join(srcDir, 'contracts', 'collections', 'features', 'feature-functions.gen.ts');
 
 const specDir = path.join(sdkDir, 'node_modules', '@monaxlabs', 'spec');
 const pathToManifestJson = path.join(specDir, 'contracts/manifest.json');
@@ -28,6 +34,11 @@ async function generate(): Promise<void> {
   const manifestJson = await generateTsFile('manifest', pathToManifestJson, prettierConfigFile, manifestFileTs);
   await Promise.all([dumpLatestABIs(contractsAbiDir, pathToManifestJson)]);
   await writeFeaturesFactoriesMap(parse(ContractsManifest, manifestJson), prettierConfigFile, featureFactoriesTs);
+  await writeFeaturesFactoriesFunctionsMap(
+    parse(ContractsManifest, manifestJson),
+    prettierConfigFile,
+    featureFunctionsTs,
+  );
 }
 
 generate().catch((err) => {

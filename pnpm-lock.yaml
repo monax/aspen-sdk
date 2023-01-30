@@ -135,7 +135,7 @@ importers:
       '@graphql-codegen/typescript': ^2.7.4
       '@graphql-codegen/typescript-operations': ^2.5.4
       '@jest/globals': ^29.3.1
-      '@monaxlabs/spec': ^0.10.0
+      '@monaxlabs/spec': ^0.10.6
       '@openzeppelin/contracts': ^4.8.1
       '@typechain/ethers-v5': ^10.2.0
       '@types/jest': ^29.2.5
@@ -193,7 +193,7 @@ importers:
       '@graphql-codegen/typescript': 2.8.7_graphql@16.6.0
       '@graphql-codegen/typescript-operations': 2.5.12_graphql@16.6.0
       '@jest/globals': 29.3.1
-      '@monaxlabs/spec': 0.10.0
+      '@monaxlabs/spec': 0.10.6
       '@openzeppelin/contracts': 4.8.1
       '@typechain/ethers-v5': 10.2.0_k6bdrczrdxrxopgjlr5kov2hw4
       '@types/jest': 29.2.5
@@ -2306,8 +2306,8 @@ packages:
       tweetnacl-util: 0.15.1
     dev: true
 
-  /@monaxlabs/spec/0.10.0:
-    resolution: {integrity: sha512-PxfIvBxg4TZAemHCNPK5ZobNgTkLUcdr827E5whcg+wPvG3IElhlDVgSgaJOyhWf+FbJ/Gp1QppxatUzYaff8w==}
+  /@monaxlabs/spec/0.10.6:
+    resolution: {integrity: sha512-DbuE2/ZapEUkEdjel8+pjOrs04Io3RvxzD2KhyKppVT3O/RwbH8ZDtvBXqrpZ0sU/WVc1IpsYUdhgliaU1/Tqg==}
     dev: true
 
   /@multiformats/mafmt/11.0.3:
@@ -4002,7 +4002,7 @@ packages:
   /axios/1.2.2:
     resolution: {integrity: sha512-bz/J4gS2S3I7mpN/YZfGFTqhXTYzRho8Ay38w2otuuDR322KzFIWm/4W2K6gIwvWaws5n+mnb7D1lN9uD+QH6Q==}
     dependencies:
-      follow-redirects: 1.15.2_debug@4.3.4
+      follow-redirects: 1.15.2
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -6229,6 +6229,16 @@ packages:
     resolution: {integrity: sha512-5nqDSxl8nn5BSNxyR3n4I6eDmbolI6WT+QqR547RwxQapgjQBmtktdP+HTBb/a/zLsbzERTONyUB5pefh5TtjQ==}
     dev: true
 
+  /follow-redirects/1.15.2:
+    resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
+    engines: {node: '>=4.0'}
+    peerDependencies:
+      debug: '*'
+    peerDependenciesMeta:
+      debug:
+        optional: true
+    dev: false
+
   /follow-redirects/1.15.2_debug@4.3.4:
     resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
     engines: {node: '>=4.0'}
@@ -6239,6 +6249,7 @@ packages:
         optional: true
     dependencies:
       debug: 4.3.4
+    dev: true
 
   /for-each/0.3.3:
     resolution: {integrity: sha512-jqYfLp7mo9vIyQf8ykW2v7A+2N4QjeCeI5+Dz9XraiO1ign81wjiH7Fb9vSOWvQfNtmSa4H2RoQTrrXivdUZmw==}
