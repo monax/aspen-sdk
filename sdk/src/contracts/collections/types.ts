@@ -169,8 +169,10 @@ export type OperationStatus<T> =
   | {
       success: true;
       result: T;
+      error: null;
     }
   | {
       success: false;
+      result: null;
       error: SdkError;
     };

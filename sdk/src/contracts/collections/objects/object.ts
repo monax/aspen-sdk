@@ -7,13 +7,10 @@ export class ContractObject {
   protected async do<T>(task: () => Promise<T>): Promise<OperationStatus<T>> {
     try {
       const result = await task();
-      return { success: true, result };
+      return { success: true, result, error: null };
     } catch (err) {
-      if (SdkError.is(err)) {
-        return { success: false, error: err };
-      } else {
-        return { success: false, error: new SdkError(SdkErrorCode.UNKNOWN_ERROR, undefined, err as Error) };
-      }
+      const error = SdkError.is(err) ? err : new SdkError(SdkErrorCode.UNKNOWN_ERROR, undefined, err as Error);
+      return { success: false, result: null, error };
     }
   }
 }

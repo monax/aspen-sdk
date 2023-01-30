@@ -1,42 +1,32 @@
 import { Provider } from '@ethersproject/providers';
-
-import { BigNumber, BigNumberish, ContractReceipt, Overrides } from 'ethers';
+import { BigNumber } from 'ethers';
 import { parse } from '../../utils';
 import { Address, Addressish, asAddress } from '../address';
-import { extractEventsFromLogs } from '../events';
-import { PromiseOrValue } from '../generated/common';
-import {
-  TokenIssuedEventObject,
-  TokensIssuedEventObject,
-} from '../generated/issuance/ICedarNFTIssuance.sol/IRestrictedNFTIssuanceV2';
 import { ChainId } from '../network';
 import { SdkError, SdkErrorCode } from './errors';
-import { extractKnownSupportedFeatures, FeatureFunction, FeatureInterface, FeatureInterfaceId } from './features';
-import { Agreements } from './features/agreements';
-import { Claims } from './features/claims';
-import { Conditions } from './features/conditions';
-import { Metadata } from './features/metadata';
-import { Ownable } from './features/ownable';
-import { Royalties } from './features/royalties';
-import { Standard } from './features/standard';
+import {
+  Agreements,
+  Claims,
+  Conditions,
+  extractKnownSupportedFeatures,
+  FeatureInterface,
+  FeatureInterfaceId,
+  Issuer,
+  Metadata,
+  Ownable,
+  Royalties,
+  Standard,
+} from './features';
+
 import { PendingClaim, Token } from './objects';
-import type { ClaimConditionsState, CollectionInfo, DebugHandler, Signerish, TokenId, TokenStandard } from './types';
+import { PendingIssue } from './objects/issue';
+import type { ClaimConditionsState, CollectionInfo, DebugHandler, TokenId, TokenStandard } from './types';
 
 export const DefaultDebugHandler = (collection: CollectionInfo, action: string, ...data: unknown[]) => {
   console.debug(`Collection Contract ${collection.chainId} # ${collection.address} -> ${action}`, ...data);
 };
 
 export type FeatureInterfaces = { -readonly [K in FeatureInterfaceId]: FeatureInterface<K> };
-
-export type NFTTokenIssueArgs = {
-  to: Addressish;
-  quantity: BigNumberish;
-  tokenURI?: string;
-};
-
-export type NFTTokenIssuance =
-  | ({ withTokenURI: true } & TokenIssuedEventObject)
-  | ({ withTokenURI: false } & TokensIssuedEventObject);
 
 export class CollectionContract {
   private static _debugHandler: DebugHandler | undefined;
@@ -57,85 +47,7 @@ export class CollectionContract {
   readonly claims: Claims;
   readonly conditions: Conditions;
   readonly standard: Standard;
-
-  readonly issueNFT = FeatureFunction.fromFeaturePartition(
-    'issueNFT',
-    this,
-    [
-      'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2',
-      'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3',
-      'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4',
-      'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV0',
-      'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV1',
-      'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2',
-    ],
-    {
-      factory: [
-        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2',
-        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3',
-        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4',
-        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV0',
-        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV1',
-        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2',
-      ],
-      tokenIssued: [
-        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2',
-        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3',
-        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4',
-        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV1',
-        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2',
-      ],
-    },
-    ({ factory, tokenIssued }) =>
-      async (
-        signer: Signerish,
-        { to, quantity, tokenURI }: NFTTokenIssueArgs,
-        overrides?: Overrides & { from?: PromiseOrValue<string> },
-      ): Promise<NFTTokenIssuance[]> => {
-        if (factory) {
-          const contract = factory.connectWith(signer);
-          const receiver = await asAddress(to);
-          const receipts: ContractReceipt[] = [];
-          try {
-            if (tokenURI === undefined) {
-              const tx = await contract.issue(receiver, quantity, overrides);
-              receipts.push(await tx.wait());
-            } else {
-              const sup = BigNumber.from(quantity);
-              for (let i = 0; sup.gt(i); i++) {
-                const tx = await contract.issueWithTokenURI(receiver, tokenURI, overrides);
-                receipts.push(await tx.wait());
-              }
-            }
-          } catch (err) {
-            throw err;
-          }
-          const issueEvents: NFTTokenIssuance[] = [];
-          if (!tokenIssued) {
-            tokenIssued = this.assumeFeature('issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2');
-          }
-          if (tokenIssued) {
-            const contract = tokenIssued.connectReadOnly();
-            issueEvents.push(
-              ...extractEventsFromLogs(
-                contract.filters.TokensIssued(),
-                tokenIssued.interface,
-                receipts.flatMap((r) => r.logs),
-              ).map((e) => ({ withTokenURI: false as const, ...e })),
-            );
-            issueEvents.push(
-              ...extractEventsFromLogs(
-                contract.filters.TokenIssued(),
-                tokenIssued.interface,
-                receipts.flatMap((r) => r.logs),
-              ).map((e) => ({ withTokenURI: true as const, ...e })),
-            );
-          }
-          return issueEvents;
-        }
-        throw new Error();
-      },
-  );
+  readonly issuer: Issuer;
 
   static setDebugHandler(handler: DebugHandler | undefined) {
     CollectionContract._debugHandler = handler;
@@ -175,6 +87,7 @@ export class CollectionContract {
     this.ownable = new Ownable(this);
     this.claims = new Claims(this);
     this.conditions = new Conditions(this);
+    this.issuer = new Issuer(this);
   }
 
   get supportedFeatures(): string[] {
@@ -222,8 +135,7 @@ export class CollectionContract {
 
   requireTokenId(tokenId: TokenId): BigNumber {
     if (tokenId === null || tokenId === undefined) {
-      // @todo make an SDK error
-      throw new Error('Token is required for ERC1155 contracts!');
+      new SdkError(SdkErrorCode.MISSING_TOKEN_ID);
     }
 
     return BigNumber.from(tokenId);
@@ -239,5 +151,9 @@ export class CollectionContract {
 
   Claim(tokenId: TokenId, conditions: ClaimConditionsState): PendingClaim {
     return new PendingClaim(this, tokenId, conditions);
+  }
+
+  Issue(tokenId: TokenId, tokenURI?: string): PendingIssue {
+    return new PendingIssue(this, tokenId, tokenURI);
   }
 }

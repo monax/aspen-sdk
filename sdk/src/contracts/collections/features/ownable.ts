@@ -3,8 +3,8 @@ import { parse } from '../../../utils/schema';
 import { Address } from '../../address.js';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import { FeatureSet } from '../features.js';
 import { Signerish } from '../types.js';
+import { FeatureSet } from './features.js';
 
 export const OwnableFeatures = [
   // 'ownable/IOwnable.sol:IOwnableEventV0', // skip

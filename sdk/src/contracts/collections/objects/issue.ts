@@ -1,38 +1,32 @@
 import { BigNumber, BigNumberish, ContractReceipt, ContractTransaction, PayableOverrides } from 'ethers';
-import { ClaimConditionsState, CollectionContract, OperationStatus, Signerish, TokenId } from '..';
+import { CollectionContract, OperationStatus, Signerish, TokenId } from '..';
 import { Address } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import { ClaimArgs, ClaimedToken } from '../features/claims';
+import { IssueArgs, IssuedToken } from '../features';
 import { ContractObject } from './object';
 
-export type ClaimState =
+export type IssueState =
   | { status: 'signing-transaction' }
   | { status: 'cancelled-transaction'; error: SdkError }
   | { status: 'pending-transaction'; tx: ContractTransaction }
   | { status: 'transaction-failed'; tx: ContractTransaction; error: SdkError }
-  | { status: 'success'; tx: ContractTransaction; receipt: ContractReceipt; tokens: ClaimedToken[] };
+  | { status: 'success'; tx: ContractTransaction; receipt: ContractReceipt; tokens: IssuedToken[] };
 
-export class PendingClaim extends ContractObject {
+export class PendingIssue extends ContractObject {
   public constructor(
     protected readonly base: CollectionContract,
     readonly tokenId: TokenId,
-    readonly conditions: ClaimConditionsState,
+    readonly tokenURI?: string,
   ) {
     super(base);
 
     this.tokenId = this.base.tokenStandard === 'ERC1155' ? this.base.requireTokenId(tokenId) : tokenId;
   }
 
-  protected getArgs(): Omit<ClaimArgs, 'receiver' | 'quantity'> {
-    const c = this.conditions;
-
+  protected getArgs(): Omit<IssueArgs, 'receiver' | 'quantity'> {
     return {
-      conditionId: c.activeClaimConditionId,
       tokenId: this.tokenId,
-      currency: c.currency,
-      pricePerToken: c.pricePerToken,
-      proofs: c.allowlistStatus.proofs,
-      proofMaxQuantityPerTransaction: c.allowlistStatus.proofMaxQuantityPerTransaction,
+      tokenURI: this.tokenURI,
     };
   }
 
@@ -41,7 +35,7 @@ export class PendingClaim extends ContractObject {
     receiver: Address,
     quantity: BigNumberish,
     overrides: PayableOverrides = {},
-    onStateChange: (state: ClaimState) => void,
+    onStateChange: (state: IssueState) => void,
   ) {
     const { success, result: tx, error } = await this.execute(signer, receiver, quantity, overrides);
     if (!success) {
@@ -53,7 +47,7 @@ export class PendingClaim extends ContractObject {
 
     try {
       const receipt = await tx.wait();
-      const tokens = await this.base.claims.parseLogs(receipt);
+      const tokens = await this.base.issuer.parseLogs(receipt);
       onStateChange({ status: 'success', tx, receipt, tokens });
     } catch (err) {
       const error = SdkError.is(err) ? err : new SdkError(SdkErrorCode.UNKNOWN_ERROR, undefined, err as Error);
@@ -70,17 +64,8 @@ export class PendingClaim extends ContractObject {
   ): Promise<OperationStatus<ContractTransaction>> {
     return this.do(() => {
       const args = { ...this.getArgs(), receiver, quantity };
-      return this.base.claims.claim(signer, args, overrides);
+      return this.base.issuer.issue(signer, args, overrides);
     });
-  }
-
-  async verify(receiver: Address, quantity: number): Promise<boolean> {
-    try {
-      const status = await this.base.claims.verify({ ...this.getArgs(), receiver, quantity }, true);
-      return status;
-    } catch {}
-
-    return false;
   }
 
   async estimateGas(
@@ -91,7 +76,7 @@ export class PendingClaim extends ContractObject {
   ): Promise<OperationStatus<BigNumber>> {
     return this.do(() => {
       const args = { ...this.getArgs(), receiver, quantity };
-      return this.base.claims.estimateGas(signer, args, overrides);
+      return this.base.issuer.estimateGas(signer, args, overrides);
     });
   }
 }

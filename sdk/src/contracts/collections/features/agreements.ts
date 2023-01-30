@@ -2,8 +2,8 @@ import { BigNumber, ContractTransaction } from 'ethers';
 import { Address, CollectionContract, IPFS_GATEWAY_PREFIX } from '../..';
 import { resolveIpfsUrl } from '../../../utils/ipfs.js';
 import { SdkError, SdkErrorCode } from '../errors';
-import { FeatureSet } from '../features';
 import type { Signerish, TermsUserAcceptanceState } from '../types';
+import { FeatureSet } from './features';
 
 export const AgreementsFeatures = [
   'agreement/IAgreement.sol:ICedarAgreementV0',

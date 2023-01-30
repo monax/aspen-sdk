@@ -6,7 +6,6 @@ import { AllowlistStatus, getAllowlistStatus } from '../../../apis/publishing';
 import { publishingChainFromChainId } from '../../../apis/utils/providers';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import { FeatureSet } from '../features';
 import { max, min } from '../number';
 import type {
   ActiveClaimConditions,
@@ -15,6 +14,7 @@ import type {
   CollectionUserClaimState,
   UserClaimConditions,
 } from '../types';
+import { FeatureSet } from './features';
 
 // Reasonably large number to compare with
 export const SUPPLY_THRESHOLD = constants.MaxInt256;
@@ -159,16 +159,13 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
    * @param tokenId Optional token id - use for ERC1155 contracts
    * @returns Token or Collection claim conditions
    */
-  async getActiveClaimConditions(tokenId: BigNumberish | null = null): Promise<ActiveClaimConditions | null> {
+  async getActiveClaimConditions(tokenId: BigNumberish | null = null): Promise<ActiveClaimConditions> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        tokenId = this.base.requireTokenId(tokenId);
-        return await this.getActiveClaimConditionsERC1155(tokenId);
+        return await this.getActiveClaimConditionsERC1155(this.base.requireTokenId(tokenId));
       case 'ERC721':
         return await this.getActiveClaimConditionsERC721();
     }
-
-    return null;
   }
 
   /**
@@ -280,21 +277,19 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
   async getUserClaimConditions(
     userAddress: Address,
     tokenId: BigNumberish | null = null,
-  ): Promise<UserClaimConditions | null> {
+  ): Promise<UserClaimConditions> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
         return this.getUserClaimConditionsERC1155(userAddress, this.base.requireTokenId(tokenId));
       case 'ERC721':
         return this.getUserClaimConditionsERC721(userAddress);
     }
-
-    return null;
   }
 
-  protected async getActiveClaimConditionsERC721(): Promise<ActiveClaimConditions | null> {
+  protected async getActiveClaimConditionsERC721(): Promise<ActiveClaimConditions> {
     const { nftV0, nftV1, nftV2 } = this.getPartition('getActiveConditions')(this.base.interfaces);
     if (!nftV0 && !nftV1 && !nftV2) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'getActiveConditions' });
+      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
     }
 
     try {
@@ -410,13 +405,13 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
       throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
     }
 
-    return null;
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
   }
 
-  protected async getUserClaimConditionsERC721(userAddress: Address): Promise<UserClaimConditions | null> {
+  protected async getUserClaimConditionsERC721(userAddress: Address): Promise<UserClaimConditions> {
     const { nftV0, nftV1, nftV2 } = this.getPartition('getUserConditions')(this.base.interfaces);
     if (!nftV0 && !nftV1 && !nftV2) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'getUserConditions' });
+      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
     }
 
     try {
@@ -475,13 +470,13 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
       throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
     }
 
-    return null;
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
   }
 
-  protected async getActiveClaimConditionsERC1155(tokenId: BigNumberish): Promise<ActiveClaimConditions | null> {
+  protected async getActiveClaimConditionsERC1155(tokenId: BigNumberish): Promise<ActiveClaimConditions> {
     const { sftV0, sftV1, sftV2 } = this.getPartition('getActiveConditions')(this.base.interfaces);
     if (!sftV0 && !sftV1 && !sftV2) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'getActiveConditions' });
+      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
     }
 
     try {
@@ -591,16 +586,16 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
       throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
     }
 
-    return null;
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
   }
 
   protected async getUserClaimConditionsERC1155(
     userAddress: Address,
     tokenId: BigNumber,
-  ): Promise<UserClaimConditions | null> {
+  ): Promise<UserClaimConditions> {
     const { sftV0, sftV1 } = this.getPartition('getUserConditions')(this.base.interfaces);
     if (!sftV0 && !sftV1) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'getUserConditions' });
+      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
     }
 
     try {
@@ -643,6 +638,6 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
       throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
     }
 
-    return null;
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
   }
 }

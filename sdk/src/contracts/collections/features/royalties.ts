@@ -1,7 +1,6 @@
 import { Address, CollectionContract } from '../..';
 import { parse } from '../../../utils';
-
-import { FeatureSet } from '../features';
+import { FeatureSet } from './features';
 
 import { SdkError, SdkErrorCode } from '../errors';
 

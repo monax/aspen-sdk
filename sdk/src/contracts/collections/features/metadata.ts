@@ -5,8 +5,8 @@ import { resolveIpfsUrl } from '../../../utils';
 import { IPublicMetadataV0__factory } from '../../generated';
 import { CollectionMetaImageType } from '../constants';
 import { SdkError, SdkErrorCode } from '../errors';
-import { FeatureSet } from '../features';
 import type { CollectionMetadata, TokenMetadata } from '../types';
+import { FeatureSet } from './features';
 
 export const MetadataFeatures = [
   'metadata/IContractMetadata.sol:ICedarMetadataV1',

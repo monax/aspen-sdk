@@ -9,6 +9,7 @@ export enum SdkErrorCode {
   FAILED_TO_LOAD_FEATURES = 'Failed to load contract features.',
   EMPTY_TOKEN_STANDARD = "Couldn't identify a token standard",
   FAILED_TO_LOAD_METADATA = 'Failed to get metadata',
+  MISSING_TOKEN_ID = 'Token ID is required!',
 }
 
 export class SdkError extends Error {

@@ -1,19 +1,11 @@
 import { BigNumber, BigNumberish, ContractReceipt, ContractTransaction, PayableOverrides } from 'ethers';
-import {
-  Address,
-  ICedarNFTIssuanceV0__factory,
-  ICedarSFTIssuanceV0__factory,
-  isSameAddress,
-  NATIVE_TOKEN,
-  TokenAsset,
-  TokenAssetMetadata,
-} from '../..';
-import type { TokensClaimedEventObject as ERC721TokensClaimedEventObject } from '../../generated/issuance/ICedarNFTIssuance.sol/ICedarNFTIssuanceV4.js';
-import type { TokensClaimedEventObject as ERC1155TokensClaimedEventObject } from '../../generated/issuance/ICedarSFTIssuance.sol/ICedarSFTIssuanceV2.js';
+import { Address, ChainId, extractEventsFromLogs, isSameAddress, NATIVE_TOKEN } from '../..';
+import { parse } from '../../../utils';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import { FeatureSet } from '../features';
-import type { Signerish, TokenId } from '../types';
+import { bnRange } from '../number';
+import type { Signerish, TokenId, TokenStandard } from '../types';
+import { FeatureSet } from './features';
 
 export const ClaimsFeatures = [
   // NFT
@@ -46,6 +38,15 @@ export type ClaimArgs = {
   pricePerToken: BigNumberish;
   proofs: string[];
   proofMaxQuantityPerTransaction: BigNumberish;
+};
+
+export type ClaimedToken = {
+  chainId: ChainId;
+  address: string;
+  tokenId: string;
+  standard: TokenStandard;
+  receiver: Address;
+  quantity: BigNumber;
 };
 
 export class Claims extends FeatureSet<ClaimsFeatures> {
@@ -154,12 +155,10 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
 
   async estimateGas(signer: Signerish, args: ClaimArgs, overrides: PayableOverrides = {}): Promise<BigNumber> {
     switch (this.base.tokenStandard) {
-      case 'ERC1155': {
+      case 'ERC1155':
         return this.estimateGasERC1155(signer, args, overrides);
-      }
-      case 'ERC721': {
+      case 'ERC721':
         return this.estimateGasERC721(signer, args, overrides);
-      }
     }
   }
 
@@ -238,8 +237,6 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
       case 'ERC721':
         return await this.verifyERC721(args, verifyMaxQuantityPerTransaction);
     }
-
-    return false;
   }
 
   protected async verifyERC1155(
@@ -306,80 +303,58 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
     }
   }
 
-  /**
-   * Get the metadata for all claimed tokens from the events in a contract receipt
-   *
-   * @param receipt
-   * @returns Tokens metadata
-   */
-  async parseClaimReceipt(receipt: ContractReceipt): Promise<TokenAssetMetadata[]> {
-    if (!receipt.events) return [];
-
-    let tokens: TokenAssetMetadata[] = [];
-    const tokenAssets: TokenAsset[] = [];
-
-    const chainId = this.base.chainId;
+  async parseLogs(receipt: ContractReceipt): Promise<ClaimedToken[]> {
+    const { nft, sft } = this.getPartition('claim')(this.base.interfaces);
+    const { chainId, address } = this.base;
+    const issueTokens: ClaimedToken[] = [];
 
     try {
-      switch (this.base.tokenStandard) {
-        case 'ERC1155':
-          const iSft = ICedarSFTIssuanceV0__factory.createInterface();
-          const topic1155 = iSft.getEventTopic('TokensClaimed');
-          const event1155 = receipt.logs.find((log) => log.topics[0] === topic1155);
-          if (event1155) {
-            const { tokenId, quantityClaimed } = iSft.decodeEventLog(
-              'TokensClaimed',
-              event1155.data,
-              event1155.topics,
-            ) as unknown as ERC1155TokensClaimedEventObject;
+      if (nft) {
+        const nftEvents = this.base.assumeFeature('issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2');
+        const contract = nftEvents.connectReadOnly();
 
-            tokenAssets.push({
-              chainId,
-              contractAddress: this.base.address,
-              tokenId: tokenId.toString(),
-              standard: 'ERC1155',
-              quantity: quantityClaimed,
-            });
-          }
-          break;
+        issueTokens.push(
+          ...extractEventsFromLogs(contract.filters.TokensClaimed(), contract.interface, receipt.logs)
+            .map(({ startTokenId, receiver, quantityClaimed }) => {
+              const events: ClaimedToken[] = [];
+              for (const tokenId of bnRange(startTokenId, quantityClaimed)) {
+                events.push({
+                  chainId,
+                  address,
+                  tokenId: tokenId.toString(),
+                  standard: 'ERC721',
+                  receiver: parse(Address, receiver),
+                  quantity: BigNumber.from(1),
+                });
+              }
+              return events;
+            })
+            .flat(),
+        );
+      } else if (sft) {
+        const sftEvents = this.base.assumeFeature('issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2');
+        const contract = sftEvents.connectReadOnly();
 
-        case 'ERC721':
-          const iNft = ICedarNFTIssuanceV0__factory.createInterface();
-          const topic721 = iNft.getEventTopic('TokensClaimed');
-          const event721 = receipt.logs.find((log) => log.topics[0] === topic721);
-          if (event721) {
-            const { startTokenId, quantityClaimed } = iNft.decodeEventLog(
-              'TokensClaimed',
-              event721.data,
-              event721.topics,
-            ) as unknown as ERC721TokensClaimedEventObject;
-
-            const lastTokenId = startTokenId.add(quantityClaimed).sub(1);
-
-            for (let tokenId = startTokenId; tokenId.lte(lastTokenId); tokenId = tokenId.add(1)) {
-              tokenAssets.push({
+        issueTokens.push(
+          ...extractEventsFromLogs(contract.filters.TokensClaimed(), contract.interface, receipt.logs).map(
+            ({ tokenId, receiver, quantityClaimed }) => {
+              const event: ClaimedToken = {
                 chainId,
-                contractAddress: this.base.address,
+                address,
                 tokenId: tokenId.toString(),
-                standard: 'ERC721',
-                quantity: BigNumber.from(1),
-              });
-            }
-          }
-
-          break;
+                standard: 'ERC1155',
+                receiver: parse(Address, receiver),
+                quantity: quantityClaimed,
+              };
+              return event;
+            },
+          ),
+        );
       }
-
-      tokens = await Promise.all(
-        tokenAssets.map<Promise<TokenAssetMetadata>>(async (asset) => {
-          const { uri, metadata } = await this.base.metadata.getTokenMetadata(asset.tokenId);
-          return { asset, uri, metadata };
-        }),
-      );
     } catch (err) {
       throw new SdkError(SdkErrorCode.INVALID_DATA, { receipt }, err as Error);
     }
 
-    return tokens;
+    return issueTokens;
   }
 }

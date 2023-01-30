@@ -2,11 +2,11 @@ import { Provider } from '@ethersproject/providers';
 import { Signer } from 'ethers';
 import { NonEmptyArray } from 'fp-ts/NonEmptyArray';
 import * as t from 'io-ts';
-import { parseThenOrElse } from '../../utils/schema';
-import { Address } from '../address';
-import type { CollectionContract } from './collections';
+import { parseThenOrElse } from '../../../utils';
+import { Address } from '../../address';
+import { CollectionContract } from '../collections';
+import { Signerish } from '../types';
 import { FeatureFactories } from './feature-factories.gen';
-import { Signerish } from './types';
 
 export const FeatureInterfaceId = t.keyof(FeatureFactories);
 export type FeatureInterfaceId = t.TypeOf<typeof FeatureInterfaceId>;

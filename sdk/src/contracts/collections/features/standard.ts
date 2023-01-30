@@ -3,7 +3,7 @@ import { TokenStandard } from '..';
 import { Addressish, asAddress } from '../../address';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import { FeatureSet } from '../features';
+import { FeatureSet } from './features';
 
 export const StandardFeatures = [
   // ERC1155

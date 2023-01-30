@@ -17,3 +17,17 @@ export function normalise(x: BigNumberish): BigNumber {
   }
   return BigNumber.from(x);
 }
+
+export function* bnRange(start: BigNumber, length: BigNumberish) {
+  const last = start.add(length);
+
+  if (start.lt(last)) {
+    for (let idx = start; idx.lt(last); idx = idx.add(1)) {
+      yield idx;
+    }
+  } else {
+    for (let idx = start; idx.gt(last); idx = idx.sub(1)) {
+      yield idx;
+    }
+  }
+}

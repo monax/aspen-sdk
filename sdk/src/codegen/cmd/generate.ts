@@ -12,7 +12,7 @@ const srcDir = path.join(sdkDir, 'src');
 const manifestFileTs = path.join(srcDir, 'codegen', 'manifest.gen.ts');
 const deployersFileTs = path.join(srcDir, 'contracts', 'deployers.gen.ts');
 const contractsAbiDir = path.join(srcDir, 'contracts', 'abis');
-const featureFactoriesTs = path.join(srcDir, 'contracts', 'collections', 'feature-factories.gen.ts');
+const featureFactoriesTs = path.join(srcDir, 'contracts', 'collections', 'features', 'feature-factories.gen.ts');
 
 const specDir = path.join(sdkDir, 'node_modules', '@monaxlabs', 'spec');
 const pathToManifestJson = path.join(specDir, 'contracts/manifest.json');
