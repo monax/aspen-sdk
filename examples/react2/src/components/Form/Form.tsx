@@ -1,18 +1,9 @@
-import {
-  Button,
-  Card,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  Input,
-} from "@chakra-ui/react";
-import axios from "axios";
+import { Button, Card } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import type { SchemaOf } from "yup";
-import { FormProvider, get, useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { getNotificationsFormSchema } from "./schema";
 import { EmailFormData } from "./types";
-import { ErrorMessage } from "@hookform/error-message";
 import FormInput from "../FormInput";
 
 const Form = () => {
@@ -26,28 +17,30 @@ const Form = () => {
     },
     reValidateMode: "onSubmit",
   });
+  const emailValue = methods.watch("email");
+
   const query = new URLSearchParams({
-    email: `${"email"}`,
+    email: `${emailValue}`,
   });
-  const onSubmit = (data: EmailFormData) => {
-    console.log(data);
-    localStorage.setItem("email", data.email);
-    const query = new URLSearchParams({
-      email: `${data.email}`,
-    });
-    axios.post(`/api/pay-with-fiat?${query.toString()}`);
-    // methods.reset({
-    //   email: "",
-    //   confirmEmail: "",
-    // });
-  };
+
+  // const onSubmit = async (data: EmailFormData) => {
+  //   console.log(data);
+  //   const query = new URLSearchParams({
+  //     email: `agnieszkaskrobo`,
+  //   });
+  //   await fetch(`/api/pay-with-fiat?${query.toString()}`, {
+  //     method: "POST",
+  //     body: JSON.stringify(data),
+  //   });
+  // };
 
   return (
     <Card p={6} w={96}>
       <form
         id="mintToken"
+        // onSubmit={methods.handleSubmit(onSubmit)}
         action={`/api/pay-with-fiat?${query.toString()}`}
-        method="POST"
+        method="post"
       >
         <FormProvider {...methods}>
           <FormInput name="email" />

@@ -1,5 +1,6 @@
 import { buffer } from "micro";
 import Cors from "micro-cors";
+import { NextApiRequest, NextApiResponse } from "next";
 import Stripe from "stripe";
 import { sendMail } from "./sendgrid-mail";
 
@@ -26,7 +27,7 @@ const validatePayment = (checkout: Stripe.Checkout.Session): boolean => {
   return checkout.payment_status === "paid" && checkout.status === "complete";
 };
 
-const webhookHandler = async (req: any, res: any) => {
+const webhookHandler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === "POST") {
     const buf = await buffer(req);
     const sig = req.headers["stripe-signature"]!;
@@ -50,19 +51,13 @@ const webhookHandler = async (req: any, res: any) => {
 
     if (event.type === "checkout.session.completed") {
       const checkoutSession = event.data.object as Stripe.Checkout.Session;
-
       if (validatePayment(checkoutSession)) {
-        const { tokenId, collectionGuid } = checkoutSession.metadata!;
-        const wallet = checkoutSession.client_reference_id!;
-        console.log(
-          `✅ Checkout complete for token ${
-            tokenId || "allocated"
-          } on collecton ${collectionGuid} to wallet ${wallet}`
-        );
+        const { email } = checkoutSession.metadata!;
+        console.log(`✅ Checkout complete for email ${email}`);
         console.log("Event id:", event.id);
 
         try {
-          sendMail()
+          sendMail("agnieszka.skrobot@monaxlabs.io");
         } catch (err) {
           console.log(`Failed sending an email`);
           return res.status(500).send(`Error: ${err}`);
