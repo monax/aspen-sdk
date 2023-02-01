@@ -1,17 +1,21 @@
 import axios from 'axios';
 import { add } from 'date-fns';
-import { BigNumber, BigNumberish, constants } from 'ethers';
+import { BigNumber, BigNumberish, constants, ContractTransaction } from 'ethers';
 import { Address, ZERO_BYTES32 } from '../..';
 import { AllowlistStatus, getAllowlistStatus } from '../../../apis/publishing';
 import { publishingChainFromChainId } from '../../../apis/utils/providers';
+import { parse } from '../../../utils';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import { max, min } from '../number';
 import type {
   ActiveClaimConditions,
   ClaimConditionsState,
+  CollectionContractClaimCondition,
   CollectionUserClaimConditions,
   CollectionUserClaimState,
+  Signerish,
+  SourcedOverrides,
   UserClaimConditions,
 } from '../types';
 import { FeatureSet } from './features';
@@ -29,6 +33,10 @@ export const ConditionsFeatures = [
   'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0',
   'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1',
   'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2',
+  'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV0',
+  'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV1',
+  'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2',
+  'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV3',
   // SFT
   // 'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV0', // very old
   'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1',
@@ -37,9 +45,19 @@ export const ConditionsFeatures = [
   'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0',
   'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1',
   'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2',
+  'issuance/ICedarSFTIssuance.sol:IRestrictedSFTIssuanceV0',
+  'issuance/ICedarSFTIssuance.sol:IRestrictedSFTIssuanceV1',
+  'issuance/ICedarSFTIssuance.sol:IRestrictedSFTIssuanceV2',
+  'issuance/ICedarSFTIssuance.sol:IRestrictedSFTIssuanceV3',
 ] as const;
 
 export type ConditionsFeatures = (typeof ConditionsFeatures)[number];
+
+export type ConditionArgs = {
+  conditions: CollectionContractClaimCondition[];
+  tokenId: BigNumberish | null;
+  resetClaimEligibility: boolean;
+};
 
 export class Conditions extends FeatureSet<ConditionsFeatures> {
   constructor(base: CollectionContract) {
@@ -47,51 +65,45 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
   }
 
   protected readonly getPartition = this.makeGetPartition((partitioner) => {
-    const getActiveConditions = partitioner({
+    const conditions = partitioner({
       nftV0: [
         'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1',
         'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2',
       ],
       nftV1: ['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3'],
-      nftV2: [
-        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4',
+      nftV2: ['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4'],
+      nftP1: [
         'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0',
         'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1',
-        'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2',
+      ],
+      nftP2: ['issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2'],
+      nftR1: [
+        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV0',
+        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV1',
+      ],
+      nftR2: [
+        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2',
+        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV3',
       ],
       sftV0: ['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1'],
       sftV1: ['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2'],
-      sftV2: [
-        'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3',
+      sftV2: ['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3'],
+      sftP1: [
         'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0',
         'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1',
-        'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2',
+      ],
+      sftP2: ['issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2'],
+      sftR1: [
+        'issuance/ICedarSFTIssuance.sol:IRestrictedSFTIssuanceV0',
+        'issuance/ICedarSFTIssuance.sol:IRestrictedSFTIssuanceV1',
+      ],
+      sftR2: [
+        'issuance/ICedarSFTIssuance.sol:IRestrictedSFTIssuanceV2',
+        'issuance/ICedarSFTIssuance.sol:IRestrictedSFTIssuanceV3',
       ],
     });
 
-    const getUserConditions = partitioner({
-      nftV0: [
-        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV1',
-        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2',
-      ],
-      nftV1: ['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3'],
-      nftV2: [
-        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4',
-        'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV0',
-        'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV1',
-        'issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2',
-      ],
-      sftV0: ['issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1'],
-      sftV1: [
-        'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2',
-        'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV3',
-        'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV0',
-        'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV1',
-        'issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2',
-      ],
-    });
-
-    return { getActiveConditions, getUserConditions };
+    return { conditions };
   });
 
   /**
@@ -104,8 +116,8 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
   async getState(userAddress: Address, tokenId: BigNumberish | null = null): Promise<ClaimConditionsState> {
     try {
       const [activeClaimConditions, userClaimConditions] = await Promise.all([
-        this.getActiveClaimConditions(tokenId),
-        this.getUserClaimConditions(userAddress, tokenId),
+        this.getActive(tokenId),
+        this.getForUser(userAddress, tokenId),
       ]);
 
       if (!activeClaimConditions || !userClaimConditions) {
@@ -129,7 +141,7 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
         );
       }
 
-      const userClaimRestrictions = await this.getUserClaimRestrictions(
+      const userClaimRestrictions = await this.getUserRestrictions(
         userClaimConditions,
         activeClaimConditions,
         allowlistStatus.proofs,
@@ -155,16 +167,115 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
     }
   }
 
+  async getById(conditionId: BigNumberish, tokenId: BigNumberish | null): Promise<CollectionContractClaimCondition> {
+    const c = this.getPartition('conditions')(this.base.interfaces);
+
+    switch (this.base.tokenStandard) {
+      case 'ERC1155':
+        tokenId = this.base.requireTokenId(tokenId);
+        if (c.sftV0 || c.sftV1 || c.sftV2 || c.sftP1 || c.sftP2) {
+          const factory = this.base.assumeFeature('issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2');
+          const condition = await factory.connectReadOnly().getClaimConditionById(tokenId, conditionId);
+          return {
+            startTimestamp: condition.startTimestamp.toNumber(),
+            maxClaimableSupply: condition.maxClaimableSupply,
+            supplyClaimed: condition.supplyClaimed,
+            quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
+            waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            merkleRoot: condition.merkleRoot,
+            pricePerToken: condition.pricePerToken,
+            currency: parse(Address, condition.currency),
+            phaseId: condition.phaseId ?? null, // 'phaseId' isn't returned by old interfaces
+          };
+        }
+        break;
+
+      case 'ERC721':
+        if (c.nftV0 || c.nftV1 || c.nftV2 || c.nftP1 || c.nftP2) {
+          const factory = this.base.assumeFeature('issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2');
+          const condition = await factory.connectReadOnly().getClaimConditionById(conditionId);
+          return {
+            startTimestamp: condition.startTimestamp.toNumber(),
+            maxClaimableSupply: condition.maxClaimableSupply,
+            supplyClaimed: condition.supplyClaimed,
+            quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
+            waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            merkleRoot: condition.merkleRoot,
+            pricePerToken: condition.pricePerToken,
+            currency: parse(Address, condition.currency),
+            phaseId: condition.phaseId ?? null, // 'phaseId' isn't returned by old interfaces
+          };
+        }
+        break;
+    }
+
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
+  }
+
+  async set(signer: Signerish, args: ConditionArgs, overrides?: SourcedOverrides): Promise<ContractTransaction> {
+    switch (this.base.tokenStandard) {
+      case 'ERC1155':
+        return await this.setERC1155(signer, args, overrides);
+      case 'ERC721':
+        return await this.setERC721(signer, args, overrides);
+    }
+  }
+
+  async setERC1155(
+    signer: Signerish,
+    { conditions, tokenId, resetClaimEligibility }: ConditionArgs,
+    overrides?: SourcedOverrides,
+  ): Promise<ContractTransaction> {
+    tokenId = this.base.requireTokenId(tokenId);
+    const { sftV0, sftV1, sftV2, sftR1, sftR2 } = this.getPartition('conditions')(this.base.interfaces);
+    const factory = sftV0 ?? sftV1 ?? sftV2 ?? sftR1 ?? sftR2;
+
+    try {
+      if (factory) {
+        const iface = factory.connectWith(signer);
+        const tx = await iface.setClaimConditions(tokenId, conditions, resetClaimEligibility, overrides);
+        return tx;
+      }
+    } catch (err) {
+      const args = { conditions, tokenId, resetClaimEligibility };
+      throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
+    }
+
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
+  }
+
+  async setERC721(
+    signer: Signerish,
+    { conditions, resetClaimEligibility }: ConditionArgs,
+    overrides?: SourcedOverrides,
+  ): Promise<ContractTransaction> {
+    const { nftV0, nftV1, nftV2, nftR1, nftR2 } = this.getPartition('conditions')(this.base.interfaces);
+    const factory = nftV0 ?? nftV1 ?? nftV2 ?? nftR1 ?? nftR2;
+
+    try {
+      if (factory) {
+        const iface = factory.connectWith(signer);
+        const tx = await iface.setClaimConditions(conditions, resetClaimEligibility, overrides);
+        return tx;
+      }
+    } catch (err) {
+      const args = { conditions, resetClaimEligibility };
+      throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
+    }
+
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
+  }
+
   /**
    * @param tokenId Optional token id - use for ERC1155 contracts
    * @returns Token or Collection claim conditions
    */
-  async getActiveClaimConditions(tokenId: BigNumberish | null = null): Promise<ActiveClaimConditions> {
+  async getActive(tokenId: BigNumberish | null = null): Promise<ActiveClaimConditions> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.getActiveClaimConditionsERC1155(this.base.requireTokenId(tokenId));
+        return await this.getActiveERC1155(this.base.requireTokenId(tokenId));
       case 'ERC721':
-        return await this.getActiveClaimConditionsERC721();
+        return await this.getActiveERC721();
     }
   }
 
@@ -179,7 +290,7 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
    * @param respectRemainingSupply Used to support old contracts
    * @returns Extra user claim conditions
    */
-  async getUserClaimRestrictions(
+  async getUserRestrictions(
     userClaimInfo: UserClaimConditions,
     claimInfo: ActiveClaimConditions,
     merkleProofs: string[],
@@ -274,23 +385,18 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
    * @param tokenId
    * @returns User claim conditions
    */
-  async getUserClaimConditions(
-    userAddress: Address,
-    tokenId: BigNumberish | null = null,
-  ): Promise<UserClaimConditions> {
+  async getForUser(userAddress: Address, tokenId: BigNumberish | null = null): Promise<UserClaimConditions> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return this.getUserClaimConditionsERC1155(userAddress, this.base.requireTokenId(tokenId));
+        return this.getForUserERC1155(userAddress, this.base.requireTokenId(tokenId));
       case 'ERC721':
-        return this.getUserClaimConditionsERC721(userAddress);
+        return this.getForUserERC721(userAddress);
     }
   }
 
-  protected async getActiveClaimConditionsERC721(): Promise<ActiveClaimConditions> {
-    const { nftV0, nftV1, nftV2 } = this.getPartition('getActiveConditions')(this.base.interfaces);
-    if (!nftV0 && !nftV1 && !nftV2) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
-    }
+  protected async getActiveERC721(): Promise<ActiveClaimConditions> {
+    const { nftV0, nftV1, nftV2, nftP1, nftP2 } = this.getPartition('conditions')(this.base.interfaces);
+    const v3 = nftV2 ?? nftP1;
 
     try {
       if (nftV0) {
@@ -324,6 +430,7 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
             quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
             startTimestamp: condition.startTimestamp.toNumber(),
             waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            phaseId: null,
             isClaimingPaused: false,
           },
         };
@@ -358,11 +465,12 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
             quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
             startTimestamp: condition.startTimestamp.toNumber(),
             waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            phaseId: null,
             isClaimingPaused: isClaimPaused,
           },
         };
-      } else if (nftV2) {
-        const iNftIssuance = nftV2.connectReadOnly();
+      } else if (v3) {
+        const iNftIssuance = v3.connectReadOnly();
 
         const {
           condition,
@@ -397,6 +505,38 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
             quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
             startTimestamp: condition.startTimestamp.toNumber(),
             waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            phaseId: null,
+            isClaimingPaused: isClaimPaused,
+          },
+        };
+      } else if (nftP2) {
+        const iNftIssuance = nftP2.connectReadOnly();
+
+        const { condition, conditionId, walletMaxClaimCount, isClaimPaused, tokenSupply, maxTotalSupply } =
+          await iNftIssuance.getActiveClaimConditions();
+
+        const remainingSupply = maxTotalSupply.eq(0) ? SUPPLY_THRESHOLD : maxTotalSupply.sub(tokenSupply);
+        const claimableSupply = condition.maxClaimableSupply.eq(0)
+          ? SUPPLY_THRESHOLD
+          : condition.maxClaimableSupply.sub(condition.supplyClaimed);
+        const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
+
+        return {
+          maxWalletClaimCount: walletMaxClaimCount,
+          tokenSupply: tokenSupply,
+          maxTotalSupply: maxTotalSupply,
+          maxAvailableSupply: maxAvailableSupply,
+          activeClaimConditionId: conditionId.toNumber(),
+          activeClaimCondition: {
+            currency: condition.currency as Address,
+            maxClaimableSupply: condition.maxClaimableSupply,
+            supplyClaimed: condition.supplyClaimed,
+            merkleRoot: condition.merkleRoot,
+            pricePerToken: condition.pricePerToken,
+            quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
+            startTimestamp: condition.startTimestamp.toNumber(),
+            waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            phaseId: condition.phaseId,
             isClaimingPaused: isClaimPaused,
           },
         };
@@ -408,11 +548,9 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
     throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
   }
 
-  protected async getUserClaimConditionsERC721(userAddress: Address): Promise<UserClaimConditions> {
-    const { nftV0, nftV1, nftV2 } = this.getPartition('getUserConditions')(this.base.interfaces);
-    if (!nftV0 && !nftV1 && !nftV2) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
-    }
+  protected async getForUserERC721(userAddress: Address): Promise<UserClaimConditions> {
+    const { nftV0, nftV1, nftV2, nftP1, nftP2 } = this.getPartition('conditions')(this.base.interfaces);
+    const v3 = nftV2 ?? nftP1 ?? nftP2;
 
     try {
       if (nftV0) {
@@ -446,8 +584,8 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
           lastClaimTimestamp: lastClaimTimestamp.toNumber(),
           nextClaimTimestamp: nextValidClaimTimestamp.toNumber(),
         };
-      } else if (nftV2) {
-        const iNftIssuance = nftV2.connectReadOnly();
+      } else if (v3) {
+        const iNftIssuance = v3.connectReadOnly();
 
         const {
           conditionId,
@@ -473,11 +611,9 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
     throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
   }
 
-  protected async getActiveClaimConditionsERC1155(tokenId: BigNumberish): Promise<ActiveClaimConditions> {
-    const { sftV0, sftV1, sftV2 } = this.getPartition('getActiveConditions')(this.base.interfaces);
-    if (!sftV0 && !sftV1 && !sftV2) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
-    }
+  protected async getActiveERC1155(tokenId: BigNumberish): Promise<ActiveClaimConditions> {
+    const { sftV0, sftV1, sftV2, sftP1, sftP2 } = this.getPartition('conditions')(this.base.interfaces);
+    const v3 = sftV2 ?? sftP1;
 
     try {
       const tokenIdBn = BigNumber.from(tokenId);
@@ -513,6 +649,7 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
             quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
             startTimestamp: condition.startTimestamp.toNumber(),
             waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            phaseId: null,
             isClaimingPaused: false,
           },
         };
@@ -547,11 +684,12 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
             quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
             startTimestamp: condition.startTimestamp.toNumber(),
             waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            phaseId: null,
             isClaimingPaused: isClaimPaused,
           },
         };
-      } else if (sftV2) {
-        const iSftIssuance = sftV2.connectReadOnly();
+      } else if (v3) {
+        const iSftIssuance = v3.connectReadOnly();
 
         const { condition, conditionId, walletMaxClaimCount, isClaimPaused, tokenSupply, maxTotalSupply } =
           await iSftIssuance.getActiveClaimConditions(tokenIdBn);
@@ -577,6 +715,38 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
             quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
             startTimestamp: condition.startTimestamp.toNumber(),
             waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            phaseId: null,
+            isClaimingPaused: isClaimPaused,
+          },
+        };
+      } else if (sftP2) {
+        const iSftIssuance = sftP2.connectReadOnly();
+
+        const { condition, conditionId, walletMaxClaimCount, isClaimPaused, tokenSupply, maxTotalSupply } =
+          await iSftIssuance.getActiveClaimConditions(tokenIdBn);
+
+        const remainingSupply = maxTotalSupply.eq(0) ? SUPPLY_THRESHOLD : maxTotalSupply.sub(tokenSupply);
+        const claimableSupply = condition.maxClaimableSupply.eq(0)
+          ? SUPPLY_THRESHOLD
+          : condition.maxClaimableSupply.sub(condition.supplyClaimed);
+        const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
+
+        return {
+          maxWalletClaimCount: walletMaxClaimCount,
+          tokenSupply: tokenSupply,
+          maxTotalSupply: maxTotalSupply,
+          maxAvailableSupply: maxAvailableSupply,
+          activeClaimConditionId: conditionId.toNumber(),
+          activeClaimCondition: {
+            currency: condition.currency as Address,
+            maxClaimableSupply: condition.maxClaimableSupply,
+            supplyClaimed: condition.supplyClaimed,
+            merkleRoot: condition.merkleRoot,
+            pricePerToken: condition.pricePerToken,
+            quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
+            startTimestamp: condition.startTimestamp.toNumber(),
+            waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            phaseId: condition.phaseId,
             isClaimingPaused: isClaimPaused,
           },
         };
@@ -589,14 +759,9 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
     throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
   }
 
-  protected async getUserClaimConditionsERC1155(
-    userAddress: Address,
-    tokenId: BigNumber,
-  ): Promise<UserClaimConditions> {
-    const { sftV0, sftV1 } = this.getPartition('getUserConditions')(this.base.interfaces);
-    if (!sftV0 && !sftV1) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
-    }
+  protected async getForUserERC1155(userAddress: Address, tokenId: BigNumber): Promise<UserClaimConditions> {
+    const { sftV0, sftV1, sftV2, sftP1, sftP2 } = this.getPartition('conditions')(this.base.interfaces);
+    const v1 = sftV1 ?? sftV2 ?? sftP1 ?? sftP2;
 
     try {
       const tokenIdBn = BigNumber.from(tokenId);
@@ -614,8 +779,8 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
           lastClaimTimestamp: lastClaimTimestamp.toNumber(),
           nextClaimTimestamp: nextValidClaimTimestamp.toNumber(),
         };
-      } else if (sftV1) {
-        const iSftIssuance = sftV1.connectReadOnly();
+      } else if (v1) {
+        const iSftIssuance = v1.connectReadOnly();
 
         const {
           conditionId,

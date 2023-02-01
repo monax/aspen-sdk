@@ -6,6 +6,8 @@ import { ClaimArgs, ClaimedToken } from '../features/claims';
 import { ContractObject } from './object';
 
 export type ClaimState =
+  | { status: 'verifying-claim' }
+  | { status: 'verification-failed'; error: SdkError }
   | { status: 'signing-transaction' }
   | { status: 'cancelled-transaction'; error: SdkError }
   | { status: 'pending-transaction'; tx: ContractTransaction }
@@ -43,8 +45,16 @@ export class PendingClaim extends ContractObject {
     overrides: PayableOverrides = {},
     onStateChange: (state: ClaimState) => void,
   ) {
-    const { success, result: tx, error } = await this.execute(signer, receiver, quantity, overrides);
-    if (!success) {
+    onStateChange({ status: 'verifying-claim' });
+
+    const verification = await this.verify(receiver, quantity);
+    if (!verification.success) {
+      onStateChange({ status: 'verification-failed', error: verification.error });
+      return;
+    }
+
+    const { success: hasTransaction, result: tx, error } = await this.execute(signer, receiver, quantity, overrides);
+    if (!hasTransaction) {
       onStateChange({ status: 'cancelled-transaction', error });
       return;
     }
@@ -68,19 +78,17 @@ export class PendingClaim extends ContractObject {
     quantity: BigNumberish,
     overrides: PayableOverrides = {},
   ): Promise<OperationStatus<ContractTransaction>> {
-    return this.do(() => {
+    return await this.do(async () => {
       const args = { ...this.getArgs(), receiver, quantity };
-      return this.base.claims.claim(signer, args, overrides);
+      return await this.base.claims.claim(signer, args, overrides);
     });
   }
 
-  async verify(receiver: Address, quantity: number): Promise<boolean> {
-    try {
-      const status = await this.base.claims.verify({ ...this.getArgs(), receiver, quantity }, true);
-      return status;
-    } catch {}
-
-    return false;
+  async verify(receiver: Address, quantity: BigNumberish): Promise<OperationStatus<boolean>> {
+    return await this.do(async () => {
+      const args = { ...this.getArgs(), receiver, quantity };
+      return await this.base.claims.verify(args, true);
+    });
   }
 
   async estimateGas(
@@ -89,9 +97,9 @@ export class PendingClaim extends ContractObject {
     quantity: BigNumberish,
     overrides: PayableOverrides = {},
   ): Promise<OperationStatus<BigNumber>> {
-    return this.do(() => {
+    return await this.do(async () => {
       const args = { ...this.getArgs(), receiver, quantity };
-      return this.base.claims.estimateGas(signer, args, overrides);
+      return await this.base.claims.estimateGas(signer, args, overrides);
     });
   }
 }

@@ -1,6 +1,7 @@
 import { Provider } from '@ethersproject/abstract-provider';
-import type { BigNumber, BigNumberish, Signer } from 'ethers';
+import type { BigNumber, BigNumberish, Overrides, Signer } from 'ethers';
 import { AllowlistStatus } from '../../apis/publishing/index';
+import { PromiseOrValue } from '../generated/common';
 import { Address, ChainId } from '../index';
 import type { CollectionMetaImageType, CollectionMetaLinkType } from './constants';
 import { SdkError } from './errors';
@@ -10,6 +11,8 @@ export type TokenId = BigNumberish | null | undefined;
 export type Signerish = Signer | Provider;
 
 export type TokenStandard = 'ERC721' | 'ERC1155';
+
+export type SourcedOverrides = Overrides & { from?: PromiseOrValue<string> };
 
 export type MetadataKind = 'collection';
 
@@ -107,7 +110,7 @@ export type CollectionContractClaimCondition = {
   merkleRoot: string;
   pricePerToken: BigNumber;
   currency: Address;
-  isClaimingPaused: boolean;
+  phaseId: string;
 };
 
 export type ActiveClaimConditions = {
@@ -116,7 +119,10 @@ export type ActiveClaimConditions = {
   maxTotalSupply: BigNumber;
   maxAvailableSupply: BigNumber;
   activeClaimConditionId: number;
-  activeClaimCondition: CollectionContractClaimCondition;
+  activeClaimCondition: Omit<CollectionContractClaimCondition, 'phaseId'> & {
+    isClaimingPaused: boolean;
+    phaseId: string | null;
+  };
 };
 
 export type UserClaimConditions = {
@@ -129,8 +135,8 @@ export type UserClaimConditions = {
 
 // Combines all conditions
 export type ClaimConditionsState = UserClaimConditions &
-  Omit<ActiveClaimConditions, 'activeClaimCondition'> &
-  CollectionContractClaimCondition & { allowlistStatus: AllowlistStatus };
+  Omit<ActiveClaimConditions, 'activeClaimCondition' | 'phaseId'> &
+  Omit<CollectionContractClaimCondition, 'phaseId'> & { allowlistStatus: AllowlistStatus; phaseId: string | null };
 
 export type CollectionUserClaimState =
   | 'ok'

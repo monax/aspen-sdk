@@ -155,7 +155,7 @@ export async function writeFeaturesFactoriesMap(
   );
 }
 
-export function generateFeatureFactoriesFunctionsMapTs(manifest: ContractsManifest): ts.Node {
+export function generateFeatureFunctionsMapTs(manifest: ContractsManifest): ts.Node {
   const currentFeatures = Object.values(manifest).filter(isFeature);
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
   const provider = new providers.JsonRpcProvider();
@@ -184,7 +184,7 @@ export function generateFeatureFactoriesFunctionsMapTs(manifest: ContractsManife
   return constNode;
 }
 
-export async function writeFeaturesFactoriesFunctionsMap(
+export async function writeFeaturesFunctionsMap(
   manifest: ContractsManifest,
   prettierConfigFile: string,
   functionsMapFile: string,
@@ -193,7 +193,7 @@ export async function writeFeaturesFactoriesFunctionsMap(
 
   fs.writeFileSync(
     functionsMapFile,
-    prettier.format(printNodes(generateFeatureFactoriesFunctionsMapTs(manifest)), {
+    prettier.format(printNodes(generateFeatureFunctionsMapTs(manifest)), {
       parser: 'typescript',
       ...options,
     }),

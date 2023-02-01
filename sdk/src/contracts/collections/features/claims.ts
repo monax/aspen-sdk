@@ -92,33 +92,34 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
     { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction }: ClaimArgs,
     overrides: PayableOverrides = {},
   ): Promise<ContractTransaction> {
-    const { sft } = this.getPartition('claim')(this.base.interfaces);
-    if (!sft) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'claim' });
-    }
     tokenId = this.base.requireTokenId(tokenId);
+    const { sft } = this.getPartition('claim')(this.base.interfaces);
 
     try {
-      if (isSameAddress(currency, NATIVE_TOKEN)) {
-        overrides.value = BigNumber.from(pricePerToken).mul(quantity);
-      }
+      if (sft) {
+        if (isSameAddress(currency, NATIVE_TOKEN)) {
+          overrides.value = BigNumber.from(pricePerToken).mul(quantity);
+        }
 
-      const iSft = await sft.connectWith(signer);
-      const tx = await iSft.claim(
-        receiver,
-        tokenId,
-        quantity,
-        currency,
-        pricePerToken,
-        proofs,
-        proofMaxQuantityPerTransaction,
-        overrides,
-      );
-      return tx;
+        const iSft = await sft.connectWith(signer);
+        const tx = await iSft.claim(
+          receiver,
+          tokenId,
+          quantity,
+          currency,
+          pricePerToken,
+          proofs,
+          proofMaxQuantityPerTransaction,
+          overrides,
+        );
+        return tx;
+      }
     } catch (err) {
       const args = { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction };
       throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
     }
+
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'claim' });
   }
 
   protected async claimERC721(
@@ -167,32 +168,33 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
     { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction }: ClaimArgs,
     overrides: PayableOverrides = {},
   ): Promise<BigNumber> {
-    const { sft } = this.getPartition('claim')(this.base.interfaces);
-    if (!sft) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'claim' });
-    }
     tokenId = this.base.requireTokenId(tokenId);
+    const { sft } = this.getPartition('claim')(this.base.interfaces);
 
     try {
-      if (isSameAddress(currency, NATIVE_TOKEN)) {
-        overrides.value = BigNumber.from(pricePerToken).mul(quantity);
-      }
+      if (sft) {
+        if (isSameAddress(currency, NATIVE_TOKEN)) {
+          overrides.value = BigNumber.from(pricePerToken).mul(quantity);
+        }
 
-      const iSft = sft.connectWith(signer);
-      return await iSft.estimateGas.claim(
-        receiver,
-        tokenId,
-        quantity,
-        currency,
-        pricePerToken,
-        proofs,
-        proofMaxQuantityPerTransaction,
-        overrides,
-      );
+        const iSft = sft.connectWith(signer);
+        return await iSft.estimateGas.claim(
+          receiver,
+          tokenId,
+          quantity,
+          currency,
+          pricePerToken,
+          proofs,
+          proofMaxQuantityPerTransaction,
+          overrides,
+        );
+      }
     } catch (err) {
       const args = { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction };
       throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
     }
+
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'claim' });
   }
 
   protected async estimateGasERC721(
@@ -228,14 +230,13 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
 
   /**
    * Use this function to verify that the claimant actually meets the claim conditions
-   * It's a 'read' function so it won't expend any gas
    */
-  async verify(args: ClaimArgs, verifyMaxQuantityPerTransaction = true): Promise<boolean> {
+  async verify(args: ClaimArgs, verifyMaxQuantity = true): Promise<boolean> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.verifyERC1155(args, verifyMaxQuantityPerTransaction);
+        return await this.verifyERC1155(args, verifyMaxQuantity);
       case 'ERC721':
-        return await this.verifyERC721(args, verifyMaxQuantityPerTransaction);
+        return await this.verifyERC721(args, verifyMaxQuantity);
     }
   }
 
@@ -243,25 +244,24 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
     { conditionId, receiver, tokenId, quantity, currency, pricePerToken }: ClaimArgs,
     verifyMaxQuantityPerTransaction: boolean,
   ): Promise<boolean> {
-    const { sft } = this.getPartition('claim')(this.base.interfaces);
-    if (!sft) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'claim' });
-    }
     tokenId = this.base.requireTokenId(tokenId);
+    const { sft } = this.getPartition('claim')(this.base.interfaces);
 
     try {
-      const iSft = sft.connectReadOnly();
-      await iSft.verifyClaim(
-        conditionId,
-        receiver,
-        tokenId,
-        quantity,
-        currency,
-        pricePerToken,
-        verifyMaxQuantityPerTransaction,
-      );
+      if (sft) {
+        const iSft = sft.connectReadOnly();
+        await iSft.verifyClaim(
+          conditionId,
+          receiver,
+          tokenId,
+          quantity,
+          currency,
+          pricePerToken,
+          verifyMaxQuantityPerTransaction,
+        );
 
-      return true;
+        return true;
+      }
     } catch (err) {
       const args = {
         conditionId,
@@ -274,6 +274,8 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
       };
       throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
     }
+
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'claim' });
   }
 
   protected async verifyERC721(
@@ -281,15 +283,21 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
     verifyMaxQuantityPerTransaction: boolean,
   ): Promise<boolean> {
     const { nft } = this.getPartition('claim')(this.base.interfaces);
-    if (!nft) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'claim' });
-    }
 
     try {
-      const iNft = nft.connectReadOnly();
-      await iNft.verifyClaim(conditionId, receiver, quantity, currency, pricePerToken, verifyMaxQuantityPerTransaction);
+      if (nft) {
+        const iNft = nft.connectReadOnly();
+        await iNft.verifyClaim(
+          conditionId,
+          receiver,
+          quantity,
+          currency,
+          pricePerToken,
+          verifyMaxQuantityPerTransaction,
+        );
 
-      return true;
+        return true;
+      }
     } catch (err) {
       const args = {
         conditionId,
@@ -301,6 +309,8 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
       };
       throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
     }
+
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'claim' });
   }
 
   async parseLogs(receipt: ContractReceipt): Promise<ClaimedToken[]> {

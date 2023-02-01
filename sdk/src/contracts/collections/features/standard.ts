@@ -1,6 +1,7 @@
-import { BigNumber, BigNumberish } from 'ethers';
-import { TokenStandard } from '..';
-import { Addressish, asAddress } from '../../address';
+import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
+import { Signerish, SourcedOverrides, TokenStandard } from '..';
+import { parse } from '../../../utils';
+import { Address, Addressish, asAddress } from '../../address';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureSet } from './features';
@@ -14,11 +15,17 @@ export const StandardFeatures = [
   'standard/IERC1155.sol:IERC1155V1',
   'issuance/ISFTSupply.sol:ISFTSupplyV0',
   'issuance/ISFTSupply.sol:ISFTSupplyV1',
+  'issuance/ISFTLimitSupply.sol:IRestrictedSFTLimitSupplyV0',
+  'issuance/ISFTLimitSupply.sol:IRestrictedSFTLimitSupplyV1',
+  'issuance/ISFTLimitSupply.sol:ISFTLimitSupplyV0',
   // ERC721
   'standard/IERC721.sol:IERC721V0',
   'standard/IERC721.sol:IERC721V1',
   'issuance/INFTSupply.sol:INFTSupplyV0',
   'issuance/INFTSupply.sol:INFTSupplyV1',
+  'issuance/INFTLimitSupply.sol:IRestrictedNFTLimitSupplyV0',
+  'issuance/INFTLimitSupply.sol:IRestrictedNFTLimitSupplyV1',
+  'issuance/INFTLimitSupply.sol:INFTLimitSupplyV0',
 ] as const;
 
 export type StandardFeatures = (typeof StandardFeatures)[number];
@@ -44,12 +51,22 @@ export class Standard extends FeatureSet<StandardFeatures> {
         'standard/IERC1155.sol:IERC1155SupplyV1',
         'standard/IERC1155.sol:IERC1155SupplyV2',
       ],
+      sftR0: [
+        'issuance/ISFTLimitSupply.sol:IRestrictedSFTLimitSupplyV0',
+        'issuance/ISFTLimitSupply.sol:IRestrictedSFTLimitSupplyV1',
+        'issuance/ISFTLimitSupply.sol:ISFTLimitSupplyV0',
+      ],
       nft: ['standard/IERC721.sol:IERC721V0', 'standard/IERC721.sol:IERC721V1'],
       nftSupply: ['issuance/INFTSupply.sol:INFTSupplyV0', 'issuance/INFTSupply.sol:INFTSupplyV1'],
-      getLargestToken: [
-        // 'issuance/ISFTSupply.sol:ISFTSupplyV0',
+      nftR0: [
+        'issuance/INFTLimitSupply.sol:IRestrictedNFTLimitSupplyV0',
+        'issuance/INFTLimitSupply.sol:IRestrictedNFTLimitSupplyV1',
+        'issuance/INFTLimitSupply.sol:INFTLimitSupplyV0',
+      ],
+      smallestToken: ['issuance/INFTSupply.sol:INFTSupplyV1', 'issuance/ISFTSupply.sol:ISFTSupplyV1'],
+      largestToken: [
+        'issuance/ISFTSupply.sol:ISFTSupplyV0',
         'issuance/ISFTSupply.sol:ISFTSupplyV1',
-        // 'standard/IERC1155.sol:IERC1155SupplyV0',
         'standard/IERC1155.sol:IERC1155SupplyV1',
         'standard/IERC1155.sol:IERC1155SupplyV2',
       ],
@@ -67,36 +84,49 @@ export class Standard extends FeatureSet<StandardFeatures> {
     throw new SdkError(SdkErrorCode.EMPTY_TOKEN_STANDARD);
   }
 
-  // Silas, do we want to keep this function?
-  // supportsPartition(partition: keyof typeof this.getPartition): boolean {
-  //   return Object.values(this.getPartition(partition)).some((f) => Boolean(f));
-  // }
+  async balanceOf(address: Addressish, tokenId: BigNumberish | null): Promise<BigNumber> {
+    const { nft, sft } = this.getPartition('standard')(this.base.interfaces);
 
-  async balanceOf(address: Addressish, tokenId: BigNumberish): Promise<BigNumber> {
-    const { sft, sftSupply } = this.getPartition('standard')(this.base.interfaces);
-    tokenId = this.base.requireTokenId(tokenId);
-
-    // Use supply as a marker interface then assume standard 1155
-    const factory = sft ? sft : sftSupply ? this.base.assumeFeature('standard/IERC1155.sol:IERC1155V0') : null;
-
-    if (factory) {
-      try {
-        const balance = factory.connectReadOnly().balanceOf(asAddress(address), tokenId);
+    try {
+      if (sft) {
+        tokenId = this.base.requireTokenId(tokenId);
+        const balance = await sft.connectReadOnly().balanceOf(asAddress(address), tokenId);
         return balance;
-      } catch (err) {
-        throw new SdkError(SdkErrorCode.CHAIN_ERROR, { tokenId }, err as Error);
+      } else if (nft) {
+        const balance = await nft.connectReadOnly().balanceOf(asAddress(address));
+        return balance;
+      }
+    } catch (err) {
+      if (SdkError.is(err)) {
+        throw err;
+      } else {
+        throw new SdkError(SdkErrorCode.CHAIN_ERROR, { address, tokenId }, err as Error);
       }
     }
 
-    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
-    // throw new Error(`Contract does not appear to be an ERC1155`);
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard', function: 'ownerOf' });
   }
 
-  async exists(tokenId: BigNumberish | null): Promise<boolean> {
-    tokenId = this.base.requireTokenId(tokenId);
+  async ownerOf(tokenId: BigNumberish): Promise<Address> {
+    const { nft } = this.getPartition('standard')(this.base.interfaces);
 
     try {
-      const { sftSupply, nftSupply } = this.getPartition('standard')(this.base.interfaces);
+      if (nft) {
+        const owner = await nft.connectReadOnly().ownerOf(tokenId);
+        return parse(Address, owner);
+      }
+    } catch (err) {
+      throw new SdkError(SdkErrorCode.CHAIN_ERROR, { tokenId }, err as Error);
+    }
+
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard', function: 'ownerOf' });
+  }
+
+  async exists(tokenId: BigNumberish): Promise<boolean> {
+    tokenId = this.base.requireTokenId(tokenId);
+    const { sftSupply, nftSupply } = this.getPartition('standard')(this.base.interfaces);
+
+    try {
       if (sftSupply) {
         const exists = await sftSupply.connectReadOnly().exists(tokenId);
         return exists;
@@ -124,63 +154,108 @@ export class Standard extends FeatureSet<StandardFeatures> {
   }
 
   protected async getERC1155TokensCount(): Promise<BigNumber> {
-    const { getLargestToken } = this.getPartition('standard')(this.base.interfaces);
-    if (!getLargestToken) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
-    }
+    const { largestToken, smallestToken } = this.getPartition('standard')(this.base.interfaces);
 
     try {
-      const iSft = getLargestToken.connectReadOnly();
-      // @todo don't add 1 when getSmallestTokenId != 0
-      return (await iSft.getLargestTokenId()).add(1);
+      if (largestToken) {
+        let smallest = 0;
+        if (smallestToken) {
+          smallest = await smallestToken.connectReadOnly().getSmallestTokenId();
+        }
+        const iSft = largestToken.connectReadOnly();
+        return (await iSft.getLargestTokenId()).add(1 - smallest);
+      }
     } catch (err) {
       throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
     }
+
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
   }
 
-  // @todo test against WoT
   protected async getERC721TokensCount(): Promise<BigNumber> {
     const { nftSupply } = this.getPartition('standard')(this.base.interfaces);
-    if (!nftSupply) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
-    }
 
     try {
-      const iNft = nftSupply.connectReadOnly();
-      return await iNft.totalSupply();
+      if (nftSupply) {
+        const count = await nftSupply.connectReadOnly().totalSupply();
+        return count;
+      }
     } catch (err) {
       throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
     }
+
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
+  }
+
+  async getSmallestTokenId(): Promise<number> {
+    const { smallestToken } = this.getPartition('standard')(this.base.interfaces);
+
+    try {
+      if (smallestToken) {
+        const smallest = await smallestToken.connectReadOnly().getSmallestTokenId();
+        return smallest;
+      }
+    } catch (err) {
+      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+    }
+
+    return 0;
   }
 
   /**
-   * @returns Number of tokens in supply
+   * @returns Number of tokens in supply (0 or 1 for ERC721 tokens)
    */
-  async getTokenSupply(tokenId: BigNumberish | null = null): Promise<BigNumber> {
+  async getTokenSupply(tokenId: BigNumberish): Promise<BigNumber> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return this.getERC1155TokenSupply(this.base.requireTokenId(tokenId));
+        return this.getERC1155TokenSupply(tokenId);
       case 'ERC721':
-        return this.getERC721TokenSupply(this.base.requireTokenId(tokenId));
+        return this.getERC721TokenSupply(tokenId);
     }
   }
 
-  protected async getERC1155TokenSupply(tokenId: BigNumber): Promise<BigNumber> {
+  protected async getERC1155TokenSupply(tokenId: BigNumberish): Promise<BigNumber> {
     const { sftSupply } = this.getPartition('standard')(this.base.interfaces);
-    if (!sftSupply) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
-    }
 
     try {
-      const iSft = sftSupply.connectReadOnly();
-      return await iSft.totalSupply(tokenId);
+      if (sftSupply) {
+        const supply = await sftSupply.connectReadOnly().totalSupply(tokenId);
+        return supply;
+      }
     } catch (err) {
       throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
     }
+
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
   }
 
-  protected async getERC721TokenSupply(tokenId: BigNumber): Promise<BigNumber> {
+  protected async getERC721TokenSupply(tokenId: BigNumberish): Promise<BigNumber> {
     const exists = await this.exists(tokenId);
     return exists ? BigNumber.from(1) : BigNumber.from(0);
+  }
+
+  async setMaxTotalSupply(
+    signer: Signerish,
+    totalSupply: BigNumberish,
+    tokenId: BigNumberish | null,
+    overrides?: SourcedOverrides,
+  ): Promise<ContractTransaction> {
+    const { sftR0, nftR0 } = this.getPartition('standard')(this.base.interfaces);
+
+    try {
+      if (sftR0) {
+        tokenId = this.base.requireTokenId(tokenId);
+        const tx = await sftR0.connectWith(signer).setMaxTotalSupply(tokenId, totalSupply, overrides);
+        return tx;
+      } else if (nftR0) {
+        const tx = await nftR0.connectWith(signer).setMaxTotalSupply(totalSupply, overrides);
+        return tx;
+      }
+    } catch (err) {
+      const error = SdkError.is(err) ? err : new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw error;
+    }
+
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'standard' });
   }
 }

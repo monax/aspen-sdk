@@ -62,9 +62,9 @@ export class PendingIssue extends ContractObject {
     quantity: BigNumberish,
     overrides: PayableOverrides = {},
   ): Promise<OperationStatus<ContractTransaction>> {
-    return this.do(() => {
+    return await this.do(async () => {
       const args = { ...this.getArgs(), receiver, quantity };
-      return this.base.issuer.issue(signer, args, overrides);
+      return await this.base.issuer.issue(signer, args, overrides);
     });
   }
 
@@ -74,9 +74,9 @@ export class PendingIssue extends ContractObject {
     quantity: BigNumberish,
     overrides: PayableOverrides = {},
   ): Promise<OperationStatus<BigNumber>> {
-    return this.do(() => {
+    return await this.do(async () => {
       const args = { ...this.getArgs(), receiver, quantity };
-      return this.base.issuer.estimateGas(signer, args, overrides);
+      return await this.base.issuer.estimateGas(signer, args, overrides);
     });
   }
 }

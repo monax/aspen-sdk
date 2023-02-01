@@ -1,5 +1,5 @@
 import { Provider } from '@ethersproject/providers';
-import { BigNumber } from 'ethers';
+import { BigNumber, BigNumberish } from 'ethers';
 import { parse } from '../../utils';
 import { Address, Addressish, asAddress } from '../address';
 import { ChainId } from '../network';
@@ -8,18 +8,23 @@ import {
   Agreements,
   Claims,
   Conditions,
+  Contract,
   extractKnownSupportedFeatures,
   FeatureInterface,
   FeatureInterfaceId,
   Issuer,
   Metadata,
+  Mint,
+  Multicall,
   Ownable,
+  Pause,
   Royalties,
   Standard,
+  TokenUri,
+  Version,
 } from './features';
 
-import { PendingClaim, Token } from './objects';
-import { PendingIssue } from './objects/issue';
+import { PendingClaim, PendingIssue, Token } from './objects';
 import type { ClaimConditionsState, CollectionInfo, DebugHandler, TokenId, TokenStandard } from './types';
 
 export const DefaultDebugHandler = (collection: CollectionInfo, action: string, ...data: unknown[]) => {
@@ -40,14 +45,20 @@ export class CollectionContract {
   readonly address: Address;
 
   // FeatureSets
-  readonly metadata: Metadata;
   readonly agreements: Agreements;
-  readonly royalties: Royalties;
-  readonly ownable: Ownable;
   readonly claims: Claims;
+  readonly contract: Contract;
   readonly conditions: Conditions;
-  readonly standard: Standard;
   readonly issuer: Issuer;
+  readonly metadata: Metadata;
+  readonly mint: Mint;
+  readonly multicall: Multicall;
+  readonly ownable: Ownable;
+  readonly pause: Pause;
+  readonly royalties: Royalties;
+  readonly standard: Standard;
+  readonly tokenUri: TokenUri;
+  readonly version: Version;
 
   static setDebugHandler(handler: DebugHandler | undefined) {
     CollectionContract._debugHandler = handler;
@@ -88,6 +99,12 @@ export class CollectionContract {
     this.claims = new Claims(this);
     this.conditions = new Conditions(this);
     this.issuer = new Issuer(this);
+    this.tokenUri = new TokenUri(this);
+    this.pause = new Pause(this);
+    this.mint = new Mint(this);
+    this.contract = new Contract(this);
+    this.multicall = new Multicall(this);
+    this.version = new Version(this);
   }
 
   get supportedFeatures(): string[] {
@@ -133,6 +150,10 @@ export class CollectionContract {
     }
   }
 
+  //////
+  /// Helper functions
+  //////
+
   requireTokenId(tokenId: TokenId): BigNumber {
     if (tokenId === null || tokenId === undefined) {
       new SdkError(SdkErrorCode.MISSING_TOKEN_ID);
@@ -145,7 +166,7 @@ export class CollectionContract {
   // High level objects
   /////
 
-  Token(tokenId: TokenId): Token {
+  Token(tokenId: BigNumberish): Token {
     return new Token(this, tokenId);
   }
 

@@ -1,31 +1,24 @@
 import axios from 'axios';
-import { ethers } from 'ethers';
+import { ContractTransaction, ethers } from 'ethers';
 import { CollectionContract, IPFS_GATEWAY_PREFIX } from '../..';
 import { resolveIpfsUrl } from '../../../utils';
-import { IPublicMetadataV0__factory } from '../../generated';
 import { CollectionMetaImageType } from '../constants';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { CollectionMetadata, TokenMetadata } from '../types';
+import type { CollectionMetadata, Signerish, SourcedOverrides } from '../types';
 import { FeatureSet } from './features';
 
 export const MetadataFeatures = [
+  'metadata/IContractMetadata.sol:ICedarMetadataV0',
   'metadata/IContractMetadata.sol:ICedarMetadataV1',
   'metadata/IContractMetadata.sol:IPublicMetadataV0',
-  // 'metadata/IContractMetadata.sol:IRestrictedMetadataV0',
-  // 'metadata/IContractMetadata.sol:IRestrictedMetadataV1',
-  // 'metadata/IContractMetadata.sol:IRestrictedMetadataV2',
-  'metadata/INFTMetadata.sol:IAspenNFTMetadataV1',
-  'metadata/INFTMetadata.sol:ICedarNFTMetadataV1',
-  'metadata/ISFTMetadata.sol:IAspenSFTMetadataV1',
-  'metadata/ISFTMetadata.sol:ICedarSFTMetadataV1',
+  'metadata/IContractMetadata.sol:IRestrictedMetadataV0',
+  'metadata/IContractMetadata.sol:IRestrictedMetadataV1',
+  'metadata/IContractMetadata.sol:IRestrictedMetadataV2',
 ] as const;
 
 export type MetadataFeatures = (typeof MetadataFeatures)[number];
 
 export class Metadata extends FeatureSet<MetadataFeatures> {
-  private _uri: string | null = null;
-  private _metadata: CollectionMetadata | null = null;
-
   constructor(base: CollectionContract) {
     super(base, MetadataFeatures);
   }
@@ -38,179 +31,133 @@ export class Metadata extends FeatureSet<MetadataFeatures> {
   }
 
   protected readonly getPartition = this.makeGetPartition((partitioner) => {
-    const get = partitioner({
-      contractV0: [
-        'metadata/IContractMetadata.sol:ICedarMetadataV1',
-        'metadata/IContractMetadata.sol:IPublicMetadataV0',
+    const collection = partitioner({
+      v0: ['metadata/IContractMetadata.sol:ICedarMetadataV0', 'metadata/IContractMetadata.sol:ICedarMetadataV1'],
+      p0: ['metadata/IContractMetadata.sol:IPublicMetadataV0'],
+      r0: [
+        'metadata/IContractMetadata.sol:IRestrictedMetadataV0',
+        'metadata/IContractMetadata.sol:IRestrictedMetadataV1',
       ],
-      nftV0: ['metadata/INFTMetadata.sol:ICedarNFTMetadataV1', 'metadata/INFTMetadata.sol:IAspenNFTMetadataV1'],
-      sftV0: ['metadata/ISFTMetadata.sol:ICedarSFTMetadataV1', 'metadata/ISFTMetadata.sol:IAspenSFTMetadataV1'],
+      r1: ['metadata/IContractMetadata.sol:IRestrictedMetadataV2'],
     });
 
-    return { get };
+    return { collection };
   });
 
-  /**
-   * Get cached contract URI value
-   *
-   * @returns If present, it should be either IPFS (99.99%) or normal URL
-   */
-  get uri(): string | null {
-    return this._uri;
-  }
-
-  /**
-   * Get cached contract metadata value
-   */
-  get metadata(): CollectionMetadata | null {
-    return this._metadata;
-  }
-
-  async loadContractMetadataUri(forceUpdate = false): Promise<string | null> {
-    if (this._uri === null || forceUpdate) {
-      try {
-        const { contractV0 } = this.getPartition('get')(this.base.interfaces);
-        if (contractV0) {
-          const iMetadata = contractV0.connectReadOnly();
-          this._uri = await iMetadata.contractURI();
-        } else {
-          // NOTE: we don't want to explicitly check if the contract supports this interface
-          // because this way we can support contracts deployed by other parties
-          // as the signature is standardized across the community
-          const iMetadata = IPublicMetadataV0__factory.connect(this.base.address, this.base.provider);
-          this._uri = await iMetadata.contractURI();
-        }
-      } catch {}
-    }
-
-    return this._uri;
-  }
-
-  async loadContractMetadata(forceUpdate = false): Promise<CollectionMetadata | null> {
-    await this.loadContractMetadataUri(forceUpdate);
-
-    if ((this._metadata === null || forceUpdate) && this._uri) {
-      this._metadata = await Metadata.getCollectionMetadataFromUri(this._uri);
-    }
-
-    return this._metadata;
-  }
-
-  static async getCollectionMetadataFromUri(collectionIpfsUri: string): Promise<CollectionMetadata | null> {
+  async name(): Promise<string> {
     try {
-      const url = resolveIpfsUrl(collectionIpfsUri, IPFS_GATEWAY_PREFIX);
-      const meta = await axios.get(url).then((r) => r.data);
-
-      return Metadata.resolveCollectionIpfsUris(meta);
-    } catch {}
-
-    return null;
-  }
-
-  static resolveCollectionIpfsUris(collectionMeta: CollectionMetadata): CollectionMetadata {
-    const newMeta: CollectionMetadata = { ...collectionMeta };
-
-    if (newMeta.image) {
-      newMeta.image = resolveIpfsUrl(newMeta.image, IPFS_GATEWAY_PREFIX);
-    }
-
-    if (newMeta.images) {
-      let imageType: keyof typeof CollectionMetaImageType;
-
-      const images = { ...newMeta.images };
-      for (imageType in CollectionMetaImageType) {
-        if (images[imageType]) {
-          images[imageType] = resolveIpfsUrl(images[imageType] || '', IPFS_GATEWAY_PREFIX);
-        }
-      }
-      newMeta.images = images;
-    }
-
-    return newMeta;
-  }
-
-  async getTokenUri(tokenId: string): Promise<string> {
-    switch (this.base.tokenStandard) {
-      case 'ERC1155':
-        return await this.getTokenUriERC1155(tokenId);
-      case 'ERC721':
-        return await this.getTokenUriERC721(tokenId);
+      const abi = ['function name() external returns (string)'];
+      const contract = new ethers.Contract(this.base.address, abi, this.base.provider);
+      return await contract.name();
+    } catch (err) {
+      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
     }
   }
 
-  async getTokenMetadata(tokenId: string): Promise<{ uri: string | null; metadata: TokenMetadata | null }> {
-    let uri: string | null = null;
-    let metadata: TokenMetadata | null = null;
+  async symbol(): Promise<string> {
+    try {
+      const abi = ['function symbol() external returns (string)'];
+      const contract = new ethers.Contract(this.base.address, abi, this.base.provider);
+      return await contract.symbol();
+    } catch (err) {
+      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+    }
+  }
+
+  async getTokenNameAndSymbol(): Promise<{ name: string; symbol: string }> {
+    const [name, symbol] = await Promise.all([this.name(), this.symbol()]);
+    return { name, symbol };
+  }
+
+  async setTokenNameAndSymbol(
+    signer: Signerish,
+    name: string,
+    symbol: string,
+    overrides?: SourcedOverrides,
+  ): Promise<ContractTransaction> {
+    const { r1 } = this.getPartition('collection')(this.base.interfaces);
 
     try {
-      uri = await this.getTokenUri(tokenId);
-
-      if (uri) {
-        metadata = await Metadata.getTokenMetadataFromUri(uri);
+      if (r1) {
+        const tx = r1.connectWith(signer).setTokenNameAndSymbol(name, symbol, overrides);
+        return tx;
       }
     } catch (err) {
-      throw new SdkError(SdkErrorCode.FAILED_TO_LOAD_METADATA, { tokenId }, err as Error);
+      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
     }
+
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'setTokenNameAndSymbol' });
+  }
+
+  async getContractUri(): Promise<string> {
+    const { v0, p0 } = this.getPartition('collection')(this.base.interfaces);
+    const factory = v0 ?? p0 ?? this.base.assumeFeature('metadata/IContractMetadata.sol:IPublicMetadataV0');
+
+    try {
+      const uri = await factory.connectReadOnly().contractURI();
+      return uri;
+    } catch (err) {
+      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+    }
+  }
+
+  async setContractUri(signer: Signerish, uri: string, overrides?: SourcedOverrides): Promise<ContractTransaction> {
+    const { r0, r1 } = this.getPartition('collection')(this.base.interfaces);
+    const factory = r0 ?? r1;
+
+    try {
+      if (factory) {
+        const tx = await factory.connectWith(signer).setContractURI(uri, overrides);
+        return tx;
+      }
+    } catch (err) {
+      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+    }
+
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'contractUri', function: 'setUri' });
+  }
+
+  async getContractMetadata(): Promise<{ uri: string; metadata: CollectionMetadata }> {
+    const uri = await this.getContractUri();
+    const metadata = await Metadata.getMetadataFromUri(uri);
 
     return { uri, metadata };
   }
 
-  protected async getTokenUriERC1155(tokenId: string): Promise<string> {
+  static async getMetadataFromUri(ipfsUri: string): Promise<CollectionMetadata> {
     try {
-      const { sftV0 } = this.getPartition('get')(this.base.interfaces);
-      if (sftV0) {
-        const iSft = sftV0.connectReadOnly();
-        return await iSft.uri(tokenId);
-      } else {
-        const abi = ['function uri(uint256 _tokenId) external view returns (string memory)'];
-        const iSft = new ethers.Contract(this.base.address, abi, this.base.provider);
-        return await iSft.uri(tokenId);
-      }
-    } catch (err) {
-      throw new SdkError(SdkErrorCode.FAILED_TO_LOAD_METADATA, { tokenId }, err as Error);
-    }
-  }
-
-  protected async getTokenUriERC721(tokenId: string): Promise<string> {
-    try {
-      const { nftV0 } = this.getPartition('get')(this.base.interfaces);
-      if (nftV0) {
-        const iNft = nftV0.connectReadOnly();
-        return await iNft.tokenURI(tokenId);
-      } else {
-        const abi = ['function tokenURI(uint256 _tokenId) external view returns (string memory)'];
-        const iNft = new ethers.Contract(this.base.address, abi, this.base.provider);
-        return await iNft.tokenURI(tokenId);
-      }
-    } catch (err) {
-      throw new SdkError(SdkErrorCode.FAILED_TO_LOAD_METADATA, { tokenId }, err as Error);
-    }
-  }
-
-  static async getTokenMetadataFromUri(tokenIpfsUri: string): Promise<TokenMetadata | null> {
-    try {
-      const url = resolveIpfsUrl(tokenIpfsUri, IPFS_GATEWAY_PREFIX);
+      const url = resolveIpfsUrl(ipfsUri, IPFS_GATEWAY_PREFIX);
       const meta = await axios.get(url).then((r) => r.data);
 
-      return Metadata.resolveTokenIpfsUris(meta);
-    } catch {}
-
-    return null;
-  }
-
-  static resolveTokenIpfsUris(tokenMeta: TokenMetadata): TokenMetadata {
-    const newMeta: TokenMetadata = { ...tokenMeta };
-
-    if (newMeta.image) {
-      newMeta.image = resolveIpfsUrl(newMeta.image, IPFS_GATEWAY_PREFIX);
+      return resolveCollectionIpfsUris(meta);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        throw new SdkError(SdkErrorCode.WEB_REQUEST_FAILED, undefined, err);
+      } else {
+        throw new SdkError(SdkErrorCode.UNKNOWN_ERROR, undefined, err as Error);
+      }
     }
-    if (newMeta.image_ipfs) {
-      newMeta.image_ipfs = resolveIpfsUrl(newMeta.image_ipfs, IPFS_GATEWAY_PREFIX);
-    }
-    if (newMeta.animation_url) {
-      newMeta.animation_url = resolveIpfsUrl(newMeta.animation_url, IPFS_GATEWAY_PREFIX);
-    }
-
-    return newMeta;
   }
 }
+
+const resolveCollectionIpfsUris = (collectionMeta: CollectionMetadata): CollectionMetadata => {
+  const newMeta: CollectionMetadata = { ...collectionMeta };
+
+  if (newMeta.image) {
+    newMeta.image = resolveIpfsUrl(newMeta.image, IPFS_GATEWAY_PREFIX);
+  }
+
+  if (newMeta.images) {
+    let imageType: keyof typeof CollectionMetaImageType;
+
+    const images = { ...newMeta.images };
+    for (imageType in CollectionMetaImageType) {
+      if (images[imageType]) {
+        images[imageType] = resolveIpfsUrl(images[imageType] || '', IPFS_GATEWAY_PREFIX);
+      }
+    }
+    newMeta.images = images;
+  }
+
+  return newMeta;
+};

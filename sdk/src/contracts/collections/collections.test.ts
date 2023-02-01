@@ -151,15 +151,15 @@ describe.skip('Collections', () => {
   test('User claim restrictions', async () => {
     const foo = await contract.agreements.getState(account);
     const tokenId = '0';
-    const activeConditions = await contract.conditions.getActiveClaimConditions(tokenId);
+    const activeConditions = await contract.conditions.getActive(tokenId);
 
-    const userConditions = await contract.conditions.getUserClaimConditions(account, tokenId);
+    const userConditions = await contract.conditions.getForUser(account, tokenId);
 
     if (!userConditions || !activeConditions) {
       throw new Error(`userConditions or activeConditions empty`);
     }
 
-    const restrictions = await contract.conditions.getUserClaimRestrictions(userConditions, activeConditions, [], 0);
+    const restrictions = await contract.conditions.getUserRestrictions(userConditions, activeConditions, [], 0);
     console.log(restrictions);
   });
 });

@@ -1,10 +1,10 @@
-import { BigNumber, BigNumberish, ContractReceipt, ContractTransaction, Overrides } from 'ethers';
+import { BigNumber, BigNumberish, ContractReceipt, ContractTransaction } from 'ethers';
 import { Address, ChainId, extractEventsFromLogs, isSameAddress, ZERO_ADDRESS } from '../..';
 import { parse } from '../../../utils';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import { bnRange } from '../number';
-import type { Signerish, TokenId, TokenStandard } from '../types';
+import type { Signerish, SourcedOverrides, TokenId, TokenStandard } from '../types';
 import { FeatureSet } from './features';
 
 export const IssuerFeatures = [
@@ -15,6 +15,7 @@ export const IssuerFeatures = [
   'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV0',
   'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV1',
   'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2',
+  'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV3',
   // SFT
   'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1',
   'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV2',
@@ -59,6 +60,7 @@ export class Issuer extends FeatureSet<IssuerFeatures> {
         'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV0',
         'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV1',
         'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2',
+        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV3',
       ],
       sft: [
         'issuance/ICedarSFTIssuance.sol:ICedarSFTIssuanceV1',
@@ -74,7 +76,7 @@ export class Issuer extends FeatureSet<IssuerFeatures> {
     return { issue };
   });
 
-  async issue(signer: Signerish, args: IssueArgs, overrides: Overrides = {}): Promise<ContractTransaction> {
+  async issue(signer: Signerish, args: IssueArgs, overrides: SourcedOverrides = {}): Promise<ContractTransaction> {
     this.validateArgs(args);
 
     switch (this.base.tokenStandard) {
@@ -88,50 +90,51 @@ export class Issuer extends FeatureSet<IssuerFeatures> {
   protected async issueERC1155(
     signer: Signerish,
     { receiver, tokenId, quantity }: IssueArgs,
-    overrides: Overrides = {},
+    overrides: SourcedOverrides = {},
   ): Promise<ContractTransaction> {
-    const { sft } = this.getPartition('issue')(this.base.interfaces);
-    if (!sft) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'issue' });
-    }
     tokenId = this.base.requireTokenId(tokenId);
+    const { sft } = this.getPartition('issue')(this.base.interfaces);
 
     try {
-      const iSft = await sft.connectWith(signer);
-      const tx = await iSft.issue(receiver, tokenId, quantity, overrides);
-      return tx;
+      if (sft) {
+        const tx = await sft.connectWith(signer).issue(receiver, tokenId, quantity, overrides);
+        return tx;
+      }
     } catch (err) {
       const args = { receiver, tokenId, quantity };
       throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
     }
+
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'issue' });
   }
 
   protected async issueERC721(
     signer: Signerish,
     { receiver, quantity, tokenURI }: IssueArgs,
-    overrides: Overrides = {},
+    overrides: SourcedOverrides = {},
   ): Promise<ContractTransaction> {
     const { nft } = this.getPartition('issue')(this.base.interfaces);
-    if (!nft) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'issue' });
-    }
 
     try {
-      const iNft = nft.connectWith(signer);
-      let tx: ContractTransaction;
-      if (tokenURI !== undefined) {
-        tx = await iNft.issueWithTokenURI(receiver, tokenURI, overrides);
-      } else {
-        tx = await iNft.issue(receiver, quantity, overrides);
+      if (nft) {
+        const iNft = nft.connectWith(signer);
+        let tx: ContractTransaction;
+        if (tokenURI !== undefined) {
+          tx = await iNft.issueWithTokenURI(receiver, tokenURI, overrides);
+        } else {
+          tx = await iNft.issue(receiver, quantity, overrides);
+        }
+        return tx;
       }
-      return tx;
     } catch (err) {
       const args = { receiver, quantity };
       throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
     }
+
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'issue' });
   }
 
-  async estimateGas(signer: Signerish, args: IssueArgs, overrides: Overrides = {}): Promise<BigNumber> {
+  async estimateGas(signer: Signerish, args: IssueArgs, overrides: SourcedOverrides = {}): Promise<BigNumber> {
     this.validateArgs(args);
 
     switch (this.base.tokenStandard) {
@@ -145,46 +148,48 @@ export class Issuer extends FeatureSet<IssuerFeatures> {
   protected async estimateGasERC1155(
     signer: Signerish,
     { receiver, tokenId, quantity }: IssueArgs,
-    overrides: Overrides = {},
+    overrides: SourcedOverrides = {},
   ): Promise<BigNumber> {
-    const { sft } = this.getPartition('issue')(this.base.interfaces);
-    if (!sft) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'issue' });
-    }
     tokenId = this.base.requireTokenId(tokenId);
+    const { sft } = this.getPartition('issue')(this.base.interfaces);
 
     try {
-      const iSft = sft.connectWith(signer);
-      return await iSft.estimateGas.issue(receiver, tokenId, quantity, overrides);
+      if (sft) {
+        const gas = await sft.connectWith(signer).estimateGas.issue(receiver, tokenId, quantity, overrides);
+        return gas;
+      }
     } catch (err) {
       const args = { receiver, tokenId, quantity };
       throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
     }
+
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'issue' });
   }
 
   protected async estimateGasERC721(
     signer: Signerish,
     { receiver, quantity, tokenURI }: IssueArgs,
-    overrides: Overrides = {},
+    overrides: SourcedOverrides = {},
   ): Promise<BigNumber> {
     const { nft } = this.getPartition('issue')(this.base.interfaces);
-    if (!nft) {
-      throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'issue' });
-    }
 
     try {
-      const iNft = nft.connectWith(signer);
-      let estimate: BigNumber;
-      if (tokenURI !== undefined) {
-        estimate = await iNft.estimateGas.issueWithTokenURI(receiver, tokenURI, overrides);
-      } else {
-        estimate = await iNft.estimateGas.issue(receiver, quantity, overrides);
+      if (nft) {
+        const iNft = nft.connectWith(signer);
+        let gas: BigNumber;
+        if (tokenURI !== undefined) {
+          gas = await iNft.estimateGas.issueWithTokenURI(receiver, tokenURI, overrides);
+        } else {
+          gas = await iNft.estimateGas.issue(receiver, quantity, overrides);
+        }
+        return gas;
       }
-      return estimate;
     } catch (err) {
       const args = { receiver, quantity };
       throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
     }
+
+    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'issue' });
   }
 
   protected async validateArgs({ receiver, quantity, tokenURI }: IssueArgs) {

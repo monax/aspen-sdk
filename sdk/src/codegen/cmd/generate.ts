@@ -1,12 +1,7 @@
 import * as path from 'path';
 import * as url from 'url';
 import { parse } from '../../utils';
-import {
-  dumpLatestABIs,
-  generateTsFile,
-  writeFeaturesFactoriesFunctionsMap,
-  writeFeaturesFactoriesMap,
-} from '../generate';
+import { dumpLatestABIs, generateTsFile, writeFeaturesFactoriesMap, writeFeaturesFunctionsMap } from '../generate';
 import { ContractsManifest } from '../manifest';
 
 const dirname = url.fileURLToPath(new url.URL('.', import.meta.url));
@@ -34,11 +29,7 @@ async function generate(): Promise<void> {
   const manifestJson = await generateTsFile('manifest', pathToManifestJson, prettierConfigFile, manifestFileTs);
   await Promise.all([dumpLatestABIs(contractsAbiDir, pathToManifestJson)]);
   await writeFeaturesFactoriesMap(parse(ContractsManifest, manifestJson), prettierConfigFile, featureFactoriesTs);
-  await writeFeaturesFactoriesFunctionsMap(
-    parse(ContractsManifest, manifestJson),
-    prettierConfigFile,
-    featureFunctionsTs,
-  );
+  await writeFeaturesFunctionsMap(parse(ContractsManifest, manifestJson), prettierConfigFile, featureFunctionsTs);
 }
 
 generate().catch((err) => {
