@@ -76,7 +76,7 @@ export class Standard extends FeatureSet<StandardFeatures> {
   });
 
   getStandard(): TokenStandard {
-    const { sft, sftSupply, nft, nftSupply } = this.getPartition('standard')(this.base.interfaces);
+    const { sft, sftSupply, nft, nftSupply } = this.getPartition('standard');
 
     if (nft || nftSupply) return 'ERC721';
     if (sft || sftSupply) return 'ERC1155';
@@ -85,7 +85,7 @@ export class Standard extends FeatureSet<StandardFeatures> {
   }
 
   async balanceOf(address: Addressish, tokenId: BigNumberish | null): Promise<BigNumber> {
-    const { nft, sft } = this.getPartition('standard')(this.base.interfaces);
+    const { nft, sft } = this.getPartition('standard');
 
     try {
       if (sft) {
@@ -108,7 +108,7 @@ export class Standard extends FeatureSet<StandardFeatures> {
   }
 
   async ownerOf(tokenId: BigNumberish): Promise<Address> {
-    const { nft } = this.getPartition('standard')(this.base.interfaces);
+    const { nft } = this.getPartition('standard');
 
     try {
       if (nft) {
@@ -124,7 +124,7 @@ export class Standard extends FeatureSet<StandardFeatures> {
 
   async exists(tokenId: BigNumberish): Promise<boolean> {
     tokenId = this.base.requireTokenId(tokenId);
-    const { sftSupply, nftSupply } = this.getPartition('standard')(this.base.interfaces);
+    const { sftSupply, nftSupply } = this.getPartition('standard');
 
     try {
       if (sftSupply) {
@@ -154,7 +154,7 @@ export class Standard extends FeatureSet<StandardFeatures> {
   }
 
   protected async getERC1155TokensCount(): Promise<BigNumber> {
-    const { largestToken, smallestToken } = this.getPartition('standard')(this.base.interfaces);
+    const { largestToken, smallestToken } = this.getPartition('standard');
 
     try {
       if (largestToken) {
@@ -173,7 +173,7 @@ export class Standard extends FeatureSet<StandardFeatures> {
   }
 
   protected async getERC721TokensCount(): Promise<BigNumber> {
-    const { nftSupply } = this.getPartition('standard')(this.base.interfaces);
+    const { nftSupply } = this.getPartition('standard');
 
     try {
       if (nftSupply) {
@@ -188,7 +188,7 @@ export class Standard extends FeatureSet<StandardFeatures> {
   }
 
   async getSmallestTokenId(): Promise<number> {
-    const { smallestToken } = this.getPartition('standard')(this.base.interfaces);
+    const { smallestToken } = this.getPartition('standard');
 
     try {
       if (smallestToken) {
@@ -215,7 +215,7 @@ export class Standard extends FeatureSet<StandardFeatures> {
   }
 
   protected async getERC1155TokenSupply(tokenId: BigNumberish): Promise<BigNumber> {
-    const { sftSupply } = this.getPartition('standard')(this.base.interfaces);
+    const { sftSupply } = this.getPartition('standard');
 
     try {
       if (sftSupply) {
@@ -240,7 +240,7 @@ export class Standard extends FeatureSet<StandardFeatures> {
     tokenId: BigNumberish | null,
     overrides?: SourcedOverrides,
   ): Promise<ContractTransaction> {
-    const { sftR0, nftR0 } = this.getPartition('standard')(this.base.interfaces);
+    const { sftR0, nftR0 } = this.getPartition('standard');
 
     try {
       if (sftR0) {

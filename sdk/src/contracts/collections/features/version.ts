@@ -82,7 +82,7 @@ export class Version extends FeatureSet<VersionFeatures> {
   });
 
   async implementationVersion(): Promise<AspenContractVersion> {
-    const { v0, v1 } = this.getPartition('version')(this.base.interfaces);
+    const { v0, v1 } = this.getPartition('version');
 
     try {
       if (v0) {
@@ -100,7 +100,7 @@ export class Version extends FeatureSet<VersionFeatures> {
   }
 
   async implementationName(): Promise<string> {
-    const { v0, v1 } = this.getPartition('name')(this.base.interfaces);
+    const { v0, v1 } = this.getPartition('name');
 
     try {
       if (v0) {

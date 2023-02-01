@@ -52,7 +52,7 @@ export class Agreements extends FeatureSet<AgreementsFeatures> {
     let termsURI = '';
     let termsVersion = 0;
 
-    const { v0, v1, p0 } = this.getPartition('acceptTerms')(this.base.interfaces);
+    const { v0, v1, p0 } = this.getPartition('acceptTerms');
 
     if (p0) {
       const iAgreement = await p0.connectReadOnly();
@@ -77,7 +77,7 @@ export class Agreements extends FeatureSet<AgreementsFeatures> {
   }
 
   async acceptTerms(signer: Signerish, overrides?: SourcedOverrides): Promise<ContractTransaction> {
-    const { v0, v1, p0 } = this.getPartition('acceptTerms')(this.base.interfaces);
+    const { v0, v1, p0 } = this.getPartition('acceptTerms');
 
     try {
       if (p0) {
@@ -98,7 +98,7 @@ export class Agreements extends FeatureSet<AgreementsFeatures> {
   }
 
   async estimateGasForAcceptTerms(signer: Signerish): Promise<BigNumber> {
-    const { v0, v1, p0 } = this.getPartition('acceptTerms')(this.base.interfaces);
+    const { v0, v1, p0 } = this.getPartition('acceptTerms');
 
     try {
       if (p0) {
@@ -124,7 +124,7 @@ export class Agreements extends FeatureSet<AgreementsFeatures> {
     signature: string,
     overrides?: SourcedOverrides,
   ): Promise<ContractTransaction> {
-    const { v0, delegated } = this.getPartition('acceptTerms')(this.base.interfaces);
+    const { v0, delegated } = this.getPartition('acceptTerms');
 
     try {
       if (delegated) {
@@ -142,7 +142,7 @@ export class Agreements extends FeatureSet<AgreementsFeatures> {
   }
 
   async hasAcceptedTermsVersion(userAddress: Address, version: BigNumberish): Promise<boolean> {
-    const { p0 } = this.getPartition('acceptTerms')(this.base.interfaces);
+    const { p0 } = this.getPartition('acceptTerms');
 
     try {
       if (p0) {
@@ -165,7 +165,7 @@ export class Agreements extends FeatureSet<AgreementsFeatures> {
     termsEnabled: boolean,
     overrides?: SourcedOverrides,
   ): Promise<ContractTransaction> {
-    const { v0, v1, r0 } = this.getPartition('acceptTerms')(this.base.interfaces);
+    const { v0, v1, r0 } = this.getPartition('acceptTerms');
 
     try {
       if (r0) {
@@ -187,7 +187,7 @@ export class Agreements extends FeatureSet<AgreementsFeatures> {
 
   /** ISSUER role required */
   async setTermsUri(signer: Signerish, termsUri: string, overrides?: SourcedOverrides): Promise<ContractTransaction> {
-    const { v1, r0 } = this.getPartition('acceptTerms')(this.base.interfaces);
+    const { v1, r0 } = this.getPartition('acceptTerms');
 
     try {
       if (r0) {
@@ -210,7 +210,7 @@ export class Agreements extends FeatureSet<AgreementsFeatures> {
     acceptor: Address,
     overrides?: SourcedOverrides,
   ): Promise<ContractTransaction> {
-    const { v1, r0 } = this.getPartition('acceptTerms')(this.base.interfaces);
+    const { v1, r0 } = this.getPartition('acceptTerms');
 
     try {
       if (v1) {
@@ -233,7 +233,7 @@ export class Agreements extends FeatureSet<AgreementsFeatures> {
     acceptors: Address[],
     overrides?: SourcedOverrides,
   ): Promise<ContractTransaction> {
-    const { delegated } = this.getPartition('acceptTerms')(this.base.interfaces);
+    const { delegated } = this.getPartition('acceptTerms');
 
     try {
       if (delegated) {

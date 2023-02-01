@@ -75,7 +75,7 @@ export class Metadata extends FeatureSet<MetadataFeatures> {
     symbol: string,
     overrides?: SourcedOverrides,
   ): Promise<ContractTransaction> {
-    const { r1 } = this.getPartition('collection')(this.base.interfaces);
+    const { r1 } = this.getPartition('collection');
 
     try {
       if (r1) {
@@ -90,7 +90,7 @@ export class Metadata extends FeatureSet<MetadataFeatures> {
   }
 
   async getContractUri(): Promise<string> {
-    const { v0, p0 } = this.getPartition('collection')(this.base.interfaces);
+    const { v0, p0 } = this.getPartition('collection');
     const factory = v0 ?? p0 ?? this.base.assumeFeature('metadata/IContractMetadata.sol:IPublicMetadataV0');
 
     try {
@@ -102,7 +102,7 @@ export class Metadata extends FeatureSet<MetadataFeatures> {
   }
 
   async setContractUri(signer: Signerish, uri: string, overrides?: SourcedOverrides): Promise<ContractTransaction> {
-    const { r0, r1 } = this.getPartition('collection')(this.base.interfaces);
+    const { r0, r1 } = this.getPartition('collection');
     const factory = r0 ?? r1;
 
     try {

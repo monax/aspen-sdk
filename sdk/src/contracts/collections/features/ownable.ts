@@ -31,7 +31,7 @@ export class Ownable extends FeatureSet<OwnableFeatures> {
   });
 
   async getOwner(): Promise<Address> {
-    const { v0, p0 } = this.getPartition('owner')(this.base.interfaces);
+    const { v0, p0 } = this.getPartition('owner');
     const factory = v0 ?? p0;
 
     try {
@@ -47,7 +47,7 @@ export class Ownable extends FeatureSet<OwnableFeatures> {
   }
 
   async setOwner(signer: Signerish, ownerAddress: Address, overrides?: CallOverrides): Promise<ContractTransaction> {
-    const { v0, r0 } = this.getPartition('owner')(this.base.interfaces);
+    const { v0, r0 } = this.getPartition('owner');
     const factory = v0 ?? r0;
 
     try {

@@ -93,7 +93,7 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
     overrides: PayableOverrides = {},
   ): Promise<ContractTransaction> {
     tokenId = this.base.requireTokenId(tokenId);
-    const { sft } = this.getPartition('claim')(this.base.interfaces);
+    const { sft } = this.getPartition('claim');
 
     try {
       if (sft) {
@@ -127,7 +127,7 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
     { receiver, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction }: ClaimArgs,
     overrides: PayableOverrides = {},
   ): Promise<ContractTransaction> {
-    const { nft } = this.getPartition('claim')(this.base.interfaces);
+    const { nft } = this.getPartition('claim');
     if (!nft) {
       throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'claim' });
     }
@@ -169,7 +169,7 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
     overrides: PayableOverrides = {},
   ): Promise<BigNumber> {
     tokenId = this.base.requireTokenId(tokenId);
-    const { sft } = this.getPartition('claim')(this.base.interfaces);
+    const { sft } = this.getPartition('claim');
 
     try {
       if (sft) {
@@ -202,7 +202,7 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
     { receiver, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction }: ClaimArgs,
     overrides: PayableOverrides = {},
   ): Promise<BigNumber> {
-    const { nft } = this.getPartition('claim')(this.base.interfaces);
+    const { nft } = this.getPartition('claim');
     if (!nft) {
       throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'claim' });
     }
@@ -245,7 +245,7 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
     verifyMaxQuantityPerTransaction: boolean,
   ): Promise<boolean> {
     tokenId = this.base.requireTokenId(tokenId);
-    const { sft } = this.getPartition('claim')(this.base.interfaces);
+    const { sft } = this.getPartition('claim');
 
     try {
       if (sft) {
@@ -282,7 +282,7 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
     { conditionId, receiver, quantity, currency, pricePerToken }: ClaimArgs,
     verifyMaxQuantityPerTransaction: boolean,
   ): Promise<boolean> {
-    const { nft } = this.getPartition('claim')(this.base.interfaces);
+    const { nft } = this.getPartition('claim');
 
     try {
       if (nft) {
@@ -314,7 +314,7 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
   }
 
   async parseLogs(receipt: ContractReceipt): Promise<ClaimedToken[]> {
-    const { nft, sft } = this.getPartition('claim')(this.base.interfaces);
+    const { nft, sft } = this.getPartition('claim');
     const { chainId, address } = this.base;
     const issueTokens: ClaimedToken[] = [];
 

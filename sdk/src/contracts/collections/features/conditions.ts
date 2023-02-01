@@ -168,7 +168,7 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
   }
 
   async getById(conditionId: BigNumberish, tokenId: BigNumberish | null): Promise<CollectionContractClaimCondition> {
-    const c = this.getPartition('conditions')(this.base.interfaces);
+    const c = this.getPartition('conditions');
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
@@ -227,7 +227,7 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
     overrides?: SourcedOverrides,
   ): Promise<ContractTransaction> {
     tokenId = this.base.requireTokenId(tokenId);
-    const { sftV0, sftV1, sftV2, sftR1, sftR2 } = this.getPartition('conditions')(this.base.interfaces);
+    const { sftV0, sftV1, sftV2, sftR1, sftR2 } = this.getPartition('conditions');
     const factory = sftV0 ?? sftV1 ?? sftV2 ?? sftR1 ?? sftR2;
 
     try {
@@ -249,7 +249,7 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
     { conditions, resetClaimEligibility }: ConditionArgs,
     overrides?: SourcedOverrides,
   ): Promise<ContractTransaction> {
-    const { nftV0, nftV1, nftV2, nftR1, nftR2 } = this.getPartition('conditions')(this.base.interfaces);
+    const { nftV0, nftV1, nftV2, nftR1, nftR2 } = this.getPartition('conditions');
     const factory = nftV0 ?? nftV1 ?? nftV2 ?? nftR1 ?? nftR2;
 
     try {
@@ -395,7 +395,7 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
   }
 
   protected async getActiveERC721(): Promise<ActiveClaimConditions> {
-    const { nftV0, nftV1, nftV2, nftP1, nftP2 } = this.getPartition('conditions')(this.base.interfaces);
+    const { nftV0, nftV1, nftV2, nftP1, nftP2 } = this.getPartition('conditions');
     const v3 = nftV2 ?? nftP1;
 
     try {
@@ -549,7 +549,7 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
   }
 
   protected async getForUserERC721(userAddress: Address): Promise<UserClaimConditions> {
-    const { nftV0, nftV1, nftV2, nftP1, nftP2 } = this.getPartition('conditions')(this.base.interfaces);
+    const { nftV0, nftV1, nftV2, nftP1, nftP2 } = this.getPartition('conditions');
     const v3 = nftV2 ?? nftP1 ?? nftP2;
 
     try {
@@ -612,7 +612,7 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
   }
 
   protected async getActiveERC1155(tokenId: BigNumberish): Promise<ActiveClaimConditions> {
-    const { sftV0, sftV1, sftV2, sftP1, sftP2 } = this.getPartition('conditions')(this.base.interfaces);
+    const { sftV0, sftV1, sftV2, sftP1, sftP2 } = this.getPartition('conditions');
     const v3 = sftV2 ?? sftP1;
 
     try {
@@ -760,7 +760,7 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
   }
 
   protected async getForUserERC1155(userAddress: Address, tokenId: BigNumber): Promise<UserClaimConditions> {
-    const { sftV0, sftV1, sftV2, sftP1, sftP2 } = this.getPartition('conditions')(this.base.interfaces);
+    const { sftV0, sftV1, sftV2, sftP1, sftP2 } = this.getPartition('conditions');
     const v1 = sftV1 ?? sftV2 ?? sftP1 ?? sftP2;
 
     try {

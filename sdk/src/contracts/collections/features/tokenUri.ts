@@ -107,7 +107,7 @@ export class TokenUri extends FeatureSet<TokenUriFeatures> {
   }
 
   protected async getTokenUriERC1155(tokenId: BigNumberish): Promise<string> {
-    const { sftV0 } = this.getPartition('uri')(this.base.interfaces);
+    const { sftV0 } = this.getPartition('uri');
     const factory = sftV0 ?? this.base.assumeFeature('metadata/ISFTMetadata.sol:IAspenSFTMetadataV1');
 
     try {
@@ -120,7 +120,7 @@ export class TokenUri extends FeatureSet<TokenUriFeatures> {
   }
 
   protected async getTokenUriERC721(tokenId: BigNumberish): Promise<string> {
-    const { nftV0 } = this.getPartition('uri')(this.base.interfaces);
+    const { nftV0 } = this.getPartition('uri');
     const factory = nftV0 ?? this.base.assumeFeature('metadata/INFTMetadata.sol:IAspenNFTMetadataV1');
 
     try {
@@ -132,7 +132,7 @@ export class TokenUri extends FeatureSet<TokenUriFeatures> {
   }
 
   async getBaseURIIndices(): Promise<BigNumber[]> {
-    const { baseUriV0, baseUriP0 } = this.getPartition('uri')(this.base.interfaces);
+    const { baseUriV0, baseUriP0 } = this.getPartition('uri');
     const factory = baseUriV0 ?? baseUriP0;
 
     try {
@@ -154,7 +154,7 @@ export class TokenUri extends FeatureSet<TokenUriFeatures> {
     tokenUri: string,
     overrides?: SourcedOverrides,
   ): Promise<ContractTransaction> {
-    const { setUriV0, setUriNftR0, setUriNftR1, setUriSftR0 } = this.getPartition('uri')(this.base.interfaces);
+    const { setUriV0, setUriNftR0, setUriNftR1, setUriSftR0 } = this.getPartition('uri');
     const factory = setUriV0 ?? setUriNftR0 ?? setUriNftR1 ?? setUriSftR0;
 
     try {
@@ -176,7 +176,7 @@ export class TokenUri extends FeatureSet<TokenUriFeatures> {
     tokenUri: string,
     overrides?: SourcedOverrides,
   ): Promise<ContractTransaction> {
-    const { setUriNftR1, setUriSftR0 } = this.getPartition('uri')(this.base.interfaces);
+    const { setUriNftR1, setUriSftR0 } = this.getPartition('uri');
     const factory = setUriNftR1 ?? setUriSftR0;
 
     try {
@@ -198,7 +198,7 @@ export class TokenUri extends FeatureSet<TokenUriFeatures> {
     baseUri: string,
     overrides?: SourcedOverrides,
   ): Promise<ContractTransaction> {
-    const { baseUriV0, baseUriR0 } = this.getPartition('uri')(this.base.interfaces);
+    const { baseUriV0, baseUriR0 } = this.getPartition('uri');
     const factory = baseUriV0 ?? baseUriR0;
 
     try {

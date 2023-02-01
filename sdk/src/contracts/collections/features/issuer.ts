@@ -93,7 +93,7 @@ export class Issuer extends FeatureSet<IssuerFeatures> {
     overrides: SourcedOverrides = {},
   ): Promise<ContractTransaction> {
     tokenId = this.base.requireTokenId(tokenId);
-    const { sft } = this.getPartition('issue')(this.base.interfaces);
+    const { sft } = this.getPartition('issue');
 
     try {
       if (sft) {
@@ -113,7 +113,7 @@ export class Issuer extends FeatureSet<IssuerFeatures> {
     { receiver, quantity, tokenURI }: IssueArgs,
     overrides: SourcedOverrides = {},
   ): Promise<ContractTransaction> {
-    const { nft } = this.getPartition('issue')(this.base.interfaces);
+    const { nft } = this.getPartition('issue');
 
     try {
       if (nft) {
@@ -151,7 +151,7 @@ export class Issuer extends FeatureSet<IssuerFeatures> {
     overrides: SourcedOverrides = {},
   ): Promise<BigNumber> {
     tokenId = this.base.requireTokenId(tokenId);
-    const { sft } = this.getPartition('issue')(this.base.interfaces);
+    const { sft } = this.getPartition('issue');
 
     try {
       if (sft) {
@@ -171,7 +171,7 @@ export class Issuer extends FeatureSet<IssuerFeatures> {
     { receiver, quantity, tokenURI }: IssueArgs,
     overrides: SourcedOverrides = {},
   ): Promise<BigNumber> {
-    const { nft } = this.getPartition('issue')(this.base.interfaces);
+    const { nft } = this.getPartition('issue');
 
     try {
       if (nft) {
@@ -221,7 +221,7 @@ export class Issuer extends FeatureSet<IssuerFeatures> {
   }
 
   async parseLogs(receipt: ContractReceipt): Promise<IssuedToken[]> {
-    const { nft, sft } = this.getPartition('issue')(this.base.interfaces);
+    const { nft, sft } = this.getPartition('issue');
     const { chainId, address } = this.base;
     const issueTokens: IssuedToken[] = [];
 

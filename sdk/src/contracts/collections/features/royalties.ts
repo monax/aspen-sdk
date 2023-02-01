@@ -43,7 +43,7 @@ export class Royalties extends FeatureSet<RoyaltiesFeatures> {
   });
 
   async royaltyInfo(tokenId: BigNumber, salePrice: BigNumber): Promise<RoyaltyInfo> {
-    const { standard, v0, p0 } = this.getPartition('getInfo')(this.base.interfaces);
+    const { standard, v0, p0 } = this.getPartition('getInfo');
 
     try {
       const factory = standard ?? v0 ?? p0;
@@ -59,7 +59,7 @@ export class Royalties extends FeatureSet<RoyaltiesFeatures> {
   }
 
   async getDefaultRoyaltyInfo(): Promise<DefaultRoyaltyInfo> {
-    const { p0 } = this.getPartition('getInfo')(this.base.interfaces);
+    const { p0 } = this.getPartition('getInfo');
 
     try {
       if (p0) {
@@ -75,7 +75,7 @@ export class Royalties extends FeatureSet<RoyaltiesFeatures> {
   }
 
   async getRoyaltyInfoForToken(tokenId: BigNumber): Promise<DefaultRoyaltyInfo> {
-    const { p0 } = this.getPartition('getInfo')(this.base.interfaces);
+    const { p0 } = this.getPartition('getInfo');
 
     try {
       if (p0) {
@@ -100,7 +100,7 @@ export class Royalties extends FeatureSet<RoyaltiesFeatures> {
     basisPoints: BigNumber,
     overrides?: SourcedOverrides,
   ): Promise<ContractTransaction> {
-    const { v0, r0, r1 } = this.getPartition('getInfo')(this.base.interfaces);
+    const { v0, r0, r1 } = this.getPartition('getInfo');
 
     try {
       const factory = v0 ?? r0 ?? r1;
@@ -123,7 +123,7 @@ export class Royalties extends FeatureSet<RoyaltiesFeatures> {
     basisPoints: BigNumber,
     overrides?: SourcedOverrides,
   ): Promise<ContractTransaction> {
-    const { v0, r0, r1 } = this.getPartition('getInfo')(this.base.interfaces);
+    const { v0, r0, r1 } = this.getPartition('getInfo');
 
     try {
       const factory = v0 ?? r0 ?? r1;

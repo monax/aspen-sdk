@@ -21,7 +21,7 @@ export class Multicall extends FeatureSet<MulticallFeatures> {
   });
 
   async call(signer: Signerish, data: BytesLike[], overrides?: SourcedOverrides): Promise<ContractTransaction> {
-    const { v0 } = this.getPartition('multicall')(this.base.interfaces);
+    const { v0 } = this.getPartition('multicall');
 
     try {
       if (v0) {
@@ -36,7 +36,7 @@ export class Multicall extends FeatureSet<MulticallFeatures> {
   }
 
   async estimateGas(signer: Signerish, data: BytesLike[]): Promise<BigNumber> {
-    const { v0 } = this.getPartition('multicall')(this.base.interfaces);
+    const { v0 } = this.getPartition('multicall');
 
     try {
       if (v0) {

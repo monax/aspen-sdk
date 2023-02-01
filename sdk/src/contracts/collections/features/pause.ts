@@ -21,7 +21,7 @@ export class Pause extends FeatureSet<PauseFeatures> {
   }
 
   protected readonly getPartition = this.makeGetPartition((partitioner) => {
-    const getInfo = partitioner({
+    const pause = partitioner({
       v0: ['pausable/IPausable.sol:ICedarPausableV0', 'pausable/ICedarPausable.sol:ICedarPausableV0'],
       v1: [
         'pausable/IPausable.sol:ICedarPausableV1',
@@ -32,7 +32,7 @@ export class Pause extends FeatureSet<PauseFeatures> {
       ],
     });
 
-    return { getInfo };
+    return { pause };
   });
 
   async getClaimPauseStatus(): Promise<boolean> {
@@ -51,7 +51,7 @@ export class Pause extends FeatureSet<PauseFeatures> {
   }
 
   async setClaimPauseStatus(pauseStatus: boolean, overrides?: SourcedOverrides): Promise<ContractTransaction> {
-    const { v0, v1 } = this.getPartition('getInfo')(this.base.interfaces);
+    const { v0, v1 } = this.getPartition('pause');
 
     try {
       if (v1) {

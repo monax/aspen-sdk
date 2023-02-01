@@ -44,7 +44,7 @@ export class Mint extends FeatureSet<MintFeatures> {
     encryptedBaseURI?: BytesLike,
     overrides?: SourcedOverrides,
   ): Promise<ContractTransaction> {
-    const { v0, v1 } = this.getPartition('mint')(this.base.interfaces);
+    const { v0, v1 } = this.getPartition('mint');
 
     try {
       if (v1) {

@@ -66,7 +66,7 @@ export abstract class FeatureSet<T extends FeatureInterfaceId> {
   ) {}
 
   // Late-bound because it must be called after load()
-  private getPartitioner = () => exhaustiveUnionPartitioner(...this.handledFeatures);
+  private getPartitioner = () => exhaustiveUnionPartitioner(this.base.interfaces, ...this.handledFeatures);
 
   makeGetPartition<N extends string, P>(
     partitionsThunk: (p: ReturnType<FeatureSet<T>['getPartitioner']>) => P,
@@ -106,7 +106,7 @@ const getPartition = <T extends FeatureInterfaceId, C extends Record<string, Non
   base: CollectionContract,
   handledFeatures: T[],
   cover: Cover<T, C>,
-) => exhaustiveUnionPartitioner(...handledFeatures)(cover)(base.interfaces);
+) => exhaustiveUnionPartitioner(base.interfaces, ...handledFeatures)(cover);
 
 type Partition<T extends FeatureInterfaceId, C extends Record<string, NonEmptyArray<T>>> = ReturnType<
   typeof getPartition<T, C>
@@ -240,9 +240,8 @@ type StringKeyOf<R> = R extends Record<infer K, unknown> ? (K extends string ? K
 // truthy value in the image of the subset under the map M. It is useful for dealing with a subset of features without
 // branching on each exact feature when you are able to work with the intersection interface of the features in a subset
 export const exhaustiveUnionPartitioner =
-  <T extends string>(...keys: T[]) =>
-  <C extends Record<string, NonEmptyArray<T>>, R>(cover: Cover<T, C>) =>
-  <M extends Partial<Record<T, unknown>>>(m: M): { [k in StringKeyOf<C>]: M[C[k][number]] } => {
+  <T extends string, M extends Partial<Record<T, unknown>>>(m: M, ...keys: T[]) =>
+  <C extends Record<string, NonEmptyArray<T>>>(cover: Cover<T, C>): { [k in StringKeyOf<C>]: M[C[k][number]] } => {
     // Flatten the cover down to its element type then map them with M to get the values
     const ret = {} as { [k in StringKeyOf<C>]: M[C[k][number]] };
     for (const [key, subset] of Object.entries(cover)) {

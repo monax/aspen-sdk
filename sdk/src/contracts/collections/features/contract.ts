@@ -35,7 +35,7 @@ export class Contract extends FeatureSet<ContractFeatures> {
   });
 
   async isAspen(): Promise<boolean> {
-    const { v0, v1 } = this.getPartition('isAspen')(this.base.interfaces);
+    const { v0, v1 } = this.getPartition('isAspen');
 
     try {
       if (v0) {
@@ -53,7 +53,7 @@ export class Contract extends FeatureSet<ContractFeatures> {
   }
 
   async supportedFeatures(): Promise<string[]> {
-    const { v0 } = this.getPartition('supportedFeatures')(this.base.interfaces);
+    const { v0 } = this.getPartition('supportedFeatures');
 
     try {
       if (v0) {
@@ -68,7 +68,7 @@ export class Contract extends FeatureSet<ContractFeatures> {
   }
 
   async supportsInterface(interfaceId: BytesLike): Promise<boolean> {
-    const { v0 } = this.getPartition('supportedFeatures')(this.base.interfaces);
+    const { v0 } = this.getPartition('supportedFeatures');
 
     try {
       if (v0) {
