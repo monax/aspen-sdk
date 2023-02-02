@@ -230,7 +230,7 @@ export class TokenUri extends FeatureSet<TokenUriFeatures> {
       if (axios.isAxiosError(err)) {
         throw new SdkError(SdkErrorCode.WEB_REQUEST_FAILED, undefined, err);
       } else {
-        throw new SdkError(SdkErrorCode.UNKNOWN_ERROR, undefined, err as Error);
+        throw new SdkError(SdkErrorCode.UNKNOWN_ERROR, { ipfsUri }, err as Error);
       }
     }
   }

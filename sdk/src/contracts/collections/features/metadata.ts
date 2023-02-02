@@ -111,7 +111,7 @@ export class Metadata extends FeatureSet<MetadataFeatures> {
         return tx;
       }
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw new SdkError(SdkErrorCode.CHAIN_ERROR, { uri }, err as Error);
     }
 
     throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'contractUri', function: 'setUri' });
@@ -132,9 +132,9 @@ export class Metadata extends FeatureSet<MetadataFeatures> {
       return resolveCollectionIpfsUris(meta);
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        throw new SdkError(SdkErrorCode.WEB_REQUEST_FAILED, undefined, err);
+        throw new SdkError(SdkErrorCode.WEB_REQUEST_FAILED, { ipfsUri }, err);
       } else {
-        throw new SdkError(SdkErrorCode.UNKNOWN_ERROR, undefined, err as Error);
+        throw new SdkError(SdkErrorCode.UNKNOWN_ERROR, { ipfsUri }, err as Error);
       }
     }
   }
