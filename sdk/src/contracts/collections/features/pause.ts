@@ -1,5 +1,5 @@
 import { ContractTransaction, ethers } from 'ethers';
-import { CollectionContract, SourcedOverrides } from '../..';
+import { CollectionContract, Signerish, SourcedOverrides } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureSet } from './features';
 
@@ -50,17 +50,21 @@ export class Pause extends FeatureSet<PauseFeatures> {
     throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'pause', function: 'getClaimPauseStatus' });
   }
 
-  async setClaimPauseStatus(pauseStatus: boolean, overrides?: SourcedOverrides): Promise<ContractTransaction> {
+  async setClaimPauseStatus(
+    signer: Signerish,
+    pauseStatus: boolean,
+    overrides?: SourcedOverrides,
+  ): Promise<ContractTransaction> {
     const { v0, v1 } = this.getPartition('pause');
 
     try {
       if (v1) {
-        const tx = await v1.connectReadOnly().setClaimPauseStatus(pauseStatus, overrides);
+        const tx = await v1.connectWith(signer).setClaimPauseStatus(pauseStatus, overrides);
         return tx;
       } else if (v0) {
         const tx = await (pauseStatus
-          ? v0.connectReadOnly().pauseClaims(overrides)
-          : v0.connectReadOnly().unpauseClaims(overrides));
+          ? v0.connectWith(signer).pauseClaims(overrides)
+          : v0.connectWith(signer).unpauseClaims(overrides));
         return tx;
       }
     } catch (err) {

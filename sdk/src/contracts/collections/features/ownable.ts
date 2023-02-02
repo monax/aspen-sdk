@@ -52,7 +52,7 @@ export class Ownable extends FeatureSet<OwnableFeatures> {
 
     try {
       if (factory) {
-        const tx = await factory.connectReadOnly().setOwner(ownerAddress, overrides);
+        const tx = await factory.connectWith(signer).setOwner(ownerAddress, overrides);
         return tx;
       }
     } catch (err) {

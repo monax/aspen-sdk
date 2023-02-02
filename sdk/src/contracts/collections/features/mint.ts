@@ -1,5 +1,5 @@
 import { BigNumber, BytesLike, ContractTransaction } from 'ethers';
-import { CollectionContract, SourcedOverrides } from '../..';
+import { CollectionContract, Signerish, SourcedOverrides } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureSet } from './features';
 
@@ -15,6 +15,12 @@ export const MintFeatures = [
 ] as const;
 
 export type MintFeatures = (typeof MintFeatures)[number];
+
+export type MintAgs = {
+  amount: BigNumber;
+  baseURI: string;
+  encryptedBaseURI?: BytesLike;
+};
 
 export class Mint extends FeatureSet<MintFeatures> {
   constructor(base: CollectionContract) {
@@ -39,22 +45,21 @@ export class Mint extends FeatureSet<MintFeatures> {
   });
 
   async lazyMint(
-    amount: BigNumber,
-    baseURI: string,
-    encryptedBaseURI?: BytesLike,
+    signer: Signerish,
+    { amount, baseURI, encryptedBaseURI }: MintAgs,
     overrides?: SourcedOverrides,
   ): Promise<ContractTransaction> {
     const { v0, v1 } = this.getPartition('mint');
 
     try {
       if (v1) {
-        const tx = await v1.connectReadOnly().lazyMint(amount, baseURI, overrides);
+        const tx = await v1.connectWith(signer).lazyMint(amount, baseURI, overrides);
         return tx;
       } else if (v0) {
         if (encryptedBaseURI === undefined) {
           throw new SdkError(SdkErrorCode.INVALID_DATA, undefined, new Error('encryptedBaseURI is required'));
         }
-        const tx = await v0.connectReadOnly().lazyMint(amount, baseURI, encryptedBaseURI, overrides);
+        const tx = await v0.connectWith(signer).lazyMint(amount, baseURI, encryptedBaseURI, overrides);
         return tx;
       }
     } catch (err) {

@@ -44,9 +44,9 @@ export class Royalties extends FeatureSet<RoyaltiesFeatures> {
 
   async royaltyInfo(tokenId: BigNumber, salePrice: BigNumber): Promise<RoyaltyInfo> {
     const { standard, v0, p0 } = this.getPartition('getInfo');
+    const factory = standard ?? v0 ?? p0;
 
     try {
-      const factory = standard ?? v0 ?? p0;
       if (factory) {
         const { receiver, royaltyAmount } = await factory.connectReadOnly().royaltyInfo(tokenId, salePrice);
         return { receiver, royaltyAmount };
@@ -101,9 +101,9 @@ export class Royalties extends FeatureSet<RoyaltiesFeatures> {
     overrides?: SourcedOverrides,
   ): Promise<ContractTransaction> {
     const { v0, r0, r1 } = this.getPartition('getInfo');
+    const factory = v0 ?? r0 ?? r1;
 
     try {
-      const factory = v0 ?? r0 ?? r1;
       if (factory) {
         const tx = await factory.connectWith(signer).setDefaultRoyaltyInfo(royaltyRecipient, basisPoints, overrides);
         return tx;
@@ -124,9 +124,9 @@ export class Royalties extends FeatureSet<RoyaltiesFeatures> {
     overrides?: SourcedOverrides,
   ): Promise<ContractTransaction> {
     const { v0, r0, r1 } = this.getPartition('getInfo');
+    const factory = v0 ?? r0 ?? r1;
 
     try {
-      const factory = v0 ?? r0 ?? r1;
       if (factory) {
         const contract = factory.connectWith(signer);
         const tx = await contract.setRoyaltyInfoForToken(tokenId, royaltyRecipient, basisPoints, overrides);
