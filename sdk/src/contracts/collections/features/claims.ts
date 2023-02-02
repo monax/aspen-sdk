@@ -3,7 +3,7 @@ import { Address, ChainId, extractEventsFromLogs, isSameAddress, NATIVE_TOKEN } 
 import { parse } from '../../../utils';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import { bnRange } from '../number';
+import { bnRange, One } from '../number';
 import type { Signerish, TokenId, TokenStandard } from '../types';
 import { FeatureSet } from './features';
 
@@ -334,7 +334,7 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
                   tokenId,
                   standard: 'ERC721',
                   receiver: parse(Address, receiver),
-                  quantity: BigNumber.from(1),
+                  quantity: One,
                 });
               }
               return events;

@@ -1,6 +1,6 @@
 import { BigNumber, BigNumberish, constants } from 'ethers';
 
-export const Zero = BigNumber.from(1);
+export const Zero = BigNumber.from(0);
 export const One = BigNumber.from(1);
 
 export function min(...xs: BigNumberish[]): BigNumber {

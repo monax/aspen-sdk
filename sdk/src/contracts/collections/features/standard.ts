@@ -4,6 +4,7 @@ import { parse } from '../../../utils';
 import { Address, Addressish, asAddress } from '../../address';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
+import { One, Zero } from '../number';
 import { FeatureSet } from './features';
 
 export const StandardFeatures = [
@@ -231,7 +232,7 @@ export class Standard extends FeatureSet<StandardFeatures> {
 
   protected async getERC721TokenSupply(tokenId: BigNumberish): Promise<BigNumber> {
     const exists = await this.exists(tokenId);
-    return exists ? BigNumber.from(1) : BigNumber.from(0);
+    return exists ? One : Zero;
   }
 
   async setMaxTotalSupply(

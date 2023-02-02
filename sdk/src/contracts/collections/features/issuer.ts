@@ -3,7 +3,7 @@ import { Address, ChainId, extractEventsFromLogs, isSameAddress, ZERO_ADDRESS } 
 import { parse } from '../../../utils';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import { bnRange } from '../number';
+import { bnRange, One } from '../number';
 import type { Signerish, SourcedOverrides, TokenId, TokenStandard } from '../types';
 import { FeatureSet } from './features';
 
@@ -243,7 +243,7 @@ export class Issuer extends FeatureSet<IssuerFeatures> {
                   issuer: parse(Address, issuer),
                   receiver: parse(Address, receiver),
                   tokenURI: null,
-                  quantity: BigNumber.from(1),
+                  quantity: One,
                 });
               }
               return events;
@@ -262,7 +262,7 @@ export class Issuer extends FeatureSet<IssuerFeatures> {
                 issuer: parse(Address, issuer),
                 receiver: parse(Address, receiver),
                 tokenURI: tokenURI,
-                quantity: BigNumber.from(1),
+                quantity: One,
               };
               return event;
             },

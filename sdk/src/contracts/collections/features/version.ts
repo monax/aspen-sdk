@@ -1,6 +1,7 @@
 import { BigNumber } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
+import { Zero } from '../number';
 import { FeatureSet } from './features';
 
 export const VersionFeatures = [
@@ -87,7 +88,7 @@ export class Version extends FeatureSet<VersionFeatures> {
     try {
       if (v0) {
         const { minor, patch } = await v0.connectReadOnly().minorVersion();
-        return { major: BigNumber.from(0), minor, patch };
+        return { major: Zero, minor, patch };
       } else if (v1) {
         const version = await v1.connectReadOnly().implementationVersion();
         return version;

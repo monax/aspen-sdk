@@ -7,7 +7,7 @@ import { publishingChainFromChainId } from '../../../apis/utils/chains';
 import { parse } from '../../../utils';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import { max, min } from '../number';
+import { max, min, Zero } from '../number';
 import type {
   ActiveClaimConditions,
   ClaimConditionsState,
@@ -406,9 +406,7 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
           await iNftIssuance.getActiveClaimConditions();
 
         const tokenSupply = await this.base.standard.getTokensCount();
-        const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD)
-          ? BigNumber.from(0)
-          : remainingSupply.add(tokenSupply);
+        const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD) ? Zero : remainingSupply.add(tokenSupply);
 
         const claimableSupply = condition.maxClaimableSupply.eq(0)
           ? SUPPLY_THRESHOLD
@@ -441,9 +439,7 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
           await iNftIssuance.getActiveClaimConditions();
 
         const tokenSupply = await this.base.standard.getTokensCount();
-        const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD)
-          ? BigNumber.from(0)
-          : remainingSupply.add(tokenSupply);
+        const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD) ? Zero : remainingSupply.add(tokenSupply);
 
         const claimableSupply = condition.maxClaimableSupply.eq(0)
           ? SUPPLY_THRESHOLD
@@ -623,9 +619,7 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
           await iSftIssuance.getActiveClaimConditions(tokenId);
 
         const tokenSupply = await this.base.standard.getTokenSupply(tokenId);
-        const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD)
-          ? BigNumber.from(0)
-          : remainingSupply.add(tokenSupply);
+        const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD) ? Zero : remainingSupply.add(tokenSupply);
 
         const claimableSupply = condition.maxClaimableSupply.eq(0)
           ? SUPPLY_THRESHOLD
@@ -658,9 +652,7 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
           await iSftIssuance.getActiveClaimConditions(tokenId);
 
         const tokenSupply = await this.base.standard.getTokenSupply(tokenId);
-        const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD)
-          ? BigNumber.from(0)
-          : remainingSupply.add(tokenSupply);
+        const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD) ? Zero : remainingSupply.add(tokenSupply);
 
         const claimableSupply = condition.maxClaimableSupply.eq(0)
           ? SUPPLY_THRESHOLD
