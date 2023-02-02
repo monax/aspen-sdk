@@ -159,7 +159,11 @@ export class CollectionContract {
       new SdkError(SdkErrorCode.MISSING_TOKEN_ID);
     }
 
-    return BigNumber.from(tokenId);
+    try {
+      return BigNumber.from(tokenId);
+    } catch (err) {
+      throw new SdkError(SdkErrorCode.INVALID_DATA, { tokenId }, new Error('Invalid value for BigNumber'));
+    }
   }
 
   /////

@@ -38,7 +38,7 @@ export type IssueArgs = {
 export type IssuedToken = {
   chainId: ChainId;
   address: Address;
-  tokenId: string;
+  tokenId: BigNumber;
   standard: TokenStandard;
   issuer: Address;
   receiver: Address;
@@ -238,7 +238,7 @@ export class Issuer extends FeatureSet<IssuerFeatures> {
                 events.push({
                   chainId,
                   address,
-                  tokenId: tokenId.toString(),
+                  tokenId,
                   standard: 'ERC721',
                   issuer: parse(Address, issuer),
                   receiver: parse(Address, receiver),
@@ -257,7 +257,7 @@ export class Issuer extends FeatureSet<IssuerFeatures> {
               const event: IssuedToken = {
                 chainId,
                 address,
-                tokenId: tokenId.toString(),
+                tokenId,
                 standard: 'ERC721',
                 issuer: parse(Address, issuer),
                 receiver: parse(Address, receiver),
@@ -278,7 +278,7 @@ export class Issuer extends FeatureSet<IssuerFeatures> {
               const event: IssuedToken = {
                 chainId,
                 address,
-                tokenId: tokenId.toString(),
+                tokenId,
                 standard: 'ERC1155',
                 issuer: parse(Address, claimer),
                 receiver: parse(Address, receiver),

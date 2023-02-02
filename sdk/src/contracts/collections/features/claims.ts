@@ -43,7 +43,7 @@ export type ClaimArgs = {
 export type ClaimedToken = {
   chainId: ChainId;
   address: string;
-  tokenId: string;
+  tokenId: BigNumber;
   standard: TokenStandard;
   receiver: Address;
   quantity: BigNumber;
@@ -331,7 +331,7 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
                 events.push({
                   chainId,
                   address,
-                  tokenId: tokenId.toString(),
+                  tokenId,
                   standard: 'ERC721',
                   receiver: parse(Address, receiver),
                   quantity: BigNumber.from(1),
@@ -351,7 +351,7 @@ export class Claims extends FeatureSet<ClaimsFeatures> {
               const event: ClaimedToken = {
                 chainId,
                 address,
-                tokenId: tokenId.toString(),
+                tokenId,
                 standard: 'ERC1155',
                 receiver: parse(Address, receiver),
                 quantity: quantityClaimed,

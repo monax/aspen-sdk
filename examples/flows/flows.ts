@@ -14,11 +14,10 @@ import {
   PostFileResponse,
   ProviderConfig,
   PublishingAPI,
-  publishingChainFromNetwork,
   SupportedNetwork,
   uploadFile,
 } from '@monaxlabs/aspen-sdk/dist/apis';
-import { ContractService, Currency } from '@monaxlabs/aspen-sdk/dist/apis/publishing';
+import { Currency } from '@monaxlabs/aspen-sdk/dist/apis/publishing';
 import { asyncYield, ISSUER_ROLE, SigningPool } from '@monaxlabs/aspen-sdk/dist/apis/utils/signing-pool';
 import { ClaimBalance, getClaimBalances } from '@monaxlabs/aspen-sdk/dist/claimgraph';
 import {
@@ -30,8 +29,8 @@ import {
   ICedarERC1155DropV5__factory,
   ICedarERC721DropV7,
   ICedarERC721DropV7__factory,
-  NFTTokenIssuance,
 } from '@monaxlabs/aspen-sdk/dist/contracts';
+import { IssueSuccessState } from '@monaxlabs/aspen-sdk/dist/contracts/collections/objects';
 import { parse } from '@monaxlabs/aspen-sdk/dist/utils';
 import { BigNumber, BigNumberish, Signer } from 'ethers';
 import { providers } from 'ethers/lib/ethers';
@@ -161,7 +160,9 @@ async function cmdIssueB(): Promise<void> {
   // address (typically `web3.eth.accounts[0]`)
   const balances = await claimGraphQuery(collections.map((c) => c.a.address));
 
-  const collectionsByAddressOfA = Object.fromEntries(collections.map((c) => [c.a.address.toLowerCase(), c]));
+  const collectionsByAddressOfA: Record<string, CollectionPair> = Object.fromEntries(
+    collections.map((c) => [c.a.address.toLowerCase(), c]),
+  );
 
   const tokensIssued = await Promise.all(
     balances.flatMap(({ tokenId: baseTokenId, receiver, totalClaimed, contractAddress }, i) => {
@@ -225,26 +226,22 @@ async function cmdDirectIssueB(): Promise<void> {
 
   await pool.isInitialised();
 
-  const promises: Promise<NFTTokenIssuance[]>[] = [];
+  const promises: Promise<IssueSuccessState>[] = [];
   for (const account of accounts) {
     await asyncYield();
     promises.push(
       pool.do(async (signer) => {
         const signerAddress = await signer.getAddress();
         console.error(`Calling issue to receiver ${account.address} with signer ${signerAddress}`);
-        return contract.issueNFT.must(signer, { to: account.address, quantity: 1 }, gasStrategy);
+        return contract.Issue(null).processAsync(signer, parse(Address, account.address), 1, gasStrategy);
       }),
     );
   }
-  const issues = (await Promise.all(promises)).flat();
+  const issuedTokens = (await Promise.all(promises)).map((s) => s.tokens).flat();
 
   console.error(
-    `Issued tokens ${issues
-      .map((i) =>
-        i.withTokenURI
-          ? `tokenId: ${i.tokenId}`
-          : `startTokenId: ${i.startTokenId}, quantity: ${i.quantity}` + `, receiver: ${i.receiver}`,
-      )
+    `Issued tokens ${issuedTokens
+      .map((i) => `tokenId: ${i.tokenId}, quantity: ${i.quantity}, receiver: ${i.receiver}`)
       .join(', ')} on contract ${contract.address}`,
   );
 }
@@ -293,77 +290,50 @@ async function cmdDeployAllowlistAndClaim(): Promise<void> {
   const tokenId = 0;
 
   const contract = await CollectionContract.from(provider, contractAddress);
+
   //
-  const phase = await contract.conditions.getActiveClaimConditions(tokenId);
+  const phase = await contract.conditions.getActive(tokenId);
   if (!phase) {
     throw new Error(`No active phase`);
   }
 
-  const { pricePerToken, currency } = phase.activeClaimCondition;
+  const { pricePerToken } = phase.activeClaimCondition;
   const gasStrategy = await getGasStrategy(provider);
 
   const reserve = await getSigner(network, providerConfig);
   for (const claimer of accounts) {
     const receiver = parse(Address, claimer.address);
     console.error(`Considering allowlist claim for ${receiver}`);
+
     const maxClaimable = allowlist[claimer.address] || 0;
     if (maxClaimable) {
       console.error(`Receiver should be on allow list, retrieving proof`);
-      const { proofs, proofMaxQuantityPerTransaction = 0 } = await ContractService.getMerkleProofsFromContract({
-        contractAddress,
-        walletAddress: receiver,
-        chainName: publishingChainFromNetwork(network),
-        tokenId,
-      });
-      if (!proofs || !proofMaxQuantityPerTransaction) {
-        throw new Error(`Merkle proof not retrieved from API for ${receiver}`);
+
+      const conditions = await contract.conditions.getState(receiver, tokenId);
+      if (conditions.claimState !== 'ok') {
+        throw new Error(`Claim state not ok: ${conditions.claimState}`);
       }
-      const goodClaim = await contract.issuance.verifyClaim(
-        phase.activeClaimConditionId,
-        receiver,
-        tokenId,
-        maxClaimable,
-        currency,
-        pricePerToken,
-        true,
-      );
-      if (!goodClaim) {
+
+      const pendingClaim = contract.Claim(tokenId, conditions);
+      const verify = await pendingClaim.verify(receiver, maxClaimable);
+
+      if (!verify.success) {
         throw new Error(`Claim did not verify!`);
       }
-      const gas = await contract.issuance.estimateGasForClaim(
-        reserve,
-        receiver,
-        tokenId,
-        maxClaimable,
-        currency,
-        pricePerToken,
-        proofs,
-        proofMaxQuantityPerTransaction,
-      );
-      await gasClaimerWallet(reserve, provider, gas || 0, claimer.address, pricePerToken, gasStrategy);
+
+      const gas = await pendingClaim.estimateGas(claimer, receiver, maxClaimable);
+      await gasClaimerWallet(reserve, provider, gas.result || 0, claimer.address, pricePerToken, gasStrategy);
       console.error(`Performing claim for ${receiver}`);
-      await contract.issuance.claim(
-        claimer,
-        receiver,
-        tokenId,
-        maxClaimable,
-        currency,
-        pricePerToken,
-        proofs,
-        proofMaxQuantityPerTransaction,
-      );
-      console.error(`Allowlist claim successful for ${receiver}`);
-    } else {
-      try {
-        const { proofs, proofMaxQuantityPerTransaction } = await ContractService.getMerkleProofsFromContract({
-          contractAddress,
-          walletAddress: receiver,
-          chainName: publishingChainFromNetwork(network),
-          tokenId,
-        });
-      } catch (err) {
-        console.error(err);
+
+      const claimTx = await pendingClaim.execute(claimer, receiver, maxClaimable);
+      if (!claimTx.success) {
+        throw claimTx.error;
       }
+
+      // wait for the transaction
+      await claimTx.result.wait();
+
+      console.error(`Allowlist claim successful for ${receiver}`);
     }
   }
 }

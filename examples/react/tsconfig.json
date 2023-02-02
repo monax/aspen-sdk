@@ -19,7 +19,11 @@
     "jsx": "preserve",
     "incremental": true,
     "baseUrl": "./src",
-    "strict": true
+    "strict": true,
+    "noUnusedLocals": true,
+    "noImplicitAny": true,
+    "noUnusedParameters": true,
+    "strictFunctionTypes": true,
   },
   "include": [
     "next-env.d.ts",

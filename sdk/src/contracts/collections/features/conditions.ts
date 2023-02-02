@@ -3,7 +3,7 @@ import { add } from 'date-fns';
 import { BigNumber, BigNumberish, constants, ContractTransaction } from 'ethers';
 import { Address, ZERO_BYTES32 } from '../..';
 import { AllowlistStatus, getAllowlistStatus } from '../../../apis/publishing';
-import { publishingChainFromChainId } from '../../../apis/utils/providers';
+import { publishingChainFromChainId } from '../../../apis/utils/chains';
 import { parse } from '../../../utils';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
@@ -611,18 +611,16 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
     throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'conditions' });
   }
 
-  protected async getActiveERC1155(tokenId: BigNumberish): Promise<ActiveClaimConditions> {
+  protected async getActiveERC1155(tokenId: BigNumber): Promise<ActiveClaimConditions> {
     const { sftV0, sftV1, sftV2, sftP1, sftP2 } = this.getPartition('conditions');
     const v3 = sftV2 ?? sftP1;
 
     try {
-      const tokenIdBn = BigNumber.from(tokenId);
-
       if (sftV0) {
         const iSftIssuance = sftV0.connectReadOnly();
 
         const { condition, conditionId, walletMaxClaimCount, remainingSupply } =
-          await iSftIssuance.getActiveClaimConditions(tokenIdBn);
+          await iSftIssuance.getActiveClaimConditions(tokenId);
 
         const tokenSupply = await this.base.standard.getTokenSupply(tokenId);
         const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD)
@@ -657,7 +655,7 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
         const iSftIssuance = sftV1.connectReadOnly();
 
         const { condition, conditionId, walletMaxClaimCount, remainingSupply, isClaimPaused } =
-          await iSftIssuance.getActiveClaimConditions(tokenIdBn);
+          await iSftIssuance.getActiveClaimConditions(tokenId);
 
         const tokenSupply = await this.base.standard.getTokenSupply(tokenId);
         const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD)
@@ -692,7 +690,7 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
         const iSftIssuance = v3.connectReadOnly();
 
         const { condition, conditionId, walletMaxClaimCount, isClaimPaused, tokenSupply, maxTotalSupply } =
-          await iSftIssuance.getActiveClaimConditions(tokenIdBn);
+          await iSftIssuance.getActiveClaimConditions(tokenId);
 
         const remainingSupply = maxTotalSupply.eq(0) ? SUPPLY_THRESHOLD : maxTotalSupply.sub(tokenSupply);
         const claimableSupply = condition.maxClaimableSupply.eq(0)
@@ -723,7 +721,7 @@ export class Conditions extends FeatureSet<ConditionsFeatures> {
         const iSftIssuance = sftP2.connectReadOnly();
 
         const { condition, conditionId, walletMaxClaimCount, isClaimPaused, tokenSupply, maxTotalSupply } =
-          await iSftIssuance.getActiveClaimConditions(tokenIdBn);
+          await iSftIssuance.getActiveClaimConditions(tokenId);
 
         const remainingSupply = maxTotalSupply.eq(0) ? SUPPLY_THRESHOLD : maxTotalSupply.sub(tokenSupply);
         const claimableSupply = condition.maxClaimableSupply.eq(0)

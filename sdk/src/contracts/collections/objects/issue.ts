@@ -12,6 +12,8 @@ export type IssueState =
   | { status: 'transaction-failed'; tx: ContractTransaction; error: SdkError }
   | { status: 'success'; tx: ContractTransaction; receipt: ContractReceipt; tokens: IssuedToken[] };
 
+export type IssueSuccessState = Extract<IssueState, { status: 'success' }>;
+
 export class PendingIssue extends ContractObject {
   public constructor(
     protected readonly base: CollectionContract,
@@ -30,7 +32,36 @@ export class PendingIssue extends ContractObject {
     };
   }
 
-  async process(
+  async processAsync(
+    signer: Signerish,
+    receiver: Address,
+    quantity: BigNumberish,
+    overrides: PayableOverrides = {},
+  ): Promise<IssueSuccessState> {
+    return new Promise((resolve, reject) => {
+      this.processCallback(signer, receiver, quantity, overrides, (state) => {
+        switch (state.status) {
+          case 'success':
+            resolve(state);
+            return;
+
+          case 'cancelled-transaction':
+          case 'transaction-failed':
+            reject(state);
+            return;
+
+          case 'pending-transaction':
+          case 'signing-transaction':
+            // throw away intermediate steps
+            return;
+        }
+
+        throw new SdkError(SdkErrorCode.INVALID_DATA, undefined, new Error(`Unknown issue status`));
+      });
+    });
+  }
+
+  async processCallback(
     signer: Signerish,
     receiver: Address,
     quantity: BigNumberish,

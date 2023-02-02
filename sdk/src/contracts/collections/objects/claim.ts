@@ -14,6 +14,8 @@ export type ClaimState =
   | { status: 'transaction-failed'; tx: ContractTransaction; error: SdkError }
   | { status: 'success'; tx: ContractTransaction; receipt: ContractReceipt; tokens: ClaimedToken[] };
 
+export type ClaimSuccessState = Extract<ClaimState, { status: 'success' }>;
+
 export class PendingClaim extends ContractObject {
   public constructor(
     protected readonly base: CollectionContract,
@@ -38,7 +40,38 @@ export class PendingClaim extends ContractObject {
     };
   }
 
-  async process(
+  async processAsync(
+    signer: Signerish,
+    receiver: Address,
+    quantity: BigNumberish,
+    overrides: PayableOverrides = {},
+  ): Promise<ClaimSuccessState> {
+    return new Promise((resolve, reject) => {
+      this.processCallback(signer, receiver, quantity, overrides, (state) => {
+        switch (state.status) {
+          case 'success':
+            resolve(state);
+            return;
+
+          case 'verification-failed':
+          case 'cancelled-transaction':
+          case 'transaction-failed':
+            reject(state);
+            return;
+
+          case 'verifying-claim':
+          case 'signing-transaction':
+          case 'pending-transaction':
+            // throw away intermediate steps
+            return;
+        }
+
+        throw new SdkError(SdkErrorCode.INVALID_DATA, undefined, new Error(`Unknown claim status`));
+      });
+    });
+  }
+
+  async processCallback(
     signer: Signerish,
     receiver: Address,
     quantity: BigNumberish,

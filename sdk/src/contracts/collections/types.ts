@@ -135,6 +135,7 @@ export type UserClaimConditions = {
 
 // Combines all conditions
 export type ClaimConditionsState = UserClaimConditions &
+  CollectionUserClaimConditions &
   Omit<ActiveClaimConditions, 'activeClaimCondition' | 'phaseId'> &
   Omit<CollectionContractClaimCondition, 'phaseId'> & { allowlistStatus: AllowlistStatus; phaseId: string | null };
 
