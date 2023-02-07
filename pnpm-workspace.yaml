@@ -2,4 +2,3 @@ packages:
   - "sdk"
   - "examples/*"
   - "test"
-  - "examples/stripedemo/demosite"
