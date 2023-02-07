@@ -1,4 +1,5 @@
 import { Contract, providers } from 'ethers';
+import { FunctionFragment, ParamType } from 'ethers/lib/utils';
 import * as fs from 'fs';
 import * as path from 'path';
 import prettier from 'prettier';
@@ -155,6 +156,15 @@ export async function writeFeaturesFactoriesMap(
   );
 }
 
+function functionParamSignature(p: ParamType) {
+  return p.type === 'tuple' ? `(${p.components.map((c) => c.type)})` : p.type;
+}
+function functionSignature(f: FunctionFragment): string {
+  const i = f.inputs.map(functionParamSignature).join(',');
+  const o = (f.outputs || []).map(functionParamSignature).join(',');
+  return `${f.name}(${i})[${o}]`;
+}
+
 export function generateFeatureFunctionsMapTs(manifest: ContractsManifest): ts.Node {
   const currentFeatures = Object.values(manifest).filter(isFeature);
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -163,19 +173,27 @@ export function generateFeatureFunctionsMapTs(manifest: ContractsManifest): ts.N
   const map: Record<string, string[]> = {};
   for (const feature of currentFeatures) {
     const c = new Contract(ZERO_ADDRESS, feature.abi as unknown as string, provider);
-    for (const func of Object.keys(c.interface.functions)) {
-      if (!map[func]) map[func] = [];
-      map[func].push(feature.id);
+    for (const func of Object.values(c.interface.functions)) {
+      const key = functionSignature(func);
+      if (!map[key]) map[key] = [];
+      map[key].push(feature.id);
     }
   }
 
   const constNode = exportConst(
-    'FeatureFunctionsMap',
+    'FeatureFunctions',
     ts.factory.createObjectLiteralExpression(
       Object.entries(map).map(([functionName, implementingInterfaces]) => {
         return ts.factory.createPropertyAssignment(
           ts.factory.createStringLiteral(functionName),
-          ts.factory.createArrayLiteralExpression(implementingInterfaces.map((i) => ts.factory.createStringLiteral(i))),
+          ts.factory.createObjectLiteralExpression([
+            ts.factory.createPropertyAssignment(
+              ts.factory.createStringLiteral('drop'),
+              ts.factory.createArrayLiteralExpression(
+                implementingInterfaces.map((i) => ts.factory.createStringLiteral(i)),
+              ),
+            ),
+          ]),
         );
       }),
     ),
