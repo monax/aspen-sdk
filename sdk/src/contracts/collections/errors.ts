@@ -2,6 +2,8 @@ export enum SdkErrorCode {
   FAILED_TO_LOAD_FEATURES = 'Failed to load contract features.',
   EMPTY_TOKEN_STANDARD = "Couldn't identify a token standard",
   FEATURE_NOT_SUPPORTED = 'This feature is not supported by the contract',
+  FUNCTION_NOT_SUPPORTED = 'Function is not supported by the contract',
+  FUNCTION_NOT_IMPLEMENTED = 'Function is not implemented',
   CHAIN_ERROR = 'A call to the chain failed',
   WEB_REQUEST_FAILED = 'Web request failed!',
   MISSING_TOKEN_ID = 'Token ID is required!',

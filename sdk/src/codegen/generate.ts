@@ -181,7 +181,7 @@ export function generateFeatureFunctionsMapTs(manifest: ContractsManifest): ts.N
   }
 
   const constNode = exportConst(
-    'FeatureFunctions',
+    'FeatureFunctionsMap',
     ts.factory.createObjectLiteralExpression(
       Object.entries(map).map(([functionName, implementingInterfaces]) => {
         return ts.factory.createPropertyAssignment(
@@ -197,6 +197,7 @@ export function generateFeatureFunctionsMapTs(manifest: ContractsManifest): ts.N
         );
       }),
     ),
+    { asConst: true },
   );
 
   return constNode;

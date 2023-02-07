@@ -1,12 +1,12 @@
 import { Provider } from '@ethersproject/providers';
-import { BigNumber, BigNumberish } from 'ethers';
+import { BigNumber } from 'ethers';
 import { parse } from '../../utils';
 import { Address, Addressish, asAddress } from '../address';
 import { ChainId } from '../network';
 import { SdkError, SdkErrorCode } from './errors';
 import {
   Agreements,
-  Claims,
+  Claim,
   Conditions,
   Contract,
   extractKnownSupportedFeatures,
@@ -24,8 +24,7 @@ import {
   Version,
 } from './features';
 
-import { PendingClaim, PendingIssue, Token } from './objects';
-import type { ClaimConditionsState, CollectionInfo, DebugHandler, TokenId, TokenStandard } from './types';
+import type { CollectionInfo, DebugHandler, TokenId, TokenStandard } from './types';
 
 export const DefaultDebugHandler = (collection: CollectionInfo, action: string, ...data: unknown[]) => {
   console.debug(`Collection Contract ${collection.chainId} # ${collection.address} -> ${action}`, ...data);
@@ -44,9 +43,11 @@ export class CollectionContract {
   readonly chainId: ChainId;
   readonly address: Address;
 
+  // Contract Functions
+  readonly claim = new Claim(this).asCallable();
+
   // FeatureSets
   readonly agreements: Agreements;
-  readonly claims: Claims;
   readonly contract: Contract;
   readonly conditions: Conditions;
   readonly issuer: Issuer;
@@ -96,7 +97,6 @@ export class CollectionContract {
     this.agreements = new Agreements(this);
     this.royalties = new Royalties(this);
     this.ownable = new Ownable(this);
-    this.claims = new Claims(this);
     this.conditions = new Conditions(this);
     this.issuer = new Issuer(this);
     this.tokenUri = new TokenUri(this);
@@ -170,15 +170,15 @@ export class CollectionContract {
   // High level objects
   /////
 
-  Token(tokenId: BigNumberish): Token {
-    return new Token(this, tokenId);
-  }
+  // Token(tokenId: BigNumberish): Token {
+  //   return new Token(this, tokenId);
+  // }
 
-  Claim(tokenId: TokenId, conditions: ClaimConditionsState): PendingClaim {
-    return new PendingClaim(this, tokenId, conditions);
-  }
+  // Claim(tokenId: TokenId, conditions: ClaimConditionsState): PendingClaim {
+  //   return new PendingClaim(this, tokenId, conditions);
+  // }
 
-  Issue(tokenId: TokenId, tokenURI?: string): PendingIssue {
-    return new PendingIssue(this, tokenId, tokenURI);
-  }
+  // Issue(tokenId: TokenId, tokenURI?: string): PendingIssue {
+  //   return new PendingIssue(this, tokenId, tokenURI);
+  // }
 }
