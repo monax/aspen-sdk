@@ -1,52 +1,45 @@
-import { BigNumber, BytesLike, ContractTransaction } from 'ethers';
-import { CollectionContract, Signerish, SourcedOverrides } from '../..';
+import { BytesLike, ContractTransaction } from 'ethers';
+import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import { FeatureSet } from './features';
+import type { Signerish, SourcedOverrides } from '../types';
+import { FeatureFunctionsMap } from './feature-functions.gen';
+import { ContractFunction } from './features';
 
-export const MulticallFeatures = ['IMulticallable.sol:IMulticallableV0'] as const;
+const MulticallPartitions = {
+  v1: [...FeatureFunctionsMap['multicall(bytes[])[bytes[]]'].drop],
+};
+type MulticallPartitions = typeof MulticallPartitions;
 
-export type MulticallFeatures = (typeof MulticallFeatures)[number];
+const MulticallInterfaces = Object.values(MulticallPartitions).flat();
+type MulticallInterfaces = (typeof MulticallInterfaces)[number];
 
-export class Multicall extends FeatureSet<MulticallFeatures> {
+export type MulticallCallArgs = [signer: Signerish, data: BytesLike[], overrides?: SourcedOverrides];
+export type MulticallResponse = ContractTransaction;
+
+export class Multicall extends ContractFunction<
+  MulticallInterfaces,
+  MulticallPartitions,
+  MulticallCallArgs,
+  MulticallResponse
+> {
+  readonly functionName = 'multicall';
+
   constructor(base: CollectionContract) {
-    super(base, MulticallFeatures);
+    super(base, MulticallInterfaces, MulticallPartitions);
   }
 
-  protected readonly getPartition = this.makeGetPartition((partitioner) => {
-    const multicall = partitioner({
-      v0: ['IMulticallable.sol:IMulticallableV0'],
-    });
+  call(...args: MulticallCallArgs): Promise<MulticallResponse> {
+    return this.multicall(...args);
+  }
 
-    return { multicall };
-  });
-
-  async call(signer: Signerish, data: BytesLike[], overrides?: SourcedOverrides): Promise<ContractTransaction> {
-    const { v0 } = this.getPartition('multicall');
+  async multicall(signer: Signerish, data: BytesLike[], overrides?: SourcedOverrides): Promise<ContractTransaction> {
+    const v1 = this.partition('v1');
 
     try {
-      if (v0) {
-        const tx = await v0.connectWith(signer).multicall(data, overrides);
-        return tx;
-      }
+      const tx = await v1.connectWith(signer).multicall(data, overrides);
+      return tx;
     } catch (err) {
       throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
     }
-
-    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'multicall' });
-  }
-
-  async estimateGas(signer: Signerish, data: BytesLike[]): Promise<BigNumber> {
-    const { v0 } = this.getPartition('multicall');
-
-    try {
-      if (v0) {
-        const estimate = await v0.connectWith(signer).estimateGas.multicall(data);
-        return estimate;
-      }
-    } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
-    }
-
-    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { feature: 'multicall' });
   }
 }

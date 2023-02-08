@@ -47,7 +47,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     super(base, ClaimInterfaces, ClaimPartitions);
   }
 
-  protected call(...args: ClaimCallArgs): Promise<ClaimResponse> {
+  call(...args: ClaimCallArgs): Promise<ClaimResponse> {
     return this.claim(...args);
   }
 

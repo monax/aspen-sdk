@@ -1,0 +1,45 @@
+import { CollectionContract } from '../..';
+import { SdkError, SdkErrorCode } from '../errors';
+import type { SourcedOverrides } from '../types';
+import { FeatureFunctionsMap } from './feature-functions.gen';
+import { ContractFunction } from './features';
+
+const GetSmallestTokenIdPartitions = {
+  v1: [...FeatureFunctionsMap['getSmallestTokenId()[uint8]'].drop],
+};
+type GetSmallestTokenIdPartitions = typeof GetSmallestTokenIdPartitions;
+
+const GetSmallestTokenIdInterfaces = Object.values(GetSmallestTokenIdPartitions).flat();
+type GetSmallestTokenIdInterfaces = (typeof GetSmallestTokenIdInterfaces)[number];
+
+export type GetSmallestTokenIdCallArgs = [overrides?: SourcedOverrides];
+export type GetSmallestTokenIdResponse = number;
+
+export class GetSmallestTokenId extends ContractFunction<
+  GetSmallestTokenIdInterfaces,
+  GetSmallestTokenIdPartitions,
+  GetSmallestTokenIdCallArgs,
+  GetSmallestTokenIdResponse
+> {
+  readonly functionName = 'getSmallestTokenId';
+
+  constructor(base: CollectionContract) {
+    super(base, GetSmallestTokenIdInterfaces, GetSmallestTokenIdPartitions);
+  }
+
+  /** Get the number of unique tokens in the collection */
+  call(...args: GetSmallestTokenIdCallArgs): Promise<GetSmallestTokenIdResponse> {
+    return this.getSmallestTokenId(...args);
+  }
+
+  async getSmallestTokenId(overrides?: SourcedOverrides): Promise<number> {
+    const v1 = this.partition('v1');
+
+    try {
+      const smallestId = await v1.connectReadOnly().getSmallestTokenId(overrides);
+      return smallestId;
+    } catch (err) {
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
+    }
+  }
+}

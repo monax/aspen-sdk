@@ -18,7 +18,7 @@ import type {
   SourcedOverrides,
   UserClaimConditions,
 } from '../types';
-import { FeatureSet } from './features';
+import { ContractFunction } from './features';
 
 // Reasonably large number to compare with
 export const SUPPLY_THRESHOLD = constants.MaxInt256;
@@ -59,7 +59,7 @@ export type ConditionArgs = {
   resetClaimEligibility: boolean;
 };
 
-export class Conditions extends FeatureSet<ConditionsFeatures> {
+export class Conditions extends ContractFunction<ConditionsFeatures> {
   constructor(base: CollectionContract) {
     super(base, ConditionsFeatures);
   }

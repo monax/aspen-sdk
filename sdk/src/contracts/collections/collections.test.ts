@@ -5,8 +5,10 @@ import { URL } from 'url';
 import { getProviderConfig, getSigner } from '../../apis';
 import { parse } from '../../utils/schema';
 import { Address } from '../address';
-import { CollectionContract } from './collections';
+import { CollectionContract, ERC1155StandardInterfaces, ERC721StandardInterfaces } from './collections';
 import { SdkErrorCode } from './errors';
+import { FeatureInterfaceId } from './features';
+import { FeatureFunctionsMap } from './features/feature-functions.gen';
 
 // FIXME: pull in from CI environment
 const providersFile = new URL('../../../../examples/flows/secrets/providers.json', import.meta.url).pathname;
@@ -45,6 +47,22 @@ export class MockJsonRpcProvider extends ethers.providers.StaticJsonRpcProvider 
 }
 
 describe('Collections - static tests', () => {
+  test('Check token standard interface matchers', () => {
+    expect([...ERC721StandardInterfaces, ...ERC1155StandardInterfaces]).toStrictEqual(
+      FeatureFunctionsMap['isApprovedForAll(address,address)[bool]'].drop,
+    );
+  });
+
+  test.skip('Check that all features are implemented', async () => {
+    const provider = new MockJsonRpcProvider();
+
+    const erc721 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, ['standard/IERC721.sol:IERC721V0', 'xxx']);
+
+    // @todo
+    const allImplementedFeatures = [...erc721.acceptTerms.handledFeatures, ...erc721.acceptTerms.handledFeatures];
+    expect(allImplementedFeatures).toStrictEqual(FeatureInterfaceId);
+  });
+
   test('Token standard detection', async () => {
     const provider = new MockJsonRpcProvider();
 

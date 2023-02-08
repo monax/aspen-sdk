@@ -2,7 +2,7 @@ import { BigNumber, ContractTransaction } from 'ethers';
 import { Address, CollectionContract, Signerish, SourcedOverrides } from '../..';
 import { parse } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
-import { FeatureSet } from './features';
+import { ContractFunction } from './features';
 
 export const RoyaltiesFeatures = [
   'standard/IERC2981.sol:IERC2981V0',
@@ -25,7 +25,7 @@ export type RoyaltyInfo = {
   royaltyAmount: BigNumber;
 };
 
-export class Royalties extends FeatureSet<RoyaltiesFeatures> {
+export class Royalties extends ContractFunction<RoyaltiesFeatures> {
   constructor(base: CollectionContract) {
     super(base, RoyaltiesFeatures);
   }

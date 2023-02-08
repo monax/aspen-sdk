@@ -5,24 +5,42 @@ import { Address, Addressish, asAddress } from '../address';
 import { ChainId } from '../network';
 import { SdkError, SdkErrorCode } from './errors';
 import {
-  Agreements,
+  AcceptTerms,
+  AcceptTermsFor,
+  AcceptTermsForMany,
+  AcceptTermsWithSignature,
+  asCallable,
+  BalanceOf,
   Claim,
-  Conditions,
-  Contract,
+  Exists,
   extractKnownSupportedFeatures,
   FeatureInterface,
   FeatureInterfaceId,
-  Issuer,
-  Metadata,
-  Mint,
+  GetClaimPauseStatus,
+  GetLargestTokenId,
+  GetSmallestTokenId,
+  GetTermsDetails,
+  HasAcceptedTerms,
+  HasAcceptedTermsVersion,
+  ImplementationName,
+  ImplementationVersion,
+  IsAspenFeatures,
+  Issue,
+  IssueWithTokenUri,
+  LazyMint,
   Multicall,
-  Ownable,
-  Pause,
-  Royalties,
-  Standard,
-  TokenUri,
-  Version,
+  Owner,
+  OwnerOf,
+  SetClaimPauseStatus,
+  SetMaxTotalSupply,
+  SetOwner,
+  SetTermsActivation,
+  SetTermsUri,
+  SupportsInterface,
+  TotalSupply,
+  VerifyClaim,
 } from './features';
+import { FeatureFunctionsMap } from './features/feature-functions.gen';
 
 import type { CollectionInfo, DebugHandler, TokenId, TokenStandard } from './types';
 
@@ -31,6 +49,13 @@ export const DefaultDebugHandler = (collection: CollectionInfo, action: string, 
 };
 
 export type FeatureInterfaces = { -readonly [K in FeatureInterfaceId]: FeatureInterface<K> };
+
+export const ERC721StandardInterfaces: FeatureInterfaceId[] = [
+  ...FeatureFunctionsMap['approve(address,uint256)[]'].drop,
+];
+export const ERC1155StandardInterfaces: FeatureInterfaceId[] = [
+  ...FeatureFunctionsMap['balanceOf(address,uint256)[uint256]'].drop,
+];
 
 export class CollectionContract {
   private static _debugHandler: DebugHandler | undefined;
@@ -43,23 +68,54 @@ export class CollectionContract {
   readonly chainId: ChainId;
   readonly address: Address;
 
+  //////
   // Contract Functions
-  readonly claim = new Claim(this).asCallable();
+  //////
 
-  // FeatureSets
-  readonly agreements: Agreements;
-  readonly contract: Contract;
-  readonly conditions: Conditions;
-  readonly issuer: Issuer;
-  readonly metadata: Metadata;
-  readonly mint: Mint;
-  readonly multicall: Multicall;
-  readonly ownable: Ownable;
-  readonly pause: Pause;
-  readonly royalties: Royalties;
-  readonly standard: Standard;
-  readonly tokenUri: TokenUri;
-  readonly version: Version;
+  // Contract
+  readonly isAspenFeatures = asCallable(new IsAspenFeatures(this));
+  readonly supportsInterface = asCallable(new SupportsInterface(this));
+  readonly implementationName = asCallable(new ImplementationName(this));
+  readonly implementationVersion = asCallable(new ImplementationVersion(this));
+  readonly owner = asCallable(new Owner(this));
+  readonly setOwner = asCallable(new SetOwner(this));
+
+  // Multicall
+  readonly multicall = asCallable(new Multicall(this));
+
+  // Terms
+  readonly acceptTerms = asCallable(new AcceptTerms(this));
+  readonly acceptTermsFor = asCallable(new AcceptTermsFor(this));
+  readonly acceptTermsForMany = asCallable(new AcceptTermsForMany(this));
+  readonly acceptTermsWithSignature = asCallable(new AcceptTermsWithSignature(this));
+  readonly getTermsDetails = asCallable(new GetTermsDetails(this));
+  readonly hasAcceptedTerms = asCallable(new HasAcceptedTerms(this));
+  readonly hasAcceptedTermsVersion = asCallable(new HasAcceptedTermsVersion(this));
+  readonly setTermsActivation = asCallable(new SetTermsActivation(this));
+  readonly setTermsUri = asCallable(new SetTermsUri(this));
+
+  // Token
+  // readonly tokenUri = asCallable(new TokenUri(this));
+  readonly exists = asCallable(new Exists(this)); // @todo enable for ERC721
+  readonly ownerOf = asCallable(new OwnerOf(this));
+  readonly balanceOf = asCallable(new BalanceOf(this));
+  readonly totalSupply = asCallable(new TotalSupply(this));
+  readonly setMaxTotalSupply = asCallable(new SetMaxTotalSupply(this));
+  readonly getSmallestTokenId = asCallable(new GetSmallestTokenId(this));
+  readonly getLargestTokenId = asCallable(new GetLargestTokenId(this));
+
+  // Mint
+  readonly lazyMint = asCallable(new LazyMint(this));
+
+  // Claim
+  readonly claim = asCallable(new Claim(this));
+  readonly verifyClaim = asCallable(new VerifyClaim(this));
+  readonly getClaimPauseStatus = asCallable(new GetClaimPauseStatus(this));
+  readonly setClaimPauseStatus = asCallable(new SetClaimPauseStatus(this));
+
+  // Issue
+  readonly issue = asCallable(new Issue(this));
+  readonly issueWithTokenUri = asCallable(new IssueWithTokenUri(this));
 
   static setDebugHandler(handler: DebugHandler | undefined) {
     CollectionContract._debugHandler = handler;
@@ -89,22 +145,8 @@ export class CollectionContract {
     this._interfaces = this.getInterfaces();
     this.debug('Loaded supported features', this._supportedFeatures);
 
-    this.standard = new Standard(this);
-    this._tokenStandard = this.standard.getStandard();
+    this._tokenStandard = CollectionContract.detectStandard(this._supportedFeatures);
     this.debug('Token standard set to', this.tokenStandard);
-
-    this.metadata = new Metadata(this);
-    this.agreements = new Agreements(this);
-    this.royalties = new Royalties(this);
-    this.ownable = new Ownable(this);
-    this.conditions = new Conditions(this);
-    this.issuer = new Issuer(this);
-    this.tokenUri = new TokenUri(this);
-    this.pause = new Pause(this);
-    this.mint = new Mint(this);
-    this.contract = new Contract(this);
-    this.multicall = new Multicall(this);
-    this.version = new Version(this);
   }
 
   get supportedFeatures(): string[] {
@@ -139,6 +181,13 @@ export class CollectionContract {
     return interfaces;
   }
 
+  static detectStandard(features: FeatureInterfaceId[]): TokenStandard {
+    if (features.some((f) => ERC721StandardInterfaces.includes(f))) return 'ERC721';
+    if (features.some((f) => ERC1155StandardInterfaces.includes(f))) return 'ERC1155';
+
+    throw new SdkError(SdkErrorCode.EMPTY_TOKEN_STANDARD);
+  }
+
   debug(message: string, ...data: unknown[]) {
     if (CollectionContract._debugHandler) {
       const collection: CollectionInfo = {
@@ -166,19 +215,10 @@ export class CollectionContract {
     }
   }
 
-  /////
-  // High level objects
-  /////
-
-  // Token(tokenId: BigNumberish): Token {
-  //   return new Token(this, tokenId);
-  // }
-
-  // Claim(tokenId: TokenId, conditions: ClaimConditionsState): PendingClaim {
-  //   return new PendingClaim(this, tokenId, conditions);
-  // }
-
-  // Issue(tokenId: TokenId, tokenURI?: string): PendingIssue {
-  //   return new PendingIssue(this, tokenId, tokenURI);
-  // }
+  restrictTokenId(tokenId: TokenId): asserts tokenId is null | undefined {
+    if (tokenId !== null && tokenId !== undefined) {
+      const err = new Error('Token Id is not supported for this function');
+      throw new SdkError(SdkErrorCode.INVALID_DATA, { tokenId }, err);
+    }
+  }
 }

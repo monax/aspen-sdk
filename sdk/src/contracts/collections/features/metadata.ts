@@ -5,7 +5,7 @@ import { resolveIpfsUrl } from '../../../utils';
 import { CollectionMetaImageType } from '../constants';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { CollectionMetadata, Signerish, SourcedOverrides } from '../types';
-import { FeatureSet } from './features';
+import { ContractFunction } from './features';
 
 export const MetadataFeatures = [
   'metadata/IContractMetadata.sol:ICedarMetadataV0',
@@ -18,7 +18,7 @@ export const MetadataFeatures = [
 
 export type MetadataFeatures = (typeof MetadataFeatures)[number];
 
-export class Metadata extends FeatureSet<MetadataFeatures> {
+export class Metadata extends ContractFunction<MetadataFeatures> {
   constructor(base: CollectionContract) {
     super(base, MetadataFeatures);
   }

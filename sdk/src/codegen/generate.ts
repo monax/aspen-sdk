@@ -159,10 +159,10 @@ export async function writeFeaturesFactoriesMap(
 function functionParamSignature(p: ParamType) {
   return p.type === 'tuple' ? `(${p.components.map((c) => c.type)})` : p.type;
 }
-function functionSignature(f: FunctionFragment): string {
+function functionSignature(f: FunctionFragment, hasOverloads: boolean): string {
   const i = f.inputs.map(functionParamSignature).join(',');
   const o = (f.outputs || []).map(functionParamSignature).join(',');
-  return `${f.name}(${i})[${o}]`;
+  return `${f.name}(${i})${hasOverloads ? '+' : ''}[${o}]`;
 }
 
 export function generateFeatureFunctionsMapTs(manifest: ContractsManifest): ts.Node {
@@ -172,9 +172,17 @@ export function generateFeatureFunctionsMapTs(manifest: ContractsManifest): ts.N
 
   const map: Record<string, string[]> = {};
   for (const feature of currentFeatures) {
-    const c = new Contract(ZERO_ADDRESS, feature.abi as unknown as string, provider);
-    for (const func of Object.values(c.interface.functions)) {
-      const key = functionSignature(func);
+    const contract = new Contract(ZERO_ADDRESS, feature.abi as unknown as string, provider);
+    const functions = Object.values(contract.interface.functions);
+    const overloads = functions.reduce<Record<string, number>>((o, f) => {
+      if (!o[f.name]) o[f.name] = 1;
+      else o[f.name]++;
+      return o;
+    }, {});
+
+    for (let i = 0, l = functions.length; i < l; i++) {
+      const func = functions[i];
+      const key = functionSignature(func, overloads[func.name] > 1);
       if (!map[key]) map[key] = [];
       map[key].push(feature.id);
     }

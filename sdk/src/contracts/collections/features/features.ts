@@ -5,6 +5,7 @@ import * as t from 'io-ts';
 import { parseThenOrElse } from '../../../utils';
 import { Address } from '../../address';
 import { CollectionContract } from '../collections';
+import { SdkError, SdkErrorCode } from '../errors';
 import { Signerish } from '../types';
 import { FeatureFactories } from './feature-factories.gen';
 
@@ -13,6 +14,36 @@ export type FeatureInterfaceId = t.TypeOf<typeof FeatureInterfaceId>;
 export type FeatureFactories = typeof FeatureFactories;
 export type FeatureFactory<T extends FeatureInterfaceId> = FeatureFactories[T];
 export type FeatureContract<T extends FeatureInterfaceId> = ReturnType<FeatureFactory<T>['connect']>;
+
+// export type FunctionPartitions = Record<string, NonEmptyArray<FeatureInterfaceId>>;
+// export const FeatureFunctionId = t.keyof(FeatureFunctionsMap);
+// export type FeatureFunctionId = t.TypeOf<typeof FeatureFunctionId>;
+
+// export const FeatureFunctionSetKey = t.literal('drop');
+// // export type FeatureFunctionSetKey = t.TypeOf<typeof FeatureFunctionSetKey>;
+
+// export const FeatureFunctionPartitions = t.record(FeatureFunctionSetKey, t.array(FeatureInterfaceId));
+// export type FeatureFunctionPartitions = t.TypeOf<typeof FeatureFunctionPartitions>;
+
+// export const FeatureFunctions = t.record(FeatureFunctionId, FeatureFunctionPartitions);
+// export type FeatureFunctions = t.TypeOf<typeof FeatureFunctions>;
+// export const ContractFunctionsMap = parse(FeatureFunctions, FeatureFunctionsMap);
+
+// same as FeatureFunctionPartitions but as generic
+// export type FeatureFunctions = typeof FeatureFunctionsMap;
+// export type FeatureFunctionId = keyof FeatureFunctions;
+// export type FeatureFunctionPartition<T extends FeatureFunctionId> = FeatureFunctions[T];
+// export type FeatureFunctionSetKey<T extends FeatureFunctionId> = keyof FeatureFunctionPartition<T>;
+// export type FeatureFunctionSetId<T extends FeatureFunctionId> = { func: T; set: FeatureFunctionSetKey<T> };
+
+// const ClaimPartitions = {
+//   nft: ['claim(address,uint256,address,uint256,bytes32[],uint256)[]', 'drop'],
+//   sft: ['claim(address,uint256,uint256,address,uint256,bytes32[],uint256)[]', 'drop'],
+// }
+
+// function toPartitions<T extends FeatureFunctionId>(p: Record<string, FeatureFunctionSetId<T>>) {
+
+// }
 
 export interface FeatureInterfaceFactory<T extends FeatureInterfaceId> {
   connect(address: string, signerOrProvider: Signer | Provider): FeatureContract<T>;
@@ -59,26 +90,26 @@ export class FeatureInterface<T extends FeatureInterfaceId> {
   }
 }
 
-export abstract class FeatureSet<T extends FeatureInterfaceId> {
+export type CallableContractFunction<
+  T extends FeatureInterfaceId,
+  C extends Record<string, T[]>,
+  A extends unknown[],
+  R,
+> = ContractFunction<T, C, A, R>['call'] & ContractFunction<T, C, A, R>;
+export abstract class ContractFunction<
+  T extends FeatureInterfaceId,
+  C extends Record<string, T[]>,
+  A extends unknown[],
+  R,
+> {
+  protected _partitions?: Partition<T, C>;
+  abstract readonly functionName: string;
+
   protected constructor(
     protected readonly base: CollectionContract,
-    protected readonly handledFeatures: readonly T[],
+    readonly handledFeatures: T[],
+    protected readonly cover: Cover<T, C>,
   ) {}
-
-  // Late-bound because it must be called after load()
-  private getPartitioner = () => exhaustiveUnionPartitioner(this.base.interfaces, ...this.handledFeatures);
-
-  makeGetPartition<N extends string, P>(
-    partitionsThunk: (p: ReturnType<FeatureSet<T>['getPartitioner']>) => P,
-  ): <K extends keyof P>(k: K) => P[K] {
-    let t: P;
-    return (k) => {
-      if (!t) {
-        t = partitionsThunk(this.getPartitioner());
-      }
-      return t[k];
-    };
-  }
 
   /**
    * @returns True if the contract supports Agreement interface
@@ -87,6 +118,28 @@ export abstract class FeatureSet<T extends FeatureInterfaceId> {
     // The contract must implement at least one handled feature
     return this.handledFeatures.some((f) => Boolean(this.base.interfaces[f]));
   }
+  protected get partitions() {
+    if (!this.supported) {
+      throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    }
+
+    if (!this._partitions) {
+      this._partitions = getPartition(this.base, this.handledFeatures, this.cover);
+    }
+
+    return this._partitions;
+  }
+
+  protected partition<K extends StringKeyOf<C>>(partition: K): Exclude<Partition<T, C>[K], undefined> {
+    const p = this.partitions[partition];
+    if (p !== undefined) {
+      return p;
+    }
+
+    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+  }
+
+  abstract call(...args: A): Promise<R>;
 }
 
 export function extractKnownSupportedFeatures(supportedFeaturesFromContract: string[]): FeatureInterfaceId[] {
@@ -102,15 +155,13 @@ export function extractKnownSupportedFeatures(supportedFeaturesFromContract: str
     .filter((f): f is FeatureInterfaceId => Boolean(f));
 }
 
-const getPartition = <T extends FeatureInterfaceId, C extends Record<string, NonEmptyArray<T>>>(
+const getPartition = <T extends FeatureInterfaceId, C extends Record<string, T[]>>(
   base: CollectionContract,
   handledFeatures: T[],
   cover: Cover<T, C>,
 ) => exhaustiveUnionPartitioner(base.interfaces, ...handledFeatures)(cover);
 
-type Partition<T extends FeatureInterfaceId, C extends Record<string, NonEmptyArray<T>>> = ReturnType<
-  typeof getPartition<T, C>
->;
+type Partition<T extends FeatureInterfaceId, C extends Record<string, T[]>> = ReturnType<typeof getPartition<T, C>>;
 
 export type CallableFeatureFunction<
   T extends FeatureInterfaceId,
@@ -222,7 +273,7 @@ export class FeatureFunction<
 
 // A cover is a set of non-empty subsets of T provided as a Record where each subset is identified by a key in K where
 // the union of the subsets contains T
-type Cover<T, C extends Record<string, NonEmptyArray<T>>> =
+type Cover<T, C extends Record<string, T[]>> =
   // Provide _some_ arguments
   C extends any
     ? // If excluding E from T is empty then E covers T so this should be a success
@@ -241,7 +292,7 @@ type StringKeyOf<R> = R extends Record<infer K, unknown> ? (K extends string ? K
 // branching on each exact feature when you are able to work with the intersection interface of the features in a subset
 export const exhaustiveUnionPartitioner =
   <T extends string, M extends Partial<Record<T, unknown>>>(m: M, ...keys: T[]) =>
-  <C extends Record<string, NonEmptyArray<T>>>(cover: Cover<T, C>): { [k in StringKeyOf<C>]: M[C[k][number]] } => {
+  <C extends Record<string, T[]>>(cover: Cover<T, C>): { [k in StringKeyOf<C>]: M[C[k][number]] } => {
     // Flatten the cover down to its element type then map them with M to get the values
     const ret = {} as { [k in StringKeyOf<C>]: M[C[k][number]] };
     for (const [key, subset] of Object.entries(cover)) {
@@ -260,4 +311,8 @@ function extendWithPrototype<TObj, TProto extends Object>(
 ): TObj & TProto & { __extendedWithPrototype: true } {
   // Proxy everything other than what is defined on obj to proto
   return Object.assign(Object.create(proto), obj, { __extendedWithPrototype: true });
+}
+
+export function asCallable<T extends { call: CallableFunction }>(obj: T): T['call'] & T {
+  return extendWithPrototype(obj.call.bind(obj), obj);
 }

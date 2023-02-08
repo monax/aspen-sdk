@@ -25,4 +25,8 @@ export class SdkError extends Error {
   static is(err: unknown): err is SdkError {
     return typeof err === 'object' && (err as SdkError).name === 'SdkError';
   }
+
+  static from(err: unknown, code: SdkErrorCode, data?: Record<string, unknown>): SdkError {
+    return SdkError.is(err) ? err : new SdkError(code, data, err as Error);
+  }
 }

@@ -3,7 +3,7 @@ import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
 import { CollectionContract, IPFS_GATEWAY_PREFIX, Signerish, SourcedOverrides, TokenMetadata } from '../..';
 import { resolveIpfsUrl } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
-import { FeatureSet } from './features';
+import { ContractFunction } from './features';
 
 export const TokenUriFeatures = [
   // tokenUri
@@ -43,7 +43,7 @@ export const TokenUriFeatures = [
 
 export type TokenUriFeatures = (typeof TokenUriFeatures)[number];
 
-export class TokenUri extends FeatureSet<TokenUriFeatures> {
+export class TokenUri extends ContractFunction<TokenUriFeatures> {
   constructor(base: CollectionContract) {
     super(base, TokenUriFeatures);
   }
