@@ -64,7 +64,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     { receiver, tokenId, quantity }: IssueArgs,
     overrides: SourcedOverrides = {},
   ): Promise<ContractTransaction> {
-    tokenId = this.base.requireTokenId(tokenId);
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
 
     try {
@@ -108,7 +108,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     { receiver, tokenId, quantity }: IssueArgs,
     overrides: SourcedOverrides = {},
   ): Promise<BigNumber> {
-    tokenId = this.base.requireTokenId(tokenId);
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
 
     try {

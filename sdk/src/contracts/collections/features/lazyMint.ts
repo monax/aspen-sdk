@@ -61,7 +61,7 @@ export class LazyMint extends ContractFunction<
       if (SdkError.is(err)) {
         throw err;
       } else {
-        throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+        throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
       }
     }
 

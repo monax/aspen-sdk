@@ -39,7 +39,7 @@ export class SetTermsUri extends ContractFunction<
       const tx = await v1.connectWith(signer).setTermsURI(termsUri, overrides);
       return tx;
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
@@ -50,7 +50,7 @@ export class SetTermsUri extends ContractFunction<
       const estimate = await v1.connectWith(signer).estimateGas.setTermsURI(termsUri, overrides);
       return estimate;
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 }

@@ -5,9 +5,14 @@ import type { Signerish, SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const AcceptTermsWithSignatureFunctions = {
+  v1: 'acceptTerms(address,bytes)[]',
+  v2: 'storeTermsAccepted(address,bytes)[]',
+} as const;
+
 const AcceptTermsWithSignaturePartitions = {
-  v1: [...FeatureFunctionsMap['acceptTerms(address,bytes)[]'].drop],
-  v2: [...FeatureFunctionsMap['storeTermsAccepted(address,bytes)[]'].drop],
+  v1: [...FeatureFunctionsMap[AcceptTermsWithSignatureFunctions.v1].drop],
+  v2: [...FeatureFunctionsMap[AcceptTermsWithSignatureFunctions.v2].drop],
 };
 type AcceptTermsWithSignaturePartitions = typeof AcceptTermsWithSignaturePartitions;
 
@@ -31,7 +36,12 @@ export class AcceptTermsWithSignature extends ContractFunction<
   readonly functionName = 'acceptTermsWithSignature';
 
   constructor(base: CollectionContract) {
-    super(base, AcceptTermsWithSignatureInterfaces, AcceptTermsWithSignaturePartitions);
+    super(
+      base,
+      AcceptTermsWithSignatureInterfaces,
+      AcceptTermsWithSignaturePartitions,
+      Object.values(AcceptTermsWithSignatureFunctions),
+    );
   }
 
   call(...args: AcceptTermsWithSignatureCallArgs): Promise<AcceptTermsWithSignatureResponse> {
@@ -55,7 +65,7 @@ export class AcceptTermsWithSignature extends ContractFunction<
         return tx;
       }
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
     throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { function: this.functionName });
@@ -78,7 +88,7 @@ export class AcceptTermsWithSignature extends ContractFunction<
         return estimate;
       }
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
     throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { function: this.functionName });

@@ -49,11 +49,11 @@ export class SetMaxTotalSupply extends ContractFunction<
 
     try {
       if (sft) {
-        tokenId = this.base.requireTokenId(tokenId);
+        tokenId = this.base.requireTokenId(tokenId, this.functionName);
         const tx = await sft.connectWith(signer).setMaxTotalSupply(tokenId, totalSupply, overrides);
         return tx;
       } else if (nft) {
-        this.base.restrictTokenId(tokenId);
+        this.base.rejectTokenId(tokenId, this.functionName);
         const tx = await nft.connectWith(signer).setMaxTotalSupply(totalSupply, overrides);
         return tx;
       }

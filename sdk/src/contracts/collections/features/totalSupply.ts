@@ -14,7 +14,7 @@ type TotalSupplyPartitions = typeof TotalSupplyPartitions;
 const TotalSupplyInterfaces = Object.values(TotalSupplyPartitions).flat();
 type TotalSupplyInterfaces = (typeof TotalSupplyInterfaces)[number];
 
-export type TotalSupplyCallArgs = [tokenId: BigNumberish | null, overrides?: SourcedOverrides];
+export type TotalSupplyCallArgs = [tokenId?: BigNumberish | null, overrides?: SourcedOverrides];
 export type TotalSupplyResponse = BigNumber;
 
 export class TotalSupply extends ContractFunction<
@@ -34,16 +34,16 @@ export class TotalSupply extends ContractFunction<
     return this.totalSupply(...args);
   }
 
-  async totalSupply(tokenId: BigNumberish | null = null, overrides?: SourcedOverrides): Promise<BigNumber> {
+  async totalSupply(tokenId?: BigNumberish | null, overrides?: SourcedOverrides): Promise<BigNumber> {
     const { nft, sft } = this.partitions;
 
     try {
       if (sft) {
-        tokenId = this.base.requireTokenId(tokenId);
+        tokenId = this.base.requireTokenId(tokenId, this.functionName);
         const balance = await sft.connectReadOnly().totalSupply(tokenId, overrides);
         return balance;
       } else if (nft) {
-        this.base.restrictTokenId(tokenId);
+        this.base.rejectTokenId(tokenId, this.functionName);
         const balance = await nft.connectReadOnly().totalSupply(overrides);
         return balance;
       }

@@ -49,7 +49,7 @@ export class SetTermsActivation extends ContractFunction<
         return tx;
       }
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
     throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
@@ -67,7 +67,7 @@ export class SetTermsActivation extends ContractFunction<
         return estimate;
       }
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
     throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });

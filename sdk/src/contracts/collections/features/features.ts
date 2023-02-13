@@ -8,12 +8,105 @@ import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import { Signerish } from '../types';
 import { FeatureFactories } from './feature-factories.gen';
+import { FeatureFunctionsMap } from './feature-functions.gen';
 
 export const FeatureInterfaceId = t.keyof(FeatureFactories);
 export type FeatureInterfaceId = t.TypeOf<typeof FeatureInterfaceId>;
 export type FeatureFactories = typeof FeatureFactories;
 export type FeatureFactory<T extends FeatureInterfaceId> = FeatureFactories[T];
 export type FeatureContract<T extends FeatureInterfaceId> = ReturnType<FeatureFactory<T>['connect']>;
+
+export const FeatureFunctionId = t.keyof(FeatureFunctionsMap);
+export type FeatureFunctionId = t.TypeOf<typeof FeatureFunctionId>;
+
+export const ERC721StandardInterfaces: FeatureInterfaceId[] = [
+  ...FeatureFunctionsMap['approve(address,uint256)[]'].drop,
+];
+export const ERC1155StandardInterfaces: FeatureInterfaceId[] = [
+  ...FeatureFunctionsMap['balanceOf(address,uint256)[uint256]'].drop,
+];
+
+export type ContractFunctionIds = typeof ContractFunctionIds;
+export type ContractFunctionId = ContractFunctionIds[number];
+
+export const ContractFunctionIds = [
+  // Contract
+  'isAspenFeatures',
+  'supportsInterface',
+  'implementationName',
+  'implementationVersion',
+  'owner',
+  'setOwner',
+
+  // Collection
+  'name',
+  'symbol',
+  'contractUri',
+  'setContractUri',
+  'setTokenNameAndSymbol',
+
+  // Multicall
+  'multicall',
+
+  // Terms
+  'acceptTerms',
+  'acceptTermsFor',
+  'acceptTermsForMany',
+  'acceptTermsWithSignature',
+  'getTermsDetails',
+  'hasAcceptedTerms',
+  'hasAcceptedTermsVersion',
+  'setTermsActivation',
+  'setTermsUri',
+
+  // Token
+  'exists',
+  'ownerOf',
+  'balanceOf',
+  'tokenUri',
+  'setTokenUri',
+  'setPermanentTokenUri',
+  'getBaseURIIndices',
+  'updateBaseUri',
+
+  // Supply
+  'totalSupply',
+  'setMaxTotalSupply',
+  'getSmallestTokenId',
+  'getLargestTokenId',
+  'tokensCount',
+
+  // Mint
+  'lazyMint',
+
+  // Claim
+  'claim',
+  'verifyClaim',
+  'getClaimConditionById',
+  'getUserClaimConditions',
+  'setClaimConditions',
+  'getClaimPauseStatus',
+  'setClaimPauseStatus',
+
+  // Issue
+  'issue',
+  'issueWithTokenUri',
+
+  // Royalties
+  'royaltyInfo',
+  'getDefaultRoyaltyInfo',
+  'setDefaultRoyaltyInfo',
+  'getRoyaltyInfoForToken',
+  'setRoyaltyInfoForToken',
+
+  // Platform fee
+  'getPlatformFeeInfo',
+  'setPlatformFeeInfo',
+
+  // Royalties
+  'getPrimarySaleRecipient',
+  'setPrimarySaleRecipient',
+] as const;
 
 // export type FunctionPartitions = Record<string, NonEmptyArray<FeatureInterfaceId>>;
 // export const FeatureFunctionId = t.keyof(FeatureFunctionsMap);
@@ -103,12 +196,13 @@ export abstract class ContractFunction<
   R,
 > {
   protected _partitions?: Partition<T, C>;
-  abstract readonly functionName: string;
+  abstract readonly functionName: ContractFunctionId;
 
   protected constructor(
     protected readonly base: CollectionContract,
     readonly handledFeatures: T[],
     protected readonly cover: Cover<T, C>,
+    readonly handledFunctions: FeatureFunctionId[] = [],
   ) {}
 
   /**
@@ -118,6 +212,7 @@ export abstract class ContractFunction<
     // The contract must implement at least one handled feature
     return this.handledFeatures.some((f) => Boolean(this.base.interfaces[f]));
   }
+
   protected get partitions() {
     if (!this.supported) {
       throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
@@ -133,7 +228,7 @@ export abstract class ContractFunction<
   protected partition<K extends StringKeyOf<C>>(partition: K): Exclude<Partition<T, C>[K], undefined> {
     const p = this.partitions[partition];
     if (p !== undefined) {
-      return p;
+      return p as Exclude<Partition<T, C>[K], undefined>;
     }
 
     throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });

@@ -10,6 +10,18 @@ import { ContractManifest, ContractsManifest } from './manifest';
 
 const nonFeatureDirs = new Set(['deploy', 'impl']);
 
+// @todo Temporary skiping those files until we implement them
+const EXCLUDED_INTERFACE_FILES = [
+  'pausable/ICedarPausable.sol',
+  'splitpayment/ISplitPayment.sol',
+  'splitpayment/ICedarSplitPayment.sol',
+  'issuance/ICedarERC20Payable.sol',
+  'issuance/ICedarIssuance.sol',
+  'issuance/ICedarOrderFiller.sol',
+  'issuance/ICedarNativePayable.sol',
+  'subscriptions/IPaymentNotary.sol',
+];
+
 export function isFeature(manifest: ContractManifest): boolean {
   return manifest.abi.length > 0 && !nonFeatureDirs.has(manifest.dir);
 }
@@ -172,6 +184,8 @@ export function generateFeatureFunctionsMapTs(manifest: ContractsManifest): ts.N
 
   const map: Record<string, string[]> = {};
   for (const feature of currentFeatures) {
+    if (EXCLUDED_INTERFACE_FILES.includes(feature.file)) continue;
+
     const contract = new Contract(ZERO_ADDRESS, feature.abi as unknown as string, provider);
     const functions = Object.values(contract.interface.functions);
     const overloads = functions.reduce<Record<string, number>>((o, f) => {

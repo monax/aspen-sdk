@@ -39,7 +39,7 @@ export class SupportsInterface extends ContractFunction<
       const supported = await v1.connectReadOnly().supportsInterface(interfaceId, overrides);
       return supported;
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 }

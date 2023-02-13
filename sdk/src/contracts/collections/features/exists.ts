@@ -29,7 +29,7 @@ export class Exists extends ContractFunction<ExistsInterfaces, ExistsPartitions,
   }
 
   async exists(tokenId: BigNumberish, overrides?: SourcedOverrides): Promise<boolean> {
-    tokenId = this.base.requireTokenId(tokenId);
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const v1 = this.partition('v1');
 
     try {

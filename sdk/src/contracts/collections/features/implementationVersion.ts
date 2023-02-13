@@ -52,7 +52,7 @@ export class ImplementationVersion extends ContractFunction<
         return { major: Zero, minor, patch };
       }
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
     throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });

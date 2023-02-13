@@ -5,8 +5,12 @@ import type { Signerish, SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const AcceptTermsForManyFunctions = {
+  v1: 'batchAcceptTerms(address[])[]',
+} as const;
+
 const AcceptTermsForManyPartitions = {
-  v1: [...FeatureFunctionsMap['batchAcceptTerms(address[])[]'].drop],
+  v1: [...FeatureFunctionsMap[AcceptTermsForManyFunctions.v1].drop],
 };
 type AcceptTermsForManyPartitions = typeof AcceptTermsForManyPartitions;
 
@@ -25,7 +29,7 @@ export class AcceptTermsForMany extends ContractFunction<
   readonly functionName = 'acceptTermsForMany';
 
   constructor(base: CollectionContract) {
-    super(base, AcceptTermsForManyInterfaces, AcceptTermsForManyPartitions);
+    super(base, AcceptTermsForManyInterfaces, AcceptTermsForManyPartitions, Object.values(AcceptTermsForManyFunctions));
   }
 
   call(...args: AcceptTermsForManyCallArgs): Promise<AcceptTermsForManyResponse> {
@@ -43,7 +47,7 @@ export class AcceptTermsForMany extends ContractFunction<
       const tx = await v1.connectWith(signer).batchAcceptTerms(acceptors, overrides);
       return tx;
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
@@ -54,7 +58,7 @@ export class AcceptTermsForMany extends ContractFunction<
       const estimate = await v1.connectWith(signer).estimateGas.batchAcceptTerms(acceptors, overrides);
       return estimate;
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 }

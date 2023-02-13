@@ -12,14 +12,27 @@ import {
   asCallable,
   BalanceOf,
   Claim,
+  ContractFunctionId,
+  ContractFunctionIds,
+  ContractUri,
+  ERC1155StandardInterfaces,
+  ERC721StandardInterfaces,
   Exists,
   extractKnownSupportedFeatures,
+  FeatureFunctionId,
   FeatureInterface,
   FeatureInterfaceId,
+  GetBaseURIIndices,
+  GetClaimConditionById,
   GetClaimPauseStatus,
+  GetDefaultRoyaltyInfo,
   GetLargestTokenId,
+  GetPlatformFeeInfo,
+  GetPrimarySaleRecipient,
+  GetRoyaltyInfoForToken,
   GetSmallestTokenId,
   GetTermsDetails,
+  GetUserClaimConditions,
   HasAcceptedTerms,
   HasAcceptedTermsVersion,
   ImplementationName,
@@ -29,18 +42,32 @@ import {
   IssueWithTokenUri,
   LazyMint,
   Multicall,
+  Name,
   Owner,
   OwnerOf,
+  RoyaltyInfo,
+  SetClaimConditions,
   SetClaimPauseStatus,
+  SetContractUri,
+  SetDefaultRoyaltyInfo,
   SetMaxTotalSupply,
   SetOwner,
+  SetPermanentTokenUri,
+  SetPlatformFeeInfo,
+  SetPrimarySaleRecipient,
+  SetRoyaltyInfoForToken,
   SetTermsActivation,
   SetTermsUri,
+  SetTokenNameAndSymbol,
+  SetTokenUri,
   SupportsInterface,
+  Symbol,
+  TokensCount,
+  TokenUri,
   TotalSupply,
+  UpdateBaseUri,
   VerifyClaim,
 } from './features';
-import { FeatureFunctionsMap } from './features/feature-functions.gen';
 
 import type { CollectionInfo, DebugHandler, TokenId, TokenStandard } from './types';
 
@@ -49,13 +76,6 @@ export const DefaultDebugHandler = (collection: CollectionInfo, action: string, 
 };
 
 export type FeatureInterfaces = { -readonly [K in FeatureInterfaceId]: FeatureInterface<K> };
-
-export const ERC721StandardInterfaces: FeatureInterfaceId[] = [
-  ...FeatureFunctionsMap['approve(address,uint256)[]'].drop,
-];
-export const ERC1155StandardInterfaces: FeatureInterfaceId[] = [
-  ...FeatureFunctionsMap['balanceOf(address,uint256)[uint256]'].drop,
-];
 
 export class CollectionContract {
   private static _debugHandler: DebugHandler | undefined;
@@ -80,6 +100,13 @@ export class CollectionContract {
   readonly owner = asCallable(new Owner(this));
   readonly setOwner = asCallable(new SetOwner(this));
 
+  // Collection
+  readonly name = asCallable(new Name(this));
+  readonly symbol = asCallable(new Symbol(this));
+  readonly contractUri = asCallable(new ContractUri(this));
+  readonly setContractUri = asCallable(new SetContractUri(this));
+  readonly setTokenNameAndSymbol = asCallable(new SetTokenNameAndSymbol(this));
+
   // Multicall
   readonly multicall = asCallable(new Multicall(this));
 
@@ -95,14 +122,21 @@ export class CollectionContract {
   readonly setTermsUri = asCallable(new SetTermsUri(this));
 
   // Token
-  // readonly tokenUri = asCallable(new TokenUri(this));
   readonly exists = asCallable(new Exists(this)); // @todo enable for ERC721
   readonly ownerOf = asCallable(new OwnerOf(this));
   readonly balanceOf = asCallable(new BalanceOf(this));
+  readonly tokenUri = asCallable(new TokenUri(this));
+  readonly setTokenUri = asCallable(new SetTokenUri(this));
+  readonly setPermanentTokenUri = asCallable(new SetPermanentTokenUri(this));
+  readonly getBaseURIIndices = asCallable(new GetBaseURIIndices(this));
+  readonly updateBaseUri = asCallable(new UpdateBaseUri(this));
+
+  // Supply
   readonly totalSupply = asCallable(new TotalSupply(this));
   readonly setMaxTotalSupply = asCallable(new SetMaxTotalSupply(this));
   readonly getSmallestTokenId = asCallable(new GetSmallestTokenId(this));
   readonly getLargestTokenId = asCallable(new GetLargestTokenId(this));
+  readonly tokensCount = asCallable(new TokensCount(this));
 
   // Mint
   readonly lazyMint = asCallable(new LazyMint(this));
@@ -110,12 +144,30 @@ export class CollectionContract {
   // Claim
   readonly claim = asCallable(new Claim(this));
   readonly verifyClaim = asCallable(new VerifyClaim(this));
+  readonly getClaimConditionById = asCallable(new GetClaimConditionById(this));
+  readonly getUserClaimConditions = asCallable(new GetUserClaimConditions(this));
+  readonly setClaimConditions = asCallable(new SetClaimConditions(this));
   readonly getClaimPauseStatus = asCallable(new GetClaimPauseStatus(this));
   readonly setClaimPauseStatus = asCallable(new SetClaimPauseStatus(this));
 
   // Issue
   readonly issue = asCallable(new Issue(this));
   readonly issueWithTokenUri = asCallable(new IssueWithTokenUri(this));
+
+  // Royalties
+  readonly royaltyInfo = asCallable(new RoyaltyInfo(this));
+  readonly getDefaultRoyaltyInfo = asCallable(new GetDefaultRoyaltyInfo(this));
+  readonly setDefaultRoyaltyInfo = asCallable(new SetDefaultRoyaltyInfo(this));
+  readonly getRoyaltyInfoForToken = asCallable(new GetRoyaltyInfoForToken(this));
+  readonly setRoyaltyInfoForToken = asCallable(new SetRoyaltyInfoForToken(this));
+
+  // Platform fee
+  readonly getPlatformFeeInfo = asCallable(new GetPlatformFeeInfo(this));
+  readonly setPlatformFeeInfo = asCallable(new SetPlatformFeeInfo(this));
+
+  // Royalties
+  readonly getPrimarySaleRecipient = asCallable(new GetPrimarySaleRecipient(this));
+  readonly setPrimarySaleRecipient = asCallable(new SetPrimarySaleRecipient(this));
 
   static setDebugHandler(handler: DebugHandler | undefined) {
     CollectionContract._debugHandler = handler;
@@ -199,26 +251,42 @@ export class CollectionContract {
     }
   }
 
+  getFunctionsProps<
+    K extends 'supported' | 'handledFeatures' | 'handledFunctions',
+    R = K extends 'supported'
+      ? boolean
+      : K extends 'handledFeatures'
+      ? FeatureInterfaceId[]
+      : K extends 'handledFunctions'
+      ? FeatureFunctionId[]
+      : never,
+  >(property: K): Record<ContractFunctionId, R> {
+    return ContractFunctionIds.reduce<Record<ContractFunctionId, R>>((acc, fId) => {
+      acc[fId] = this[fId][property] as R;
+      return acc;
+    }, {} as Record<ContractFunctionId, R>);
+  }
+
   //////
   /// Helper functions
   //////
 
-  requireTokenId(tokenId: TokenId): BigNumber {
+  requireTokenId(tokenId: TokenId, functionName?: string): BigNumber {
     if (tokenId === null || tokenId === undefined) {
-      new SdkError(SdkErrorCode.MISSING_TOKEN_ID);
+      new SdkError(SdkErrorCode.TOKEN_ID_REQUIRED, { tokenId, functionName });
     }
 
     try {
       return BigNumber.from(tokenId);
     } catch (err) {
-      throw new SdkError(SdkErrorCode.INVALID_DATA, { tokenId }, new Error('Invalid value for BigNumber'));
+      const error = new Error('Invalid value for BigNumber');
+      throw new SdkError(SdkErrorCode.INVALID_DATA, { tokenId, functionName }, error);
     }
   }
 
-  restrictTokenId(tokenId: TokenId): asserts tokenId is null | undefined {
+  rejectTokenId(tokenId: TokenId, functionName?: string): asserts tokenId is null | undefined {
     if (tokenId !== null && tokenId !== undefined) {
-      const err = new Error('Token Id is not supported for this function');
-      throw new SdkError(SdkErrorCode.INVALID_DATA, { tokenId }, err);
+      throw new SdkError(SdkErrorCode.TOKEN_ID_REJECTED, { tokenId, functionName });
     }
   }
 }

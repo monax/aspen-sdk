@@ -47,7 +47,7 @@ export class HasAcceptedTermsVersion extends ContractFunction<
       const status = await v1.connectReadOnly()['hasAcceptedTerms(address,uint8)'](userAddress, version, overrides);
       return status;
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 }

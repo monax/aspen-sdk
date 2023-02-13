@@ -35,7 +35,7 @@ export class Owner extends ContractFunction<OwnerInterfaces, OwnerPartitions, Ow
       const owner = await v1.connectReadOnly().owner(overrides);
       return parse(Address, owner);
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 }

@@ -135,7 +135,7 @@ importers:
       '@graphql-codegen/typescript': ^2.7.4
       '@graphql-codegen/typescript-operations': ^2.5.4
       '@jest/globals': ^29.3.1
-      '@monaxlabs/spec': ^0.10.6
+      '@monaxlabs/spec': ^0.10.14
       '@openzeppelin/contracts': ^4.8.1
       '@typechain/ethers-v5': ^10.2.0
       '@types/jest': ^29.2.5
@@ -193,7 +193,7 @@ importers:
       '@graphql-codegen/typescript': 2.8.7_graphql@16.6.0
       '@graphql-codegen/typescript-operations': 2.5.12_graphql@16.6.0
       '@jest/globals': 29.3.1
-      '@monaxlabs/spec': 0.10.6
+      '@monaxlabs/spec': 0.10.14
       '@openzeppelin/contracts': 4.8.1
       '@typechain/ethers-v5': 10.2.0_k6bdrczrdxrxopgjlr5kov2hw4
       '@types/jest': 29.2.5
@@ -2306,8 +2306,8 @@ packages:
       tweetnacl-util: 0.15.1
     dev: true
 
-  /@monaxlabs/spec/0.10.6:
-    resolution: {integrity: sha512-DbuE2/ZapEUkEdjel8+pjOrs04Io3RvxzD2KhyKppVT3O/RwbH8ZDtvBXqrpZ0sU/WVc1IpsYUdhgliaU1/Tqg==}
+  /@monaxlabs/spec/0.10.14:
+    resolution: {integrity: sha512-5/0cED1+RauFQClFVgFcygTeq5UokRQ8W9ObArk8clnA1qFMyoFum8sBb2/0jA9CJwK8MmGVfeCv4H2EEFzSpg==}
     dev: true
 
   /@multiformats/mafmt/11.0.3:

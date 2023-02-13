@@ -5,9 +5,14 @@ import type { Signerish, SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const AcceptTermsFunctions = {
+  v1: 'acceptTerms()+[]',
+  v2: 'acceptTerms()[]',
+} as const;
+
 const AcceptTermsPartitions = {
-  v1: [...FeatureFunctionsMap['acceptTerms()+[]'].drop],
-  v2: [...FeatureFunctionsMap['acceptTerms()[]'].drop],
+  v1: [...FeatureFunctionsMap[AcceptTermsFunctions.v1].drop],
+  v2: [...FeatureFunctionsMap[AcceptTermsFunctions.v2].drop],
 };
 type AcceptTermsPartitions = typeof AcceptTermsPartitions;
 
@@ -26,7 +31,7 @@ export class AcceptTerms extends ContractFunction<
   readonly functionName = 'acceptTerms';
 
   constructor(base: CollectionContract) {
-    super(base, AcceptTermsInterfaces, AcceptTermsPartitions);
+    super(base, AcceptTermsInterfaces, AcceptTermsPartitions, Object.values(AcceptTermsFunctions));
   }
 
   /** The signing wallet accepts the terms of the collection */
@@ -46,7 +51,7 @@ export class AcceptTerms extends ContractFunction<
         return tx;
       }
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
     throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
@@ -64,7 +69,7 @@ export class AcceptTerms extends ContractFunction<
         return estimate;
       }
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
     throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });

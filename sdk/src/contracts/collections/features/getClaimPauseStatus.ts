@@ -35,7 +35,7 @@ export class GetClaimPauseStatus extends ContractFunction<
   }
 
   async getClaimPauseStatus(overrides?: SourcedOverrides): Promise<boolean> {
-    if (this.supported) {
+    if (!this.supported) {
       throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
     }
 
@@ -45,7 +45,7 @@ export class GetClaimPauseStatus extends ContractFunction<
       const paused = await contract.claimIsPaused(overrides);
       return paused;
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 }

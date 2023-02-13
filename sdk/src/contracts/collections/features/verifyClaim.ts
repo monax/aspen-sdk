@@ -44,7 +44,7 @@ export class VerifyClaim extends ContractFunction<
   }
 
   protected async verifyERC1155(args: ClaimArgs, verifyMaxQuantity: boolean): Promise<boolean> {
-    args.tokenId = this.base.requireTokenId(args.tokenId);
+    args.tokenId = this.base.requireTokenId(args.tokenId, this.functionName);
     const sft = this.partition('sft');
 
     try {

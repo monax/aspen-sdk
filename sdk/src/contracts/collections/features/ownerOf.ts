@@ -36,7 +36,7 @@ export class OwnerOf extends ContractFunction<OwnerOfInterfaces, OwnerOfPartitio
       const ownerOf = await v1.connectReadOnly().ownerOf(tokenId, overrides);
       return parse(Address, ownerOf);
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 }

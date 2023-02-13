@@ -39,7 +39,7 @@ export class Multicall extends ContractFunction<
       const tx = await v1.connectWith(signer).multicall(data, overrides);
       return tx;
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 }

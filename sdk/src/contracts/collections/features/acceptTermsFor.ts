@@ -5,9 +5,14 @@ import type { Signerish, SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const AcceptTermsForFunctions = {
+  v1: 'acceptTerms(address)+[]',
+  v2: 'acceptTerms(address)[]',
+} as const;
+
 const AcceptTermsForPartitions = {
-  v1: [...FeatureFunctionsMap['acceptTerms(address)+[]'].drop],
-  v2: [...FeatureFunctionsMap['acceptTerms(address)[]'].drop],
+  v1: [...FeatureFunctionsMap[AcceptTermsForFunctions.v1].drop],
+  v2: [...FeatureFunctionsMap[AcceptTermsForFunctions.v2].drop],
 };
 type AcceptTermsForPartitions = typeof AcceptTermsForPartitions;
 
@@ -26,7 +31,7 @@ export class AcceptTermsFor extends ContractFunction<
   readonly functionName = 'acceptTermsFor';
 
   constructor(base: CollectionContract) {
-    super(base, AcceptTermsForInterfaces, AcceptTermsForPartitions);
+    super(base, AcceptTermsForInterfaces, AcceptTermsForPartitions, Object.values(AcceptTermsForFunctions));
   }
 
   call(...args: AcceptTermsForCallArgs): Promise<AcceptTermsForResponse> {
@@ -49,7 +54,7 @@ export class AcceptTermsFor extends ContractFunction<
         return tx;
       }
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
     throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { function: this.functionName });
@@ -67,7 +72,7 @@ export class AcceptTermsFor extends ContractFunction<
         return estimate;
       }
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, undefined, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
     throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { function: this.functionName });

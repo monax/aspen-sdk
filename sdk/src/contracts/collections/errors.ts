@@ -6,7 +6,8 @@ export enum SdkErrorCode {
   FUNCTION_NOT_IMPLEMENTED = 'Function is not implemented',
   CHAIN_ERROR = 'A call to the chain failed',
   WEB_REQUEST_FAILED = 'Web request failed!',
-  MISSING_TOKEN_ID = 'Token ID is required!',
+  TOKEN_ID_REQUIRED = 'Token Id is required to call the function on this contract!',
+  TOKEN_ID_REJECTED = 'Token Id is not supported for this function on this contract!',
   INVALID_DATA = 'Invalid input data provided!',
   UNKNOWN_ERROR = 'Unknown error.',
 }

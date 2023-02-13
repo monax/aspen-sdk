@@ -65,7 +65,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction }: ClaimArgs,
     overrides: PayableOverrides = {},
   ): Promise<ContractTransaction> {
-    tokenId = this.base.requireTokenId(tokenId);
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
 
     try {
@@ -134,7 +134,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction }: ClaimArgs,
     overrides: PayableOverrides = {},
   ): Promise<BigNumber> {
-    tokenId = this.base.requireTokenId(tokenId);
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
 
     try {
