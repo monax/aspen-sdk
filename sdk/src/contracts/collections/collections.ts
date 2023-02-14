@@ -125,7 +125,7 @@ export class CollectionContract {
   readonly setTermsUri = asCallable(new SetTermsUri(this));
 
   // Token
-  readonly exists = asCallable(new Exists(this)); // @todo enable for ERC721
+  readonly exists = asCallable(new Exists(this));
   readonly ownerOf = asCallable(new OwnerOf(this));
   readonly balanceOf = asCallable(new BalanceOf(this));
   readonly tokenUri = asCallable(new TokenUri(this));

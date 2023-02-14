@@ -28,6 +28,7 @@ export class SdkError extends Error {
   }
 
   static from(err: unknown, code: SdkErrorCode, data?: Record<string, unknown>): SdkError {
+    // @todo - parse the error if code == SdkErrorCode.CHAIN_ERROR
     return SdkError.is(err) ? err : new SdkError(code, data, err as Error);
   }
 }
