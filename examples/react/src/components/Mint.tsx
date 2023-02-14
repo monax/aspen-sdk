@@ -4,12 +4,13 @@ import {
   Address,
   ClaimConditionsState,
   CollectionContract,
-  TermsUserAcceptanceState,
+  PendingClaim,
 } from "@monaxlabs/aspen-sdk/dist/contracts";
 import { parse } from "@monaxlabs/aspen-sdk/dist/utils";
 import { useWeb3React } from "@web3-react/core";
 import { useEffect, useMemo, useState } from "react";
 import { Options as ToastOptions, useToasts } from "react-toast-notifications";
+import { TermsUserAcceptanceState } from "pages";
 
 const TOAST_SUCCESS: ToastOptions = {
   appearance: "success",
@@ -46,7 +47,7 @@ const Mint: React.FC<{
 
     setLoadingMintButton(true);
 
-    const pendingClaim = contract.Claim(tokenId, conditions);
+    const pendingClaim = new PendingClaim(contract, tokenId, conditions);
     const signer = library.getSigner();
     const recipient = parse(Address, account);
     const overrides = undefined;

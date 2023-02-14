@@ -24,7 +24,9 @@ const GetTermsDetailsInterfaces = Object.values(GetTermsDetailsPartitions).flat(
 type GetTermsDetailsInterfaces = (typeof GetTermsDetailsInterfaces)[number];
 
 export type GetTermsDetailsCallArgs = [overrides?: SourcedOverrides];
-export type GetTermsDetailsResponse = {
+export type GetTermsDetailsResponse = TermsDetails;
+
+export type TermsDetails = {
   termsActivated: boolean;
   termsLink: string;
   termsVersion: number;
@@ -46,7 +48,7 @@ export class GetTermsDetails extends ContractFunction<
     return this.getTermsDetails(...args);
   }
 
-  async getTermsDetails(overrides?: SourcedOverrides): Promise<GetTermsDetailsResponse> {
+  async getTermsDetails(overrides?: SourcedOverrides): Promise<TermsDetails> {
     const { v1, v2 } = this.partitions;
 
     try {

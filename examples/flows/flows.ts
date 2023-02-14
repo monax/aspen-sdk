@@ -29,8 +29,12 @@ import {
   ICedarERC1155DropV5__factory,
   ICedarERC721DropV7,
   ICedarERC721DropV7__factory,
+  IssueSuccessState,
+  PendingClaim,
+  PendingIssue,
+  Token,
+  ZERO_ADDRESS,
 } from '@monaxlabs/aspen-sdk/dist/contracts';
-import { IssueSuccessState } from '@monaxlabs/aspen-sdk/dist/contracts/collections/objects';
 import { parse } from '@monaxlabs/aspen-sdk/dist/utils';
 import { BigNumber, BigNumberish, Signer } from 'ethers';
 import { providers } from 'ethers/lib/ethers';
@@ -233,7 +237,7 @@ async function cmdDirectIssueB(): Promise<void> {
       pool.do(async (signer) => {
         const signerAddress = await signer.getAddress();
         console.error(`Calling issue to receiver ${account.address} with signer ${signerAddress}`);
-        return contract.Issue(null).processAsync(signer, parse(Address, account.address), 1, gasStrategy);
+        return new PendingIssue(contract, null).processAsync(signer, parse(Address, account.address), 1, gasStrategy);
       }),
     );
   }
@@ -292,12 +296,11 @@ async function cmdDeployAllowlistAndClaim(): Promise<void> {
   const contract = await CollectionContract.from(provider, contractAddress);
 
   //
-  const phase = await contract.conditions.getActive(tokenId);
+  const phase = await contract.getUserClaimConditions(ZERO_ADDRESS, tokenId);
   if (!phase) {
     throw new Error(`No active phase`);
   }
 
-  const { pricePerToken } = phase.activeClaimCondition;
   const gasStrategy = await getGasStrategy(provider);
 
   const reserve = await getSigner(network, providerConfig);
@@ -309,12 +312,14 @@ async function cmdDeployAllowlistAndClaim(): Promise<void> {
     if (maxClaimable) {
       console.error(`Receiver should be on allow list, retrieving proof`);
 
-      const conditions = await contract.conditions.getState(receiver, tokenId);
-      if (conditions.claimState !== 'ok') {
+      const { success, result: conditions } = await new Token(contract, tokenId).getFullUserClaimConditions(receiver);
+      if (!success) {
+        throw new Error(`Couldn't get user conditions`);
+      } else if (conditions.claimState !== 'ok') {
         throw new Error(`Claim state not ok: ${conditions.claimState}`);
       }
 
-      const pendingClaim = contract.Claim(tokenId, conditions);
+      const pendingClaim = new PendingClaim(contract, tokenId, conditions);
       const verify = await pendingClaim.verify(receiver, maxClaimable);
 
       if (!verify.success) {
@@ -322,7 +327,7 @@ async function cmdDeployAllowlistAndClaim(): Promise<void> {
       }
 
       const gas = await pendingClaim.estimateGas(claimer, receiver, maxClaimable);
-      await gasClaimerWallet(reserve, provider, gas.result || 0, claimer.address, pricePerToken, gasStrategy);
+      await gasClaimerWallet(reserve, provider, gas.result || 0, claimer.address, phase.pricePerToken, gasStrategy);
       console.error(`Performing claim for ${receiver}`);
 
       const claimTx = await pendingClaim.execute(claimer, receiver, maxClaimable);

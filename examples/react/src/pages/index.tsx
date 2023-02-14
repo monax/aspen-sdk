@@ -6,8 +6,9 @@ import { Web3Provider } from "@ethersproject/providers";
 import {
   Address,
   ClaimConditionsState,
+  Collection,
   CollectionContract,
-  TermsUserAcceptanceState,
+  Token,
   TokenMetadata,
   ZERO_ADDRESS,
 } from "@monaxlabs/aspen-sdk/dist/contracts";
@@ -21,10 +22,15 @@ import Mint from "components/Mint";
 import { useToasts } from "react-toast-notifications";
 import { useAsyncEffect } from "hooks/useAsyncEffect";
 import { SdkError } from "@monaxlabs/aspen-sdk/dist/contracts/collections/errors";
+import { TermsDetails } from "@monaxlabs/aspen-sdk/dist/contracts/collections/features";
 
 type Metadata = {
   uri: string | null;
   metadata: TokenMetadata | null;
+};
+
+export type TermsUserAcceptanceState = TermsDetails & {
+  termsAccepted: boolean;
 };
 
 const DELAY = 10000;
@@ -54,17 +60,12 @@ const Home: NextPage = () => {
 
     try {
       const address = parse(Address, account ?? ZERO_ADDRESS);
-      const conditions = await contract.conditions.getState(
-        address,
-        selectedToken
-      );
-      setConditions(conditions);
+      const token = new Token(contract, selectedToken);
+      const conditions = await token.getFullUserClaimConditions(address);
+      setConditions(conditions.result);
 
       if (contract.tokenStandard === "ERC1155" && selectedToken) {
-        const balance = await contract.standard.balanceOf(
-          address,
-          selectedToken
-        );
+        const balance = await contract.balanceOf(address, selectedToken);
         setTokenBalance(balance.toString());
       }
     } catch (err) {
@@ -95,22 +96,24 @@ const Home: NextPage = () => {
     const contract = await CollectionContract.from(library, contractAddress);
     setContract(contract);
 
-    const tokensCount = await contract.standard.getTokensCount();
+    const tokensCount = await new Collection(contract).tokensCount();
     setTokens(Array.from(Array(tokensCount.toNumber()).keys()));
   }, [active, library, contractAddress]);
 
   useAsyncEffect(async () => {
     if (!contract) return;
-    const acceptTerms = await contract.agreements.getState(
-      parse(Address, account)
-    );
-    setTermsInfo(acceptTerms);
+    const [termDetails, termsAccepted] = await Promise.all([
+      contract.getTermsDetails(),
+      contract.hasAcceptedTerms(parse(Address, account)),
+    ]);
+    setTermsInfo({ ...termDetails, termsAccepted });
   }, [contract, account]);
 
   useAsyncEffect(async () => {
     if (!contract || selectedToken === null) return;
-    const metadata = await contract.tokenUri.getMetadata(selectedToken);
-    setTokenMetadata(metadata);
+    const token = new Token(contract, selectedToken);
+    const metadata = await token.getMetadata();
+    setTokenMetadata(metadata.result);
   }, [contract, selectedToken]);
 
   return (
