@@ -1,13 +1,17 @@
 import { ContractTransaction } from 'ethers';
 import { CollectionContract } from '../..';
-import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const PrefixFunctions = {
+  v1: 'acceptTerms()+[]',
+  v2: 'acceptTerms()[]',
+} as const;
+
 const PrefixPartitions = {
-  v1: [...FeatureFunctionsMap['acceptTerms()+[]'].drop],
-  v2: [...FeatureFunctionsMap['acceptTerms()[]'].drop],
+  v1: [...FeatureFunctionsMap[PrefixFunctions.v1].drop],
+  v2: [...FeatureFunctionsMap[PrefixFunctions.v2].drop],
 };
 type PrefixPartitions = typeof PrefixPartitions;
 
@@ -21,11 +25,11 @@ export class Prefix extends ContractFunction<PrefixInterfaces, PrefixPartitions,
   readonly functionName = 'name';
 
   constructor(base: CollectionContract) {
-    super(base, PrefixInterfaces, PrefixPartitions);
+    super(base, PrefixInterfaces, PrefixPartitions, PrefixFunctions);
   }
 
   call(...args: PrefixCallArgs): Promise<PrefixResponse> {
     // return this.funcName(...args);
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 }

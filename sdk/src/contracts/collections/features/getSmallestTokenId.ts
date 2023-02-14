@@ -4,8 +4,12 @@ import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const GetSmallestTokenIdFunctions = {
+  v1: 'getSmallestTokenId()[uint8]',
+} as const;
+
 const GetSmallestTokenIdPartitions = {
-  v1: [...FeatureFunctionsMap['getSmallestTokenId()[uint8]'].drop],
+  v1: [...FeatureFunctionsMap[GetSmallestTokenIdFunctions.v1].drop],
 };
 type GetSmallestTokenIdPartitions = typeof GetSmallestTokenIdPartitions;
 
@@ -24,7 +28,7 @@ export class GetSmallestTokenId extends ContractFunction<
   readonly functionName = 'getSmallestTokenId';
 
   constructor(base: CollectionContract) {
-    super(base, GetSmallestTokenIdInterfaces, GetSmallestTokenIdPartitions);
+    super(base, GetSmallestTokenIdInterfaces, GetSmallestTokenIdPartitions, GetSmallestTokenIdFunctions);
   }
 
   /** Get the number of unique tokens in the collection */

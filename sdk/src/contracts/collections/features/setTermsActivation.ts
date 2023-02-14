@@ -5,9 +5,14 @@ import type { Signerish, SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const SetTermsActivationFunctions = {
+  v1: 'setTermsStatus(bool)[]',
+  v2: 'setTermsActivation(bool)[]',
+} as const;
+
 const SetTermsActivationPartitions = {
-  v1: [...FeatureFunctionsMap['setTermsStatus(bool)[]'].drop],
-  v2: [...FeatureFunctionsMap['setTermsActivation(bool)[]'].drop],
+  v1: [...FeatureFunctionsMap[SetTermsActivationFunctions.v1].drop],
+  v2: [...FeatureFunctionsMap[SetTermsActivationFunctions.v2].drop],
 };
 type SetTermsActivationPartitions = typeof SetTermsActivationPartitions;
 
@@ -26,7 +31,7 @@ export class SetTermsActivation extends ContractFunction<
   readonly functionName = 'setTermsActivation';
 
   constructor(base: CollectionContract) {
-    super(base, SetTermsActivationInterfaces, SetTermsActivationPartitions);
+    super(base, SetTermsActivationInterfaces, SetTermsActivationPartitions, SetTermsActivationFunctions);
   }
 
   call(...args: SetTermsActivationCallArgs): Promise<SetTermsActivationResponse> {
@@ -52,7 +57,7 @@ export class SetTermsActivation extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 
   async estimateGas(signer: Signerish, termsEnabled: boolean, overrides?: SourcedOverrides): Promise<BigNumber> {
@@ -70,6 +75,6 @@ export class SetTermsActivation extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 }

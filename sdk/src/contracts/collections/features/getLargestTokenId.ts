@@ -5,8 +5,12 @@ import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const GetLargestTokenIdFunctions = {
+  v1: 'getLargestTokenId()[uint256]',
+} as const;
+
 const GetLargestTokenIdPartitions = {
-  v1: [...FeatureFunctionsMap['getLargestTokenId()[uint256]'].drop],
+  v1: [...FeatureFunctionsMap[GetLargestTokenIdFunctions.v1].drop],
 };
 type GetLargestTokenIdPartitions = typeof GetLargestTokenIdPartitions;
 
@@ -25,7 +29,7 @@ export class GetLargestTokenId extends ContractFunction<
   readonly functionName = 'getLargestTokenId';
 
   constructor(base: CollectionContract) {
-    super(base, GetLargestTokenIdInterfaces, GetLargestTokenIdPartitions);
+    super(base, GetLargestTokenIdInterfaces, GetLargestTokenIdPartitions, GetLargestTokenIdFunctions);
   }
 
   /** Get the number of unique tokens in the collection */

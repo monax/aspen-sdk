@@ -25,6 +25,10 @@ export const ERC721StandardInterfaces: FeatureInterfaceId[] = [
 export const ERC1155StandardInterfaces: FeatureInterfaceId[] = [
   ...FeatureFunctionsMap['balanceOf(address,uint256)[uint256]'].drop,
 ];
+export const CatchAllInterfaces: FeatureInterfaceId[] = [
+  ...FeatureFunctionsMap['isIAspenFeaturesV0()[bool]'].drop,
+  ...FeatureFunctionsMap['isICedarFeaturesV0()[bool]'].drop,
+];
 
 export type ContractFunctionIds = typeof ContractFunctionIds;
 export type ContractFunctionId = ContractFunctionIds[number];
@@ -33,6 +37,7 @@ export const ContractFunctionIds = [
   // Contract
   'isAspenFeatures',
   'supportsInterface',
+  'supportedFeatures',
   'implementationName',
   'implementationVersion',
   'owner',
@@ -74,7 +79,6 @@ export const ContractFunctionIds = [
   'setMaxTotalSupply',
   'getSmallestTokenId',
   'getLargestTokenId',
-  'tokensCount',
 
   // Mint
   'lazyMint',
@@ -87,6 +91,9 @@ export const ContractFunctionIds = [
   'setClaimConditions',
   'getClaimPauseStatus',
   'setClaimPauseStatus',
+
+  // Burn
+  'burn',
 
   // Issue
   'issue',
@@ -106,6 +113,9 @@ export const ContractFunctionIds = [
   // Royalties
   'getPrimarySaleRecipient',
   'setPrimarySaleRecipient',
+
+  //
+  'setOperatorFiltererStatus',
 ] as const;
 
 // export type FunctionPartitions = Record<string, NonEmptyArray<FeatureInterfaceId>>;
@@ -189,6 +199,7 @@ export type CallableContractFunction<
   A extends unknown[],
   R,
 > = ContractFunction<T, C, A, R>['call'] & ContractFunction<T, C, A, R>;
+
 export abstract class ContractFunction<
   T extends FeatureInterfaceId,
   C extends Record<string, T[]>,
@@ -202,7 +213,7 @@ export abstract class ContractFunction<
     protected readonly base: CollectionContract,
     readonly handledFeatures: T[],
     protected readonly cover: Cover<T, C>,
-    readonly handledFunctions: FeatureFunctionId[] = [],
+    readonly handledFunctions: Record<string, FeatureFunctionId> = {},
   ) {}
 
   /**
@@ -215,7 +226,7 @@ export abstract class ContractFunction<
 
   protected get partitions() {
     if (!this.supported) {
-      throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+      this.notSupported();
     }
 
     if (!this._partitions) {
@@ -231,6 +242,10 @@ export abstract class ContractFunction<
       return p as Exclude<Partition<T, C>[K], undefined>;
     }
 
+    this.notSupported();
+  }
+
+  protected notSupported(): never {
     throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
   }
 

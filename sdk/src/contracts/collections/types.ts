@@ -1,10 +1,11 @@
 import { Provider } from '@ethersproject/abstract-provider';
 import type { BigNumber, BigNumberish, Overrides, Signer } from 'ethers';
-import { AllowlistStatus } from '../../apis/publishing/index';
+import { AllowlistStatus } from '../../apis/publishing';
 import { PromiseOrValue } from '../generated/common';
 import { Address, ChainId } from '../index';
 import type { CollectionMetaImageType, CollectionMetaLinkType } from './constants';
 import { SdkError } from './errors';
+import { UserClaimConditions } from './features';
 
 export type TokenId = BigNumberish | null | undefined;
 
@@ -29,6 +30,7 @@ export type CollectionCreator = {
   creator_email: string;
 };
 
+// @todo - use spec for parsing
 export type CollectionMetadata = {
   schema?: string | null;
   kind?: MetadataKind;
@@ -101,43 +103,8 @@ export type TokenAssetMetadata = {
   metadata: TokenMetadata | null;
 };
 
-export type CollectionContractClaimCondition = {
-  startTimestamp: number;
-  maxClaimableSupply: BigNumber;
-  supplyClaimed: BigNumber;
-  quantityLimitPerTransaction: BigNumber;
-  waitTimeInSecondsBetweenClaims: number;
-  merkleRoot: string;
-  pricePerToken: BigNumber;
-  currency: Address;
-  phaseId: string;
-};
-
-export type ActiveClaimConditions = {
-  maxWalletClaimCount: BigNumber;
-  tokenSupply: BigNumber;
-  maxTotalSupply: BigNumber;
-  maxAvailableSupply: BigNumber;
-  activeClaimConditionId: number;
-  activeClaimCondition: Omit<CollectionContractClaimCondition, 'phaseId'> & {
-    isClaimingPaused: boolean;
-    phaseId: string | null;
-  };
-};
-
-export type UserClaimConditions = {
-  activeClaimConditionId: number;
-  walletClaimCount: BigNumber;
-  walletClaimedCountInPhase: BigNumber | null;
-  lastClaimTimestamp: number;
-  nextClaimTimestamp: number;
-};
-
-// Combines all conditions
 export type ClaimConditionsState = UserClaimConditions &
-  CollectionUserClaimConditions &
-  Omit<ActiveClaimConditions, 'activeClaimCondition' | 'phaseId'> &
-  Omit<CollectionContractClaimCondition, 'phaseId'> & { allowlistStatus: AllowlistStatus; phaseId: string | null };
+  UserClaimRestrictions & { allowlistStatus: AllowlistStatus; phaseId: string | null };
 
 export type CollectionUserClaimState =
   | 'ok'
@@ -150,18 +117,11 @@ export type CollectionUserClaimState =
   | 'claimed-phase-allowance'
   | 'claimed-wallet-allowance';
 
-export type CollectionUserClaimConditions = {
+export type UserClaimRestrictions = {
   availableQuantity: BigNumber;
   canClaimTokens: boolean;
   canMintAfter: Date;
   claimState: CollectionUserClaimState;
-};
-
-export type TermsUserAcceptanceState = {
-  termsActivated: boolean;
-  termsAccepted: boolean;
-  termsLink: string;
-  termsVersion: number;
 };
 
 export type CollectionInfo = {

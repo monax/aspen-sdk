@@ -5,8 +5,12 @@ import type { Signerish, SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const SetPermanentTokenUriFunctions = {
+  v1: 'setPermantentTokenURI(uint256,string)[]',
+} as const;
+
 const SetPermanentTokenUriPartitions = {
-  v1: [...FeatureFunctionsMap['setPermantentTokenURI(uint256,string)[]'].drop],
+  v1: [...FeatureFunctionsMap[SetPermanentTokenUriFunctions.v1].drop],
 };
 type SetPermanentTokenUriPartitions = typeof SetPermanentTokenUriPartitions;
 
@@ -30,7 +34,7 @@ export class SetPermanentTokenUri extends ContractFunction<
   readonly functionName = 'setPermanentTokenUri';
 
   constructor(base: CollectionContract) {
-    super(base, SetPermanentTokenUriInterfaces, SetPermanentTokenUriPartitions);
+    super(base, SetPermanentTokenUriInterfaces, SetPermanentTokenUriPartitions, SetPermanentTokenUriFunctions);
   }
 
   call(...args: SetPermanentTokenUriCallArgs): Promise<SetPermanentTokenUriResponse> {

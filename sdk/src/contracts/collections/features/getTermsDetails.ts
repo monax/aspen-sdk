@@ -5,9 +5,18 @@ import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const GetTermsDetailsFunctions = {
+  v1a: 'termsActivated()[bool]',
+  v1b: 'userAgreement()[string]',
+  v2: 'getTermsDetails()[string,uint8,bool]',
+} as const;
+
 const GetTermsDetailsPartitions = {
-  v1: [...FeatureFunctionsMap['termsActivated()[bool]'].drop],
-  v2: [...FeatureFunctionsMap['getTermsDetails()[string,uint8,bool]'].drop],
+  v1: [
+    ...FeatureFunctionsMap[GetTermsDetailsFunctions.v1a].drop,
+    ...FeatureFunctionsMap[GetTermsDetailsFunctions.v1b].drop,
+  ],
+  v2: [...FeatureFunctionsMap[GetTermsDetailsFunctions.v2].drop],
 };
 type GetTermsDetailsPartitions = typeof GetTermsDetailsPartitions;
 
@@ -30,7 +39,7 @@ export class GetTermsDetails extends ContractFunction<
   readonly functionName = 'getTermsDetails';
 
   constructor(base: CollectionContract) {
-    super(base, GetTermsDetailsInterfaces, GetTermsDetailsPartitions);
+    super(base, GetTermsDetailsInterfaces, GetTermsDetailsPartitions, GetTermsDetailsFunctions);
   }
 
   call(...args: GetTermsDetailsCallArgs): Promise<GetTermsDetailsResponse> {
@@ -57,6 +66,6 @@ export class GetTermsDetails extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
-    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 }

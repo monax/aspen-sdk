@@ -1,13 +1,19 @@
 import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { CollectionContractClaimCondition, Signerish, SourcedOverrides } from '../types';
+import type { Signerish, SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
+import { CollectionContractClaimCondition } from './getClaimConditionById';
+
+const SetClaimConditionsFunctions = {
+  nft: 'setClaimConditions(tuple[],bool)[]',
+  sft: 'setClaimConditions(uint256,tuple[],bool)[]',
+} as const;
 
 const SetClaimConditionsPartitions = {
-  nft: [...FeatureFunctionsMap['setClaimConditions(tuple[],bool)[]'].drop],
-  sft: [...FeatureFunctionsMap['setClaimConditions(uint256,tuple[],bool)[]'].drop],
+  nft: [...FeatureFunctionsMap[SetClaimConditionsFunctions.nft].drop],
+  sft: [...FeatureFunctionsMap[SetClaimConditionsFunctions.sft].drop],
 };
 type SetClaimConditionsPartitions = typeof SetClaimConditionsPartitions;
 
@@ -32,7 +38,7 @@ export class SetClaimConditions extends ContractFunction<
   readonly functionName = 'setClaimConditions';
 
   constructor(base: CollectionContract) {
-    super(base, SetClaimConditionsInterfaces, SetClaimConditionsPartitions);
+    super(base, SetClaimConditionsInterfaces, SetClaimConditionsPartitions, SetClaimConditionsFunctions);
   }
 
   call(...args: SetClaimConditionsCallArgs): Promise<SetClaimConditionsResponse> {
@@ -70,7 +76,7 @@ export class SetClaimConditions extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { conditions, tokenId, resetClaimEligibility });
     }
 
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 
   async estimateGas(
@@ -106,6 +112,6 @@ export class SetClaimConditions extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { conditions, tokenId, resetClaimEligibility });
     }
 
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 }

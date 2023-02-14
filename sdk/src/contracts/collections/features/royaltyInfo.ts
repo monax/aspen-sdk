@@ -5,8 +5,12 @@ import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const RoyaltyInfoFunctions = {
+  v1: 'royaltyInfo(uint256,uint256)[address,uint256]',
+} as const;
+
 const RoyaltyInfoPartitions = {
-  v1: [...FeatureFunctionsMap['royaltyInfo(uint256,uint256)[address,uint256]'].drop],
+  v1: [...FeatureFunctionsMap[RoyaltyInfoFunctions.v1].drop],
 };
 type RoyaltyInfoPartitions = typeof RoyaltyInfoPartitions;
 
@@ -30,7 +34,7 @@ export class RoyaltyInfo extends ContractFunction<
   readonly functionName = 'royaltyInfo';
 
   constructor(base: CollectionContract) {
-    super(base, RoyaltyInfoInterfaces, RoyaltyInfoPartitions);
+    super(base, RoyaltyInfoInterfaces, RoyaltyInfoPartitions, RoyaltyInfoFunctions);
   }
 
   call(...args: RoyaltyInfoCallArgs): Promise<RoyaltyInfoResponse> {

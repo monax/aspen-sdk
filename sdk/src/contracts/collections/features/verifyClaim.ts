@@ -1,11 +1,17 @@
 import { CollectionContract } from '../collections';
+import { SdkError, SdkErrorCode } from '../errors';
 import { ClaimArgs } from './claim';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const VerifyClaimFunctions = {
+  nft: 'verifyClaim(uint256,address,uint256,address,uint256,bool)[]',
+  sft: 'verifyClaim(uint256,address,uint256,uint256,address,uint256,bool)[]',
+} as const;
+
 const VerifyClaimPartitions = {
-  nft: [...FeatureFunctionsMap['verifyClaim(uint256,address,uint256,address,uint256,bool)[]'].drop],
-  sft: [...FeatureFunctionsMap['verifyClaim(uint256,address,uint256,uint256,address,uint256,bool)[]'].drop],
+  nft: [...FeatureFunctionsMap[VerifyClaimFunctions.nft].drop],
+  sft: [...FeatureFunctionsMap[VerifyClaimFunctions.sft].drop],
 };
 type VerifyClaimPartitions = typeof VerifyClaimPartitions;
 
@@ -24,7 +30,7 @@ export class VerifyClaim extends ContractFunction<
   readonly functionName = 'verifyClaim';
 
   constructor(base: CollectionContract) {
-    super(base, VerifyClaimInterfaces, VerifyClaimPartitions);
+    super(base, VerifyClaimInterfaces, VerifyClaimPartitions, VerifyClaimFunctions);
   }
 
   call(...args: VerifyClaimCallArgs): Promise<VerifyClaimResponse> {
@@ -62,12 +68,8 @@ export class VerifyClaim extends ContractFunction<
 
       return true;
     } catch (err) {
-      // @todo - we should return false if it's normal revert
-      // that signals that the claimant doesn't meet the requirements
-      // throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
-
-    return false;
   }
 
   protected async verifyERC721(args: ClaimArgs, verifyMaxQuantity: boolean): Promise<boolean> {
@@ -87,11 +89,7 @@ export class VerifyClaim extends ContractFunction<
 
       return true;
     } catch (err) {
-      // @todo - we should return false if it's normal revert
-      // that signals that the claimant doesn't meet the requirements
-      // throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
-
-    return false;
   }
 }

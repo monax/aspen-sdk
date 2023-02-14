@@ -5,8 +5,12 @@ import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const HasAcceptedTermsVersionFunctions = {
+  v1: 'hasAcceptedTerms(address,uint8)+[bool]',
+} as const;
+
 const HasAcceptedTermsVersionPartitions = {
-  v1: [...FeatureFunctionsMap['hasAcceptedTerms(address,uint8)+[bool]'].drop],
+  v1: [...FeatureFunctionsMap[HasAcceptedTermsVersionFunctions.v1].drop],
 };
 type HasAcceptedTermsVersionPartitions = typeof HasAcceptedTermsVersionPartitions;
 
@@ -29,7 +33,7 @@ export class HasAcceptedTermsVersion extends ContractFunction<
   readonly functionName = 'hasAcceptedTermsVersion';
 
   constructor(base: CollectionContract) {
-    super(base, HasAcceptedTermsVersionInterfaces, HasAcceptedTermsVersionPartitions);
+    super(base, HasAcceptedTermsVersionInterfaces, HasAcceptedTermsVersionPartitions, HasAcceptedTermsVersionFunctions);
   }
 
   call(...args: HasAcceptedTermsVersionCallArgs): Promise<HasAcceptedTermsVersionResponse> {

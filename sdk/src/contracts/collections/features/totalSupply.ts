@@ -5,9 +5,14 @@ import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const TotalSupplyFunctions = {
+  nft: 'totalSupply()[uint256]',
+  sft: 'totalSupply(uint256)[uint256]',
+} as const;
+
 const TotalSupplyPartitions = {
-  nft: [...FeatureFunctionsMap['totalSupply()[uint256]'].drop],
-  sft: [...FeatureFunctionsMap['totalSupply(uint256)[uint256]'].drop],
+  nft: [...FeatureFunctionsMap[TotalSupplyFunctions.nft].drop],
+  sft: [...FeatureFunctionsMap[TotalSupplyFunctions.sft].drop],
 };
 type TotalSupplyPartitions = typeof TotalSupplyPartitions;
 
@@ -26,7 +31,7 @@ export class TotalSupply extends ContractFunction<
   readonly functionName = 'totalSupply';
 
   constructor(base: CollectionContract) {
-    super(base, TotalSupplyInterfaces, TotalSupplyPartitions);
+    super(base, TotalSupplyInterfaces, TotalSupplyPartitions, TotalSupplyFunctions);
   }
 
   /** Get the token supply [ERC721: across the collection] [ERC1155: for specific token] */
@@ -51,6 +56,6 @@ export class TotalSupply extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { tokenId });
     }
 
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 }

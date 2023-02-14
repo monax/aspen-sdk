@@ -11,6 +11,7 @@ import {
   AcceptTermsWithSignature,
   asCallable,
   BalanceOf,
+  Burn,
   Claim,
   ContractFunctionId,
   ContractFunctionIds,
@@ -51,6 +52,7 @@ import {
   SetContractUri,
   SetDefaultRoyaltyInfo,
   SetMaxTotalSupply,
+  SetOperatorFiltererStatus,
   SetOwner,
   SetPermanentTokenUri,
   SetPlatformFeeInfo,
@@ -60,9 +62,9 @@ import {
   SetTermsUri,
   SetTokenNameAndSymbol,
   SetTokenUri,
+  SupportedFeatures,
   SupportsInterface,
   Symbol,
-  TokensCount,
   TokenUri,
   TotalSupply,
   UpdateBaseUri,
@@ -80,7 +82,7 @@ export type FeatureInterfaces = { -readonly [K in FeatureInterfaceId]: FeatureIn
 export class CollectionContract {
   private static _debugHandler: DebugHandler | undefined;
 
-  private _supportedFeatures: FeatureInterfaceId[] = [];
+  private _supportedFeaturesList: FeatureInterfaceId[] = [];
   private _interfaces: Partial<FeatureInterfaces>;
   private _tokenStandard: TokenStandard;
   private readonly _provider: Provider;
@@ -95,6 +97,7 @@ export class CollectionContract {
   // Contract
   readonly isAspenFeatures = asCallable(new IsAspenFeatures(this));
   readonly supportsInterface = asCallable(new SupportsInterface(this));
+  readonly supportedFeatures = asCallable(new SupportedFeatures(this));
   readonly implementationName = asCallable(new ImplementationName(this));
   readonly implementationVersion = asCallable(new ImplementationVersion(this));
   readonly owner = asCallable(new Owner(this));
@@ -136,7 +139,6 @@ export class CollectionContract {
   readonly setMaxTotalSupply = asCallable(new SetMaxTotalSupply(this));
   readonly getSmallestTokenId = asCallable(new GetSmallestTokenId(this));
   readonly getLargestTokenId = asCallable(new GetLargestTokenId(this));
-  readonly tokensCount = asCallable(new TokensCount(this));
 
   // Mint
   readonly lazyMint = asCallable(new LazyMint(this));
@@ -149,6 +151,9 @@ export class CollectionContract {
   readonly setClaimConditions = asCallable(new SetClaimConditions(this));
   readonly getClaimPauseStatus = asCallable(new GetClaimPauseStatus(this));
   readonly setClaimPauseStatus = asCallable(new SetClaimPauseStatus(this));
+
+  // Burn
+  readonly burn = asCallable(new Burn(this));
 
   // Issue
   readonly issue = asCallable(new Issue(this));
@@ -168,6 +173,9 @@ export class CollectionContract {
   // Royalties
   readonly getPrimarySaleRecipient = asCallable(new GetPrimarySaleRecipient(this));
   readonly setPrimarySaleRecipient = asCallable(new SetPrimarySaleRecipient(this));
+
+  // Operator filterer
+  readonly setOperatorFiltererStatus = asCallable(new SetOperatorFiltererStatus(this));
 
   static setDebugHandler(handler: DebugHandler | undefined) {
     CollectionContract._debugHandler = handler;
@@ -193,16 +201,16 @@ export class CollectionContract {
     this.address = address;
     this._provider = provider;
 
-    this._supportedFeatures = extractKnownSupportedFeatures(features);
+    this._supportedFeaturesList = extractKnownSupportedFeatures(features);
     this._interfaces = this.getInterfaces();
-    this.debug('Loaded supported features', this._supportedFeatures);
+    this.debug('Loaded supported features', this._supportedFeaturesList);
 
-    this._tokenStandard = CollectionContract.detectStandard(this._supportedFeatures);
+    this._tokenStandard = CollectionContract.detectStandard(this._supportedFeaturesList);
     this.debug('Token standard set to', this.tokenStandard);
   }
 
-  get supportedFeatures(): string[] {
-    return this._supportedFeatures;
+  get supportedFeaturesList(): string[] {
+    return this._supportedFeaturesList;
   }
 
   /**
@@ -226,7 +234,7 @@ export class CollectionContract {
 
   protected getInterfaces(): Partial<FeatureInterfaces> {
     const interfaces = {} as Record<FeatureInterfaceId, FeatureInterface<FeatureInterfaceId>>;
-    for (const feature of this._supportedFeatures) {
+    for (const feature of this._supportedFeaturesList) {
       interfaces[feature] = this.assumeFeature(feature);
     }
 
@@ -258,11 +266,11 @@ export class CollectionContract {
       : K extends 'handledFeatures'
       ? FeatureInterfaceId[]
       : K extends 'handledFunctions'
-      ? FeatureFunctionId[]
+      ? Record<string, FeatureFunctionId>
       : never,
   >(property: K): Record<ContractFunctionId, R> {
-    return ContractFunctionIds.reduce<Record<ContractFunctionId, R>>((acc, fId) => {
-      acc[fId] = this[fId][property] as R;
+    return ContractFunctionIds.reduce<Record<ContractFunctionId, R>>((acc, func) => {
+      acc[func] = this[func][property] as R;
       return acc;
     }, {} as Record<ContractFunctionId, R>);
   }
@@ -273,7 +281,7 @@ export class CollectionContract {
 
   requireTokenId(tokenId: TokenId, functionName?: string): BigNumber {
     if (tokenId === null || tokenId === undefined) {
-      new SdkError(SdkErrorCode.TOKEN_ID_REQUIRED, { tokenId, functionName });
+      throw new SdkError(SdkErrorCode.TOKEN_ID_REQUIRED, { tokenId, functionName });
     }
 
     try {

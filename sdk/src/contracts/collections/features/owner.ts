@@ -5,8 +5,12 @@ import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const OwnerFunctions = {
+  v1: 'owner()[address]',
+} as const;
+
 const OwnerPartitions = {
-  v1: [...FeatureFunctionsMap['owner()[address]'].drop],
+  v1: [...FeatureFunctionsMap[OwnerFunctions.v1].drop],
 };
 type OwnerPartitions = typeof OwnerPartitions;
 
@@ -20,7 +24,7 @@ export class Owner extends ContractFunction<OwnerInterfaces, OwnerPartitions, Ow
   readonly functionName = 'owner';
 
   constructor(base: CollectionContract) {
-    super(base, OwnerInterfaces, OwnerPartitions);
+    super(base, OwnerInterfaces, OwnerPartitions, OwnerFunctions);
   }
 
   /** Get contract owner */

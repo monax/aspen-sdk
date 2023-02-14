@@ -1,12 +1,16 @@
-import { ContractTransaction } from 'ethers';
+import { BigNumber, ContractTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const SetTokenNameAndSymbolFunctions = {
+  v1: 'setTokenNameAndSymbol(string,string)[]',
+} as const;
+
 const SetTokenNameAndSymbolPartitions = {
-  v1: [...FeatureFunctionsMap['setTokenNameAndSymbol(string,string)[]'].drop],
+  v1: [...FeatureFunctionsMap[SetTokenNameAndSymbolFunctions.v1].drop],
 };
 type SetTokenNameAndSymbolPartitions = typeof SetTokenNameAndSymbolPartitions;
 
@@ -30,7 +34,7 @@ export class SetTokenNameAndSymbol extends ContractFunction<
   readonly functionName = 'setTokenNameAndSymbol';
 
   constructor(base: CollectionContract) {
-    super(base, SetTokenNameAndSymbolInterfaces, SetTokenNameAndSymbolPartitions);
+    super(base, SetTokenNameAndSymbolInterfaces, SetTokenNameAndSymbolPartitions, SetTokenNameAndSymbolFunctions);
   }
 
   call(...args: SetTokenNameAndSymbolCallArgs): Promise<SetTokenNameAndSymbolResponse> {
@@ -48,6 +52,17 @@ export class SetTokenNameAndSymbol extends ContractFunction<
     try {
       const tx = v1.connectWith(signer).setTokenNameAndSymbol(name, symbol, overrides);
       return tx;
+    } catch (err) {
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
+    }
+  }
+
+  async estimateGas(signer: Signerish, name: string, symbol: string, overrides?: SourcedOverrides): Promise<BigNumber> {
+    const v1 = this.partition('v1');
+
+    try {
+      const estimate = v1.connectWith(signer).estimateGas.setTokenNameAndSymbol(name, symbol, overrides);
+      return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

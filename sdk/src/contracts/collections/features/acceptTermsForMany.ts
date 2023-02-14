@@ -29,7 +29,7 @@ export class AcceptTermsForMany extends ContractFunction<
   readonly functionName = 'acceptTermsForMany';
 
   constructor(base: CollectionContract) {
-    super(base, AcceptTermsForManyInterfaces, AcceptTermsForManyPartitions, Object.values(AcceptTermsForManyFunctions));
+    super(base, AcceptTermsForManyInterfaces, AcceptTermsForManyPartitions, AcceptTermsForManyFunctions);
   }
 
   call(...args: AcceptTermsForManyCallArgs): Promise<AcceptTermsForManyResponse> {

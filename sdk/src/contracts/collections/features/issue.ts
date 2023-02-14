@@ -8,9 +8,14 @@ import type { Signerish, SourcedOverrides, TokenId, TokenStandard } from '../typ
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const IssueFunctions = {
+  nft: 'issue(address,uint256)[]',
+  sft: 'issue(address,uint256,uint256)[]',
+} as const;
+
 const IssuePartitions = {
-  nft: [...FeatureFunctionsMap['issue(address,uint256)[]'].drop],
-  sft: [...FeatureFunctionsMap['issue(address,uint256,uint256)[]'].drop],
+  nft: [...FeatureFunctionsMap[IssueFunctions.nft].drop],
+  sft: [...FeatureFunctionsMap[IssueFunctions.sft].drop],
 };
 type IssuePartitions = typeof IssuePartitions;
 
@@ -41,7 +46,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
   readonly functionName = 'issue';
 
   constructor(base: CollectionContract) {
-    super(base, IssueInterfaces, IssuePartitions);
+    super(base, IssueInterfaces, IssuePartitions, IssueFunctions);
   }
 
   call(...args: IssueCallArgs): Promise<IssueResponse> {
@@ -71,8 +76,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
       const tx = await sft.connectWith(signer).issue(receiver, tokenId, quantity, overrides);
       return tx;
     } catch (err) {
-      const args = { receiver, tokenId, quantity };
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, tokenId, quantity });
     }
   }
 
@@ -87,8 +91,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
       const tx = await nft.connectWith(signer).issue(receiver, quantity, overrides);
       return tx;
     } catch (err) {
-      const args = { receiver, quantity };
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, quantity });
     }
   }
 
@@ -115,8 +118,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
       const gas = await sft.connectWith(signer).estimateGas.issue(receiver, tokenId, quantity, overrides);
       return gas;
     } catch (err) {
-      const args = { receiver, tokenId, quantity };
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, tokenId, quantity });
     }
   }
 
@@ -131,14 +133,13 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
       const gas = await nft.connectWith(signer).estimateGas.issue(receiver, quantity, overrides);
       return gas;
     } catch (err) {
-      const args = { receiver, quantity };
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, quantity });
     }
   }
 
   protected async validateArgs({ receiver }: IssueArgs) {
     if (isSameAddress(receiver, ZERO_ADDRESS)) {
-      throw new SdkError(SdkErrorCode.INVALID_DATA, undefined, new Error('Receiver cannot be an empty address'));
+      throw new SdkError(SdkErrorCode.INVALID_DATA, { receiver }, new Error('Receiver cannot be an empty address'));
     }
   }
 
@@ -215,7 +216,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
         );
       }
     } catch (err) {
-      throw new SdkError(SdkErrorCode.INVALID_DATA, { receipt }, err as Error);
+      throw SdkError.from(err, SdkErrorCode.INVALID_DATA, { receipt });
     }
 
     return issueTokens;

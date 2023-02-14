@@ -3,14 +3,16 @@ import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { CatchAllInterfaces, ContractFunction } from './features';
+
+const SymbolFunctions = {
+  v1: 'symbol()[string]',
+} as const;
 
 const SymbolPartitions = {
+  v1: [...FeatureFunctionsMap[SymbolFunctions.v1].drop],
   // 'Symbol' has always been present but not actually exposed by the old interfaces
-  catchAll: [
-    ...FeatureFunctionsMap['isIAspenFeaturesV0()[bool]'].drop,
-    ...FeatureFunctionsMap['isICedarFeaturesV0()[bool]'].drop,
-  ],
+  catchAll: CatchAllInterfaces,
 };
 type SymbolPartitions = typeof SymbolPartitions;
 
@@ -24,7 +26,7 @@ export class Symbol extends ContractFunction<SymbolInterfaces, SymbolPartitions,
   readonly functionName = 'symbol';
 
   constructor(base: CollectionContract) {
-    super(base, SymbolInterfaces, SymbolPartitions);
+    super(base, SymbolInterfaces, SymbolPartitions, SymbolFunctions);
   }
 
   call(...args: SymbolCallArgs): Promise<SymbolResponse> {

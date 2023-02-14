@@ -5,8 +5,12 @@ import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const GetBaseURIIndicesFunctions = {
+  v1: 'getBaseURIIndices()[uint256[]]',
+} as const;
+
 const GetBaseURIIndicesPartitions = {
-  v1: [...FeatureFunctionsMap['getBaseURIIndices()[uint256[]]'].drop],
+  v1: [...FeatureFunctionsMap[GetBaseURIIndicesFunctions.v1].drop],
 };
 type GetBaseURIIndicesPartitions = typeof GetBaseURIIndicesPartitions;
 
@@ -25,7 +29,7 @@ export class GetBaseURIIndices extends ContractFunction<
   readonly functionName = 'getBaseURIIndices';
 
   constructor(base: CollectionContract) {
-    super(base, GetBaseURIIndicesInterfaces, GetBaseURIIndicesPartitions);
+    super(base, GetBaseURIIndicesInterfaces, GetBaseURIIndicesPartitions, GetBaseURIIndicesFunctions);
   }
 
   call(...args: GetBaseURIIndicesCallArgs): Promise<GetBaseURIIndicesResponse> {

@@ -1,27 +1,22 @@
-import { BigNumberish } from 'ethers';
+import { BigNumber, BigNumberish } from 'ethers';
 import { Address, CollectionContract } from '../..';
 import { parse } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { CollectionContractClaimCondition, SourcedOverrides } from '../types';
+import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { CatchAllInterfaces, ContractFunction } from './features';
+
+const GetClaimConditionByIdFunctions = {
+  nftV2: 'getClaimConditionById(uint256)[(uint256,uint256,uint256,uint256,uint256,bytes32,uint256,address,bytes32)]',
+  sftV2:
+    'getClaimConditionById(uint256,uint256)[(uint256,uint256,uint256,uint256,uint256,bytes32,uint256,address,bytes32)]',
+} as const;
 
 const GetClaimConditionByIdPartitions = {
-  nftV2: [
-    ...FeatureFunctionsMap[
-      'getClaimConditionById(uint256)[(uint256,uint256,uint256,uint256,uint256,bytes32,uint256,address,bytes32)]'
-    ].drop,
-  ],
-  sftV2: [
-    ...FeatureFunctionsMap[
-      'getClaimConditionById(uint256,uint256)[(uint256,uint256,uint256,uint256,uint256,bytes32,uint256,address,bytes32)]'
-    ].drop,
-  ],
+  nftV2: [...FeatureFunctionsMap[GetClaimConditionByIdFunctions.nftV2].drop],
+  sftV2: [...FeatureFunctionsMap[GetClaimConditionByIdFunctions.sftV2].drop],
   // 'getClaimConditionById' has always been present but not actually exposed by the old interfaces
-  catchAll: [
-    ...FeatureFunctionsMap['isIAspenFeaturesV0()[bool]'].drop,
-    ...FeatureFunctionsMap['isICedarFeaturesV0()[bool]'].drop,
-  ],
+  catchAll: CatchAllInterfaces,
 };
 type GetClaimConditionByIdPartitions = typeof GetClaimConditionByIdPartitions;
 
@@ -35,6 +30,18 @@ export type GetClaimConditionByIdCallArgs = [
 ];
 export type GetClaimConditionByIdResponse = CollectionContractClaimCondition;
 
+export type CollectionContractClaimCondition = {
+  startTimestamp: number;
+  maxClaimableSupply: BigNumber;
+  supplyClaimed: BigNumber;
+  quantityLimitPerTransaction: BigNumber;
+  waitTimeInSecondsBetweenClaims: number;
+  merkleRoot: string;
+  pricePerToken: BigNumber;
+  currency: Address;
+  phaseId: string;
+};
+
 export class GetClaimConditionById extends ContractFunction<
   GetClaimConditionByIdInterfaces,
   GetClaimConditionByIdPartitions,
@@ -44,7 +51,7 @@ export class GetClaimConditionById extends ContractFunction<
   readonly functionName = 'getClaimConditionById';
 
   constructor(base: CollectionContract) {
-    super(base, GetClaimConditionByIdInterfaces, GetClaimConditionByIdPartitions);
+    super(base, GetClaimConditionByIdInterfaces, GetClaimConditionByIdPartitions, GetClaimConditionByIdFunctions);
   }
 
   call(...args: GetClaimConditionByIdCallArgs): Promise<GetClaimConditionByIdResponse> {

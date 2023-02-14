@@ -5,8 +5,12 @@ import type { Signerish, SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const SetTermsUriFunctions = {
+  v1: 'setTermsURI(string)[]',
+} as const;
+
 const SetTermsUriPartitions = {
-  v1: [...FeatureFunctionsMap['setTermsURI(string)[]'].drop],
+  v1: [...FeatureFunctionsMap[SetTermsUriFunctions.v1].drop],
 };
 type SetTermsUriPartitions = typeof SetTermsUriPartitions;
 
@@ -25,7 +29,7 @@ export class SetTermsUri extends ContractFunction<
   readonly functionName = 'setTermsUri';
 
   constructor(base: CollectionContract) {
-    super(base, SetTermsUriInterfaces, SetTermsUriPartitions);
+    super(base, SetTermsUriInterfaces, SetTermsUriPartitions, SetTermsUriFunctions);
   }
 
   call(...args: SetTermsUriCallArgs): Promise<SetTermsUriResponse> {

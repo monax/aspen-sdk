@@ -6,9 +6,14 @@ import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const ImplementationVersionFunctions = {
+  v1: 'minorVersion()[uint256,uint256]',
+  v2: 'implementationVersion()[uint256,uint256,uint256]',
+} as const;
+
 const ImplementationVersionPartitions = {
-  v1: [...FeatureFunctionsMap['minorVersion()[uint256,uint256]'].drop],
-  v2: [...FeatureFunctionsMap['implementationVersion()[uint256,uint256,uint256]'].drop],
+  v1: [...FeatureFunctionsMap[ImplementationVersionFunctions.v1].drop],
+  v2: [...FeatureFunctionsMap[ImplementationVersionFunctions.v2].drop],
 };
 type ImplementationVersionPartitions = typeof ImplementationVersionPartitions;
 
@@ -33,7 +38,7 @@ export class ImplementationVersion extends ContractFunction<
   readonly functionName = 'implementationVersion';
 
   constructor(base: CollectionContract) {
-    super(base, ImplementationVersionInterfaces, ImplementationVersionPartitions);
+    super(base, ImplementationVersionInterfaces, ImplementationVersionPartitions, ImplementationVersionFunctions);
   }
 
   call(...args: ImplementationVersionCallArgs): Promise<ImplementationVersionResponse> {
@@ -55,6 +60,6 @@ export class ImplementationVersion extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 }

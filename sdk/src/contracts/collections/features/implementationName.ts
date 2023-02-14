@@ -4,9 +4,14 @@ import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const ImplementationNameFunctions = {
+  v1: 'implementationInterfaceName()[string]',
+  v2: 'implementationInterfaceId()[string]',
+} as const;
+
 const ImplementationNamePartitions = {
-  v1: [...FeatureFunctionsMap['implementationInterfaceName()[string]'].drop],
-  v2: [...FeatureFunctionsMap['implementationInterfaceId()[string]'].drop],
+  v1: [...FeatureFunctionsMap[ImplementationNameFunctions.v1].drop],
+  v2: [...FeatureFunctionsMap[ImplementationNameFunctions.v2].drop],
 };
 type ImplementationNamePartitions = typeof ImplementationNamePartitions;
 
@@ -25,7 +30,7 @@ export class ImplementationName extends ContractFunction<
   readonly functionName = 'implementationName';
 
   constructor(base: CollectionContract) {
-    super(base, ImplementationNameInterfaces, ImplementationNamePartitions);
+    super(base, ImplementationNameInterfaces, ImplementationNamePartitions, ImplementationNameFunctions);
   }
 
   call(...args: ImplementationNameCallArgs): Promise<ImplementationNameResponse> {
@@ -47,6 +52,6 @@ export class ImplementationName extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 }

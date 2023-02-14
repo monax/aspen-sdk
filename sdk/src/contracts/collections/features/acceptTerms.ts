@@ -31,7 +31,7 @@ export class AcceptTerms extends ContractFunction<
   readonly functionName = 'acceptTerms';
 
   constructor(base: CollectionContract) {
-    super(base, AcceptTermsInterfaces, AcceptTermsPartitions, Object.values(AcceptTermsFunctions));
+    super(base, AcceptTermsInterfaces, AcceptTermsPartitions, AcceptTermsFunctions);
   }
 
   /** The signing wallet accepts the terms of the collection */
@@ -54,7 +54,7 @@ export class AcceptTerms extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 
   async estimateGas(signer: Signerish, overrides?: SourcedOverrides): Promise<BigNumber> {
@@ -72,6 +72,6 @@ export class AcceptTerms extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 }

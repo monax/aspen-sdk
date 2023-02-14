@@ -5,9 +5,18 @@ import type { Signerish, SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const SetClaimPauseStatusFunctions = {
+  v1a: 'pauseClaims()[]',
+  v1b: 'unpauseClaims()[]',
+  v2: 'setClaimPauseStatus(bool)[]',
+} as const;
+
 const SetClaimPauseStatusPartitions = {
-  v1: [...FeatureFunctionsMap['pauseClaims()[]'].drop],
-  v2: [...FeatureFunctionsMap['setClaimPauseStatus(bool)[]'].drop],
+  v1: [
+    ...FeatureFunctionsMap[SetClaimPauseStatusFunctions.v1a].drop,
+    ...FeatureFunctionsMap[SetClaimPauseStatusFunctions.v1b].drop,
+  ],
+  v2: [...FeatureFunctionsMap[SetClaimPauseStatusFunctions.v2].drop],
 };
 type SetClaimPauseStatusPartitions = typeof SetClaimPauseStatusPartitions;
 
@@ -26,7 +35,7 @@ export class SetClaimPauseStatus extends ContractFunction<
   readonly functionName = 'setClaimPauseStatus';
 
   constructor(base: CollectionContract) {
-    super(base, SetClaimPauseStatusInterfaces, SetClaimPauseStatusPartitions);
+    super(base, SetClaimPauseStatusInterfaces, SetClaimPauseStatusPartitions, SetClaimPauseStatusFunctions);
   }
 
   call(...args: SetClaimPauseStatusCallArgs): Promise<SetClaimPauseStatusResponse> {
@@ -54,7 +63,7 @@ export class SetClaimPauseStatus extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 
   async estimateGas(signer: Signerish, pauseStatus: boolean, overrides?: SourcedOverrides): Promise<BigNumber> {
@@ -74,6 +83,6 @@ export class SetClaimPauseStatus extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 }

@@ -3,10 +3,16 @@ import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { CatchAllInterfaces, ContractFunction } from './features';
+
+const ExistsFunctions = {
+  v1: 'exists(uint256)[bool]',
+} as const;
 
 const ExistsPartitions = {
-  v1: [...FeatureFunctionsMap['exists(uint256)[bool]'].drop],
+  v1: [...FeatureFunctionsMap[ExistsFunctions.v1].drop],
+  // 'exists' has always been present but not actually exposed by the old interfaces
+  catchAll: CatchAllInterfaces,
 };
 type ExistsPartitions = typeof ExistsPartitions;
 
@@ -20,7 +26,7 @@ export class Exists extends ContractFunction<ExistsInterfaces, ExistsPartitions,
   readonly functionName = 'exists';
 
   constructor(base: CollectionContract) {
-    super(base, ExistsInterfaces, ExistsPartitions);
+    super(base, ExistsInterfaces, ExistsPartitions, ExistsFunctions);
   }
 
   /** Check if a token exists */
@@ -30,13 +36,13 @@ export class Exists extends ContractFunction<ExistsInterfaces, ExistsPartitions,
 
   async exists(tokenId: BigNumberish, overrides?: SourcedOverrides): Promise<boolean> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
-    const v1 = this.partition('v1');
 
     try {
-      const exists = await v1.connectReadOnly().exists(tokenId, overrides);
+      const token = this.base.assumeFeature('standard/IERC1155.sol:IERC1155SupplyV2');
+      const exists = await token.connectReadOnly().exists(tokenId, overrides);
       return exists;
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, { tokenId }, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { tokenId });
     }
   }
 }

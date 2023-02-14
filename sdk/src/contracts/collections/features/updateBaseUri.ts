@@ -5,8 +5,12 @@ import type { Signerish, SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const UpdateBaseUriFunctions = {
+  v1: 'updateBaseURI(uint256,string)[]',
+} as const;
+
 const UpdateBaseUriPartitions = {
-  v1: [...FeatureFunctionsMap['updateBaseURI(uint256,string)[]'].drop],
+  v1: [...FeatureFunctionsMap[UpdateBaseUriFunctions.v1].drop],
 };
 type UpdateBaseUriPartitions = typeof UpdateBaseUriPartitions;
 
@@ -30,7 +34,7 @@ export class UpdateBaseUri extends ContractFunction<
   readonly functionName = 'updateBaseUri';
 
   constructor(base: CollectionContract) {
-    super(base, UpdateBaseUriInterfaces, UpdateBaseUriPartitions);
+    super(base, UpdateBaseUriInterfaces, UpdateBaseUriPartitions, UpdateBaseUriFunctions);
   }
 
   call(...args: UpdateBaseUriCallArgs): Promise<UpdateBaseUriResponse> {

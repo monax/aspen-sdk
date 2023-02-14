@@ -3,14 +3,16 @@ import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { CatchAllInterfaces, ContractFunction } from './features';
+
+const NameFunctions = {
+  v1: 'name()[string]',
+} as const;
 
 const NamePartitions = {
+  v1: [...FeatureFunctionsMap[NameFunctions.v1].drop],
   // 'name' has always been present but not actually exposed by the old interfaces
-  catchAll: [
-    ...FeatureFunctionsMap['isIAspenFeaturesV0()[bool]'].drop,
-    ...FeatureFunctionsMap['isICedarFeaturesV0()[bool]'].drop,
-  ],
+  catchAll: CatchAllInterfaces,
 };
 type NamePartitions = typeof NamePartitions;
 
@@ -24,7 +26,7 @@ export class Name extends ContractFunction<NameInterfaces, NamePartitions, NameC
   readonly functionName = 'name';
 
   constructor(base: CollectionContract) {
-    super(base, NameInterfaces, NamePartitions);
+    super(base, NameInterfaces, NamePartitions, NameFunctions);
   }
 
   call(...args: NameCallArgs): Promise<NameResponse> {

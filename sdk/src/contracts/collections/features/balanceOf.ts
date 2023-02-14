@@ -31,7 +31,7 @@ export class BalanceOf extends ContractFunction<
   readonly functionName = 'balanceOf';
 
   constructor(base: CollectionContract) {
-    super(base, BalanceOfInterfaces, BalanceOfPartitions, Object.values(BalanceOfFunctions));
+    super(base, BalanceOfInterfaces, BalanceOfPartitions, BalanceOfFunctions);
   }
 
   /** Get the token supply owned by a wallet [ERC721: across the collection] [ERC1155: for specific token] */
@@ -60,6 +60,6 @@ export class BalanceOf extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { address, tokenId });
     }
 
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 }

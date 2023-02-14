@@ -5,8 +5,12 @@ import type { Signerish, SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const SetOwnerFunctions = {
+  v1: 'setOwner(address)[]',
+} as const;
+
 const SetOwnerPartitions = {
-  v1: [...FeatureFunctionsMap['setOwner(address)[]'].drop],
+  v1: [...FeatureFunctionsMap[SetOwnerFunctions.v1].drop],
 };
 type SetOwnerPartitions = typeof SetOwnerPartitions;
 
@@ -25,7 +29,7 @@ export class SetOwner extends ContractFunction<
   readonly functionName = 'setOwner';
 
   constructor(base: CollectionContract) {
-    super(base, SetOwnerInterfaces, SetOwnerPartitions);
+    super(base, SetOwnerInterfaces, SetOwnerPartitions, SetOwnerFunctions);
   }
 
   call(...args: SetOwnerCallArgs): Promise<SetOwnerResponse> {

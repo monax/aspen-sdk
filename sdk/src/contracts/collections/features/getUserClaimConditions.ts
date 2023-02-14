@@ -2,9 +2,10 @@ import { BigNumber, BigNumberish, constants } from 'ethers';
 import { Address, Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { Zero } from '../number';
-import type { CollectionContractClaimCondition, SourcedOverrides } from '../types';
+import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
+import { CollectionContractClaimCondition } from './getClaimConditionById';
 
 // Reasonably large number to compare with
 export const SUPPLY_THRESHOLD = constants.MaxInt256;
@@ -65,7 +66,7 @@ export type GetUserClaimConditionsResponse = UserClaimConditions;
 
 export type UserClaimConditions = PartialUserClaimConditions &
   Omit<ActiveClaimConditions, 'activeClaimCondition'> &
-  Omit<CollectionContractClaimCondition, 'phaseId'> & { phaseId: string | null };
+  Omit<CollectionContractClaimCondition, 'phaseId'> & { isClaimingPaused: boolean; phaseId: string | null };
 
 type ActiveClaimConditions = {
   maxWalletClaimCount: BigNumber;
@@ -96,12 +97,7 @@ export class GetUserClaimConditions extends ContractFunction<
   readonly functionName = 'getUserClaimConditions';
 
   constructor(base: CollectionContract) {
-    super(
-      base,
-      GetUserClaimConditionsInterfaces,
-      GetUserClaimConditionsPartitions,
-      Object.values(GetUserClaimConditionsFunctions),
-    );
+    super(base, GetUserClaimConditionsInterfaces, GetUserClaimConditionsPartitions, GetUserClaimConditionsFunctions);
   }
 
   call(...args: GetUserClaimConditionsCallArgs): Promise<GetUserClaimConditionsResponse> {
@@ -119,25 +115,25 @@ export class GetUserClaimConditions extends ContractFunction<
       case 'ERC1155': {
         tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
-        const [activeSftConditions, userSftConditions] = await Promise.all([
+        const [activeConditions, userConditions] = await Promise.all([
           this.getActiveERC1155(tokenId, overrides),
           this.getForUserERC1155(address, tokenId, overrides),
         ]);
 
-        const { activeClaimCondition, ...otherSftActiveConditions } = activeSftConditions;
-        return { ...activeClaimCondition, ...otherSftActiveConditions, ...userSftConditions };
+        const { activeClaimCondition, ...otherActiveConditions } = activeConditions;
+        return { ...activeClaimCondition, ...otherActiveConditions, ...userConditions };
       }
 
       case 'ERC721': {
         this.base.rejectTokenId(tokenId, this.functionName);
 
-        const [activeNftConditions, userSftConditions] = await Promise.all([
+        const [activeConditions, userConditions] = await Promise.all([
           this.getActiveERC721(overrides),
           this.getForUserERC721(address, overrides),
         ]);
 
-        const { activeClaimCondition, ...otherSftActiveConditions } = activeNftConditions;
-        return { ...activeClaimCondition, ...otherSftActiveConditions, ...userSftConditions };
+        const { activeClaimCondition, ...otherActiveConditions } = activeConditions;
+        return { ...activeClaimCondition, ...otherActiveConditions, ...userConditions };
       }
     }
   }
@@ -289,7 +285,7 @@ export class GetUserClaimConditions extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 
   protected async getForUserERC721(
@@ -335,7 +331,7 @@ export class GetUserClaimConditions extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { userAddress });
     }
 
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 
   protected async getActiveERC1155(tokenId: BigNumber, overrides?: SourcedOverrides): Promise<ActiveClaimConditions> {
@@ -477,7 +473,7 @@ export class GetUserClaimConditions extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { tokenId });
     }
 
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 
   protected async getForUserERC1155(
@@ -526,6 +522,6 @@ export class GetUserClaimConditions extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { userAddress, tokenId });
     }
 
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 }

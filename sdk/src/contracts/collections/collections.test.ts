@@ -1,12 +1,19 @@
 import { Network } from '@ethersproject/providers';
-import { describe, expect, test } from '@jest/globals';
+import { beforeAll, describe, expect, test } from '@jest/globals';
 import { BigNumber, ethers } from 'ethers';
 import { URL } from 'url';
+import { getProviderConfig, getSigner } from '../../apis';
 import { parse } from '../../utils/schema';
 import { Address } from '../address';
 import { CollectionContract } from './collections';
 import { SdkErrorCode } from './errors';
-import { ERC1155StandardInterfaces, ERC721StandardInterfaces, FeatureFunctionId, FeatureInterfaceId } from './features';
+import {
+  ContractFunctionId,
+  ERC1155StandardInterfaces,
+  ERC721StandardInterfaces,
+  FeatureFunctionId,
+  FeatureInterfaceId,
+} from './features';
 import { FeatureFactories } from './features/feature-factories.gen';
 import { FeatureFunctionsMap } from './features/feature-functions.gen';
 import { Token } from './objects';
@@ -21,6 +28,31 @@ const TESTNET: Network = {
 };
 
 const CONTRACT_ADDRESS = parse(Address, '0xB2Af02eC55E2ba5afe246Ed51b8aBdBBa5F7937C');
+
+const NON_DROP_CONTRACT_INTERFACE_FILES = [
+  'standard/IERC4906.sol',
+  'pausable/ICedarPausable.sol',
+  'splitpayment/ISplitPayment.sol',
+  'splitpayment/ICedarSplitPayment.sol',
+  'issuance/ICedarPremint.sol',
+  'issuance/ICedarERC20Payable.sol',
+  'issuance/ICedarIssuance.sol',
+  'issuance/ICedarOrderFiller.sol',
+  'issuance/ICedarNativePayable.sol',
+  'issuance/ICedarClaimable.sol',
+  'subscriptions/IPaymentNotary.sol',
+  'agreement/IAgreementsRegistry.sol',
+  'baseURI/ICedarUpgradeBaseURI.sol',
+];
+
+const isDropInterface = (iface: FeatureInterfaceId): boolean => {
+  const file = iface.split(/[:]/).shift() as string;
+  return !NON_DROP_CONTRACT_INTERFACE_FILES.includes(file);
+};
+
+const isDropFunction = (func: FeatureFunctionId): boolean => {
+  return Object.values(FeatureFunctionsMap[func].drop).filter(isDropInterface).length !== 0;
+};
 
 export class MockJsonRpcProvider extends ethers.providers.StaticJsonRpcProvider {
   // FIFO queue by method
@@ -54,47 +86,74 @@ describe('Collections - static tests', () => {
     );
   });
 
-  test.only('Check that all functions are implemented', async () => {
+  test('Check that all functions are implemented', () => {
     const provider = new MockJsonRpcProvider();
+    const erc721 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, ['standard/IERC721.sol:IERC721V0']);
 
-    const erc721 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, ['standard/IERC721.sol:IERC721V0', 'xxx']);
+    const allImplementedFunctions: FeatureFunctionId[] = Object.values(erc721.getFunctionsProps('handledFunctions'))
+      .map(Object.values)
+      .flat();
 
-    const allImplementedFunctions = Object.values(erc721.getFunctionsProps('handledFunctions')).flat();
+    // @todo - those need implementing
+    const notImplementedStandardFunctions: FeatureFunctionId[] = [
+      'balanceOfBatch(address[],uint256[])[uint256[]]',
+      'isApprovedForAll(address,address)[bool]',
+      'approve(address,uint256)[]',
+      'getApproved(uint256)[address]',
+      'setApprovalForAll(address,bool)[]',
+      'burnBatch(address,uint256[],uint256[])[]',
+      'transferFrom(address,address,uint256)[]',
+      'safeTransferFrom(address,address,uint256)+[]',
+      'safeTransferFrom(address,address,uint256,bytes)+[]',
+      'safeTransferFrom(address,address,uint256,uint256,bytes)[]',
+      'safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)[]',
+    ];
 
-    const missingFeatures = Object.keys(FeatureFunctionsMap).filter(
-      (f) => !allImplementedFunctions.includes(f as FeatureFunctionId),
+    const missingFunctions = Object.keys(FeatureFunctionsMap).filter(
+      (f) =>
+        isDropFunction(f as FeatureFunctionId) &&
+        !(
+          allImplementedFunctions.includes(f as FeatureFunctionId) ||
+          notImplementedStandardFunctions.includes(f as FeatureFunctionId)
+        ),
     );
 
     // immediately show what's not implemened
-    expect(missingFeatures).toStrictEqual([]);
+    expect(missingFunctions).toStrictEqual([]);
+  });
+
+  test.only('Check that every function lists at least the interfaces of the functions it states to implemenst', () => {
+    const provider = new MockJsonRpcProvider();
+    const erc721 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, ['standard/IERC721.sol:IERC721V0']);
+
+    const allImplementedFeatures = erc721.getFunctionsProps('handledFeatures');
+
+    Object.entries(erc721.getFunctionsProps('handledFunctions')).map(([func, handledFunctions]) => {
+      const expectedInterfaces = Object.values(handledFunctions)
+        .map((f) => FeatureFunctionsMap[f].drop)
+        .flat();
+      const listedInterfaces = allImplementedFeatures[func as ContractFunctionId];
+      const missingInterfaces = expectedInterfaces.filter((i) => !listedInterfaces.includes(i));
+      expect(missingInterfaces).toStrictEqual([]);
+    });
   });
 
   test('Check that all features are implemented', async () => {
     const provider = new MockJsonRpcProvider();
+    const erc721 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, ['standard/IERC721.sol:IERC721V0']);
 
-    const erc721 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, ['standard/IERC721.sol:IERC721V0', 'xxx']);
     const allImplementedFeatures = Object.values(erc721.getFunctionsProps('handledFeatures')).flat();
 
     // The following interfaces don't relate to any drop contract and so they don't need implementing
-    const nonDropContractFeatures = [
-      'baseURI/ICedarUpgradeBaseURI.sol:ICedarUpgradeBaseURIV0',
-      'ownable/IOwnable.sol:IOwnableEventV0', // this interface exposes only event
-      'standard/IERC4906.sol:IRestrictedERC4906V0',
-      'splitpayment/ISplitPayment.sol:IAspenSplitPaymentV1',
-      'splitpayment/ISplitPayment.sol:ICedarSplitPaymentV0',
-      'splitpayment/ICedarSplitPayment.sol:ICedarSplitPaymentV0',
-      'subscriptions/IPaymentNotary.sol:IPaymentNotaryV0',
-      'issuance/ICedarPremint.sol:ICedarPremintV0',
-      'issuance/ICedarClaimable.sol:ICedarClaimableV0',
-      'issuance/ICedarERC20Payable.sol:ICedarERC20PayableV0',
-      'issuance/ICedarIssuance.sol:ICedarIssuanceV0',
-      'issuance/ICedarIssuance.sol:ICedarIssuanceV1',
-      'issuance/ICedarNativePayable.sol:ICedarNativePayableV0',
-      'issuance/ICedarOrderFiller.sol:ICedarOrderFillerV0',
-    ];
+    const nonDropContractFeatures: FeatureInterfaceId[] = ['ownable/IOwnable.sol:IOwnableEventV0'];
 
     const missingFeatures = Object.keys(FeatureFactories).filter(
-      (f) => !(allImplementedFeatures.includes(f as FeatureInterfaceId) || nonDropContractFeatures.includes(f)),
+      (f) =>
+        isDropInterface(f as FeatureInterfaceId) &&
+        !(
+          allImplementedFeatures.includes(f as FeatureInterfaceId) ||
+          nonDropContractFeatures.includes(f as FeatureInterfaceId)
+        ),
     );
 
     // immediately show what's not implemened
@@ -109,12 +168,12 @@ describe('Collections - static tests', () => {
 
     const erc721 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, ['standard/IERC721.sol:IERC721V0', 'xxx']);
     expect(erc721.tokenStandard).toBe('ERC721');
-    expect(erc721.supportedFeatures).toStrictEqual(['standard/IERC721.sol:IERC721V0']);
+    expect(erc721.supportedFeaturesList).toStrictEqual(['standard/IERC721.sol:IERC721V0']);
     expect(async () => await new Token(erc721, 0).exists()).rejects.toThrow(SdkErrorCode.FEATURE_NOT_SUPPORTED);
 
     const erc1155 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, ['standard/IERC1155.sol:IERC1155V0', 'yyy']);
     expect(erc1155.tokenStandard).toBe('ERC1155');
-    expect(erc1155.supportedFeatures).toStrictEqual(['standard/IERC1155.sol:IERC1155V0']);
+    expect(erc1155.supportedFeaturesList).toStrictEqual(['standard/IERC1155.sol:IERC1155V0']);
   });
 
   test('ERC721 Token existence & supply', async () => {
@@ -194,26 +253,20 @@ describe.skip('Collections', () => {
   let contract: CollectionContract;
   let account: Address;
 
-  // beforeAll(async () => {
-  //   const address = parse(Address, '0xB2Af02eC55E2ba5afe246Ed51b8aBdBBa5F7937C');
-  //   const providerConfig = await getProviderConfig(providersFile);
-  //   const signer = await getSigner('Mumbai', providerConfig);
-  //   account = parse(Address, await signer.getAddress());
-  //   contract = await CollectionContract.from(signer.provider, address);
-  // });
+  beforeAll(async () => {
+    const address = parse(Address, '0xB2Af02eC55E2ba5afe246Ed51b8aBdBBa5F7937C');
+    const providerConfig = await getProviderConfig(providersFile);
+    const signer = await getSigner('Mumbai', providerConfig);
+    account = parse(Address, await signer.getAddress());
+    contract = await CollectionContract.from(signer.provider, address);
+  });
 
-  // test('User claim restrictions', async () => {
-  //   const foo = await contract.agreements.getState(account);
-  //   const tokenId = '0';
-  //   const activeConditions = await contract.conditions.getActive(tokenId);
+  test('User claim restrictions', async () => {
+    const tokenId = '0';
 
-  //   const userConditions = await contract.conditions.getForUser(account, tokenId);
-
-  //   if (!userConditions || !activeConditions) {
-  //     throw new Error(`userConditions or activeConditions empty`);
-  //   }
-
-  //   const restrictions = await contract.conditions.getUserRestrictions(userConditions, activeConditions, [], 0);
-  //   console.log(restrictions);
-  // });
+    const userConditions = await contract.getUserClaimConditions(account, tokenId);
+    if (!userConditions) {
+      throw new Error(`userConditions or activeConditions empty`);
+    }
+  });
 });

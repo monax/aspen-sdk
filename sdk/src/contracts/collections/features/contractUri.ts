@@ -4,8 +4,12 @@ import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const ContractUriFunctions = {
+  v1: 'contractURI()[string]',
+} as const;
+
 const ContractUriPartitions = {
-  v1: [...FeatureFunctionsMap['contractURI()[string]'].drop],
+  v1: [...FeatureFunctionsMap[ContractUriFunctions.v1].drop],
 };
 type ContractUriPartitions = typeof ContractUriPartitions;
 
@@ -24,7 +28,7 @@ export class ContractUri extends ContractFunction<
   readonly functionName = 'contractUri';
 
   constructor(base: CollectionContract) {
-    super(base, ContractUriInterfaces, ContractUriPartitions);
+    super(base, ContractUriInterfaces, ContractUriPartitions, ContractUriFunctions);
   }
 
   call(...args: ContractUriCallArgs): Promise<ContractUriResponse> {

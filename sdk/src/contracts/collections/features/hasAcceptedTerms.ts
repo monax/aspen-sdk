@@ -4,10 +4,16 @@ import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const HasAcceptedTermsFunctions = {
+  v1: 'getAgreementStatus(address)[bool]',
+  v2: 'hasAcceptedTerms(address)[bool]',
+  v3: 'hasAcceptedTerms(address)+[bool]',
+} as const;
+
 const HasAcceptedTermsPartitions = {
-  v1: [...FeatureFunctionsMap['getAgreementStatus(address)[bool]'].drop],
-  v2: [...FeatureFunctionsMap['hasAcceptedTerms(address)[bool]'].drop],
-  v3: [...FeatureFunctionsMap['hasAcceptedTerms(address)+[bool]'].drop],
+  v1: [...FeatureFunctionsMap[HasAcceptedTermsFunctions.v1].drop],
+  v2: [...FeatureFunctionsMap[HasAcceptedTermsFunctions.v2].drop],
+  v3: [...FeatureFunctionsMap[HasAcceptedTermsFunctions.v3].drop],
 };
 type HasAcceptedTermsPartitions = typeof HasAcceptedTermsPartitions;
 
@@ -26,7 +32,7 @@ export class HasAcceptedTerms extends ContractFunction<
   readonly functionName = 'hasAcceptedTerms';
 
   constructor(base: CollectionContract) {
-    super(base, HasAcceptedTermsInterfaces, HasAcceptedTermsPartitions);
+    super(base, HasAcceptedTermsInterfaces, HasAcceptedTermsPartitions, HasAcceptedTermsFunctions);
   }
 
   call(...args: HasAcceptedTermsCallArgs): Promise<HasAcceptedTermsResponse> {
@@ -51,6 +57,6 @@ export class HasAcceptedTerms extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
-    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 }

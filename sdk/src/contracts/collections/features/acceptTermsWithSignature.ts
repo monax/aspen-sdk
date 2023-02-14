@@ -40,7 +40,7 @@ export class AcceptTermsWithSignature extends ContractFunction<
       base,
       AcceptTermsWithSignatureInterfaces,
       AcceptTermsWithSignaturePartitions,
-      Object.values(AcceptTermsWithSignatureFunctions),
+      AcceptTermsWithSignatureFunctions,
     );
   }
 
@@ -68,7 +68,7 @@ export class AcceptTermsWithSignature extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
-    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 
   async estimateGas(
@@ -91,6 +91,6 @@ export class AcceptTermsWithSignature extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
-    throw new SdkError(SdkErrorCode.FEATURE_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 }

@@ -5,10 +5,15 @@ import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction, ERC1155StandardInterfaces } from './features';
 
+const TokenUriFunctions = {
+  nft: 'tokenURI(uint256)[string]',
+  sft: 'uri(uint256)[string]',
+} as const;
+
 const TokenUriPartitions = {
   // @todo - waiting on manifest update
-  nft: [...FeatureFunctionsMap['tokenURI(uint256)[string]'].drop],
-  sft: [...FeatureFunctionsMap['uri(uint256)[string]'].drop],
+  nft: [...FeatureFunctionsMap[TokenUriFunctions.nft].drop],
+  sft: [...FeatureFunctionsMap[TokenUriFunctions.sft].drop],
   // some SFT contracts don't explicitly state support for metadata interfaces
   catchSft: [...ERC1155StandardInterfaces],
 };
@@ -29,7 +34,7 @@ export class TokenUri extends ContractFunction<
   readonly functionName = 'tokenUri';
 
   constructor(base: CollectionContract) {
-    super(base, TokenUriInterfaces, TokenUriPartitions);
+    super(base, TokenUriInterfaces, TokenUriPartitions, TokenUriFunctions);
   }
 
   call(...args: TokenUriCallArgs): Promise<TokenUriResponse> {
@@ -48,9 +53,9 @@ export class TokenUri extends ContractFunction<
         return uri;
       }
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, { tokenId }, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { tokenId });
     }
 
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 }

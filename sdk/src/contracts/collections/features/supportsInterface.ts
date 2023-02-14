@@ -5,8 +5,12 @@ import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const SupportsInterfaceFunctions = {
+  v1: 'supportsInterface(bytes4)[bool]',
+} as const;
+
 const SupportsInterfacePartitions = {
-  v1: [...FeatureFunctionsMap['supportsInterface(bytes4)[bool]'].drop],
+  v1: [...FeatureFunctionsMap[SupportsInterfaceFunctions.v1].drop],
 };
 type SupportsInterfacePartitions = typeof SupportsInterfacePartitions;
 
@@ -25,7 +29,7 @@ export class SupportsInterface extends ContractFunction<
   readonly functionName = 'supportsInterface';
 
   constructor(base: CollectionContract) {
-    super(base, SupportsInterfaceInterfaces, SupportsInterfacePartitions);
+    super(base, SupportsInterfaceInterfaces, SupportsInterfacePartitions, SupportsInterfaceFunctions);
   }
 
   call(...args: SupportsInterfaceCallArgs): Promise<SupportsInterfaceResponse> {

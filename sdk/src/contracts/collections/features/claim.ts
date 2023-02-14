@@ -8,9 +8,14 @@ import type { Signerish, TokenId, TokenStandard } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const ClaimFunctions = {
+  nft: 'claim(address,uint256,address,uint256,bytes32[],uint256)[]',
+  sft: 'claim(address,uint256,uint256,address,uint256,bytes32[],uint256)[]',
+} as const;
+
 const ClaimPartitions = {
-  nft: [...FeatureFunctionsMap['claim(address,uint256,address,uint256,bytes32[],uint256)[]'].drop],
-  sft: [...FeatureFunctionsMap['claim(address,uint256,uint256,address,uint256,bytes32[],uint256)[]'].drop],
+  nft: [...FeatureFunctionsMap[ClaimFunctions.nft].drop],
+  sft: [...FeatureFunctionsMap[ClaimFunctions.sft].drop],
 };
 type ClaimPartitions = typeof ClaimPartitions;
 
@@ -44,7 +49,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
   readonly functionName = 'claim';
 
   constructor(base: CollectionContract) {
-    super(base, ClaimInterfaces, ClaimPartitions);
+    super(base, ClaimInterfaces, ClaimPartitions, ClaimFunctions);
   }
 
   call(...args: ClaimCallArgs): Promise<ClaimResponse> {
@@ -87,7 +92,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
       return tx;
     } catch (err) {
       const args = { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction };
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
   }
 
@@ -116,7 +121,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
       return tx;
     } catch (err) {
       const args = { receiver, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction };
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
   }
 
@@ -155,7 +160,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
       );
     } catch (err) {
       const args = { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction };
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
   }
 
@@ -183,7 +188,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
       );
     } catch (err) {
       const args = { receiver, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction };
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
   }
 
@@ -236,7 +241,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
         );
       }
     } catch (err) {
-      throw new SdkError(SdkErrorCode.INVALID_DATA, { receipt }, err as Error);
+      throw SdkError.from(err, SdkErrorCode.INVALID_DATA, { receipt });
     }
 
     return issueTokens;

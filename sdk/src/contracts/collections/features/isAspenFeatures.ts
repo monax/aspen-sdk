@@ -4,9 +4,14 @@ import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const IsAspenFeaturesFunctions = {
+  v1: 'isICedarFeaturesV0()[bool]',
+  v2: 'isIAspenFeaturesV0()[bool]',
+} as const;
+
 const IsAspenFeaturesPartitions = {
-  v1: [...FeatureFunctionsMap['isICedarFeaturesV0()[bool]'].drop],
-  v2: [...FeatureFunctionsMap['isIAspenFeaturesV0()[bool]'].drop],
+  v1: [...FeatureFunctionsMap[IsAspenFeaturesFunctions.v1].drop],
+  v2: [...FeatureFunctionsMap[IsAspenFeaturesFunctions.v2].drop],
 };
 type IsAspenFeaturesPartitions = typeof IsAspenFeaturesPartitions;
 
@@ -25,7 +30,7 @@ export class IsAspenFeatures extends ContractFunction<
   readonly functionName = 'isAspenFeatures';
 
   constructor(base: CollectionContract) {
-    super(base, IsAspenFeaturesInterfaces, IsAspenFeaturesPartitions);
+    super(base, IsAspenFeaturesInterfaces, IsAspenFeaturesPartitions, IsAspenFeaturesFunctions);
   }
 
   call(...args: IsAspenFeaturesCallArgs): Promise<IsAspenFeaturesResponse> {
@@ -47,6 +52,6 @@ export class IsAspenFeatures extends ContractFunction<
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
 
-    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+    this.notSupported();
   }
 }

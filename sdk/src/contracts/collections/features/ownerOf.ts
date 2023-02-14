@@ -6,8 +6,12 @@ import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const OwnerOfFunctions = {
+  v1: 'ownerOf(uint256)[address]',
+} as const;
+
 const OwnerOfPartitions = {
-  v1: [...FeatureFunctionsMap['ownerOf(uint256)[address]'].drop],
+  v1: [...FeatureFunctionsMap[OwnerOfFunctions.v1].drop],
 };
 type OwnerOfPartitions = typeof OwnerOfPartitions;
 
@@ -21,7 +25,7 @@ export class OwnerOf extends ContractFunction<OwnerOfInterfaces, OwnerOfPartitio
   readonly functionName = 'ownerOf';
 
   constructor(base: CollectionContract) {
-    super(base, OwnerOfInterfaces, OwnerOfPartitions);
+    super(base, OwnerOfInterfaces, OwnerOfPartitions, OwnerOfFunctions);
   }
 
   /** Get the token owner */

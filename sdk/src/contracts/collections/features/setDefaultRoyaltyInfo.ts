@@ -5,6 +5,10 @@ import type { Signerish, SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const SetDefaultRoyaltyInfoFunctions = {
+  v1: 'setDefaultRoyaltyInfo(address,uint256)[]',
+} as const;
+
 const SetDefaultRoyaltyInfoPartitions = {
   v1: [...FeatureFunctionsMap['setDefaultRoyaltyInfo(address,uint256)[]'].drop],
 };
@@ -30,7 +34,7 @@ export class SetDefaultRoyaltyInfo extends ContractFunction<
   readonly functionName = 'setDefaultRoyaltyInfo';
 
   constructor(base: CollectionContract) {
-    super(base, SetDefaultRoyaltyInfoInterfaces, SetDefaultRoyaltyInfoPartitions);
+    super(base, SetDefaultRoyaltyInfoInterfaces, SetDefaultRoyaltyInfoPartitions, SetDefaultRoyaltyInfoFunctions);
   }
 
   call(...args: SetDefaultRoyaltyInfoCallArgs): Promise<SetDefaultRoyaltyInfoResponse> {
@@ -48,6 +52,23 @@ export class SetDefaultRoyaltyInfo extends ContractFunction<
     try {
       const tx = await v1.connectWith(signer).setDefaultRoyaltyInfo(royaltyRecipient, basisPoints, overrides);
       return tx;
+    } catch (err) {
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
+    }
+  }
+
+  async estimateGas(
+    signer: Signerish,
+    royaltyRecipient: Address,
+    basisPoints: BigNumber,
+    overrides?: SourcedOverrides,
+  ): Promise<BigNumber> {
+    const v1 = this.partition('v1');
+
+    try {
+      const estimator = v1.connectWith(signer).estimateGas;
+      const estimate = await estimator.setDefaultRoyaltyInfo(royaltyRecipient, basisPoints, overrides);
+      return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

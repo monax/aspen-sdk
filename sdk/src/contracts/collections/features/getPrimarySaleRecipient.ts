@@ -5,8 +5,12 @@ import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const GetPrimarySaleRecipientFunctions = {
+  v1: 'primarySaleRecipient()[address]',
+} as const;
+
 const GetPrimarySaleRecipientPartitions = {
-  v1: [...FeatureFunctionsMap['primarySaleRecipient()[address]'].drop],
+  v1: [...FeatureFunctionsMap[GetPrimarySaleRecipientFunctions.v1].drop],
 };
 type GetPrimarySaleRecipientPartitions = typeof GetPrimarySaleRecipientPartitions;
 
@@ -25,7 +29,7 @@ export class GetPrimarySaleRecipient extends ContractFunction<
   readonly functionName = 'getPrimarySaleRecipient';
 
   constructor(base: CollectionContract) {
-    super(base, GetPrimarySaleRecipientInterfaces, GetPrimarySaleRecipientPartitions);
+    super(base, GetPrimarySaleRecipientInterfaces, GetPrimarySaleRecipientPartitions, GetPrimarySaleRecipientFunctions);
   }
 
   call(...args: GetPrimarySaleRecipientCallArgs): Promise<GetPrimarySaleRecipientResponse> {

@@ -5,8 +5,12 @@ import type { Signerish, SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const SetPlatformFeeInfoFunctions = {
+  v1: 'setPlatformFeeInfo(address,uint256)[]',
+} as const;
+
 const SetPlatformFeeInfoPartitions = {
-  v1: [...FeatureFunctionsMap['setPlatformFeeInfo(address,uint256)[]'].drop],
+  v1: [...FeatureFunctionsMap[SetPlatformFeeInfoFunctions.v1].drop],
 };
 type SetPlatformFeeInfoPartitions = typeof SetPlatformFeeInfoPartitions;
 
@@ -30,7 +34,7 @@ export class SetPlatformFeeInfo extends ContractFunction<
   readonly functionName = 'setPlatformFeeInfo';
 
   constructor(base: CollectionContract) {
-    super(base, SetPlatformFeeInfoInterfaces, SetPlatformFeeInfoPartitions);
+    super(base, SetPlatformFeeInfoInterfaces, SetPlatformFeeInfoPartitions, SetPlatformFeeInfoFunctions);
   }
 
   call(...args: SetPlatformFeeInfoCallArgs): Promise<SetPlatformFeeInfoResponse> {

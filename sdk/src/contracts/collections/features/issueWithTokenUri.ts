@@ -7,8 +7,12 @@ import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 import { IssuedToken } from './issue';
 
+const IssueWithTokenUriFunctions = {
+  nft: 'issueWithTokenURI(address,string)[]',
+} as const;
+
 const IssueWithTokenUriPartitions = {
-  nft: [...FeatureFunctionsMap['issueWithTokenURI(address,string)[]'].drop],
+  nft: [...FeatureFunctionsMap[IssueWithTokenUriFunctions.nft].drop],
 };
 type IssueWithTokenUriPartitions = typeof IssueWithTokenUriPartitions;
 
@@ -32,7 +36,7 @@ export class IssueWithTokenUri extends ContractFunction<
   readonly functionName = 'issueWithTokenUri';
 
   constructor(base: CollectionContract) {
-    super(base, IssueWithTokenUriInterfaces, IssueWithTokenUriPartitions);
+    super(base, IssueWithTokenUriInterfaces, IssueWithTokenUriPartitions, IssueWithTokenUriFunctions);
   }
 
   call(...args: IssueWithTokenUriCallArgs): Promise<IssueWithTokenUriResponse> {
@@ -51,7 +55,7 @@ export class IssueWithTokenUri extends ContractFunction<
       const tx = await nft.connectWith(signer).issueWithTokenURI(args.receiver, args.tokenURI, overrides);
       return tx;
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
   }
 
@@ -67,13 +71,13 @@ export class IssueWithTokenUri extends ContractFunction<
       const gas = await nft.connectWith(signer).estimateGas.issueWithTokenURI(args.receiver, args.tokenURI, overrides);
       return gas;
     } catch (err) {
-      throw new SdkError(SdkErrorCode.CHAIN_ERROR, args, err as Error);
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
   }
 
   protected async validateArgs({ receiver }: IssueWithTokenUriArgs) {
     if (isSameAddress(receiver, ZERO_ADDRESS)) {
-      throw new SdkError(SdkErrorCode.INVALID_DATA, undefined, new Error('Receiver cannot be an empty address'));
+      throw new SdkError(SdkErrorCode.INVALID_DATA, { receiver }, new Error('Receiver cannot be an empty address'));
     }
   }
 

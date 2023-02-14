@@ -6,8 +6,12 @@ import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
+const GetPlatformFeeInfoFunctions = {
+  v1: 'getPlatformFeeInfo()[address,uint16]',
+} as const;
+
 const GetPlatformFeeInfoPartitions = {
-  v1: [...FeatureFunctionsMap['getPlatformFeeInfo()[address,uint16]'].drop],
+  v1: [...FeatureFunctionsMap[GetPlatformFeeInfoFunctions.v1].drop],
 };
 type GetPlatformFeeInfoPartitions = typeof GetPlatformFeeInfoPartitions;
 
@@ -31,7 +35,7 @@ export class GetPlatformFeeInfo extends ContractFunction<
   readonly functionName = 'getPlatformFeeInfo';
 
   constructor(base: CollectionContract) {
-    super(base, GetPlatformFeeInfoInterfaces, GetPlatformFeeInfoPartitions);
+    super(base, GetPlatformFeeInfoInterfaces, GetPlatformFeeInfoPartitions, GetPlatformFeeInfoFunctions);
   }
 
   call(...args: GetPlatformFeeInfoCallArgs): Promise<GetPlatformFeeInfoResponse> {

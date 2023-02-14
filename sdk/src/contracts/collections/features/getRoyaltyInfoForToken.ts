@@ -7,8 +7,12 @@ import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 import { DefaultRoyaltyInfo } from './getDefaultRoyaltyInfo';
 
+const GetRoyaltyInfoForTokenFunctions = {
+  v1: 'getRoyaltyInfoForToken(uint256)[address,uint16]',
+} as const;
+
 const GetRoyaltyInfoForTokenPartitions = {
-  v1: [...FeatureFunctionsMap['getRoyaltyInfoForToken(uint256)[address,uint16]'].drop],
+  v1: [...FeatureFunctionsMap[GetRoyaltyInfoForTokenFunctions.v1].drop],
 };
 type GetRoyaltyInfoForTokenPartitions = typeof GetRoyaltyInfoForTokenPartitions;
 
@@ -27,7 +31,7 @@ export class GetRoyaltyInfoForToken extends ContractFunction<
   readonly functionName = 'getRoyaltyInfoForToken';
 
   constructor(base: CollectionContract) {
-    super(base, GetRoyaltyInfoForTokenInterfaces, GetRoyaltyInfoForTokenPartitions);
+    super(base, GetRoyaltyInfoForTokenInterfaces, GetRoyaltyInfoForTokenPartitions, GetRoyaltyInfoForTokenFunctions);
   }
 
   call(...args: GetRoyaltyInfoForTokenCallArgs): Promise<GetRoyaltyInfoForTokenResponse> {

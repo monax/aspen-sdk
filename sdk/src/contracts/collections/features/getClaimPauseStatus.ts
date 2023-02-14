@@ -6,9 +6,11 @@ import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
 const GetClaimPauseStatusPartitions = {
-  // @todo
-  x1: [...FeatureFunctionsMap['pauseClaims()[]'].drop],
-  x2: [...FeatureFunctionsMap['setClaimPauseStatus(bool)[]'].drop],
+  // 'claimIsPaused' has always been present but not actually exposed by the old interfaces
+  catchAll: [
+    ...FeatureFunctionsMap['pauseClaims()[]'].drop,
+    ...FeatureFunctionsMap['setClaimPauseStatus(bool)[]'].drop,
+  ],
 };
 type GetClaimPauseStatusPartitions = typeof GetClaimPauseStatusPartitions;
 
@@ -27,7 +29,7 @@ export class GetClaimPauseStatus extends ContractFunction<
   readonly functionName = 'getClaimPauseStatus';
 
   constructor(base: CollectionContract) {
-    super(base, GetClaimPauseStatusInterfaces, GetClaimPauseStatusPartitions);
+    super(base, GetClaimPauseStatusInterfaces, GetClaimPauseStatusPartitions, {});
   }
 
   call(...args: GetClaimPauseStatusCallArgs): Promise<GetClaimPauseStatusResponse> {
@@ -36,7 +38,7 @@ export class GetClaimPauseStatus extends ContractFunction<
 
   async getClaimPauseStatus(overrides?: SourcedOverrides): Promise<boolean> {
     if (!this.supported) {
-      throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+      this.notSupported();
     }
 
     try {

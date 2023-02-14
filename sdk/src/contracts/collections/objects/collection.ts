@@ -1,10 +1,24 @@
-/*
-async getContractMetadata(): Promise<{ uri: string; metadata: CollectionMetadata }> {
-    const uri = await this.getContractUri();
-    const metadata = await Metadata.getMetadataFromUri(uri);
+import axios from 'axios';
+import { CollectionContract, CollectionMetadata, CollectionMetaImageType, OperationStatus } from '..';
+import { IPFS_GATEWAY_PREFIX } from '../..';
+import { resolveIpfsUrl } from '../../../utils/ipfs';
+import { SdkError, SdkErrorCode } from '../errors';
+import { ContractObject } from './object';
 
-    return { uri, metadata };
+export class Collection extends ContractObject {
+  public constructor(protected readonly base: CollectionContract) {
+    super(base);
   }
+
+  async getMetadata(): Promise<OperationStatus<{ uri: string; metadata: CollectionMetadata }>> {
+    return await this.run(async () => {
+      const uri = await this.base.contractUri();
+      const metadata = await Collection.getMetadataFromUri(uri);
+
+      return { uri, metadata };
+    });
+  }
+
   static async getMetadataFromUri(ipfsUri: string): Promise<CollectionMetadata> {
     try {
       const url = resolveIpfsUrl(ipfsUri, IPFS_GATEWAY_PREFIX);
@@ -19,8 +33,9 @@ async getContractMetadata(): Promise<{ uri: string; metadata: CollectionMetadata
       }
     }
   }
+}
 
-  const resolveCollectionIpfsUris = (collectionMeta: CollectionMetadata): CollectionMetadata => {
+const resolveCollectionIpfsUris = (collectionMeta: CollectionMetadata): CollectionMetadata => {
   const newMeta: CollectionMetadata = { ...collectionMeta };
 
   if (newMeta.image) {
@@ -41,5 +56,3 @@ async getContractMetadata(): Promise<{ uri: string; metadata: CollectionMetadata
 
   return newMeta;
 };
-
-*/
