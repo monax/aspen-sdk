@@ -1,6 +1,6 @@
+import { CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -16,7 +16,7 @@ type GetSmallestTokenIdPartitions = typeof GetSmallestTokenIdPartitions;
 const GetSmallestTokenIdInterfaces = Object.values(GetSmallestTokenIdPartitions).flat();
 type GetSmallestTokenIdInterfaces = (typeof GetSmallestTokenIdInterfaces)[number];
 
-export type GetSmallestTokenIdCallArgs = [overrides?: SourcedOverrides];
+export type GetSmallestTokenIdCallArgs = [overrides?: CallOverrides];
 export type GetSmallestTokenIdResponse = number;
 
 export class GetSmallestTokenId extends ContractFunction<
@@ -36,7 +36,7 @@ export class GetSmallestTokenId extends ContractFunction<
     return this.getSmallestTokenId(...args);
   }
 
-  async getSmallestTokenId(overrides?: SourcedOverrides): Promise<number> {
+  async getSmallestTokenId(overrides: CallOverrides = {}): Promise<number> {
     const v1 = this.partition('v1');
 
     try {

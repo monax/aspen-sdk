@@ -1,7 +1,7 @@
 import { BigNumber, ContractTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -19,7 +19,7 @@ type AcceptTermsPartitions = typeof AcceptTermsPartitions;
 const AcceptTermsInterfaces = Object.values(AcceptTermsPartitions).flat();
 type AcceptTermsInterfaces = (typeof AcceptTermsInterfaces)[number];
 
-export type AcceptTermsCallArgs = [signer: Signerish, overrides?: SourcedOverrides];
+export type AcceptTermsCallArgs = [signer: Signerish, overrides?: WriteOverrides];
 export type AcceptTermsResponse = ContractTransaction;
 
 export class AcceptTerms extends ContractFunction<
@@ -39,7 +39,7 @@ export class AcceptTerms extends ContractFunction<
     return this.acceptTerms(...args);
   }
 
-  protected async acceptTerms(signer: Signerish, overrides?: SourcedOverrides): Promise<ContractTransaction> {
+  protected async acceptTerms(signer: Signerish, overrides: WriteOverrides = {}): Promise<ContractTransaction> {
     const { v1, v2 } = this.partitions;
 
     try {
@@ -57,7 +57,7 @@ export class AcceptTerms extends ContractFunction<
     this.notSupported();
   }
 
-  async estimateGas(signer: Signerish, overrides?: SourcedOverrides): Promise<BigNumber> {
+  async estimateGas(signer: Signerish, overrides: WriteOverrides = {}): Promise<BigNumber> {
     const { v1, v2 } = this.partitions;
 
     try {

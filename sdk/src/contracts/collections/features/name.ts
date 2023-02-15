@@ -1,7 +1,6 @@
-import { ethers } from 'ethers';
+import { CallOverrides, ethers } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { CatchAllInterfaces, ContractFunction } from './features';
 
@@ -19,7 +18,7 @@ type NamePartitions = typeof NamePartitions;
 const NameInterfaces = Object.values(NamePartitions).flat();
 type NameInterfaces = (typeof NameInterfaces)[number];
 
-export type NameCallArgs = [overrides?: SourcedOverrides];
+export type NameCallArgs = [overrides?: CallOverrides];
 export type NameResponse = string;
 
 export class Name extends ContractFunction<NameInterfaces, NamePartitions, NameCallArgs, NameResponse> {
@@ -33,7 +32,7 @@ export class Name extends ContractFunction<NameInterfaces, NamePartitions, NameC
     return this.name(...args);
   }
 
-  async name(overrides?: SourcedOverrides): Promise<string> {
+  async name(overrides: CallOverrides = {}): Promise<string> {
     try {
       const abi = ['function name() external returns (string)'];
       const contract = new ethers.Contract(this.base.address, abi, this.base.provider);

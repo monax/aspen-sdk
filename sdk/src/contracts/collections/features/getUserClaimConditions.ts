@@ -1,8 +1,7 @@
-import { BigNumber, BigNumberish, constants } from 'ethers';
+import { BigNumber, BigNumberish, CallOverrides, constants } from 'ethers';
 import { Address, Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { Zero } from '../number';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 import { CollectionContractClaimCondition } from './getClaimConditionById';
@@ -60,7 +59,7 @@ type GetUserClaimConditionsInterfaces = (typeof GetUserClaimConditionsInterfaces
 export type GetUserClaimConditionsCallArgs = [
   userAddress: Addressish,
   tokenId: BigNumberish | null,
-  overrides?: SourcedOverrides,
+  overrides?: CallOverrides,
 ];
 export type GetUserClaimConditionsResponse = UserClaimConditions;
 
@@ -107,7 +106,7 @@ export class GetUserClaimConditions extends ContractFunction<
   async getUserClaimConditions(
     userAddress: Addressish,
     tokenId: BigNumberish | null,
-    overrides?: SourcedOverrides,
+    overrides: CallOverrides = {},
   ): Promise<UserClaimConditions> {
     const address = await asAddress(userAddress);
 
@@ -138,7 +137,7 @@ export class GetUserClaimConditions extends ContractFunction<
     }
   }
 
-  protected async getActiveERC721(overrides?: SourcedOverrides): Promise<ActiveClaimConditions> {
+  protected async getActiveERC721(overrides: CallOverrides = {}): Promise<ActiveClaimConditions> {
     const { activeNftV1, activeNftV2, activeNftV3, activeNftV4 } = this.partitions;
 
     try {
@@ -290,7 +289,7 @@ export class GetUserClaimConditions extends ContractFunction<
 
   protected async getForUserERC721(
     userAddress: Address,
-    overrides?: SourcedOverrides,
+    overrides: CallOverrides = {},
   ): Promise<PartialUserClaimConditions> {
     const { userNftV1, userNftV2 } = this.partitions;
 
@@ -334,7 +333,7 @@ export class GetUserClaimConditions extends ContractFunction<
     this.notSupported();
   }
 
-  protected async getActiveERC1155(tokenId: BigNumber, overrides?: SourcedOverrides): Promise<ActiveClaimConditions> {
+  protected async getActiveERC1155(tokenId: BigNumber, overrides: CallOverrides = {}): Promise<ActiveClaimConditions> {
     const { activeSftV1, activeSftV2, activeSftV3, activeSftV4 } = this.partitions;
 
     try {
@@ -479,7 +478,7 @@ export class GetUserClaimConditions extends ContractFunction<
   protected async getForUserERC1155(
     userAddress: Address,
     tokenId: BigNumber,
-    overrides?: SourcedOverrides,
+    overrides: CallOverrides = {},
   ): Promise<PartialUserClaimConditions> {
     const { userSftV1, userSftV2 } = this.partitions;
 

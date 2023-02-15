@@ -1,7 +1,6 @@
-import { BigNumberish } from 'ethers';
+import { BigNumberish, CallOverrides } from 'ethers';
 import { Address, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -17,11 +16,7 @@ type HasAcceptedTermsVersionPartitions = typeof HasAcceptedTermsVersionPartition
 const HasAcceptedTermsVersionInterfaces = Object.values(HasAcceptedTermsVersionPartitions).flat();
 type HasAcceptedTermsVersionInterfaces = (typeof HasAcceptedTermsVersionInterfaces)[number];
 
-export type HasAcceptedTermsVersionCallArgs = [
-  userAddress: Address,
-  version: BigNumberish,
-  overrides?: SourcedOverrides,
-];
+export type HasAcceptedTermsVersionCallArgs = [userAddress: Address, version: BigNumberish, overrides?: CallOverrides];
 export type HasAcceptedTermsVersionResponse = boolean;
 
 export class HasAcceptedTermsVersion extends ContractFunction<
@@ -43,7 +38,7 @@ export class HasAcceptedTermsVersion extends ContractFunction<
   async hasAcceptedTermsVersion(
     userAddress: Address,
     version: BigNumberish,
-    overrides?: SourcedOverrides,
+    overrides: CallOverrides = {},
   ): Promise<boolean> {
     const v1 = this.partition('v1');
 

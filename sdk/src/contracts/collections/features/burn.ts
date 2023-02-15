@@ -1,7 +1,7 @@
 import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
 import { Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { CatchAllInterfaces, ContractFunction } from './features';
 
@@ -26,7 +26,7 @@ export type BurnCallArgs = [
   tokenId: BigNumberish,
   wallet?: Addressish,
   amount?: BigNumberish,
-  overrides?: SourcedOverrides,
+  overrides?: WriteOverrides,
 ];
 export type BurnResponse = ContractTransaction;
 
@@ -46,7 +46,7 @@ export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnC
     tokenId: BigNumberish,
     wallet?: Addressish,
     amount?: BigNumberish,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
@@ -75,7 +75,7 @@ export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnC
     tokenId: BigNumberish,
     wallet?: Addressish,
     amount?: BigNumberish,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
 

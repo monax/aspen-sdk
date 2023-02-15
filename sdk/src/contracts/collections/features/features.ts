@@ -118,36 +118,6 @@ export const ContractFunctionIds = [
   'setOperatorFiltererStatus',
 ] as const;
 
-// export type FunctionPartitions = Record<string, NonEmptyArray<FeatureInterfaceId>>;
-// export const FeatureFunctionId = t.keyof(FeatureFunctionsMap);
-// export type FeatureFunctionId = t.TypeOf<typeof FeatureFunctionId>;
-
-// export const FeatureFunctionSetKey = t.literal('drop');
-// // export type FeatureFunctionSetKey = t.TypeOf<typeof FeatureFunctionSetKey>;
-
-// export const FeatureFunctionPartitions = t.record(FeatureFunctionSetKey, t.array(FeatureInterfaceId));
-// export type FeatureFunctionPartitions = t.TypeOf<typeof FeatureFunctionPartitions>;
-
-// export const FeatureFunctions = t.record(FeatureFunctionId, FeatureFunctionPartitions);
-// export type FeatureFunctions = t.TypeOf<typeof FeatureFunctions>;
-// export const ContractFunctionsMap = parse(FeatureFunctions, FeatureFunctionsMap);
-
-// same as FeatureFunctionPartitions but as generic
-// export type FeatureFunctions = typeof FeatureFunctionsMap;
-// export type FeatureFunctionId = keyof FeatureFunctions;
-// export type FeatureFunctionPartition<T extends FeatureFunctionId> = FeatureFunctions[T];
-// export type FeatureFunctionSetKey<T extends FeatureFunctionId> = keyof FeatureFunctionPartition<T>;
-// export type FeatureFunctionSetId<T extends FeatureFunctionId> = { func: T; set: FeatureFunctionSetKey<T> };
-
-// const ClaimPartitions = {
-//   nft: ['claim(address,uint256,address,uint256,bytes32[],uint256)[]', 'drop'],
-//   sft: ['claim(address,uint256,uint256,address,uint256,bytes32[],uint256)[]', 'drop'],
-// }
-
-// function toPartitions<T extends FeatureFunctionId>(p: Record<string, FeatureFunctionSetId<T>>) {
-
-// }
-
 export interface FeatureInterfaceFactory<T extends FeatureInterfaceId> {
   connect(address: string, signerOrProvider: Signer | Provider): FeatureContract<T>;
   createInterface(): FeatureContract<T>['interface'];
@@ -199,6 +169,10 @@ export type CallableContractFunction<
   A extends unknown[],
   R,
 > = ContractFunction<T, C, A, R>['call'] & ContractFunction<T, C, A, R>;
+
+export interface CallContractFunction<A extends unknown[], R> {
+  (...args: A): R;
+}
 
 export abstract class ContractFunction<
   T extends FeatureInterfaceId,
@@ -424,5 +398,5 @@ function extendWithPrototype<TObj, TProto extends Object>(
 }
 
 export function asCallable<T extends { call: CallableFunction }>(obj: T): T['call'] & T {
-  return extendWithPrototype(obj.call.bind(obj), obj);
+  return Object.assign(obj.call.bind(obj), obj);
 }

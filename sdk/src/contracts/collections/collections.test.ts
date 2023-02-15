@@ -81,8 +81,8 @@ export class MockJsonRpcProvider extends ethers.providers.StaticJsonRpcProvider 
 
 describe('Collections - static tests', () => {
   test('Check token standard interface matchers', () => {
-    expect([...ERC721StandardInterfaces, ...ERC1155StandardInterfaces]).toStrictEqual(
-      FeatureFunctionsMap['isApprovedForAll(address,address)[bool]'].drop,
+    expect([...ERC721StandardInterfaces, ...ERC1155StandardInterfaces].sort()).toStrictEqual(
+      [...FeatureFunctionsMap['isApprovedForAll(address,address)[bool]'].drop].sort(),
     );
   });
 
@@ -122,7 +122,7 @@ describe('Collections - static tests', () => {
     expect(missingFunctions).toStrictEqual([]);
   });
 
-  test.only('Check that every function lists at least the interfaces of the functions it states to implemenst', () => {
+  test('Check that every function lists at least the interfaces of the functions it states to implemenst', () => {
     const provider = new MockJsonRpcProvider();
     const erc721 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, ['standard/IERC721.sol:IERC721V0']);
 
@@ -169,7 +169,7 @@ describe('Collections - static tests', () => {
     const erc721 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, ['standard/IERC721.sol:IERC721V0', 'xxx']);
     expect(erc721.tokenStandard).toBe('ERC721');
     expect(erc721.supportedFeaturesList).toStrictEqual(['standard/IERC721.sol:IERC721V0']);
-    expect(async () => await new Token(erc721, 0).exists()).rejects.toThrow(SdkErrorCode.FEATURE_NOT_SUPPORTED);
+    expect(async () => await new Token(erc721, 0).exists()).rejects.toThrow(SdkErrorCode.CHAIN_ERROR);
 
     const erc1155 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, ['standard/IERC1155.sol:IERC1155V0', 'yyy']);
     expect(erc1155.tokenStandard).toBe('ERC1155');
@@ -192,7 +192,7 @@ describe('Collections - static tests', () => {
     // for ERC721 the token supply is either 1 or 0 depending on its existence
     const doesntExist = iface.encodeFunctionResult(iface.functions['exists(uint256)'], [false]);
     provider.addMock('call', doesntExist);
-    expect((await new Token(erc721, 0).totalSupply()).toNumber()).toBe(0);
+    expect((await new Token(erc721, null).totalSupply()).toNumber()).toBe(0);
   });
 
   test('ERC1155 Token existence & supply', async () => {

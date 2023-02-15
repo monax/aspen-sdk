@@ -1,7 +1,6 @@
-import { BigNumber, BigNumberish } from 'ethers';
+import { BigNumber, BigNumberish, CallOverrides } from 'ethers';
 import { Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -19,7 +18,7 @@ type BalanceOfPartitions = typeof BalanceOfPartitions;
 const BalanceOfInterfaces = Object.values(BalanceOfPartitions).flat();
 type BalanceOfInterfaces = (typeof BalanceOfInterfaces)[number];
 
-export type BalanceOfCallArgs = [address: Addressish, tokenId: BigNumberish | null, overrides?: SourcedOverrides];
+export type BalanceOfCallArgs = [address: Addressish, tokenId: BigNumberish | null, overrides?: CallOverrides];
 export type BalanceOfResponse = BigNumber;
 
 export class BalanceOf extends ContractFunction<
@@ -42,7 +41,7 @@ export class BalanceOf extends ContractFunction<
   async balanceOf(
     address: Addressish,
     tokenId: BigNumberish | null = null,
-    overrides?: SourcedOverrides,
+    overrides: CallOverrides = {},
   ): Promise<BigNumber> {
     const { nft, sft } = this.partitions;
 

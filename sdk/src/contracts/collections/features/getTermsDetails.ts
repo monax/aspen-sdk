@@ -1,7 +1,7 @@
+import { CallOverrides } from 'ethers';
 import { CollectionContract, IPFS_GATEWAY_PREFIX } from '../..';
 import { resolveIpfsUrl } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -23,7 +23,7 @@ type GetTermsDetailsPartitions = typeof GetTermsDetailsPartitions;
 const GetTermsDetailsInterfaces = Object.values(GetTermsDetailsPartitions).flat();
 type GetTermsDetailsInterfaces = (typeof GetTermsDetailsInterfaces)[number];
 
-export type GetTermsDetailsCallArgs = [overrides?: SourcedOverrides];
+export type GetTermsDetailsCallArgs = [overrides?: CallOverrides];
 export type GetTermsDetailsResponse = TermsDetails;
 
 export type TermsDetails = {
@@ -48,7 +48,7 @@ export class GetTermsDetails extends ContractFunction<
     return this.getTermsDetails(...args);
   }
 
-  async getTermsDetails(overrides?: SourcedOverrides): Promise<TermsDetails> {
+  async getTermsDetails(overrides: CallOverrides = {}): Promise<TermsDetails> {
     const { v1, v2 } = this.partitions;
 
     try {

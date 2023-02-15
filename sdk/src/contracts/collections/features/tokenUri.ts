@@ -1,7 +1,6 @@
-import { BigNumberish } from 'ethers';
+import { BigNumberish, CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction, ERC1155StandardInterfaces } from './features';
 
@@ -22,7 +21,7 @@ type TokenUriPartitions = typeof TokenUriPartitions;
 const TokenUriInterfaces = Object.values(TokenUriPartitions).flat();
 type TokenUriInterfaces = (typeof TokenUriInterfaces)[number];
 
-export type TokenUriCallArgs = [tokenId: BigNumberish, overrides?: SourcedOverrides];
+export type TokenUriCallArgs = [tokenId: BigNumberish, overrides?: CallOverrides];
 export type TokenUriResponse = string;
 
 export class TokenUri extends ContractFunction<
@@ -41,7 +40,7 @@ export class TokenUri extends ContractFunction<
     return this.tokenUri(...args);
   }
 
-  protected async tokenUri(tokenId: BigNumberish, overrides?: SourcedOverrides): Promise<string> {
+  protected async tokenUri(tokenId: BigNumberish, overrides: CallOverrides = {}): Promise<string> {
     try {
       if (this.base.tokenStandard === 'ERC721') {
         const iface = this.base.assumeFeature('metadata/INFTMetadata.sol:IAspenNFTMetadataV1');

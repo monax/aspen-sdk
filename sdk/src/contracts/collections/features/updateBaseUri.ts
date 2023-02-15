@@ -1,7 +1,7 @@
 import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -21,7 +21,7 @@ export type UpdateBaseUriCallArgs = [
   signer: Signerish,
   tokenId: BigNumberish,
   tokenUri: string,
-  overrides?: SourcedOverrides,
+  overrides?: WriteOverrides,
 ];
 export type UpdateBaseUriResponse = ContractTransaction;
 
@@ -45,7 +45,7 @@ export class UpdateBaseUri extends ContractFunction<
     signer: Signerish,
     tokenId: BigNumberish,
     tokenUri: string,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const v1 = this.partition('v1');
 
@@ -61,7 +61,7 @@ export class UpdateBaseUri extends ContractFunction<
     signer: Signerish,
     tokenId: BigNumberish,
     tokenUri: string,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
     const v1 = this.partition('v1');
 

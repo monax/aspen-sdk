@@ -1,7 +1,7 @@
 import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -23,7 +23,7 @@ export type SetMaxTotalSupplyCallArgs = [
   signer: Signerish,
   totalSupply: BigNumberish,
   tokenId: BigNumberish | null,
-  overrides?: SourcedOverrides,
+  overrides?: WriteOverrides,
 ];
 export type SetMaxTotalSupplyResponse = ContractTransaction;
 
@@ -48,7 +48,7 @@ export class SetMaxTotalSupply extends ContractFunction<
     signer: Signerish,
     totalSupply: BigNumberish,
     tokenId: BigNumberish | null = null,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const { nft, sft } = this.partitions;
 
@@ -73,7 +73,7 @@ export class SetMaxTotalSupply extends ContractFunction<
     signer: Signerish,
     totalSupply: BigNumberish,
     tokenId: BigNumberish | null = null,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
     const { nft, sft } = this.partitions;
 

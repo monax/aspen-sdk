@@ -1,7 +1,7 @@
+import { CallOverrides } from 'ethers';
 import { Address, CollectionContract } from '../..';
 import { parse } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -17,7 +17,7 @@ type GetDefaultRoyaltyInfoPartitions = typeof GetDefaultRoyaltyInfoPartitions;
 const GetDefaultRoyaltyInfoInterfaces = Object.values(GetDefaultRoyaltyInfoPartitions).flat();
 type GetDefaultRoyaltyInfoInterfaces = (typeof GetDefaultRoyaltyInfoInterfaces)[number];
 
-export type GetDefaultRoyaltyInfoCallArgs = [overrides?: SourcedOverrides];
+export type GetDefaultRoyaltyInfoCallArgs = [overrides?: CallOverrides];
 export type GetDefaultRoyaltyInfoResponse = DefaultRoyaltyInfo;
 
 export type DefaultRoyaltyInfo = {
@@ -41,7 +41,7 @@ export class GetDefaultRoyaltyInfo extends ContractFunction<
     return this.getDefaultRoyaltyInfo(...args);
   }
 
-  async getDefaultRoyaltyInfo(overrides?: SourcedOverrides): Promise<DefaultRoyaltyInfo> {
+  async getDefaultRoyaltyInfo(overrides: CallOverrides = {}): Promise<DefaultRoyaltyInfo> {
     const v1 = this.partition('v1');
 
     try {

@@ -1,6 +1,6 @@
+import { CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -16,7 +16,7 @@ type SupportedFeaturesPartitions = typeof SupportedFeaturesPartitions;
 const SupportedFeaturesInterfaces = Object.values(SupportedFeaturesPartitions).flat();
 type SupportedFeaturesInterfaces = (typeof SupportedFeaturesInterfaces)[number];
 
-export type SupportedFeaturesCallArgs = [overrides?: SourcedOverrides];
+export type SupportedFeaturesCallArgs = [overrides?: CallOverrides];
 export type SupportedFeaturesResponse = string[];
 
 export class SupportedFeatures extends ContractFunction<
@@ -35,7 +35,7 @@ export class SupportedFeatures extends ContractFunction<
     return this.supportedFeatures(...args);
   }
 
-  async supportedFeatures(overrides?: SourcedOverrides): Promise<string[]> {
+  async supportedFeatures(overrides: CallOverrides = {}): Promise<string[]> {
     const v1 = this.partition('v1');
 
     try {

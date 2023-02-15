@@ -1,7 +1,7 @@
 import { BigNumber, ContractTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -21,7 +21,7 @@ export type SetTokenNameAndSymbolCallArgs = [
   signer: Signerish,
   name: string,
   symbol: string,
-  overrides?: SourcedOverrides,
+  overrides?: WriteOverrides,
 ];
 export type SetTokenNameAndSymbolResponse = ContractTransaction;
 
@@ -45,7 +45,7 @@ export class SetTokenNameAndSymbol extends ContractFunction<
     signer: Signerish,
     name: string,
     symbol: string,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const v1 = this.partition('v1');
 
@@ -57,7 +57,12 @@ export class SetTokenNameAndSymbol extends ContractFunction<
     }
   }
 
-  async estimateGas(signer: Signerish, name: string, symbol: string, overrides?: SourcedOverrides): Promise<BigNumber> {
+  async estimateGas(
+    signer: Signerish,
+    name: string,
+    symbol: string,
+    overrides: WriteOverrides = {},
+  ): Promise<BigNumber> {
     const v1 = this.partition('v1');
 
     try {

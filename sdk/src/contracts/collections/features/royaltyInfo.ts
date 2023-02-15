@@ -1,7 +1,6 @@
-import { BigNumber } from 'ethers';
+import { BigNumber, CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -17,7 +16,7 @@ type RoyaltyInfoPartitions = typeof RoyaltyInfoPartitions;
 const RoyaltyInfoInterfaces = Object.values(RoyaltyInfoPartitions).flat();
 type RoyaltyInfoInterfaces = (typeof RoyaltyInfoInterfaces)[number];
 
-export type RoyaltyInfoCallArgs = [tokenId: BigNumber, salePrice: BigNumber, overrides?: SourcedOverrides];
+export type RoyaltyInfoCallArgs = [tokenId: BigNumber, salePrice: BigNumber, overrides?: CallOverrides];
 export type RoyaltyInfoResponse = RoyaltiesInfo;
 
 export type RoyaltiesInfo = {
@@ -41,7 +40,7 @@ export class RoyaltyInfo extends ContractFunction<
     return this.royaltyInfo(...args);
   }
 
-  async royaltyInfo(tokenId: BigNumber, salePrice: BigNumber, overrides?: SourcedOverrides): Promise<RoyaltiesInfo> {
+  async royaltyInfo(tokenId: BigNumber, salePrice: BigNumber, overrides: CallOverrides = {}): Promise<RoyaltiesInfo> {
     const v1 = this.partition('v1');
 
     try {

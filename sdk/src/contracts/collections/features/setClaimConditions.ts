@@ -1,7 +1,7 @@
 import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 import { CollectionContractClaimCondition } from './getClaimConditionById';
@@ -20,7 +20,7 @@ type SetClaimConditionsPartitions = typeof SetClaimConditionsPartitions;
 const SetClaimConditionsInterfaces = Object.values(SetClaimConditionsPartitions).flat();
 type SetClaimConditionsInterfaces = (typeof SetClaimConditionsInterfaces)[number];
 
-export type SetClaimConditionsCallArgs = [signer: Signerish, args: ConditionArgs, overrides?: SourcedOverrides];
+export type SetClaimConditionsCallArgs = [signer: Signerish, args: ConditionArgs, overrides?: WriteOverrides];
 export type SetClaimConditionsResponse = ContractTransaction;
 
 export type ConditionArgs = {
@@ -48,7 +48,7 @@ export class SetClaimConditions extends ContractFunction<
   async setClaimConditions(
     signer: Signerish,
     { conditions, tokenId, resetClaimEligibility }: ConditionArgs,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const { nft, sft } = this.partitions;
 
@@ -82,7 +82,7 @@ export class SetClaimConditions extends ContractFunction<
   async estimateGas(
     signer: Signerish,
     { conditions, tokenId, resetClaimEligibility }: ConditionArgs,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
     const { nft, sft } = this.partitions;
 

@@ -1,7 +1,7 @@
 import { BigNumber, ContractTransaction } from 'ethers';
 import { Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -17,7 +17,7 @@ type SetPrimarySaleRecipientPartitions = typeof SetPrimarySaleRecipientPartition
 const SetPrimarySaleRecipientInterfaces = Object.values(SetPrimarySaleRecipientPartitions).flat();
 type SetPrimarySaleRecipientInterfaces = (typeof SetPrimarySaleRecipientInterfaces)[number];
 
-export type SetPrimarySaleRecipientCallArgs = [signer: Signerish, recipient: Addressish, overrides?: SourcedOverrides];
+export type SetPrimarySaleRecipientCallArgs = [signer: Signerish, recipient: Addressish, overrides?: WriteOverrides];
 export type SetPrimarySaleRecipientResponse = ContractTransaction;
 
 export class SetPrimarySaleRecipient extends ContractFunction<
@@ -39,7 +39,7 @@ export class SetPrimarySaleRecipient extends ContractFunction<
   async setPrimarySaleRecipient(
     signer: Signerish,
     recipient: Addressish,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const v1 = this.partition('v1');
 
@@ -51,7 +51,7 @@ export class SetPrimarySaleRecipient extends ContractFunction<
     }
   }
 
-  async estimateGas(signer: Signerish, recipient: Addressish, overrides?: SourcedOverrides): Promise<BigNumber> {
+  async estimateGas(signer: Signerish, recipient: Addressish, overrides: WriteOverrides = {}): Promise<BigNumber> {
     const v1 = this.partition('v1');
 
     try {

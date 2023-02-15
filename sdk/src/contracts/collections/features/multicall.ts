@@ -1,7 +1,7 @@
 import { BigNumber, BytesLike, ContractTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -17,7 +17,7 @@ type MulticallPartitions = typeof MulticallPartitions;
 const MulticallInterfaces = Object.values(MulticallPartitions).flat();
 type MulticallInterfaces = (typeof MulticallInterfaces)[number];
 
-export type MulticallCallArgs = [signer: Signerish, data: BytesLike[], overrides?: SourcedOverrides];
+export type MulticallCallArgs = [signer: Signerish, data: BytesLike[], overrides?: WriteOverrides];
 export type MulticallResponse = ContractTransaction;
 
 export class Multicall extends ContractFunction<
@@ -36,7 +36,7 @@ export class Multicall extends ContractFunction<
     return this.multicall(...args);
   }
 
-  async multicall(signer: Signerish, data: BytesLike[], overrides?: SourcedOverrides): Promise<ContractTransaction> {
+  async multicall(signer: Signerish, data: BytesLike[], overrides: WriteOverrides = {}): Promise<ContractTransaction> {
     const v1 = this.partition('v1');
 
     try {
@@ -47,7 +47,7 @@ export class Multicall extends ContractFunction<
     }
   }
 
-  async estimateGas(signer: Signerish, data: BytesLike[], overrides?: SourcedOverrides): Promise<BigNumber> {
+  async estimateGas(signer: Signerish, data: BytesLike[], overrides: WriteOverrides = {}): Promise<BigNumber> {
     const v1 = this.partition('v1');
 
     try {

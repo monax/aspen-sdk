@@ -1,7 +1,7 @@
 import { BigNumber, ContractTransaction } from 'ethers';
 import { Address, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -17,7 +17,7 @@ type SetOwnerPartitions = typeof SetOwnerPartitions;
 const SetOwnerInterfaces = Object.values(SetOwnerPartitions).flat();
 type SetOwnerInterfaces = (typeof SetOwnerInterfaces)[number];
 
-export type SetOwnerCallArgs = [signer: Signerish, ownerAddress: Address, overrides?: SourcedOverrides];
+export type SetOwnerCallArgs = [signer: Signerish, ownerAddress: Address, overrides?: WriteOverrides];
 export type SetOwnerResponse = ContractTransaction;
 
 export class SetOwner extends ContractFunction<
@@ -36,7 +36,11 @@ export class SetOwner extends ContractFunction<
     return this.setOwner(...args);
   }
 
-  async setOwner(signer: Signerish, ownerAddress: Address, overrides?: SourcedOverrides): Promise<ContractTransaction> {
+  async setOwner(
+    signer: Signerish,
+    ownerAddress: Address,
+    overrides: WriteOverrides = {},
+  ): Promise<ContractTransaction> {
     const v1 = this.partition('v1');
 
     try {
@@ -47,7 +51,7 @@ export class SetOwner extends ContractFunction<
     }
   }
 
-  async estimateGas(signer: Signerish, ownerAddress: Address, overrides?: SourcedOverrides): Promise<BigNumber> {
+  async estimateGas(signer: Signerish, ownerAddress: Address, overrides: WriteOverrides = {}): Promise<BigNumber> {
     const v1 = this.partition('v1');
 
     try {

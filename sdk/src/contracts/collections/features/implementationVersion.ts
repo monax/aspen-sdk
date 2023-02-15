@@ -1,8 +1,7 @@
-import { BigNumber } from 'ethers';
+import { BigNumber, CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { Zero } from '../number';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -20,7 +19,7 @@ type ImplementationVersionPartitions = typeof ImplementationVersionPartitions;
 const ImplementationVersionInterfaces = Object.values(ImplementationVersionPartitions).flat();
 type ImplementationVersionInterfaces = (typeof ImplementationVersionInterfaces)[number];
 
-export type ImplementationVersionCallArgs = [overrides?: SourcedOverrides];
+export type ImplementationVersionCallArgs = [overrides?: CallOverrides];
 export type ImplementationVersionResponse = AspenContractVersion;
 
 export type AspenContractVersion = {
@@ -45,7 +44,7 @@ export class ImplementationVersion extends ContractFunction<
     return this.implementationVersion(...args);
   }
 
-  async implementationVersion(overrides?: SourcedOverrides): Promise<AspenContractVersion> {
+  async implementationVersion(overrides: CallOverrides = {}): Promise<AspenContractVersion> {
     const { v1, v2 } = this.partitions;
 
     try {

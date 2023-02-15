@@ -1,6 +1,6 @@
+import { CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -18,7 +18,7 @@ type ImplementationNamePartitions = typeof ImplementationNamePartitions;
 const ImplementationNameInterfaces = Object.values(ImplementationNamePartitions).flat();
 type ImplementationNameInterfaces = (typeof ImplementationNameInterfaces)[number];
 
-export type ImplementationNameCallArgs = [overrides?: SourcedOverrides];
+export type ImplementationNameCallArgs = [overrides?: CallOverrides];
 export type ImplementationNameResponse = string;
 
 export class ImplementationName extends ContractFunction<
@@ -37,7 +37,7 @@ export class ImplementationName extends ContractFunction<
     return this.implementationName(...args);
   }
 
-  async implementationName(overrides?: SourcedOverrides): Promise<string> {
+  async implementationName(overrides: CallOverrides = {}): Promise<string> {
     const { v1, v2 } = this.partitions;
 
     try {

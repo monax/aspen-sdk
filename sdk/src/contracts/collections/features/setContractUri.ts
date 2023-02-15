@@ -1,7 +1,7 @@
 import { BigNumber, ContractTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -17,7 +17,7 @@ type SetContractUriPartitions = typeof SetContractUriPartitions;
 const SetContractUriInterfaces = Object.values(SetContractUriPartitions).flat();
 type SetContractUriInterfaces = (typeof SetContractUriInterfaces)[number];
 
-export type SetContractUriCallArgs = [signer: Signerish, uri: string, overrides?: SourcedOverrides];
+export type SetContractUriCallArgs = [signer: Signerish, uri: string, overrides?: WriteOverrides];
 export type SetContractUriResponse = ContractTransaction;
 
 export class SetContractUri extends ContractFunction<
@@ -36,7 +36,7 @@ export class SetContractUri extends ContractFunction<
     return this.setContractUri(...args);
   }
 
-  async setContractUri(signer: Signerish, uri: string, overrides?: SourcedOverrides): Promise<ContractTransaction> {
+  async setContractUri(signer: Signerish, uri: string, overrides: WriteOverrides = {}): Promise<ContractTransaction> {
     const v1 = this.partition('v1');
 
     try {
@@ -47,7 +47,7 @@ export class SetContractUri extends ContractFunction<
     }
   }
 
-  async estimateGas(signer: Signerish, uri: string, overrides?: SourcedOverrides): Promise<BigNumber> {
+  async estimateGas(signer: Signerish, uri: string, overrides: WriteOverrides = {}): Promise<BigNumber> {
     const v1 = this.partition('v1');
 
     try {

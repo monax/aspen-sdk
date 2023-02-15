@@ -1,7 +1,6 @@
-import { ethers } from 'ethers';
+import { CallOverrides, ethers } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { CatchAllInterfaces, ContractFunction } from './features';
 
@@ -19,7 +18,7 @@ type SymbolPartitions = typeof SymbolPartitions;
 const SymbolInterfaces = Object.values(SymbolPartitions).flat();
 type SymbolInterfaces = (typeof SymbolInterfaces)[number];
 
-export type SymbolCallArgs = [overrides?: SourcedOverrides];
+export type SymbolCallArgs = [overrides?: CallOverrides];
 export type SymbolResponse = string;
 
 export class Symbol extends ContractFunction<SymbolInterfaces, SymbolPartitions, SymbolCallArgs, SymbolResponse> {
@@ -33,7 +32,7 @@ export class Symbol extends ContractFunction<SymbolInterfaces, SymbolPartitions,
     return this.symbol(...args);
   }
 
-  async symbol(overrides?: SourcedOverrides): Promise<string> {
+  async symbol(overrides: CallOverrides = {}): Promise<string> {
     try {
       const abi = ['function symbol() external returns (string)'];
       const contract = new ethers.Contract(this.base.address, abi, this.base.provider);

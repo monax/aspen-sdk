@@ -1,7 +1,6 @@
-import { BigNumber } from 'ethers';
+import { BigNumber, CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -17,7 +16,7 @@ type GetLargestTokenIdPartitions = typeof GetLargestTokenIdPartitions;
 const GetLargestTokenIdInterfaces = Object.values(GetLargestTokenIdPartitions).flat();
 type GetLargestTokenIdInterfaces = (typeof GetLargestTokenIdInterfaces)[number];
 
-export type GetLargestTokenIdCallArgs = [overrides?: SourcedOverrides];
+export type GetLargestTokenIdCallArgs = [overrides?: CallOverrides];
 export type GetLargestTokenIdResponse = BigNumber;
 
 export class GetLargestTokenId extends ContractFunction<
@@ -37,7 +36,7 @@ export class GetLargestTokenId extends ContractFunction<
     return this.getLargestTokenId(...args);
   }
 
-  async getLargestTokenId(overrides?: SourcedOverrides): Promise<BigNumber> {
+  async getLargestTokenId(overrides: CallOverrides = {}): Promise<BigNumber> {
     const v1 = this.partition('v1');
 
     try {

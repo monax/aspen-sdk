@@ -1,7 +1,6 @@
-import { BytesLike } from 'ethers';
+import { BytesLike, CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -17,7 +16,7 @@ type SupportsInterfacePartitions = typeof SupportsInterfacePartitions;
 const SupportsInterfaceInterfaces = Object.values(SupportsInterfacePartitions).flat();
 type SupportsInterfaceInterfaces = (typeof SupportsInterfaceInterfaces)[number];
 
-export type SupportsInterfaceCallArgs = [interfaceId: BytesLike, overrides?: SourcedOverrides];
+export type SupportsInterfaceCallArgs = [interfaceId: BytesLike, overrides?: CallOverrides];
 export type SupportsInterfaceResponse = boolean;
 
 export class SupportsInterface extends ContractFunction<
@@ -36,7 +35,7 @@ export class SupportsInterface extends ContractFunction<
     return this.supportsInterface(...args);
   }
 
-  async supportsInterface(interfaceId: BytesLike, overrides?: SourcedOverrides): Promise<boolean> {
+  async supportsInterface(interfaceId: BytesLike, overrides: CallOverrides = {}): Promise<boolean> {
     const v1 = this.partition('v1');
 
     try {

@@ -9,9 +9,9 @@ import {
   IPFS_GATEWAY_PREFIX,
   OperationStatus,
   Signerish,
-  SourcedOverrides,
   TokenMetadata,
   UserClaimRestrictions,
+  WriteOverrides,
   ZERO_BYTES32,
 } from '../..';
 import { publishingChainFromChainId } from '../../../apis';
@@ -24,12 +24,13 @@ import { max, min } from '../number';
 import { ContractObject } from './object';
 
 export class Token extends ContractObject {
-  public constructor(protected readonly base: CollectionContract, readonly tokenId: BigNumberish) {
+  public constructor(protected readonly base: CollectionContract, readonly tokenId: BigNumberish | null) {
     super(base);
   }
 
   async getUri(): Promise<string> {
-    return await this.base.tokenUri(this.tokenId);
+    const tokenId = this.base.requireTokenId(this.tokenId);
+    return await this.base.tokenUri(tokenId);
   }
 
   async totalSupply(): Promise<BigNumber> {
@@ -37,12 +38,14 @@ export class Token extends ContractObject {
   }
 
   async exists(): Promise<boolean> {
-    return await this.base.exists(this.tokenId);
+    const tokenId = this.base.requireTokenId(this.tokenId);
+    return await this.base.exists(tokenId);
   }
 
   async getMetadata(): Promise<OperationStatus<{ uri: string; metadata: TokenMetadata }>> {
     return await this.run(async () => {
-      const uri = await this.base.tokenUri(this.tokenId);
+      const tokenId = this.base.requireTokenId(this.tokenId);
+      const uri = await this.base.tokenUri(tokenId);
       const metadata = await Token.getMetadataFromUri(uri);
 
       return { uri, metadata };
@@ -99,27 +102,29 @@ export class Token extends ContractObject {
   async setTokenURI(
     signer: Signerish,
     tokenUri: string,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<OperationStatus<ContractTransaction>> {
     return await this.run(async () => {
-      return await this.base.setTokenUri(signer, this.tokenId, tokenUri, overrides);
+      const tokenId = this.base.requireTokenId(this.tokenId);
+      return await this.base.setTokenUri(signer, tokenId, tokenUri, overrides);
     });
   }
 
   async setPermantentTokenURI(
     signer: Signerish,
     tokenUri: string,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<OperationStatus<ContractTransaction>> {
     return await this.run(async () => {
-      return await this.base.setPermanentTokenUri(signer, this.tokenId, tokenUri, overrides);
+      const tokenId = this.base.requireTokenId(this.tokenId);
+      return await this.base.setPermanentTokenUri(signer, tokenId, tokenUri, overrides);
     });
   }
 
   async setMaxTotalSupply(
     signer: Signerish,
     totalSupply: BigNumberish,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<OperationStatus<ContractTransaction>> {
     return await this.run(async () => {
       return await this.base.setMaxTotalSupply(signer, totalSupply, this.tokenId, overrides);
@@ -130,7 +135,7 @@ export class Token extends ContractObject {
     signer: Signerish,
     conditions: CollectionContractClaimCondition[],
     resetClaimEligibility: boolean,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<OperationStatus<ContractTransaction>> {
     return await this.run(async () => {
       const args = { conditions, resetClaimEligibility, tokenId: this.tokenId };

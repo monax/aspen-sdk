@@ -1,6 +1,6 @@
+import { CallOverrides } from 'ethers';
 import { Address, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -20,7 +20,7 @@ type HasAcceptedTermsPartitions = typeof HasAcceptedTermsPartitions;
 const HasAcceptedTermsInterfaces = Object.values(HasAcceptedTermsPartitions).flat();
 type HasAcceptedTermsInterfaces = (typeof HasAcceptedTermsInterfaces)[number];
 
-export type HasAcceptedTermsCallArgs = [userAddress: Address, overrides?: SourcedOverrides];
+export type HasAcceptedTermsCallArgs = [userAddress: Address, overrides?: CallOverrides];
 export type HasAcceptedTermsResponse = boolean;
 
 export class HasAcceptedTerms extends ContractFunction<
@@ -39,7 +39,7 @@ export class HasAcceptedTerms extends ContractFunction<
     return this.hasAcceptedTerms(...args);
   }
 
-  async hasAcceptedTerms(userAddress: Address, overrides?: SourcedOverrides): Promise<boolean> {
+  async hasAcceptedTerms(userAddress: Address, overrides: CallOverrides = {}): Promise<boolean> {
     const { v1, v2, v3 } = this.partitions;
 
     try {

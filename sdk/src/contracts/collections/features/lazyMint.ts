@@ -1,7 +1,7 @@
 import { BigNumber, BytesLike, ContractTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -19,7 +19,7 @@ type LazyMintPartitions = typeof LazyMintPartitions;
 const LazyMintInterfaces = Object.values(LazyMintPartitions).flat();
 type LazyMintInterfaces = (typeof LazyMintInterfaces)[number];
 
-export type LazyMintCallArgs = [signer: Signerish, mint: MintAgs, overrides?: SourcedOverrides];
+export type LazyMintCallArgs = [signer: Signerish, mint: MintAgs, overrides?: WriteOverrides];
 export type LazyMintResponse = ContractTransaction;
 
 export type MintAgs = {
@@ -47,7 +47,7 @@ export class LazyMint extends ContractFunction<
   async lazyMint(
     signer: Signerish,
     { amount, baseURI, encryptedBaseURI }: MintAgs,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const { v1, v2 } = this.partitions;
 
@@ -72,7 +72,7 @@ export class LazyMint extends ContractFunction<
   async estimateGas(
     signer: Signerish,
     { amount, baseURI, encryptedBaseURI }: MintAgs,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
     const { v1, v2 } = this.partitions;
 

@@ -1,8 +1,7 @@
-import { BigNumber } from 'ethers';
+import { BigNumber, CallOverrides } from 'ethers';
 import { Address, CollectionContract } from '../..';
 import { parse } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 import { DefaultRoyaltyInfo } from './getDefaultRoyaltyInfo';
@@ -19,7 +18,7 @@ type GetRoyaltyInfoForTokenPartitions = typeof GetRoyaltyInfoForTokenPartitions;
 const GetRoyaltyInfoForTokenInterfaces = Object.values(GetRoyaltyInfoForTokenPartitions).flat();
 type GetRoyaltyInfoForTokenInterfaces = (typeof GetRoyaltyInfoForTokenInterfaces)[number];
 
-export type GetRoyaltyInfoForTokenCallArgs = [tokenId: BigNumber, overrides?: SourcedOverrides];
+export type GetRoyaltyInfoForTokenCallArgs = [tokenId: BigNumber, overrides?: CallOverrides];
 export type GetRoyaltyInfoForTokenResponse = DefaultRoyaltyInfo;
 
 export class GetRoyaltyInfoForToken extends ContractFunction<
@@ -38,7 +37,7 @@ export class GetRoyaltyInfoForToken extends ContractFunction<
     return this.getRoyaltyInfoForToken(...args);
   }
 
-  async getRoyaltyInfoForToken(tokenId: BigNumber, overrides?: SourcedOverrides): Promise<DefaultRoyaltyInfo> {
+  async getRoyaltyInfoForToken(tokenId: BigNumber, overrides: CallOverrides = {}): Promise<DefaultRoyaltyInfo> {
     const v1 = this.partition('v1');
 
     try {

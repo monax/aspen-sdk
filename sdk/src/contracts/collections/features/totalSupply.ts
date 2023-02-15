@@ -1,7 +1,6 @@
-import { BigNumber, BigNumberish } from 'ethers';
+import { BigNumber, BigNumberish, CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -19,7 +18,7 @@ type TotalSupplyPartitions = typeof TotalSupplyPartitions;
 const TotalSupplyInterfaces = Object.values(TotalSupplyPartitions).flat();
 type TotalSupplyInterfaces = (typeof TotalSupplyInterfaces)[number];
 
-export type TotalSupplyCallArgs = [tokenId?: BigNumberish | null, overrides?: SourcedOverrides];
+export type TotalSupplyCallArgs = [tokenId?: BigNumberish | null, overrides?: CallOverrides];
 export type TotalSupplyResponse = BigNumber;
 
 export class TotalSupply extends ContractFunction<
@@ -39,7 +38,7 @@ export class TotalSupply extends ContractFunction<
     return this.totalSupply(...args);
   }
 
-  async totalSupply(tokenId?: BigNumberish | null, overrides?: SourcedOverrides): Promise<BigNumber> {
+  async totalSupply(tokenId?: BigNumberish | null, overrides: CallOverrides = {}): Promise<BigNumber> {
     const { nft, sft } = this.partitions;
 
     try {
@@ -53,6 +52,7 @@ export class TotalSupply extends ContractFunction<
         return balance;
       }
     } catch (err) {
+      console.log(err);
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { tokenId });
     }
 

@@ -1,7 +1,7 @@
+import { CallOverrides } from 'ethers';
 import { Address, CollectionContract } from '../..';
 import { parse } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -17,7 +17,7 @@ type GetPrimarySaleRecipientPartitions = typeof GetPrimarySaleRecipientPartition
 const GetPrimarySaleRecipientInterfaces = Object.values(GetPrimarySaleRecipientPartitions).flat();
 type GetPrimarySaleRecipientInterfaces = (typeof GetPrimarySaleRecipientInterfaces)[number];
 
-export type GetPrimarySaleRecipientCallArgs = [overrides?: SourcedOverrides];
+export type GetPrimarySaleRecipientCallArgs = [overrides?: CallOverrides];
 export type GetPrimarySaleRecipientResponse = Address;
 
 export class GetPrimarySaleRecipient extends ContractFunction<
@@ -36,7 +36,7 @@ export class GetPrimarySaleRecipient extends ContractFunction<
     return this.getPrimarySaleRecipient(...args);
   }
 
-  async getPrimarySaleRecipient(overrides?: SourcedOverrides): Promise<Address> {
+  async getPrimarySaleRecipient(overrides: CallOverrides = {}): Promise<Address> {
     const v1 = this.partition('v1');
 
     try {

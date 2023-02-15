@@ -1,7 +1,7 @@
+import { CallOverrides } from 'ethers';
 import { Address, CollectionContract } from '../..';
 import { parse } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -17,7 +17,7 @@ type OwnerPartitions = typeof OwnerPartitions;
 const OwnerInterfaces = Object.values(OwnerPartitions).flat();
 type OwnerInterfaces = (typeof OwnerInterfaces)[number];
 
-export type OwnerCallArgs = [overrides?: SourcedOverrides];
+export type OwnerCallArgs = [overrides?: CallOverrides];
 export type OwnerResponse = Address;
 
 export class Owner extends ContractFunction<OwnerInterfaces, OwnerPartitions, OwnerCallArgs, OwnerResponse> {
@@ -32,7 +32,7 @@ export class Owner extends ContractFunction<OwnerInterfaces, OwnerPartitions, Ow
     return this.owner(...args);
   }
 
-  async owner(overrides?: SourcedOverrides): Promise<Address> {
+  async owner(overrides: CallOverrides = {}): Promise<Address> {
     const v1 = this.partition('v1');
 
     try {

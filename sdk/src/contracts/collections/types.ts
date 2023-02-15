@@ -13,7 +13,7 @@ export type Signerish = Signer | Provider;
 
 export type TokenStandard = 'ERC721' | 'ERC1155';
 
-export type SourcedOverrides = Overrides & { from?: PromiseOrValue<string> };
+export type WriteOverrides = Overrides & { from?: PromiseOrValue<string> };
 
 export type MetadataKind = 'collection';
 

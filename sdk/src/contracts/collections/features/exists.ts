@@ -1,7 +1,6 @@
-import { BigNumberish } from 'ethers';
+import { BigNumberish, CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { CatchAllInterfaces, ContractFunction } from './features';
 
@@ -19,7 +18,7 @@ type ExistsPartitions = typeof ExistsPartitions;
 const ExistsInterfaces = Object.values(ExistsPartitions).flat();
 type ExistsInterfaces = (typeof ExistsInterfaces)[number];
 
-export type ExistsCallArgs = [tokenId: BigNumberish, overrides?: SourcedOverrides];
+export type ExistsCallArgs = [tokenId: BigNumberish, overrides?: CallOverrides];
 export type ExistsResponse = boolean;
 
 export class Exists extends ContractFunction<ExistsInterfaces, ExistsPartitions, ExistsCallArgs, ExistsResponse> {
@@ -34,7 +33,7 @@ export class Exists extends ContractFunction<ExistsInterfaces, ExistsPartitions,
     return this.exists(...args);
   }
 
-  async exists(tokenId: BigNumberish, overrides?: SourcedOverrides): Promise<boolean> {
+  async exists(tokenId: BigNumberish, overrides: CallOverrides = {}): Promise<boolean> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {

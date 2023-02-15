@@ -1,8 +1,8 @@
-import { BigNumber } from 'ethers';
+import { BigNumber, CallOverrides } from 'ethers';
 import { Address, CollectionContract } from '../..';
 import { parse } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
+import type { WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -18,7 +18,7 @@ type GetPlatformFeeInfoPartitions = typeof GetPlatformFeeInfoPartitions;
 const GetPlatformFeeInfoInterfaces = Object.values(GetPlatformFeeInfoPartitions).flat();
 type GetPlatformFeeInfoInterfaces = (typeof GetPlatformFeeInfoInterfaces)[number];
 
-export type GetPlatformFeeInfoCallArgs = [overrides?: SourcedOverrides];
+export type GetPlatformFeeInfoCallArgs = [overrides?: CallOverrides];
 export type GetPlatformFeeInfoResponse = PlatformFee;
 
 export type PlatformFee = {
@@ -42,7 +42,7 @@ export class GetPlatformFeeInfo extends ContractFunction<
     return this.getPlatformFeeInfo(...args);
   }
 
-  async getPlatformFeeInfo(overrides?: SourcedOverrides): Promise<PlatformFee> {
+  async getPlatformFeeInfo(overrides: WriteOverrides = {}): Promise<PlatformFee> {
     const v1 = this.partition('v1');
 
     try {

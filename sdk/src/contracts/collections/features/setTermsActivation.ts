@@ -1,7 +1,7 @@
 import { BigNumber, ContractTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -19,7 +19,7 @@ type SetTermsActivationPartitions = typeof SetTermsActivationPartitions;
 const SetTermsActivationInterfaces = Object.values(SetTermsActivationPartitions).flat();
 type SetTermsActivationInterfaces = (typeof SetTermsActivationInterfaces)[number];
 
-export type SetTermsActivationCallArgs = [signer: Signerish, termsEnabled: boolean, overrides?: SourcedOverrides];
+export type SetTermsActivationCallArgs = [signer: Signerish, termsEnabled: boolean, overrides?: WriteOverrides];
 export type SetTermsActivationResponse = ContractTransaction;
 
 export class SetTermsActivation extends ContractFunction<
@@ -41,7 +41,7 @@ export class SetTermsActivation extends ContractFunction<
   async setTermsActivation(
     signer: Signerish,
     termsEnabled: boolean,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const { v1, v2 } = this.partitions;
 
@@ -60,7 +60,7 @@ export class SetTermsActivation extends ContractFunction<
     this.notSupported();
   }
 
-  async estimateGas(signer: Signerish, termsEnabled: boolean, overrides?: SourcedOverrides): Promise<BigNumber> {
+  async estimateGas(signer: Signerish, termsEnabled: boolean, overrides: WriteOverrides = {}): Promise<BigNumber> {
     const { v1, v2 } = this.partitions;
 
     try {

@@ -1,7 +1,7 @@
 import { BigNumber, ContractTransaction } from 'ethers';
 import { Address, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -23,7 +23,7 @@ export type AcceptTermsWithSignatureCallArgs = [
   signer: Signerish,
   acceptor: Address,
   signature: string,
-  overrides?: SourcedOverrides,
+  overrides?: WriteOverrides,
 ];
 export type AcceptTermsWithSignatureResponse = ContractTransaction;
 
@@ -52,7 +52,7 @@ export class AcceptTermsWithSignature extends ContractFunction<
     signer: Signerish,
     acceptor: Address,
     signature: string,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const { v1, v2 } = this.partitions;
 
@@ -75,7 +75,7 @@ export class AcceptTermsWithSignature extends ContractFunction<
     signer: Signerish,
     acceptor: Address,
     signature: string,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
     const { v1, v2 } = this.partitions;
 

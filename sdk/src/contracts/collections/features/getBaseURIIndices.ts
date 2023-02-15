@@ -1,7 +1,6 @@
-import { BigNumber } from 'ethers';
+import { BigNumber, CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -17,7 +16,7 @@ type GetBaseURIIndicesPartitions = typeof GetBaseURIIndicesPartitions;
 const GetBaseURIIndicesInterfaces = Object.values(GetBaseURIIndicesPartitions).flat();
 type GetBaseURIIndicesInterfaces = (typeof GetBaseURIIndicesInterfaces)[number];
 
-export type GetBaseURIIndicesCallArgs = [overrides?: SourcedOverrides];
+export type GetBaseURIIndicesCallArgs = [overrides?: CallOverrides];
 export type GetBaseURIIndicesResponse = BigNumber[];
 
 export class GetBaseURIIndices extends ContractFunction<
@@ -36,7 +35,7 @@ export class GetBaseURIIndices extends ContractFunction<
     return this.getBaseURIIndices(...args);
   }
 
-  async getBaseURIIndices(overrides?: SourcedOverrides): Promise<BigNumber[]> {
+  async getBaseURIIndices(overrides: CallOverrides = {}): Promise<BigNumber[]> {
     const v1 = this.partition('v1');
 
     try {

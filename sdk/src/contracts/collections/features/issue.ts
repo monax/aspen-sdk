@@ -4,7 +4,7 @@ import { parse } from '../../../utils';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import { bnRange, One } from '../number';
-import type { Signerish, SourcedOverrides, TokenId, TokenStandard } from '../types';
+import type { Signerish, TokenId, TokenStandard, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -22,7 +22,7 @@ type IssuePartitions = typeof IssuePartitions;
 const IssueInterfaces = Object.values(IssuePartitions).flat();
 type IssueInterfaces = (typeof IssueInterfaces)[number];
 
-export type IssueCallArgs = [signer: Signerish, args: IssueArgs, overrides?: SourcedOverrides];
+export type IssueCallArgs = [signer: Signerish, args: IssueArgs, overrides?: WriteOverrides];
 export type IssueResponse = ContractTransaction;
 
 export type IssueArgs = {
@@ -53,7 +53,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     return this.issue(...args);
   }
 
-  async issue(signer: Signerish, args: IssueArgs, overrides: SourcedOverrides = {}): Promise<ContractTransaction> {
+  async issue(signer: Signerish, args: IssueArgs, overrides: WriteOverrides = {}): Promise<ContractTransaction> {
     this.validateArgs(args);
 
     switch (this.base.tokenStandard) {
@@ -67,7 +67,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
   protected async issueERC1155(
     signer: Signerish,
     { receiver, tokenId, quantity }: IssueArgs,
-    overrides: SourcedOverrides = {},
+    overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
@@ -83,7 +83,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
   protected async issueERC721(
     signer: Signerish,
     { receiver, quantity }: IssueArgs,
-    overrides: SourcedOverrides = {},
+    overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const nft = this.partition('nft');
 
@@ -95,7 +95,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     }
   }
 
-  async estimateGas(signer: Signerish, args: IssueArgs, overrides: SourcedOverrides = {}): Promise<BigNumber> {
+  async estimateGas(signer: Signerish, args: IssueArgs, overrides: WriteOverrides = {}): Promise<BigNumber> {
     this.validateArgs(args);
 
     switch (this.base.tokenStandard) {
@@ -109,7 +109,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
   protected async estimateGasERC1155(
     signer: Signerish,
     { receiver, tokenId, quantity }: IssueArgs,
-    overrides: SourcedOverrides = {},
+    overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
@@ -125,7 +125,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
   protected async estimateGasERC721(
     signer: Signerish,
     { receiver, quantity }: IssueArgs,
-    overrides: SourcedOverrides = {},
+    overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
     const nft = this.partition('nft');
 

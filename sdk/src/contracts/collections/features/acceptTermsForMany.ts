@@ -1,7 +1,7 @@
 import { BigNumber, ContractTransaction } from 'ethers';
 import { Address, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -17,7 +17,7 @@ type AcceptTermsForManyPartitions = typeof AcceptTermsForManyPartitions;
 const AcceptTermsForManyInterfaces = Object.values(AcceptTermsForManyPartitions).flat();
 type AcceptTermsForManyInterfaces = (typeof AcceptTermsForManyInterfaces)[number];
 
-export type AcceptTermsForManyCallArgs = [signer: Signerish, acceptors: Address[], overrides?: SourcedOverrides];
+export type AcceptTermsForManyCallArgs = [signer: Signerish, acceptors: Address[], overrides?: WriteOverrides];
 export type AcceptTermsForManyResponse = ContractTransaction;
 
 export class AcceptTermsForMany extends ContractFunction<
@@ -39,7 +39,7 @@ export class AcceptTermsForMany extends ContractFunction<
   async acceptTermsForMany(
     signer: Signerish,
     acceptors: Address[],
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const v1 = this.partition('v1');
 
@@ -51,7 +51,7 @@ export class AcceptTermsForMany extends ContractFunction<
     }
   }
 
-  async estimateGas(signer: Signerish, acceptors: Address[], overrides?: SourcedOverrides): Promise<BigNumber> {
+  async estimateGas(signer: Signerish, acceptors: Address[], overrides: WriteOverrides = {}): Promise<BigNumber> {
     const v1 = this.partition('v1');
 
     try {

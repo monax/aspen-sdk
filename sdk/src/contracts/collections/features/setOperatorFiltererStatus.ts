@@ -1,7 +1,7 @@
 import { BigNumber, ContractTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -17,7 +17,7 @@ type SetOperatorFiltererStatusPartitions = typeof SetOperatorFiltererStatusParti
 const SetOperatorFiltererStatusInterfaces = Object.values(SetOperatorFiltererStatusPartitions).flat();
 type SetOperatorFiltererStatusInterfaces = (typeof SetOperatorFiltererStatusInterfaces)[number];
 
-export type SetOperatorFiltererStatusCallArgs = [signer: Signerish, enabled: boolean, overrides?: SourcedOverrides];
+export type SetOperatorFiltererStatusCallArgs = [signer: Signerish, enabled: boolean, overrides?: WriteOverrides];
 export type SetOperatorFiltererStatusResponse = ContractTransaction;
 
 export class SetOperatorFiltererStatus extends ContractFunction<
@@ -44,7 +44,7 @@ export class SetOperatorFiltererStatus extends ContractFunction<
   async setOperatorFiltererStatus(
     signer: Signerish,
     enabled: boolean,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const v1 = this.partition('v1');
 
@@ -56,7 +56,7 @@ export class SetOperatorFiltererStatus extends ContractFunction<
     }
   }
 
-  async estimateGas(signer: Signerish, enabled: boolean, overrides?: SourcedOverrides): Promise<BigNumber> {
+  async estimateGas(signer: Signerish, enabled: boolean, overrides: WriteOverrides = {}): Promise<BigNumber> {
     const v1 = this.partition('v1');
 
     try {

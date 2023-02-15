@@ -1,6 +1,6 @@
+import { CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -18,7 +18,7 @@ type IsAspenFeaturesPartitions = typeof IsAspenFeaturesPartitions;
 const IsAspenFeaturesInterfaces = Object.values(IsAspenFeaturesPartitions).flat();
 type IsAspenFeaturesInterfaces = (typeof IsAspenFeaturesInterfaces)[number];
 
-export type IsAspenFeaturesCallArgs = [overrides?: SourcedOverrides];
+export type IsAspenFeaturesCallArgs = [overrides?: CallOverrides];
 export type IsAspenFeaturesResponse = boolean;
 
 export class IsAspenFeatures extends ContractFunction<
@@ -37,7 +37,7 @@ export class IsAspenFeatures extends ContractFunction<
     return this.isAspenFeatures(...args);
   }
 
-  async isAspenFeatures(overrides?: SourcedOverrides): Promise<boolean> {
+  async isAspenFeatures(overrides: CallOverrides = {}): Promise<boolean> {
     const { v1, v2 } = this.partitions;
 
     try {

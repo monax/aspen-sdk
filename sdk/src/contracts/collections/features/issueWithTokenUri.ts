@@ -2,7 +2,7 @@ import { BigNumber, ContractReceipt, ContractTransaction } from 'ethers';
 import { Address, isSameAddress, ZERO_ADDRESS } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 import { IssuedToken } from './issue';
@@ -19,7 +19,7 @@ type IssueWithTokenUriPartitions = typeof IssueWithTokenUriPartitions;
 const IssueWithTokenUriInterfaces = Object.values(IssueWithTokenUriPartitions).flat();
 type IssueWithTokenUriInterfaces = (typeof IssueWithTokenUriInterfaces)[number];
 
-export type IssueWithTokenUriCallArgs = [signer: Signerish, args: IssueWithTokenUriArgs, overrides?: SourcedOverrides];
+export type IssueWithTokenUriCallArgs = [signer: Signerish, args: IssueWithTokenUriArgs, overrides?: WriteOverrides];
 export type IssueWithTokenUriResponse = ContractTransaction;
 
 export type IssueWithTokenUriArgs = {
@@ -46,7 +46,7 @@ export class IssueWithTokenUri extends ContractFunction<
   async issueWithTokenUri(
     signer: Signerish,
     args: IssueWithTokenUriArgs,
-    overrides: SourcedOverrides = {},
+    overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     this.validateArgs(args);
     const nft = this.partition('nft');
@@ -62,7 +62,7 @@ export class IssueWithTokenUri extends ContractFunction<
   async estimateGas(
     signer: Signerish,
     args: IssueWithTokenUriArgs,
-    overrides: SourcedOverrides = {},
+    overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
     this.validateArgs(args);
     const nft = this.partition('nft');

@@ -1,7 +1,7 @@
 import { BigNumber, ContractTransaction } from 'ethers';
 import { Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -21,7 +21,7 @@ export type SetPlatformFeeInfoCallArgs = [
   signer: Signerish,
   recipient: Addressish,
   basisPoints: BigNumber,
-  overrides?: SourcedOverrides,
+  overrides?: WriteOverrides,
 ];
 export type SetPlatformFeeInfoResponse = ContractTransaction;
 
@@ -45,7 +45,7 @@ export class SetPlatformFeeInfo extends ContractFunction<
     signer: Signerish,
     recipient: Addressish,
     basisPoints: BigNumber,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const v1 = this.partition('v1');
 
@@ -61,7 +61,7 @@ export class SetPlatformFeeInfo extends ContractFunction<
     signer: Signerish,
     recipient: Addressish,
     basisPoints: BigNumber,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
     const v1 = this.partition('v1');
 

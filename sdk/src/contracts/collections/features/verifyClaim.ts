@@ -1,3 +1,4 @@
+import { CallOverrides } from 'ethers';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import { ClaimArgs } from './claim';
@@ -18,7 +19,7 @@ type VerifyClaimPartitions = typeof VerifyClaimPartitions;
 const VerifyClaimInterfaces = Object.values(VerifyClaimPartitions).flat();
 type VerifyClaimInterfaces = (typeof VerifyClaimInterfaces)[number];
 
-export type VerifyClaimCallArgs = [args: ClaimArgs, verifyMaxQuantity?: boolean];
+export type VerifyClaimCallArgs = [args: ClaimArgs, verifyMaxQuantity?: boolean, overrides?: CallOverrides];
 export type VerifyClaimResponse = boolean;
 
 export class VerifyClaim extends ContractFunction<
@@ -40,16 +41,20 @@ export class VerifyClaim extends ContractFunction<
   /**
    * Use this function to verify that the claimant actually meets the claim conditions
    */
-  async verifyClaim(args: ClaimArgs, verifyMaxQuantity = true): Promise<boolean> {
+  async verifyClaim(args: ClaimArgs, verifyMaxQuantity = true, overrides?: CallOverrides): Promise<boolean> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.verifyERC1155(args, verifyMaxQuantity);
+        return await this.verifyERC1155(args, verifyMaxQuantity, overrides);
       case 'ERC721':
-        return await this.verifyERC721(args, verifyMaxQuantity);
+        return await this.verifyERC721(args, verifyMaxQuantity, overrides);
     }
   }
 
-  protected async verifyERC1155(args: ClaimArgs, verifyMaxQuantity: boolean): Promise<boolean> {
+  protected async verifyERC1155(
+    args: ClaimArgs,
+    verifyMaxQuantity: boolean,
+    overrides: CallOverrides = {},
+  ): Promise<boolean> {
     args.tokenId = this.base.requireTokenId(args.tokenId, this.functionName);
     const sft = this.partition('sft');
 
@@ -64,6 +69,7 @@ export class VerifyClaim extends ContractFunction<
           args.currency,
           args.pricePerToken,
           verifyMaxQuantity,
+          overrides,
         );
 
       return true;
@@ -72,7 +78,11 @@ export class VerifyClaim extends ContractFunction<
     }
   }
 
-  protected async verifyERC721(args: ClaimArgs, verifyMaxQuantity: boolean): Promise<boolean> {
+  protected async verifyERC721(
+    args: ClaimArgs,
+    verifyMaxQuantity: boolean,
+    overrides: CallOverrides = {},
+  ): Promise<boolean> {
     const nft = this.partition('nft');
 
     try {
@@ -85,6 +95,7 @@ export class VerifyClaim extends ContractFunction<
           args.currency,
           args.pricePerToken,
           verifyMaxQuantity,
+          overrides,
         );
 
       return true;

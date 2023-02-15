@@ -1,8 +1,7 @@
-import { BigNumber, BigNumberish } from 'ethers';
+import { BigNumber, BigNumberish, CallOverrides } from 'ethers';
 import { Address, CollectionContract } from '../..';
 import { parse } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { SourcedOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { CatchAllInterfaces, ContractFunction } from './features';
 
@@ -26,7 +25,7 @@ type GetClaimConditionByIdInterfaces = (typeof GetClaimConditionByIdInterfaces)[
 export type GetClaimConditionByIdCallArgs = [
   conditionId: BigNumberish,
   tokenId: BigNumberish | null,
-  overrides?: SourcedOverrides,
+  overrides?: CallOverrides,
 ];
 export type GetClaimConditionByIdResponse = CollectionContractClaimCondition;
 
@@ -61,7 +60,7 @@ export class GetClaimConditionById extends ContractFunction<
   async getClaimConditionById(
     conditionId: BigNumberish,
     tokenId: BigNumberish | null,
-    overrides?: SourcedOverrides,
+    overrides: CallOverrides = {},
   ): Promise<CollectionContractClaimCondition> {
     const { nftV2, sftV2 } = this.partitions;
 

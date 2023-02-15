@@ -1,7 +1,7 @@
 import { BigNumber, ContractTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -23,7 +23,7 @@ type SetClaimPauseStatusPartitions = typeof SetClaimPauseStatusPartitions;
 const SetClaimPauseStatusInterfaces = Object.values(SetClaimPauseStatusPartitions).flat();
 type SetClaimPauseStatusInterfaces = (typeof SetClaimPauseStatusInterfaces)[number];
 
-export type SetClaimPauseStatusCallArgs = [signer: Signerish, pauseStatus: boolean, overrides?: SourcedOverrides];
+export type SetClaimPauseStatusCallArgs = [signer: Signerish, pauseStatus: boolean, overrides?: WriteOverrides];
 export type SetClaimPauseStatusResponse = ContractTransaction;
 
 export class SetClaimPauseStatus extends ContractFunction<
@@ -45,7 +45,7 @@ export class SetClaimPauseStatus extends ContractFunction<
   async setClaimPauseStatus(
     signer: Signerish,
     pauseStatus: boolean,
-    overrides?: SourcedOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const { v1, v2 } = this.partitions;
 
@@ -66,7 +66,7 @@ export class SetClaimPauseStatus extends ContractFunction<
     this.notSupported();
   }
 
-  async estimateGas(signer: Signerish, pauseStatus: boolean, overrides?: SourcedOverrides): Promise<BigNumber> {
+  async estimateGas(signer: Signerish, pauseStatus: boolean, overrides: WriteOverrides = {}): Promise<BigNumber> {
     const { v1, v2 } = this.partitions;
 
     try {

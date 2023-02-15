@@ -1,6 +1,6 @@
 import { ContractTransaction } from 'ethers';
 import { CollectionContract } from '../..';
-import type { Signerish, SourcedOverrides } from '../types';
+import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { ContractFunction } from './features';
 
@@ -18,7 +18,7 @@ type PrefixPartitions = typeof PrefixPartitions;
 const PrefixInterfaces = Object.values(PrefixPartitions).flat();
 type PrefixInterfaces = (typeof PrefixInterfaces)[number];
 
-export type PrefixCallArgs = [signer: Signerish, overrides?: SourcedOverrides];
+export type PrefixCallArgs = [signer: Signerish, overrides?: WriteOverrides];
 export type PrefixResponse = ContractTransaction;
 
 export class Prefix extends ContractFunction<PrefixInterfaces, PrefixPartitions, PrefixCallArgs, PrefixResponse> {
