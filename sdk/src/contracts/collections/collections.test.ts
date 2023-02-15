@@ -80,7 +80,7 @@ export class MockJsonRpcProvider extends ethers.providers.StaticJsonRpcProvider 
 }
 
 describe('Collections - static tests', () => {
-  test.only('Check token standard interface matchers', () => {
+  test('Check token standard interface matchers', () => {
     const combinedActual = [...ERC721StandardInterfaces, ...ERC1155StandardInterfaces];
     const combinedExpected = [
       ...FeatureFunctionsMap['isApprovedForAll(address,address)[bool]'].drop,

@@ -41,7 +41,11 @@ export class VerifyClaim extends ContractFunction<
   /**
    * Use this function to verify that the claimant actually meets the claim conditions
    */
-  async verifyClaim(args: ClaimArgs, verifyMaxQuantity = true, overrides?: CallOverrides): Promise<boolean> {
+  protected async verifyClaim(
+    args: ClaimArgs,
+    verifyMaxQuantity = true,
+    overrides: CallOverrides = {},
+  ): Promise<boolean> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
         return await this.verifyERC1155(args, verifyMaxQuantity, overrides);
