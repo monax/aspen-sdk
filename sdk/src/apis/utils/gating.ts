@@ -5,7 +5,7 @@ import { importJWK, JWTPayload, jwtVerify } from 'jose';
 import { GatingAPI } from '..';
 import { ChainIdFromChainName } from '../../contracts';
 import { parse } from '../../utils';
-import { SupportedNetwork } from './providers';
+import { SupportedNetwork } from './types';
 
 const { AuthService, GateService, GateSignInMode, GateType, RolesService } = GatingAPI;
 

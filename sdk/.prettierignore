@@ -5,3 +5,8 @@ cache
 deployments
 dist
 *.types.ts
+src/contracts/generated
+src/contracts/abis
+src/apis/publishing/generated
+src/apis/gating/generated
+

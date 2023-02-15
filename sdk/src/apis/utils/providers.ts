@@ -1,34 +1,11 @@
-import { Provider } from '@ethersproject/providers';
-import { providers, Signer, Wallet } from 'ethers';
-import * as t from 'io-ts';
+import { providers, Wallet } from 'ethers';
 import { JsonFromString } from 'io-ts-types';
-import { Chain } from '../publishing';
 import { parseFromEnvOrFile } from './environment';
+import { NetworkSecrets, ProviderConfig, SupportedNetwork } from './types';
 
 // A JSON object of type EnvCredentials is expected to be saved here (ignored from repo)
 const defaultConfigFile = 'providers.json';
 const defaultConfigEnvVarName = 'PROVIDERS_JSON';
-
-const NetworkSecrets = t.partial({
-  Mumbai: t.string,
-  Mainnet: t.string,
-  Goerli: t.string,
-  Polygon: t.string,
-});
-
-export type Signerish = Signer | Provider;
-
-type NetworkSecrets = t.TypeOf<typeof NetworkSecrets>;
-
-export const ProviderConfig = t.type({
-  providerUrls: NetworkSecrets,
-  privateKeys: NetworkSecrets,
-});
-
-export type ProviderConfig = t.TypeOf<typeof ProviderConfig>;
-
-export type SupportedNetwork = keyof NetworkSecrets;
-export const SupportedNetwork = t.keyof(NetworkSecrets.props);
 
 export const supportedNetworks = Object.freeze(Object.keys(NetworkSecrets.props)) as SupportedNetwork[];
 
@@ -60,14 +37,4 @@ export async function getProviderConfig(
   configEnvVarName = defaultConfigEnvVarName,
 ): Promise<ProviderConfig> {
   return parseFromEnvOrFile(JsonFromString.pipe(ProviderConfig), configFile, configEnvVarName);
-}
-
-export function publishingChainFromNetwork(network: SupportedNetwork): Chain {
-  // FIXME: single network definition, double-sided mapping, use const object instead of enum for lookup
-  if (network === 'Mainnet') return Chain.ETHEREUM;
-  if (network === 'Goerli') return Chain.GOERLI;
-  if (network === 'Polygon') return Chain.POLYGON;
-  if (network === 'Mumbai') return Chain.MUMBAI;
-
-  throw new Error(`Missing case in SupportedNetwork selection`);
 }

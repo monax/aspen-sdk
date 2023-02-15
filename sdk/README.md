@@ -150,10 +150,8 @@ async function getCollectionContract(): Promise<CollectionContract> {
   const provider = await getProvider(network, providerConfig);
   // Generate local signers
   const userSigners = generateAccounts(numAccounts, { mnemonic: demoMnemonic, provider });
-  // Obtain a CollectionContract
-  const contract = new CollectionContract(provider, collectionAddress);
-  // Introspect contract and load available smart contract features
-  await contract.load();
+  // Obtain a CollectionContract - introspects contract and loads available smart contract features
+  const contract = await CollectionContract.from(provider, collectionAddress);
 }
 ```
 
@@ -181,42 +179,48 @@ import { NATIVE_TOKEN } from '@monaxlabs/aspen-sdk/dist/contract';
 
 async function main(): Promise<void> {
   // Assume that a CollectionContract has be instantiated and loaded
-  const contract = new CollectionContract(provider, collectionAddress);
-  await contract.load();
-  // Access the issuance feature and determine if it is supported
-  const isSupported: boolean = contract.issuance.supported;
+  const contract = await CollectionContract.from(provider, collectionAddress);
+  // Access the conditions feature and determine if it is supported
+  const isSupported: boolean = contract.conditions.supported;
   // If the collection is an ERC721 then tokenId should be null (the tokenId will be dynamically allocated on calim),
   // otherwise for ERC1155 it must be specified
   const tokenId = 0;
   if (isSupported) {
     // Get the current claim conditions (needed in order to claim).
-    const conditions = await contract.issuance.getActiveClaimConditions(tokenId);
-  }
-  // Use the metadata feature to access the tokenURI
-  const tokenUri = await contract.metadata.getTokenUri(tokenId);
-  // Accept agreement terms (if/when enabled on the contract) by passing a signer for the acceptee
-  await contract.agreements.acceptTerms(signer);
+    const conditions = await contract.conditions.getState(receiver, tokenId);
+    if (conditions.claimState !== 'ok') {
+      throw new Error(`Not okay to mint based on user restrictions and claim phase`);
+    }
 
-  // Claim (mint) a token be calling the NFT contract (
-  contract.issuance.claim(
-    // An ether.js signer
-    signer,
-    // The receipient of the token
-    receiver,
-    // The tokenId if the contract is an ERC1155 null/ignored otherwise
-    tokenId,
-    // The quantity of tokens to claim if ERC721 then a run of tokenIds will be issued, if ERC1155 then the recipients
-    // balance will increase by quantity
-    quantity,
-    // The remaining fields must match those specified by the conditions in the active claim phase
-    // An ERC20 token contract address if payment is in ERC20 or the constant NATIVE_TOKEN
-    // (0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE) to indicate payment in native eth/matic
-    currency || NATIVE_TOKEN,
-    // The price of the token
-    pricePerToken,
-    merkleProof,
-    proofMaxQuantity,
-  );
+    // Use the metadata feature to access the tokenURI
+    const tokenUri = await contract.metadata.getTokenUri(tokenId);
+    // Accept agreement terms (if/when enabled on the contract) by passing a signer for the acceptee
+    await contract.agreements.acceptTerms(signer);
+
+    // Claim (mint) a token be calling the NFT contract (
+    contract.claims.claim(
+      // An ether.js signer
+      signer,
+      {
+        // The receipient of the token
+        receiver,
+        // The tokenId if the contract is an ERC1155 null/ignored otherwise
+        tokenId,
+        // The quantity of tokens to claim if ERC721 then a run of tokenIds will be issued, if ERC1155 then the recipients
+        // balance will increase by quantity
+        quantity,
+        // The remaining fields must match those specified by the conditions in the active claim phase
+        // An ERC20 token contract address if payment is in ERC20 or the constant NATIVE_TOKEN
+        // (0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE) to indicate payment in native eth/matic
+        currency: conditions.currency,
+        // The price of the token
+        pricePerToken: conditions.pricePerToken,
+        // allowlist proofs
+        proofs: conditions.allowlistStatus.proofs,
+        proofMaxQuantityPerTransaction: conditions.allowlistStatus.proofMaxQuantityPerTransaction,
+      },
+    );
+  }
 }
 ```
 
@@ -333,35 +337,29 @@ async function main(contract: CollectionContract): Promise<void> {
   // Depending on whether ERC721 or ERC1155
   const tokenId: null | BigNumberish = 2;
   // Get the active claim phase from the contract
-  const activeConditions = await contract.issuance.getActiveClaimConditions(tokenId);
-  if (!activeConditions) {
-    throw new Error(`No active claim condition`);
-  }
-  // Get claim conditions from the current claim phased enriched with user-account-specific additional data (such as
-  // per-wallet claim limits)
-  const userConditions = await contract.issuance.getUserClaimConditions(claimingAccount, tokenId);
-
-  if (!userConditions) {
-    throw new Error(`No user claim conditions`);
-  }
-  // Combine the active claim condition and user conditions to compute a global view of whether the use can claim
-  const restrictions = await contract.issuance.getUserClaimRestrictions(userConditions, activeConditions, [], 0);
-  if (restrictions.claimState !== 'ok') {
-    throw new Error(`Not okay to mint based on user restrictions and claim pahse`);
+  const conditions = await contract.conditions.getState(claimingAccount, tokenId);
+  if (conditions.claimState !== 'ok') {
+    throw new Error(`Not okay to mint based on user restrictions and claim phase`);
   }
   // Finally claim
-  await contract.issuance.claim(
+  await contract.claims.claim(
     // The signer for the user entitled to claim
     signer,
-    // Usually this is the address of the signer above unless the claimant would like the NFT to be deposited elsewhere
-    claimingAccount,
-    // tokenId if ERC1155, null if ERC721
-    tokenId,
-    // Quantity to claim (multiple tokens can be claimed in a single call for both ERC721 and ERC1155)
-    BigNumber.from(1),
-    // The
-    activeClaimConditions.activeClaimCondition.currency,
-    activeClaimConditions.activeClaimCondition.pricePerToken,
+    {
+      conditionId: conditions.activeClaimConditionId
+      // Usually this is the address of the signer above unless the claimant would like the NFT to be deposited elsewhere
+      receiver: claimingAccount,
+      // tokenId if ERC1155, null if ERC721
+      tokenId,
+      // Quantity to claim (multiple tokens can be claimed in a single call for both ERC721 and ERC1155)
+      quantity: BigNumber.from(1),
+      // price details
+      currency: conditions.currency,
+      pricePerToken: conditions.pricePerToken,
+      // allowlist proofs
+      proofs: conditions.allowlistStatus.proofs,
+      proofMaxQuantityPerTransaction: conditions.allowlistStatus.proofMaxQuantityPerTransaction,
+    }
   );
 }
 ```
