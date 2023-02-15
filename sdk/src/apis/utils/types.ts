@@ -30,3 +30,30 @@ export type ChainMapEntry = {
   chain: Chain;
   chainId: ChainId;
 };
+
+export const Credential = t.type({
+  baseUrl: t.string,
+  name: t.string,
+  password: t.string,
+});
+
+export type Credential = t.TypeOf<typeof Credential>;
+
+export const Credentials = t.type({
+  gating: Credential,
+  publishing: Credential,
+});
+
+export type Credentials = t.TypeOf<typeof Credentials>;
+
+export const EnvCredentials = t.partial({
+  staging: Credentials,
+  develop: Credentials,
+  production: Credentials,
+  localhost: Credentials,
+});
+
+type EnvCredentials = t.TypeOf<typeof EnvCredentials>;
+
+export type AspenEnvironment = keyof EnvCredentials;
+export const AspenEnvironment = t.keyof(EnvCredentials.props);

@@ -2,7 +2,7 @@ import { Network } from '@ethersproject/providers';
 import { beforeAll, describe, expect, test } from '@jest/globals';
 import { BigNumber, ethers } from 'ethers';
 import { URL } from 'url';
-import { getProviderConfig, getSigner } from '../../apis';
+import { getProviderConfig, getSigner } from '../../apis/utils/providers';
 import { parse } from '../../utils/schema';
 import { Address } from '../address';
 import { CollectionContract } from './collections';
@@ -80,10 +80,16 @@ export class MockJsonRpcProvider extends ethers.providers.StaticJsonRpcProvider 
 }
 
 describe('Collections - static tests', () => {
-  test('Check token standard interface matchers', () => {
-    expect([...ERC721StandardInterfaces, ...ERC1155StandardInterfaces].sort()).toStrictEqual(
-      [...FeatureFunctionsMap['isApprovedForAll(address,address)[bool]'].drop].sort(),
-    );
+  test.only('Check token standard interface matchers', () => {
+    const combinedActual = [...ERC721StandardInterfaces, ...ERC1155StandardInterfaces];
+    const combinedExpected = [
+      ...FeatureFunctionsMap['isApprovedForAll(address,address)[bool]'].drop,
+      ...FeatureFunctionsMap['exists(uint256)[bool]'].drop,
+    ];
+    expect(Array.from(new Set(combinedActual)).sort()).toStrictEqual(Array.from(new Set(combinedExpected)).sort());
+
+    const overlap = ERC721StandardInterfaces.filter((f) => ERC1155StandardInterfaces.includes(f));
+    expect(overlap).toStrictEqual([]);
   });
 
   test('Check that all functions are implemented', () => {

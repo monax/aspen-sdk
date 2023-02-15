@@ -18,20 +18,21 @@
   "exports": {
     "./dist/*": "./dist/*",
     "./api": {
-      "default": "./dist/api/index.js",
-      "types": "./dist/api/index.d.ts"
+      "types": "./dist/api/index.d.ts",
+      "default": "./dist/api/index.js"
     },
     "./contracts": {
-      "default": "./dist/contracts/index.js",
-      "types": "./dist/contracts/index.d.ts"
+      "types": "./dist/contracts/index.d.ts",
+      "default": "./dist/contracts/index.js"
     },
     "./claimgraph": {
-      "default": "./dist/claimgraph/index.js",
-      "types": "./dist/claimgraph/index.d.ts"
+      "types": "./dist/claimgraph/index.d.ts",
+      "default": "./dist/claimgraph/index.js"
     },
     "./utils": {
-      "default": "./dist/utils/index.js",
-      "types": "./dist/utils/index.d.ts"
+      "types": "./dist/utils/index.d.ts",
+      "node": "./dist/utils/node-index.js",
+      "default": "./dist/utils/index.js"
     }
   },
   "scripts": {

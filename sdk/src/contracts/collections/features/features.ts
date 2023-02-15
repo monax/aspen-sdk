@@ -21,9 +21,11 @@ export type FeatureFunctionId = t.TypeOf<typeof FeatureFunctionId>;
 
 export const ERC721StandardInterfaces: FeatureInterfaceId[] = [
   ...FeatureFunctionsMap['approve(address,uint256)[]'].drop,
+  ...FeatureFunctionsMap['totalSupply()[uint256]'].drop,
 ];
 export const ERC1155StandardInterfaces: FeatureInterfaceId[] = [
   ...FeatureFunctionsMap['balanceOf(address,uint256)[uint256]'].drop,
+  ...FeatureFunctionsMap['totalSupply(uint256)[uint256]'].drop,
 ];
 export const CatchAllInterfaces: FeatureInterfaceId[] = [
   ...FeatureFunctionsMap['isIAspenFeaturesV0()[bool]'].drop,

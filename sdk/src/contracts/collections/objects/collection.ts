@@ -13,15 +13,15 @@ export class Collection extends ContractObject {
 
   /** Get the number of unique tokens in the collection */
   async tokensCount(): Promise<BigNumber> {
-    // ERC1155
-    if (this.base.getLargestTokenId.supported) {
-      const offset = this.base.getSmallestTokenId.supported ? await this.base.getSmallestTokenId() : 0;
-      const largest = await this.base.getLargestTokenId();
-      return largest.add(1 - offset);
-    } else {
-      // ERC721
-      const uniqueCount = this.base.totalSupply();
-      return uniqueCount;
+    switch (this.base.tokenStandard) {
+      case 'ERC1155':
+        const offset = this.base.getSmallestTokenId.supported ? await this.base.getSmallestTokenId() : 0;
+        const largest = await this.base.getLargestTokenId();
+        return largest.add(1 - offset);
+
+      case 'ERC721':
+        const uniqueCount = this.base.totalSupply();
+        return uniqueCount;
     }
   }
 

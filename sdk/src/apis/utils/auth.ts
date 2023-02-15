@@ -1,35 +1,7 @@
-import * as t from 'io-ts';
 import { JsonFromString } from 'io-ts-types';
 import * as path from 'path';
-import { GatingAPI, PublishingAPI } from '..';
+import { AspenEnvironment, Credential, Credentials, EnvCredentials, GatingAPI, PublishingAPI } from '..';
 import { parseFromEnvOrFile } from './environment';
-
-const Credential = t.type({
-  baseUrl: t.string,
-  name: t.string,
-  password: t.string,
-});
-
-type Credential = t.TypeOf<typeof Credential>;
-
-const Credentials = t.type({
-  gating: Credential,
-  publishing: Credential,
-});
-
-type Credentials = t.TypeOf<typeof Credentials>;
-
-export const EnvCredentials = t.partial({
-  staging: Credentials,
-  develop: Credentials,
-  production: Credentials,
-  localhost: Credentials,
-});
-
-type EnvCredentials = t.TypeOf<typeof EnvCredentials>;
-
-export type AspenEnvironment = keyof EnvCredentials;
-export const AspenEnvironment = t.keyof(EnvCredentials.props);
 
 // A JSON object of type EnvCredentials is expected to be saved here (ignored from repo)
 const defaultCredentialsFile = 'credentials.json';

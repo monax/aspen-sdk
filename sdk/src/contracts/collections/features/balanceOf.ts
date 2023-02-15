@@ -2,7 +2,7 @@ import { BigNumber, BigNumberish, CallOverrides } from 'ethers';
 import { Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { CatchAllInterfaces, ContractFunction } from './features';
 
 const BalanceOfFunctions = {
   nft: 'balanceOf(address)[uint256]',
@@ -12,6 +12,8 @@ const BalanceOfFunctions = {
 const BalanceOfPartitions = {
   nft: [...FeatureFunctionsMap[BalanceOfFunctions.nft].drop],
   sft: [...FeatureFunctionsMap[BalanceOfFunctions.sft].drop],
+  // 'balanceOf' has always been present but not actually exposed by the old interfaces
+  catchAll: CatchAllInterfaces,
 };
 type BalanceOfPartitions = typeof BalanceOfPartitions;
 
@@ -43,22 +45,24 @@ export class BalanceOf extends ContractFunction<
     tokenId: BigNumberish | null = null,
     overrides: CallOverrides = {},
   ): Promise<BigNumber> {
-    const { nft, sft } = this.partitions;
-
     try {
-      if (sft) {
-        tokenId = this.base.requireTokenId(tokenId, this.functionName);
-        const balance = await sft.connectReadOnly().balanceOf(asAddress(address), tokenId, overrides);
-        return balance;
-      } else if (nft) {
-        this.base.rejectTokenId(tokenId, this.functionName);
-        const balance = await nft.connectReadOnly().balanceOf(asAddress(address), overrides);
-        return balance;
+      switch (this.base.tokenStandard) {
+        case 'ERC1155': {
+          tokenId = this.base.requireTokenId(tokenId, this.functionName);
+          const sft = this.base.assumeFeature('standard/IERC1155.sol:IERC1155V2').connectReadOnly();
+          const balance = await sft.balanceOf(asAddress(address), tokenId, overrides);
+          return balance;
+        }
+
+        case 'ERC721': {
+          this.base.rejectTokenId(tokenId, this.functionName);
+          const nft = this.base.assumeFeature('standard/IERC721.sol:IERC721V2').connectReadOnly();
+          const balance = await nft.balanceOf(asAddress(address), overrides);
+          return balance;
+        }
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { address, tokenId });
     }
-
-    this.notSupported();
   }
 }

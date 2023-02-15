@@ -21,8 +21,8 @@ import LoadClaimConditions from "components/LoadClaimConditions";
 import Mint from "components/Mint";
 import { useToasts } from "react-toast-notifications";
 import { useAsyncEffect } from "hooks/useAsyncEffect";
-import { SdkError } from "@monaxlabs/aspen-sdk/dist/contracts/collections/errors";
 import { TermsDetails } from "@monaxlabs/aspen-sdk/dist/contracts/collections/features";
+import { SdkError } from "@monaxlabs/aspen-sdk/dist/contracts/collections/errors";
 
 type Metadata = {
   uri: string | null;
@@ -93,11 +93,19 @@ const Home: NextPage = () => {
   useAsyncEffect(async () => {
     if (!active || !library) return;
 
-    const contract = await CollectionContract.from(library, contractAddress);
-    setContract(contract);
+    try {
+      const contract = await CollectionContract.from(library, contractAddress);
+      setContract(contract);
 
-    const tokensCount = await new Collection(contract).tokensCount();
-    setTokens(Array.from(Array(tokensCount.toNumber()).keys()));
+      const tokensCount = await new Collection(contract).tokensCount();
+      setTokens(Array.from(Array(tokensCount.toNumber()).keys()));
+    } catch (err) {
+      if (SdkError.is(err)) {
+        console.log(err.message, err.data, err.error);
+      } else {
+        console.log(err);
+      }
+    }
   }, [active, library, contractAddress]);
 
   useAsyncEffect(async () => {
