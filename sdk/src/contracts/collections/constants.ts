@@ -1,3 +1,4 @@
+export const TokenStandards = ['ERC721', 'ERC1155'];
 
 export const CollectionMetaImageType = {
   banner: 'banner',

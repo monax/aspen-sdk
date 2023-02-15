@@ -1,18 +1,14 @@
 import { Provider } from '@ethersproject/providers';
-import { Signer, utils } from 'ethers';
+import { Signer } from 'ethers';
 import { NonEmptyArray } from 'fp-ts/NonEmptyArray';
 import * as t from 'io-ts';
-import { parseThenOrElse } from '../../utils/schema';
-import { Address } from '../address';
-import { AccessControlInterface } from '../generated/additional/AccessControl';
-import type { CollectionContract } from './collections';
+import { parseThenOrElse } from '../../../utils';
+import { Address } from '../../address';
+import { CollectionContract } from '../collections';
+import { SdkError, SdkErrorCode } from '../errors';
+import { Signerish } from '../types';
 import { FeatureFactories } from './feature-factories.gen';
-import { Signerish } from './types';
-
-export interface FeatureInterfaceFactory<T> {
-  connect(address: string, signerOrProvider: Signer | Provider): T;
-  createInterface(): AccessControlInterface;
-}
+import { FeatureFunctionsMap } from './feature-functions.gen';
 
 export const FeatureInterfaceId = t.keyof(FeatureFactories);
 export type FeatureInterfaceId = t.TypeOf<typeof FeatureInterfaceId>;
@@ -20,21 +16,128 @@ export type FeatureFactories = typeof FeatureFactories;
 export type FeatureFactory<T extends FeatureInterfaceId> = FeatureFactories[T];
 export type FeatureContract<T extends FeatureInterfaceId> = ReturnType<FeatureFactory<T>['connect']>;
 
-export class FeatureInterface<T> {
+export const FeatureFunctionId = t.keyof(FeatureFunctionsMap);
+export type FeatureFunctionId = t.TypeOf<typeof FeatureFunctionId>;
+
+export const ERC721StandardInterfaces: FeatureInterfaceId[] = [
+  ...FeatureFunctionsMap['approve(address,uint256)[]'].drop,
+  ...FeatureFunctionsMap['totalSupply()[uint256]'].drop,
+];
+export const ERC1155StandardInterfaces: FeatureInterfaceId[] = [
+  ...FeatureFunctionsMap['balanceOf(address,uint256)[uint256]'].drop,
+  ...FeatureFunctionsMap['totalSupply(uint256)[uint256]'].drop,
+];
+export const CatchAllInterfaces: FeatureInterfaceId[] = [
+  ...FeatureFunctionsMap['isIAspenFeaturesV0()[bool]'].drop,
+  ...FeatureFunctionsMap['isICedarFeaturesV0()[bool]'].drop,
+];
+
+export type ContractFunctionIds = typeof ContractFunctionIds;
+export type ContractFunctionId = ContractFunctionIds[number];
+
+export const ContractFunctionIds = [
+  // Contract
+  'isAspenFeatures',
+  'supportsInterface',
+  'supportedFeatures',
+  'implementationName',
+  'implementationVersion',
+  'owner',
+  'setOwner',
+
+  // Collection
+  'name',
+  'symbol',
+  'contractUri',
+  'setContractUri',
+  'setTokenNameAndSymbol',
+
+  // Multicall
+  'multicall',
+
+  // Terms
+  'acceptTerms',
+  'acceptTermsFor',
+  'acceptTermsForMany',
+  'acceptTermsWithSignature',
+  'getTermsDetails',
+  'hasAcceptedTerms',
+  'hasAcceptedTermsVersion',
+  'setTermsActivation',
+  'setTermsUri',
+
+  // Token
+  'exists',
+  'ownerOf',
+  'balanceOf',
+  'tokenUri',
+  'setTokenUri',
+  'setPermanentTokenUri',
+  'getBaseURIIndices',
+  'updateBaseUri',
+
+  // Supply
+  'totalSupply',
+  'setMaxTotalSupply',
+  'getSmallestTokenId',
+  'getLargestTokenId',
+
+  // Mint
+  'lazyMint',
+
+  // Claim
+  'claim',
+  'verifyClaim',
+  'getClaimConditionById',
+  'getUserClaimConditions',
+  'setClaimConditions',
+  'getClaimPauseStatus',
+  'setClaimPauseStatus',
+
+  // Burn
+  'burn',
+
+  // Issue
+  'issue',
+  'issueWithTokenUri',
+
+  // Royalties
+  'royaltyInfo',
+  'getDefaultRoyaltyInfo',
+  'setDefaultRoyaltyInfo',
+  'getRoyaltyInfoForToken',
+  'setRoyaltyInfoForToken',
+
+  // Platform fee
+  'getPlatformFeeInfo',
+  'setPlatformFeeInfo',
+
+  // Royalties
+  'getPrimarySaleRecipient',
+  'setPrimarySaleRecipient',
+
+  //
+  'setOperatorFiltererStatus',
+] as const;
+
+export interface FeatureInterfaceFactory<T extends FeatureInterfaceId> {
+  connect(address: string, signerOrProvider: Signer | Provider): FeatureContract<T>;
+  createInterface(): FeatureContract<T>['interface'];
+}
+
+export class FeatureInterface<T extends FeatureInterfaceId> {
   private readonly _factory: FeatureInterfaceFactory<T>;
   private readonly _address: Address;
   private readonly _signer: Signerish;
-  private readonly _iface: AccessControlInterface;
-  private connection: T | null = null;
+  private connection: FeatureContract<T> | null = null;
 
   constructor(factory: FeatureInterfaceFactory<T>, address: Address, signer: Signerish) {
     this._factory = factory;
     this._address = address;
     this._signer = signer;
-    this._iface = factory.createInterface();
   }
 
-  connectReadOnly(): T {
+  connectReadOnly(): FeatureContract<T> {
     if (!this.connection) {
       this.connection = this._factory.connect(this._address, this._signer);
     }
@@ -42,43 +145,52 @@ export class FeatureInterface<T> {
     return this.connection;
   }
 
-  connectWith(signer: Signerish): T {
+  connectWith(signer: Signerish): FeatureContract<T> {
     return this._factory.connect(this._address, signer);
   }
 
-  get interface(): utils.Interface {
-    return this._iface;
+  get interface(): FeatureContract<T>['interface'] {
+    return this._factory.createInterface();
   }
 
   static fromFeature<T extends FeatureInterfaceId>(
     feature: T,
     address: Address,
     signer: Signerish,
-  ): FeatureInterface<FeatureContract<T>> {
+  ): FeatureInterface<T> {
     const factory = FeatureFactories[feature];
     // FIXME[Silas]: this makes me sad but typescript is not smart enough to understand that the map key union
     //  is correlated with the map value union and narrow appropriately (even though this _does_ work with a literal key)
-    return new FeatureInterface(factory as unknown as FeatureInterfaceFactory<FeatureContract<T>>, address, signer);
+    return new FeatureInterface(factory as unknown as FeatureInterfaceFactory<T>, address, signer);
   }
 }
 
-export abstract class FeatureSet<T extends FeatureInterfaceId> {
-  protected constructor(readonly base: CollectionContract, readonly handledFeatures: readonly T[]) {}
+export type CallableContractFunction<
+  T extends FeatureInterfaceId,
+  C extends Record<string, T[]>,
+  A extends unknown[],
+  R,
+> = ContractFunction<T, C, A, R>['call'] & ContractFunction<T, C, A, R>;
 
-  // Late-bound because it must be called after load()
-  private getPartitioner = () => exhaustiveUnionPartitioner(...this.handledFeatures);
+export interface CallContractFunction<A extends unknown[], R> {
+  (...args: A): R;
+}
 
-  makeGetPartition<N extends string, P>(
-    partitionsThunk: (p: ReturnType<FeatureSet<T>['getPartitioner']>) => P,
-  ): <K extends keyof P>(k: K) => P[K] {
-    let t: P;
-    return (k) => {
-      if (!t) {
-        t = partitionsThunk(this.getPartitioner());
-      }
-      return t[k];
-    };
-  }
+export abstract class ContractFunction<
+  T extends FeatureInterfaceId,
+  C extends Record<string, T[]>,
+  A extends unknown[],
+  R,
+> {
+  protected _partitions?: Partition<T, C>;
+  abstract readonly functionName: ContractFunctionId;
+
+  protected constructor(
+    protected readonly base: CollectionContract,
+    readonly handledFeatures: T[],
+    protected readonly cover: Cover<T, C>,
+    readonly handledFunctions: Record<string, FeatureFunctionId> = {},
+  ) {}
 
   /**
    * @returns True if the contract supports Agreement interface
@@ -87,6 +199,33 @@ export abstract class FeatureSet<T extends FeatureInterfaceId> {
     // The contract must implement at least one handled feature
     return this.handledFeatures.some((f) => Boolean(this.base.interfaces[f]));
   }
+
+  protected get partitions() {
+    if (!this.supported) {
+      this.notSupported();
+    }
+
+    if (!this._partitions) {
+      this._partitions = getPartition(this.base, this.handledFeatures, this.cover);
+    }
+
+    return this._partitions;
+  }
+
+  protected partition<K extends StringKeyOf<C>>(partition: K): Exclude<Partition<T, C>[K], undefined> {
+    const p = this.partitions[partition];
+    if (p !== undefined) {
+      return p as Exclude<Partition<T, C>[K], undefined>;
+    }
+
+    this.notSupported();
+  }
+
+  protected notSupported(): never {
+    throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
+  }
+
+  abstract call(...args: A): Promise<R>;
 }
 
 export function extractKnownSupportedFeatures(supportedFeaturesFromContract: string[]): FeatureInterfaceId[] {
@@ -102,15 +241,13 @@ export function extractKnownSupportedFeatures(supportedFeaturesFromContract: str
     .filter((f): f is FeatureInterfaceId => Boolean(f));
 }
 
-const getPartition = <T extends FeatureInterfaceId, C extends Record<string, NonEmptyArray<T>>>(
+const getPartition = <T extends FeatureInterfaceId, C extends Record<string, T[]>>(
   base: CollectionContract,
   handledFeatures: T[],
   cover: Cover<T, C>,
-) => exhaustiveUnionPartitioner(...handledFeatures)(cover)(base.interfaces);
+) => exhaustiveUnionPartitioner(base.interfaces, ...handledFeatures)(cover);
 
-type Partition<T extends FeatureInterfaceId, C extends Record<string, NonEmptyArray<T>>> = ReturnType<
-  typeof getPartition<T, C>
->;
+type Partition<T extends FeatureInterfaceId, C extends Record<string, T[]>> = ReturnType<typeof getPartition<T, C>>;
 
 export type CallableFeatureFunction<
   T extends FeatureInterfaceId,
@@ -180,7 +317,6 @@ export class FeatureFunction<
   }
 
   async call(...args: A): Promise<R | Unsupported> {
-    await this.base.load();
     if (!this.supported) {
       return FeatureFunction.UNSUPPORTED;
     }
@@ -223,7 +359,7 @@ export class FeatureFunction<
 
 // A cover is a set of non-empty subsets of T provided as a Record where each subset is identified by a key in K where
 // the union of the subsets contains T
-type Cover<T, C extends Record<string, NonEmptyArray<T>>> =
+type Cover<T, C extends Record<string, T[]>> =
   // Provide _some_ arguments
   C extends any
     ? // If excluding E from T is empty then E covers T so this should be a success
@@ -241,9 +377,8 @@ type StringKeyOf<R> = R extends Record<infer K, unknown> ? (K extends string ? K
 // truthy value in the image of the subset under the map M. It is useful for dealing with a subset of features without
 // branching on each exact feature when you are able to work with the intersection interface of the features in a subset
 export const exhaustiveUnionPartitioner =
-  <T extends string>(...keys: T[]) =>
-  <C extends Record<string, NonEmptyArray<T>>, R>(cover: Cover<T, C>) =>
-  <M extends Partial<Record<T, unknown>>>(m: M): { [k in StringKeyOf<C>]: M[C[k][number]] } => {
+  <T extends string, M extends Partial<Record<T, unknown>>>(m: M, ...keys: T[]) =>
+  <C extends Record<string, T[]>>(cover: Cover<T, C>): { [k in StringKeyOf<C>]: M[C[k][number]] } => {
     // Flatten the cover down to its element type then map them with M to get the values
     const ret = {} as { [k in StringKeyOf<C>]: M[C[k][number]] };
     for (const [key, subset] of Object.entries(cover)) {
@@ -262,4 +397,8 @@ function extendWithPrototype<TObj, TProto extends Object>(
 ): TObj & TProto & { __extendedWithPrototype: true } {
   // Proxy everything other than what is defined on obj to proto
   return Object.assign(Object.create(proto), obj, { __extendedWithPrototype: true });
+}
+
+export function asCallable<T extends { call: CallableFunction }>(obj: T): T['call'] & T {
+  return Object.assign(obj.call.bind(obj), obj);
 }

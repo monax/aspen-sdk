@@ -2,12 +2,10 @@ import styles from "../styles/Home.module.css";
 
 import { Web3Provider } from "@ethersproject/providers";
 
-import {
-  CollectionContract,
-  TermsUserAcceptanceState,
-} from "@monaxlabs/aspen-sdk/dist/contracts";
+import { CollectionContract } from "@monaxlabs/aspen-sdk/dist/contracts";
 import { useWeb3React } from "@web3-react/core";
 import { useToasts } from "react-toast-notifications";
+import { TermsUserAcceptanceState } from "pages";
 
 const AcceptTerms: React.FC<{
   contract: CollectionContract;
@@ -24,8 +22,7 @@ const AcceptTerms: React.FC<{
     return null;
   }
 
-  const handleAcceptTerms = () =>
-    contract.agreements.acceptTerms(library.getSigner());
+  const handleAcceptTerms = () => contract.acceptTerms(library.getSigner());
 
   return (
     <div>

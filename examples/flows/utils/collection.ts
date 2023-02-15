@@ -1,3 +1,5 @@
+import { coerceToBlob } from '@monaxlabs/aspen-sdk/dist/api-utils';
+import { SupportedNetwork } from '@monaxlabs/aspen-sdk/dist/apis';
 import {
   Chain,
   CollectionActionsService,
@@ -13,10 +15,8 @@ import {
   OperationType,
   PhaseRequest,
   TokenService,
-  UpdatableCollectionFieldsJsonPatchDocument,
+  UpdateCollectionRequestJsonPatchDocument,
 } from '@monaxlabs/aspen-sdk/dist/apis/publishing';
-import { coerceToBlob } from '@monaxlabs/aspen-sdk/dist/apis/utils/files';
-import { SupportedNetwork } from '@monaxlabs/aspen-sdk/dist/apis/utils/providers';
 import { waitForCompletion } from './waiter';
 
 let mutex = false;
@@ -284,7 +284,7 @@ export async function updateCollection(collectionGuid: string) {
     guid: collectionGuid,
     requestBody: [
       { path: 'FileSource', op: OperationType.REPLACE, value: FileSource.WEB2 },
-    ] as UpdatableCollectionFieldsJsonPatchDocument,
+    ] as UpdateCollectionRequestJsonPatchDocument,
   });
 }
 

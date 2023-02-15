@@ -1,7 +1,7 @@
 import * as t from 'io-ts';
 import { Readable, ReadableOptions } from 'stream';
-import { PublishingAPI } from '..';
-import { parse } from '../../utils';
+import { PublishingAPI } from '../apis';
+import { parse } from '../utils';
 
 export interface NamedReadable extends Readable {
   readonly name: string;
