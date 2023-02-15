@@ -1,4 +1,5 @@
-import { AspenEnvironment, authenticateAllFromFile, SupportedNetwork } from '@monaxlabs/aspen-sdk/dist/apis';
+import { authenticateAllFromFile } from '@monaxlabs/aspen-sdk/dist/api-utils';
+import { AspenEnvironment, SupportedNetwork } from '@monaxlabs/aspen-sdk/dist/apis';
 import { Currency } from '@monaxlabs/aspen-sdk/dist/apis/publishing';
 import { addHours, addMinutes } from 'date-fns';
 import { credentialsFile } from './secrets';

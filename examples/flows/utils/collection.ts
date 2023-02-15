@@ -1,3 +1,5 @@
+import { coerceToBlob } from '@monaxlabs/aspen-sdk/dist/api-utils';
+import { SupportedNetwork } from '@monaxlabs/aspen-sdk/dist/apis';
 import {
   Chain,
   CollectionActionsService,
@@ -15,7 +17,6 @@ import {
   TokenService,
   UpdateCollectionRequestJsonPatchDocument,
 } from '@monaxlabs/aspen-sdk/dist/apis/publishing';
-import { coerceToBlob, SupportedNetwork } from '@monaxlabs/aspen-sdk/dist/apis/utils';
 import { waitForCompletion } from './waiter';
 
 let mutex = false;

@@ -1,7 +1,7 @@
 import { providers, Wallet } from 'ethers';
 import { JsonFromString } from 'io-ts-types';
+import { NetworkSecrets, ProviderConfig, SupportedNetwork } from '../apis';
 import { parseFromEnvOrFile } from './environment';
-import { NetworkSecrets, ProviderConfig, SupportedNetwork } from './types';
 
 // A JSON object of type EnvCredentials is expected to be saved here (ignored from repo)
 const defaultConfigFile = 'providers.json';

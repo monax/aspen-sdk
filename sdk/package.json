@@ -17,9 +17,13 @@
   ],
   "exports": {
     "./dist/*": "./dist/*",
-    "./api": {
-      "types": "./dist/api/index.d.ts",
-      "default": "./dist/api/index.js"
+    "./apis": {
+      "types": "./dist/apis/index.d.ts",
+      "default": "./dist/apis/index.js"
+    },
+    "./api-utils": {
+      "types": "./dist/api-utils/index.d.ts",
+      "default": "./dist/api-utils/index.js"
     },
     "./contracts": {
       "types": "./dist/contracts/index.d.ts",
@@ -31,7 +35,6 @@
     },
     "./utils": {
       "types": "./dist/utils/index.d.ts",
-      "node": "./dist/utils/node-index.js",
       "default": "./dist/utils/index.js"
     }
   },

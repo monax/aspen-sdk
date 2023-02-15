@@ -1,7 +1,6 @@
 import { JsonFromString } from 'io-ts-types';
 import * as path from 'path';
-import { AspenEnvironment, EnvCredentials } from '..';
-import { authenticateAll } from './auth';
+import { AspenEnvironment, authenticateAll, EnvCredentials } from '../apis';
 import { parseFromEnvOrFile } from './environment';
 
 // A JSON object of type EnvCredentials is expected to be saved here (ignored from repo)

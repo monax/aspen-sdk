@@ -1,21 +1,23 @@
 import {
-  AspenEnvironment,
   authenticateAllFromFile,
-  authenticateForGate,
-  configureGate,
-  extractCustomError,
-  GatingAPI,
   generateAccounts,
   getProvider,
   getProviderConfig,
   getSigner,
+  PostFileResponse,
+  uploadFile,
+} from '@monaxlabs/aspen-sdk/dist/api-utils';
+import {
+  AspenEnvironment,
+  authenticateForGate,
+  configureGate,
+  extractCustomError,
+  GatingAPI,
   issueToken,
   parseAndVerifyJWT,
-  PostFileResponse,
   ProviderConfig,
   PublishingAPI,
   SupportedNetwork,
-  uploadFile,
 } from '@monaxlabs/aspen-sdk/dist/apis';
 import { Currency } from '@monaxlabs/aspen-sdk/dist/apis/publishing';
 import { ClaimBalance, getClaimBalances } from '@monaxlabs/aspen-sdk/dist/claimgraph';
