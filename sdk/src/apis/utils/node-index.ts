@@ -1,5 +1,6 @@
 export * from './accounts';
 export * from './auth';
+export * from './auth-node';
 export * from './chains';
 export * from './environment';
 export * from './errors';

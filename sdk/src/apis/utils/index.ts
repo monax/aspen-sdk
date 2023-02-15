@@ -1,3 +1,4 @@
+export * from './auth';
 export * from './chains';
 export * from './errors';
 export * from './gating';
