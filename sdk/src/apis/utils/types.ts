@@ -1,10 +1,6 @@
-import { Provider } from '@ethersproject/providers';
-import { Signer } from 'ethers';
 import * as t from 'io-ts';
 import { ChainId } from '../../contracts';
 import { Chain } from '../publishing';
-
-export type Signerish = Signer | Provider;
 
 export const NetworkSecrets = t.partial({
   Mumbai: t.string,
