@@ -29,7 +29,7 @@ export async function deployCedarERC1155DropDemo(provider: providers.Provider) {
 
   const gas = await getGasStrategy(provider);
 
-  const deployer = getDeployer('Mumbai', provider);
+  const deployer = getDeployer(provider, 'Mumbai', 'CedarDeployer', 9);
   const contractAddress = await deployDrop(deployer);
   // ONE made earlier on Mumbai. Setting an existing contract here is useful if you want to just do some claims and not
   // redeploy
