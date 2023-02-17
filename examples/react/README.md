@@ -33,11 +33,10 @@ You need to connect with Mumbai network where examples contract are deployed.
 then `contract` needs to be loaded :
 
 ```js
-const collectionContract = new CollectionContract(
+const collectionContract = await CollectionContract.from(
   library,
   parse(Address, contractAddress)
 );
-await collectionContract.load();
 ```
 
 When contract is loaded you can access features provided :
@@ -90,25 +89,25 @@ Mint via crypto payment :
 When the `Mint` button is pressed, function `onMint` is called.
 
 ```js
-     const tx = await contract.issuance.claim(
-          library.getSigner(), // The signer for the user entitled to claim
-          parse(Address, account), // Claiming account
-          tokenId, // TokenId if ERC1155, null if ERC721
-          BigNumber.from(1), // Quantity to claim (multiple tokens can be claimed in a single call for both ERC721 and ERC1155)
-          activeClaimConditions.activeClaimCondition.currency, // Currency
-          activeClaimConditions.activeClaimCondition.pricePerToken, // Price per token
-          [],
-          BigNumber.from(0)
-        );
+const tx = await contract.issuance.claim(
+  library.getSigner(), // The signer for the user entitled to claim
+  parse(Address, account), // Claiming account
+  tokenId, // TokenId if ERC1155, null if ERC721
+  BigNumber.from(1), // Quantity to claim (multiple tokens can be claimed in a single call for both ERC721 and ERC1155)
+  activeClaimConditions.activeClaimCondition.currency, // Currency
+  activeClaimConditions.activeClaimCondition.pricePerToken, // Price per token
+  [],
+  BigNumber.from(0)
+);
 ```
 
 When the transaction succeeds, function `onUpdate` is called:
-```js
-    if (tx) {
-      const receipt = await tx.wait();
-      if (receipt.status === 1) {
-        onUpdate(); // Update Wallet Claim Count and Wallet Claimed Count In Phase
-      }
-    }
-```
 
+```js
+if (tx) {
+  const receipt = await tx.wait();
+  if (receipt.status === 1) {
+    onUpdate(); // Update Wallet Claim Count and Wallet Claimed Count In Phase
+  }
+}
+```

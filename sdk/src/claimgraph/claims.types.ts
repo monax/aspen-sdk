@@ -38,6 +38,7 @@ export type ClaimBalance = {
 export type ClaimBalance_Filter = {
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<ClaimBalance_Filter>>>;
   contractAddress?: InputMaybe<Scalars['String']>;
   contractAddress_contains?: InputMaybe<Scalars['String']>;
   contractAddress_contains_nocase?: InputMaybe<Scalars['String']>;
@@ -66,6 +67,7 @@ export type ClaimBalance_Filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_not?: InputMaybe<Scalars['ID']>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  or?: InputMaybe<Array<InputMaybe<ClaimBalance_Filter>>>;
   receiver?: InputMaybe<Scalars['String']>;
   receiver_contains?: InputMaybe<Scalars['String']>;
   receiver_contains_nocase?: InputMaybe<Scalars['String']>;

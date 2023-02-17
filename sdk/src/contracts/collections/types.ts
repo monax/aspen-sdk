@@ -1,13 +1,19 @@
 import { Provider } from '@ethersproject/abstract-provider';
-import type { BigNumber, Signer } from 'ethers';
+import type { BigNumber, BigNumberish, Overrides, Signer } from 'ethers';
+import { AllowlistStatus } from '../../apis/publishing';
+import { PromiseOrValue } from '../generated/common';
 import { Address, ChainId } from '../index';
 import type { CollectionMetaImageType, CollectionMetaLinkType } from './constants';
+import { SdkError } from './errors';
+import { UserClaimConditions } from './features';
+
+export type TokenId = BigNumberish | null | undefined;
 
 export type Signerish = Signer | Provider;
 
-export type TokenStandard = 'ERC721' | 'ERC1155' | 'ERC20';
+export type TokenStandard = 'ERC721' | 'ERC1155';
 
-export type ContractVerificationType = 'aspen-minted' | 'aspen-partner' | 'os-verified';
+export type WriteOverrides = Overrides & { from?: PromiseOrValue<string> };
 
 export type MetadataKind = 'collection';
 
@@ -24,6 +30,7 @@ export type CollectionCreator = {
   creator_email: string;
 };
 
+// @todo - use spec for parsing
 export type CollectionMetadata = {
   schema?: string | null;
   kind?: MetadataKind;
@@ -96,34 +103,8 @@ export type TokenAssetMetadata = {
   metadata: TokenMetadata | null;
 };
 
-export type CollectionContractClaimCondition = {
-  startTimestamp: number;
-  maxClaimableSupply: BigNumber;
-  supplyClaimed: BigNumber;
-  quantityLimitPerTransaction: BigNumber;
-  waitTimeInSecondsBetweenClaims: number;
-  merkleRoot: string;
-  pricePerToken: BigNumber;
-  currency: Address;
-  isClaimingPaused: boolean;
-};
-
-export type ActiveClaimConditions = {
-  maxWalletClaimCount: BigNumber;
-  tokenSupply: BigNumber;
-  maxTotalSupply: BigNumber;
-  maxAvailableSupply: BigNumber;
-  activeClaimConditionId: number;
-  activeClaimCondition: CollectionContractClaimCondition;
-};
-
-export type UserClaimConditions = {
-  activeClaimConditionId: number;
-  walletClaimCount: BigNumber;
-  walletClaimedCountInPhase: BigNumber | null;
-  lastClaimTimestamp: number;
-  nextClaimTimestamp: number;
-};
+export type ClaimConditionsState = UserClaimConditions &
+  UserClaimRestrictions & { allowlistStatus: AllowlistStatus; phaseId: string | null };
 
 export type CollectionUserClaimState =
   | 'ok'
@@ -136,18 +117,11 @@ export type CollectionUserClaimState =
   | 'claimed-phase-allowance'
   | 'claimed-wallet-allowance';
 
-export type CollectionUserClaimConditions = {
+export type UserClaimRestrictions = {
   availableQuantity: BigNumber;
   canClaimTokens: boolean;
   canMintAfter: Date;
   claimState: CollectionUserClaimState;
-};
-
-export type TermsUserAcceptanceState = {
-  termsActivated: boolean;
-  termsAccepted: boolean;
-  termsLink: string;
-  termsVersion: number;
 };
 
 export type CollectionInfo = {
@@ -156,18 +130,16 @@ export type CollectionInfo = {
   tokenStandard: TokenStandard | null;
 };
 
-export type CollectionCallData = {
-  method: string;
-  args?: { [key: string]: unknown };
-  signer: Signerish;
-  supportedFeatures: string[];
-};
-
 export type DebugHandler = (collection: CollectionInfo, message: string, ...optionalParams: unknown[]) => void;
 
-export type ErrorHandler = (
-  message: string,
-  error: Error,
-  collection: CollectionInfo,
-  callData: CollectionCallData,
-) => void;
+export type OperationStatus<T> =
+  | {
+      success: true;
+      result: T;
+      error: null;
+    }
+  | {
+      success: false;
+      result: null;
+      error: SdkError;
+    };

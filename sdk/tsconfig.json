@@ -2,9 +2,18 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "./src",
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "strict": true,
+    "strictFunctionTypes": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "useUnknownInCatchVariables": true,
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["src/codegen/**/*"],
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/codegen/**/*"
+  ],
   "declaration": true
 }

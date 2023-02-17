@@ -1,198 +1,226 @@
 import { Provider } from '@ethersproject/providers';
-import { BigNumber, BigNumberish, ContractReceipt, Overrides } from 'ethers';
-import { parse } from '../../utils/index.js';
+import { BigNumber } from 'ethers';
+import { parse } from '../../utils';
 import { Address, Addressish, asAddress } from '../address';
-import { extractCustomError } from '../errors';
-import { extractEventsFromLogs } from '../events';
-import { ICedarFeaturesV0__factory } from '../generated';
-import { PromiseOrValue } from '../generated/common';
-import {
-  TokenIssuedEventObject,
-  TokensIssuedEventObject,
-} from '../generated/issuance/ICedarNFTIssuance.sol/IRestrictedNFTIssuanceV2';
 import { ChainId } from '../network';
+import { SdkError, SdkErrorCode } from './errors';
 import {
+  AcceptTerms,
+  AcceptTermsFor,
+  AcceptTermsForMany,
+  AcceptTermsWithSignature,
+  asCallable,
+  BalanceOf,
+  Burn,
+  Claim,
+  ContractFunctionId,
+  ContractFunctionIds,
+  ContractUri,
+  ERC1155StandardInterfaces,
+  ERC721StandardInterfaces,
+  Exists,
   extractKnownSupportedFeatures,
-  FeatureContract,
-  FeatureFunction,
+  FeatureFunctionId,
   FeatureInterface,
   FeatureInterfaceId,
+  GetBaseURIIndices,
+  GetClaimConditionById,
+  GetClaimPauseStatus,
+  GetDefaultRoyaltyInfo,
+  GetLargestTokenId,
+  GetPlatformFeeInfo,
+  GetPrimarySaleRecipient,
+  GetRoyaltyInfoForToken,
+  GetSmallestTokenId,
+  GetTermsDetails,
+  GetUserClaimConditions,
+  HasAcceptedTerms,
+  HasAcceptedTermsVersion,
+  ImplementationName,
+  ImplementationVersion,
+  IsAspenFeatures,
+  Issue,
+  IssueWithTokenUri,
+  LazyMint,
+  Multicall,
+  Name,
+  Owner,
+  OwnerOf,
+  RoyaltyInfo,
+  SetClaimConditions,
+  SetClaimPauseStatus,
+  SetContractUri,
+  SetDefaultRoyaltyInfo,
+  SetMaxTotalSupply,
+  SetOperatorFiltererStatus,
+  SetOwner,
+  SetPermanentTokenUri,
+  SetPlatformFeeInfo,
+  SetPrimarySaleRecipient,
+  SetRoyaltyInfoForToken,
+  SetTermsActivation,
+  SetTermsUri,
+  SetTokenNameAndSymbol,
+  SetTokenUri,
+  SupportedFeatures,
+  SupportsInterface,
+  Symbol,
+  TokenUri,
+  TotalSupply,
+  UpdateBaseUri,
+  VerifyClaim,
 } from './features';
-import { Agreements } from './features/agreements';
-import { Erc1155 } from './features/erc1155';
-import { Issuance } from './features/issuance';
-import { Metadata } from './features/metadata';
-import { Ownable } from './features/ownable';
-import { Royalties } from './features/royalties';
-import type { CollectionCallData, CollectionInfo, DebugHandler, ErrorHandler, Signerish, TokenStandard } from './types';
+
+import type { CollectionInfo, DebugHandler, TokenId, TokenStandard } from './types';
 
 export const DefaultDebugHandler = (collection: CollectionInfo, action: string, ...data: unknown[]) => {
   console.debug(`Collection Contract ${collection.chainId} # ${collection.address} -> ${action}`, ...data);
 };
 
-export const DefaultErrorHandler = (
-  message: string,
-  error: Error,
-  collection: CollectionInfo,
-  callData: CollectionCallData,
-) => {
-  console.debug(`Received "${message}" error when calling ${callData.method}`, { collection, callData, error });
-  console.error(error);
-};
-
-export type FeatureInterfaces = { -readonly [K in FeatureInterfaceId]: FeatureInterface<FeatureContract<K>> };
-
-export type NFTTokenIssueArgs = {
-  to: Addressish;
-  quantity: BigNumberish;
-  tokenURI?: string;
-};
-
-export type NFTTokenIssuance =
-  | ({ withTokenURI: true } & TokenIssuedEventObject)
-  | ({ withTokenURI: false } & TokensIssuedEventObject);
+export type FeatureInterfaces = { -readonly [K in FeatureInterfaceId]: FeatureInterface<K> };
 
 export class CollectionContract {
-  private _supportedFeatures: FeatureInterfaceId[] = [];
-  private _interfaces: Partial<FeatureInterfaces> | null = null;
-  private _tokenStandard: TokenStandard | null = null;
-  private readonly _provider: Provider;
-  private chainId: ChainId | null = null;
   private static _debugHandler: DebugHandler | undefined;
-  private static _errorHandler: ErrorHandler | undefined;
-  private static _throwErrors = false;
 
+  private _supportedFeaturesList: FeatureInterfaceId[] = [];
+  private _interfaces: Partial<FeatureInterfaces>;
+  private _tokenStandard: TokenStandard;
+  private readonly _provider: Provider;
+
+  readonly chainId: ChainId;
   readonly address: Address;
-  // features
-  readonly metadata: Metadata;
-  readonly agreements: Agreements;
-  readonly royalties: Royalties;
-  readonly issuance: Issuance;
-  readonly ownable: Ownable;
-  readonly erc1155: Erc1155;
 
-  readonly issueNFT = FeatureFunction.fromFeaturePartition(
-    'issueNFT',
-    this,
-    [
-      'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2',
-      'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3',
-      'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4',
-      'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV0',
-      'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV1',
-      'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2',
-    ],
-    {
-      factory: [
-        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2',
-        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3',
-        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4',
-        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV0',
-        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV1',
-        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2',
-      ],
-      tokenIssued: [
-        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV2',
-        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3',
-        'issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV4',
-        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV1',
-        'issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2',
-      ],
-    },
-    ({ factory, tokenIssued }) =>
-      async (
-        signer: Signerish,
-        { to, quantity, tokenURI }: NFTTokenIssueArgs,
-        overrides?: Overrides & { from?: PromiseOrValue<string> },
-      ): Promise<NFTTokenIssuance[]> => {
-        if (factory) {
-          const contract = factory.connectWith(signer);
-          const receiver = await asAddress(to);
-          const receipts: ContractReceipt[] = [];
-          try {
-            if (tokenURI === undefined) {
-              const tx = await contract.issue(receiver, quantity, overrides);
-              receipts.push(await tx.wait());
-            } else {
-              const sup = BigNumber.from(quantity);
-              for (let i = 0; sup.gt(i); i++) {
-                const tx = await contract.issueWithTokenURI(receiver, tokenURI, overrides);
-                receipts.push(await tx.wait());
-              }
-            }
-          } catch (err) {
-            throw extractCustomError(factory.interface, err);
-          }
-          let issueEvents: NFTTokenIssuance[] = [];
-          if (!tokenIssued) {
-            tokenIssued = this.assumeFeature('issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2');
-          }
-          if (tokenIssued) {
-            const contract = tokenIssued.connectReadOnly();
-            issueEvents.push(
-              ...extractEventsFromLogs(
-                contract.filters.TokensIssued(),
-                tokenIssued.interface,
-                receipts.flatMap((r) => r.logs),
-              ).map((e) => ({ withTokenURI: false as const, ...e })),
-            );
-            issueEvents.push(
-              ...extractEventsFromLogs(
-                contract.filters.TokenIssued(),
-                tokenIssued.interface,
-                receipts.flatMap((r) => r.logs),
-              ).map((e) => ({ withTokenURI: true as const, ...e })),
-            );
-          }
-          return issueEvents;
-        }
-        throw new Error();
-      },
-  );
+  //////
+  // Contract Functions
+  //////
+
+  // Contract
+  readonly isAspenFeatures = asCallable(new IsAspenFeatures(this));
+  readonly supportsInterface = asCallable(new SupportsInterface(this));
+  readonly supportedFeatures = asCallable(new SupportedFeatures(this));
+  readonly implementationName = asCallable(new ImplementationName(this));
+  readonly implementationVersion = asCallable(new ImplementationVersion(this));
+  readonly owner = asCallable(new Owner(this));
+  readonly setOwner = asCallable(new SetOwner(this));
+
+  // Collection
+  readonly name = asCallable(new Name(this));
+  readonly symbol = asCallable(new Symbol(this));
+  readonly contractUri = asCallable(new ContractUri(this));
+  readonly setContractUri = asCallable(new SetContractUri(this));
+  readonly setTokenNameAndSymbol = asCallable(new SetTokenNameAndSymbol(this));
+
+  // Multicall
+  readonly multicall = asCallable(new Multicall(this));
+
+  // Terms
+  readonly acceptTerms = asCallable(new AcceptTerms(this));
+  readonly acceptTermsFor = asCallable(new AcceptTermsFor(this));
+  readonly acceptTermsForMany = asCallable(new AcceptTermsForMany(this));
+  readonly acceptTermsWithSignature = asCallable(new AcceptTermsWithSignature(this));
+  readonly getTermsDetails = asCallable(new GetTermsDetails(this));
+  readonly hasAcceptedTerms = asCallable(new HasAcceptedTerms(this));
+  readonly hasAcceptedTermsVersion = asCallable(new HasAcceptedTermsVersion(this));
+  readonly setTermsActivation = asCallable(new SetTermsActivation(this));
+  readonly setTermsUri = asCallable(new SetTermsUri(this));
+
+  // Token
+  readonly exists = asCallable(new Exists(this));
+  readonly ownerOf = asCallable(new OwnerOf(this));
+  readonly balanceOf = asCallable(new BalanceOf(this));
+  readonly tokenUri = asCallable(new TokenUri(this));
+  readonly setTokenUri = asCallable(new SetTokenUri(this));
+  readonly setPermanentTokenUri = asCallable(new SetPermanentTokenUri(this));
+  readonly getBaseURIIndices = asCallable(new GetBaseURIIndices(this));
+  readonly updateBaseUri = asCallable(new UpdateBaseUri(this));
+
+  // Supply
+  readonly totalSupply = asCallable(new TotalSupply(this));
+  readonly setMaxTotalSupply = asCallable(new SetMaxTotalSupply(this));
+  readonly getSmallestTokenId = asCallable(new GetSmallestTokenId(this));
+  readonly getLargestTokenId = asCallable(new GetLargestTokenId(this));
+
+  // Mint
+  readonly lazyMint = asCallable(new LazyMint(this));
+
+  // Claim
+  readonly claim = asCallable(new Claim(this));
+  readonly verifyClaim = asCallable(new VerifyClaim(this));
+  readonly getClaimConditionById = asCallable(new GetClaimConditionById(this));
+  readonly getUserClaimConditions = asCallable(new GetUserClaimConditions(this));
+  readonly setClaimConditions = asCallable(new SetClaimConditions(this));
+  readonly getClaimPauseStatus = asCallable(new GetClaimPauseStatus(this));
+  readonly setClaimPauseStatus = asCallable(new SetClaimPauseStatus(this));
+
+  // Burn
+  readonly burn = asCallable(new Burn(this));
+
+  // Issue
+  readonly issue = asCallable(new Issue(this));
+  readonly issueWithTokenUri = asCallable(new IssueWithTokenUri(this));
+
+  // Royalties
+  readonly royaltyInfo = asCallable(new RoyaltyInfo(this));
+  readonly getDefaultRoyaltyInfo = asCallable(new GetDefaultRoyaltyInfo(this));
+  readonly setDefaultRoyaltyInfo = asCallable(new SetDefaultRoyaltyInfo(this));
+  readonly getRoyaltyInfoForToken = asCallable(new GetRoyaltyInfoForToken(this));
+  readonly setRoyaltyInfoForToken = asCallable(new SetRoyaltyInfoForToken(this));
+
+  // Platform fee
+  readonly getPlatformFeeInfo = asCallable(new GetPlatformFeeInfo(this));
+  readonly setPlatformFeeInfo = asCallable(new SetPlatformFeeInfo(this));
+
+  // Royalties
+  readonly getPrimarySaleRecipient = asCallable(new GetPrimarySaleRecipient(this));
+  readonly setPrimarySaleRecipient = asCallable(new SetPrimarySaleRecipient(this));
+
+  // Operator filterer
+  readonly setOperatorFiltererStatus = asCallable(new SetOperatorFiltererStatus(this));
 
   static setDebugHandler(handler: DebugHandler | undefined) {
     CollectionContract._debugHandler = handler;
   }
 
-  static setErrorHandler(handler: ErrorHandler | undefined) {
-    CollectionContract._errorHandler = handler;
-  }
-
-  static setThrowsErrors(shouldThrowErrors: boolean) {
-    CollectionContract._throwErrors = shouldThrowErrors;
-  }
-
   static async from(provider: Provider, collectionAddress: Addressish): Promise<CollectionContract> {
-    const contract = new CollectionContract(provider, await asAddress(collectionAddress));
-    await contract.load();
-    return contract;
+    try {
+      const { chainId } = await provider.getNetwork();
+      const chain = parse(ChainId, chainId);
+      const address = await asAddress(collectionAddress);
+
+      const iFeatures = FeatureInterface.fromFeature('IAspenFeatures.sol:IAspenFeaturesV0', address, provider);
+      const features = await iFeatures.connectReadOnly().supportedFeatures();
+
+      return new CollectionContract(provider, chain, address, features);
+    } catch (err) {
+      throw new SdkError(SdkErrorCode.FAILED_TO_LOAD_FEATURES, undefined, err as Error);
+    }
   }
 
-  constructor(provider: Provider, collectionAddress: Address) {
-    this.address = collectionAddress;
+  constructor(provider: Provider, chain: ChainId, address: Address, features: string[]) {
+    this.chainId = chain;
+    this.address = address;
     this._provider = provider;
-    this.metadata = new Metadata(this);
-    this.agreements = new Agreements(this);
-    this.royalties = new Royalties(this);
-    this.issuance = new Issuance(this);
-    this.ownable = new Ownable(this);
-    this.erc1155 = new Erc1155(this);
+
+    this._supportedFeaturesList = extractKnownSupportedFeatures(features);
+    this._interfaces = this.getInterfaces();
+    this.debug('Loaded supported features', this._supportedFeaturesList);
+
+    this._tokenStandard = CollectionContract.detectStandard(this._supportedFeaturesList);
+    this.debug('Token standard set to', this.tokenStandard);
   }
 
-  get supportedFeatures(): string[] {
-    return this._supportedFeatures;
+  get supportedFeaturesList(): string[] {
+    return this._supportedFeaturesList;
   }
 
   /**
-   * @throws InterfaceNotLoadedError
    * @returns An object with mapped interface factories
    */
   get interfaces(): Partial<FeatureInterfaces> {
-    if (!this._interfaces) throw new Error('Interface is not loaded');
     return this._interfaces;
   }
 
-  get tokenStandard(): TokenStandard | null {
+  get tokenStandard(): TokenStandard {
     return this._tokenStandard;
   }
 
@@ -200,76 +228,24 @@ export class CollectionContract {
     return this._provider;
   }
 
-  async getChainId(): Promise<ChainId> {
-    if (!this.chainId) {
-      const { chainId } = await this.provider.getNetwork();
-      this.chainId = parse(ChainId, chainId);
-    }
-    return this.chainId;
-  }
-
-  async load(forceUpdate = false): Promise<boolean> {
-    if (this._interfaces == null || forceUpdate) {
-      try {
-        // Preload chainId
-        await this.getChainId();
-        const contract = ICedarFeaturesV0__factory.connect(this.address, this._provider);
-        this._supportedFeatures = extractKnownSupportedFeatures(await contract.supportedFeatures());
-        this.debug('Loaded supported features', this._supportedFeatures);
-
-        this.buildInterface();
-      } catch (err) {
-        this._supportedFeatures = [];
-        this._interfaces = null;
-        this.error('Failed to load supported features', err, 'base.load', { forceUpdate });
-      }
-    }
-
-    return this._interfaces != null;
-  }
-
-  assumeFeature<T extends FeatureInterfaceId>(feature: T): FeatureInterface<FeatureContract<T>> {
+  assumeFeature<T extends FeatureInterfaceId>(feature: T): FeatureInterface<T> {
     return FeatureInterface.fromFeature(feature, this.address, this._provider);
   }
 
-  protected buildInterface() {
-    if (this._supportedFeatures.length == 0) {
-      this._interfaces = null;
-      this.debug('Interfaces set to null');
-      return;
-    }
-    // Note: we are forced to subvert the type system since it cannot invert that the keys and values are correlated
-    const interfaces = {} as Record<FeatureInterfaceId, FeatureInterface<unknown>>;
-    for (const feature of this._supportedFeatures) {
+  protected getInterfaces(): Partial<FeatureInterfaces> {
+    const interfaces = {} as Record<FeatureInterfaceId, FeatureInterface<FeatureInterfaceId>>;
+    for (const feature of this._supportedFeaturesList) {
       interfaces[feature] = this.assumeFeature(feature);
     }
-    this._interfaces = interfaces as Partial<FeatureInterfaces>;
 
-    this.debug('Interfaces initialized');
-
-    this.detectTokenStandards();
+    return interfaces;
   }
 
-  protected detectTokenStandards() {
-    if (!this._interfaces) {
-      this._tokenStandard = null;
-    } else if (
-      this._interfaces['standard/IERC1155.sol:IERC1155V0'] ||
-      this._interfaces['standard/IERC1155.sol:IERC1155SupplyV0'] ||
-      this._interfaces['standard/IERC1155.sol:IERC1155SupplyV1'] ||
-      this._interfaces['issuance/ISFTSupply.sol:ISFTSupplyV0']
-    ) {
-      this._tokenStandard = 'ERC1155';
-    } else if (
-      this._interfaces['standard/IERC721.sol:IERC721V0'] ||
-      this._interfaces['issuance/INFTSupply.sol:INFTSupplyV0']
-    ) {
-      this._tokenStandard = 'ERC721';
-    } else {
-      this._tokenStandard = null;
-    }
+  static detectStandard(features: FeatureInterfaceId[]): TokenStandard {
+    if (features.some((f) => ERC721StandardInterfaces.includes(f))) return 'ERC721';
+    if (features.some((f) => ERC1155StandardInterfaces.includes(f))) return 'ERC1155';
 
-    this.debug('Token standard set to', this.tokenStandard);
+    throw new SdkError(SdkErrorCode.EMPTY_TOKEN_STANDARD);
   }
 
   debug(message: string, ...data: unknown[]) {
@@ -283,33 +259,42 @@ export class CollectionContract {
     }
   }
 
-  error(
-    message: string,
-    error: Error | unknown,
-    method: string,
-    args?: { [key: string]: unknown },
-    signer?: Signerish,
-  ) {
-    const collection: CollectionInfo = {
-      chainId: this.chainId,
-      address: this.address,
-      tokenStandard: this.tokenStandard,
-    };
+  getFunctionsProps<
+    K extends 'supported' | 'handledFeatures' | 'handledFunctions',
+    R = K extends 'supported'
+      ? boolean
+      : K extends 'handledFeatures'
+      ? FeatureInterfaceId[]
+      : K extends 'handledFunctions'
+      ? Record<string, FeatureFunctionId>
+      : never,
+  >(property: K): Record<ContractFunctionId, R> {
+    return ContractFunctionIds.reduce<Record<ContractFunctionId, R>>((acc, func) => {
+      acc[func] = this[func][property] as R;
+      return acc;
+    }, {} as Record<ContractFunctionId, R>);
+  }
 
-    const callData = {
-      method,
-      args,
-      signer: signer || this._provider,
-      supportedFeatures: this._supportedFeatures,
-    };
+  //////
+  /// Helper functions
+  //////
 
-    if (CollectionContract._errorHandler) {
-      const validError = error instanceof Error ? error : new Error((error as string).toString());
-      CollectionContract._errorHandler(message, validError, collection, callData);
+  requireTokenId(tokenId: TokenId, functionName?: string): BigNumber {
+    if (tokenId === null || tokenId === undefined) {
+      throw new SdkError(SdkErrorCode.TOKEN_ID_REQUIRED, { tokenId, functionName });
     }
 
-    if (CollectionContract._throwErrors) {
-      throw error;
+    try {
+      return BigNumber.from(tokenId);
+    } catch (err) {
+      const error = new Error('Invalid value for BigNumber');
+      throw new SdkError(SdkErrorCode.INVALID_DATA, { tokenId, functionName }, error);
+    }
+  }
+
+  rejectTokenId(tokenId: TokenId, functionName?: string): asserts tokenId is null | undefined {
+    if (tokenId !== null && tokenId !== undefined) {
+      throw new SdkError(SdkErrorCode.TOKEN_ID_REJECTED, { tokenId, functionName });
     }
   }
 }
