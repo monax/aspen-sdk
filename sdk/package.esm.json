@@ -17,25 +17,21 @@
   ],
   "exports": {
     "./dist/*": "./dist/*",
-    "./apis": {
-      "types": "./dist/apis/index.d.ts",
-      "default": "./dist/apis/index.js"
-    },
-    "./api-utils": {
-      "types": "./dist/api-utils/index.d.ts",
-      "default": "./dist/api-utils/index.js"
+    "./api": {
+      "default": "./dist/api/index.js",
+      "types": "./dist/api/index.d.ts"
     },
     "./contracts": {
-      "types": "./dist/contracts/index.d.ts",
-      "default": "./dist/contracts/index.js"
+      "default": "./dist/contracts/index.js",
+      "types": "./dist/contracts/index.d.ts"
     },
     "./claimgraph": {
-      "types": "./dist/claimgraph/index.d.ts",
-      "default": "./dist/claimgraph/index.js"
+      "default": "./dist/claimgraph/index.js",
+      "types": "./dist/claimgraph/index.d.ts"
     },
     "./utils": {
-      "types": "./dist/utils/index.d.ts",
-      "default": "./dist/utils/index.js"
+      "default": "./dist/utils/index.js",
+      "types": "./dist/utils/index.d.ts"
     }
   },
   "scripts": {
@@ -48,9 +44,6 @@
     "fix": "pnpm run fix:prettier && pnpm run fix:eslint",
     "fix:prettier": "prettier --write ..",
     "fix:eslint": "eslint --fix '**/*.ts'",
-    "lint": "pnpm lint:js && pnpm lint:types",
-    "lint:js": "eslint '**/*.{js,ts}'",
-    "lint:types": "pnpm tsc --noEmit",
     "tsnode": "ts-node --esm --experimental-specifier-resolution=node",
     "generate:spec": "ts-node src/codegen/cmd/generate.ts",
     "generate:publishing": "npx openapi-typescript-codegen --input ./node_modules/@monaxlabs/spec/apis/publishing.json --output ./src/apis/publishing/generated --client axios --useOptions",

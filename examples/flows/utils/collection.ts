@@ -12,10 +12,8 @@ import {
   CreateTokenRequest,
   Currency,
   FileSource,
-  OperationType,
   PhaseRequest,
   TokenService,
-  UpdateCollectionRequestJsonPatchDocument,
 } from '@monaxlabs/aspen-sdk/dist/apis/publishing';
 import { waitForCompletion } from './waiter';
 
@@ -277,15 +275,6 @@ export async function updateRoyaltyRecipient(collectionGuid: string) {
 
   await CollectionActionsService.postCollectionResync({ guid: collectionGuid });
   await waitForCompletion(CollectionActionsService.getCollectionResync, { guid: collectionGuid });
-}
-
-export async function updateCollection(collectionGuid: string) {
-  await CollectionService.patchCollection({
-    guid: collectionGuid,
-    requestBody: [
-      { path: 'FileSource', op: OperationType.REPLACE, value: FileSource.WEB2 },
-    ] as UpdateCollectionRequestJsonPatchDocument,
-  });
 }
 
 export function wait(ms: number, reason?: string): Promise<void> {

@@ -1,8 +1,6 @@
 import { Network } from '@ethersproject/providers';
-import { beforeAll, describe, expect, test } from '@jest/globals';
+import { describe, expect, test } from '@jest/globals';
 import { BigNumber, ethers } from 'ethers';
-import { URL } from 'url';
-import { getProviderConfig, getSigner } from '../../api-utils/providers';
 import { parse } from '../../utils';
 import { Address } from '../address';
 import { CollectionContract } from './collections';
@@ -17,9 +15,6 @@ import {
 import { FeatureFactories } from './features/feature-factories.gen';
 import { FeatureFunctionsMap } from './features/feature-functions.gen';
 import { Token } from './objects';
-
-// FIXME: pull in from CI environment
-const providersFile = new URL('../../../../examples/flows/secrets/providers.json', import.meta.url).pathname;
 
 const PROVIDER_URL = 'http://localhost:8545';
 const TESTNET: Network = {
@@ -251,28 +246,5 @@ describe('Collections - static tests', () => {
     const supply = iface.encodeFunctionResult(iface.functions['uri(uint256)'], [ipfsUri]);
     provider.addMock('call', supply);
     expect(await new Token(erc1155, 0).getUri()).toBe(ipfsUri);
-  });
-});
-
-// FIXME: unskip/refactor to integration test suite when available in CI
-describe.skip('Collections', () => {
-  let contract: CollectionContract;
-  let account: Address;
-
-  beforeAll(async () => {
-    const address = parse(Address, '0xB2Af02eC55E2ba5afe246Ed51b8aBdBBa5F7937C');
-    const providerConfig = await getProviderConfig(providersFile);
-    const signer = await getSigner('Mumbai', providerConfig);
-    account = parse(Address, await signer.getAddress());
-    contract = await CollectionContract.from(signer.provider, address);
-  });
-
-  test('User claim restrictions', async () => {
-    const tokenId = '0';
-
-    const userConditions = await contract.getUserClaimConditions(account, tokenId);
-    if (!userConditions) {
-      throw new Error(`userConditions or activeConditions empty`);
-    }
   });
 });

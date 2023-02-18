@@ -1,12 +1,10 @@
-import { cid } from 'is-ipfs';
-
 export function resolveIpfsUrl(hashOrUrl: string, gatewayPrefix: string): string {
   if (!gatewayPrefix) {
     return hashOrUrl;
   }
 
   // Raw hash
-  if (cid(hashOrUrl)) {
+  if (!hashOrUrl.includes('://')) {
     return gatewayPrefix + hashOrUrl;
   }
 
@@ -16,7 +14,7 @@ export function resolveIpfsUrl(hashOrUrl: string, gatewayPrefix: string): string
   }
 
   const pathParts = hashOrUrl.slice(7).split('/');
-  if (cid(pathParts[0])) {
+  if (pathParts[0]) {
     return gatewayPrefix + pathParts.join('/');
   }
 
