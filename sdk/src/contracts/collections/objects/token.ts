@@ -81,12 +81,16 @@ export class Token extends ContractObject {
 
       // @todo - update with Publishing API v2
       if (userConditions.merkleRoot !== ZERO_BYTES32) {
-        allowlistStatus = await getAllowlistStatus(
-          this.base.address,
-          address,
-          publishingChainFromChainId(this.base.chainId),
-          this.tokenId,
-        );
+        try {
+          allowlistStatus = await getAllowlistStatus(
+            this.base.address,
+            address,
+            publishingChainFromChainId(this.base.chainId),
+            this.tokenId,
+          );
+        } catch {
+          allowlistStatus.status = 'excluded';
+        }
       }
 
       const userRestrictions = await getUserRestrictions(
