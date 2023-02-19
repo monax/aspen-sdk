@@ -11,9 +11,9 @@ import {
 } from '../generate';
 import { ContractsManifest } from '../manifest';
 
-const dirname = url.fileURLToPath(new url.URL('.', import.meta.url));
+// const __dirname = url.fileURLToPath(new url.URL('.', import.meta.url));
 
-const sdkDir = path.join(dirname, '..', '..', '..');
+const sdkDir = path.join(__dirname, '..', '..', '..');
 const srcDir = path.join(sdkDir, 'src');
 
 const manifestFileTs = path.join(srcDir, 'codegen', 'manifest.gen.ts');

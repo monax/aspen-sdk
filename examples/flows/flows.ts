@@ -42,7 +42,6 @@ import { providers } from 'ethers/lib/ethers';
 import { formatEther } from 'ethers/lib/utils';
 import { createReadStream } from 'fs';
 import { GraphQLClient } from 'graphql-request';
-import { URL } from 'url';
 import { format } from 'util';
 import { demoMnemonic } from './keys';
 import { credentialsFile, providersFile } from './secrets';
@@ -68,6 +67,9 @@ const Drop1155__factory = ICedarERC1155DropV5__factory;
 type Drop721 = ICedarERC721DropV7;
 const Drop721__factory = ICedarERC721DropV7__factory;
 type Drop = Drop721 | Drop1155;
+
+// const __dirname = url.fileURLToPath(new url.URL('.', import.meta.url));
+const placeHolderFile = __dirname + '/assets/tokens/0.jpg';
 
 // Various flows:
 const flows = {
@@ -434,8 +436,6 @@ async function claimGraphQuery(contractAddresses: string[], userAddress?: string
     receiver: userAddress ? userAddress.toLowerCase() : undefined,
   });
 }
-
-const placeHolderFile = new URL('./assets/tokens/0.jpg', import.meta.url).pathname;
 
 async function issueTokenFlow(
   collectionGuid: string,

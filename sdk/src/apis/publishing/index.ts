@@ -116,7 +116,6 @@ export async function getAllowlistStatus(
   tokenId: BigNumberish | null = null,
 ): Promise<AllowlistStatus> {
   // Ugh. This goes away.
-  const excludedBodyText = 'Address not whitelisted';
   const noActivePhaseBodyText = 'Phase not found';
 
   const { proofs, proofMaxQuantityPerTransaction, err }: MerkleProofResponse & { err?: any } =
@@ -130,22 +129,24 @@ export async function getAllowlistStatus(
       proofs: [],
       proofMaxQuantityPerTransaction: 0,
     }));
+
   if (err) {
     // Handle some 404s as non-error states
     if (err.status === 404) {
-      if (err.body === excludedBodyText) {
-        return { status: 'excluded', proofs: [], proofMaxQuantityPerTransaction: 0 };
-      }
       if (err.body === noActivePhaseBodyText) {
         return { status: 'no-active-phase', proofs: [], proofMaxQuantityPerTransaction: 0 };
       }
+      return { status: 'excluded', proofs: [], proofMaxQuantityPerTransaction: 0 };
     }
+
     // Throw other errors
     throw err;
   }
-  if (!proofs || !proofMaxQuantityPerTransaction || (!proofs.length && !proofMaxQuantityPerTransaction)) {
-    return { status: 'no-allowlist', proofs: [], proofMaxQuantityPerTransaction: 0 };
+
+  if (!(proofs && proofs.length) || !proofMaxQuantityPerTransaction) {
+    return { status: 'excluded', proofs: [], proofMaxQuantityPerTransaction: 0 };
   }
+
   return { status: 'included', proofs, proofMaxQuantityPerTransaction };
 }
 export * from './generated';
