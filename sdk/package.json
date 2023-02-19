@@ -1,7 +1,7 @@
 {
   "name": "@monaxlabs/aspen-sdk",
   "license": "Apache-2.0",
-  "version": "0.3.1-14-g3cb91f82",
+  "version": "0.0.0",
   "author": "Silas Davis <silas.davis@monaxlabs.io>",
   "type": "commonjs",
   "repository": {
