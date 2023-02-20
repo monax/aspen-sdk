@@ -179,7 +179,7 @@ importers:
       '@graphql-codegen/typescript': ^2.7.4
       '@graphql-codegen/typescript-operations': ^2.5.4
       '@jest/globals': ^29.3.1
-      '@monaxlabs/spec': 0.10.15-6-g9fe95797
+      '@monaxlabs/spec': ^0.10.18
       '@openzeppelin/contracts': ^4.8.1
       '@typechain/ethers-v5': ^10.2.0
       '@types/jest': ^29.2.5
@@ -236,7 +236,7 @@ importers:
       '@graphql-codegen/typescript': 2.8.7_graphql@16.6.0
       '@graphql-codegen/typescript-operations': 2.5.12_graphql@16.6.0
       '@jest/globals': 29.3.1
-      '@monaxlabs/spec': 0.10.15-6-g9fe95797
+      '@monaxlabs/spec': 0.10.18
       '@openzeppelin/contracts': 4.8.1
       '@typechain/ethers-v5': 10.2.0_k6bdrczrdxrxopgjlr5kov2hw4
       '@types/jest': 29.2.5
@@ -3582,8 +3582,8 @@ packages:
       tweetnacl-util: 0.15.1
     dev: true
 
-  /@monaxlabs/spec/0.10.15-6-g9fe95797:
-    resolution: {integrity: sha512-1HxDWqreAuHu8a69qtJWMOFnaRxCOZ3OIZrsJP3IqpXYZZNiLT1TJjqOigQ7taq2p/LldY9FY2R0wXxN0V+TXQ==}
+  /@monaxlabs/spec/0.10.18:
+    resolution: {integrity: sha512-S8/ZX8A7GUstpoMTYhGxy/4ylmVHDo/FWytnhHNrPItBynj+GTvZ1q9y+iNuAQ//Fp0IOOFqTyEQNRIBrJUFTQ==}
     dev: true
 
   /@motionone/animation/10.15.1:

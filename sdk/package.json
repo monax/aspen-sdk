@@ -4,6 +4,7 @@
   "version": "0.3.1-14-g3cb91f82",
   "author": "Silas Davis <silas.davis@monaxlabs.io>",
   "type": "commonjs",
+  "main": "dist/index.js",
   "repository": {
     "type": "git",
     "url": "git@github.com:monax/aspen-sdk.git",
@@ -95,7 +96,7 @@
     "@graphql-codegen/typescript": "^2.7.4",
     "@graphql-codegen/typescript-operations": "^2.5.4",
     "@jest/globals": "^29.3.1",
-    "@monaxlabs/spec": "0.10.15-6-g9fe95797",
+    "@monaxlabs/spec": "^0.10.18",
     "@openzeppelin/contracts": "^4.8.1",
     "@typechain/ethers-v5": "^10.2.0",
     "@types/jest": "^29.2.5",
