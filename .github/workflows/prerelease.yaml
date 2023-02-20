@@ -1,9 +1,9 @@
-name: Publish
+name: Prerelease
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - prerelease
 
 jobs:
   version:
@@ -26,4 +26,4 @@ jobs:
         with:
           version: ^7.18.0
       - run: pnpm config set //registry.npmjs.org/:_authToken ${NPM_TOKEN}
-      - run: pnpm ci:publish
+      - run: pnpm ci:publish:prerelease
