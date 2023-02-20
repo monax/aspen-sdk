@@ -17,6 +17,7 @@
     "README.md"
   ],
   "exports": {
+    ".": "./dist/index.js",
     "./dist/*": "./dist/*",
     "./apis": {
       "types": "./dist/apis/index.d.ts",
