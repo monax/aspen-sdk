@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "lib": ["ES2020", "DOM"],
+    "target": "ES2018",
+    "lib": ["ES2018", "DOM"],
     "module": "commonjs",
     "moduleResolution": "Node",
     "allowSyntheticDefaultImports": true,
