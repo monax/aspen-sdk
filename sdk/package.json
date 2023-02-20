@@ -16,30 +16,6 @@
     "LICENSE",
     "README.md"
   ],
-  "exports": {
-    ".": "./dist/index.js",
-    "./dist/*": "./dist/*",
-    "./apis": {
-      "types": "./dist/apis/index.d.ts",
-      "default": "./dist/apis/index.js"
-    },
-    "./api-utils": {
-      "types": "./dist/api-utils/index.d.ts",
-      "default": "./dist/api-utils/index.js"
-    },
-    "./contracts": {
-      "types": "./dist/contracts/index.d.ts",
-      "default": "./dist/contracts/index.js"
-    },
-    "./claimgraph": {
-      "types": "./dist/claimgraph/index.d.ts",
-      "default": "./dist/claimgraph/index.js"
-    },
-    "./utils": {
-      "types": "./dist/utils/index.d.ts",
-      "default": "./dist/utils/index.js"
-    }
-  },
   "scripts": {
     "build": "pnpm run build:generate && pnpm run build:ts",
     "build:generate": "pnpm run generate:spec && pnpm run generate:typechain && pnpm run generate:gating && pnpm run generate:publishing && pnpm run generate:graphql",
