@@ -45,7 +45,7 @@ const LoadClaimConditions: React.FC<{
           {conditions.canClaimTokens ? "YES" : `NO (${conditions.claimState})`}
         </p>
         <p>Can Mint After : {conditions.canMintAfter.toDateString()}</p>
-        <p>Wallet Allow List Status : {conditions.allowlistStatus.status}</p>
+        <p>Wallet Allow List Status : {conditions.allowlist.status}</p>
       </div>
     </>
   );

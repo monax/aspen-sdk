@@ -1,8 +1,7 @@
 import { Provider } from '@ethersproject/abstract-provider';
 import type { BigNumber, BigNumberish, Overrides, Signer } from 'ethers';
-import { AllowlistStatus } from '../../apis/publishing';
 import { PromiseOrValue } from '../generated/common';
-import { Address, ChainId } from '../index';
+import { Address, AllowlistStatus, ChainId } from '../index';
 import type { CollectionMetaImageType, CollectionMetaLinkType } from './constants';
 import { SdkError } from './errors';
 import { UserClaimConditions } from './features';
@@ -104,7 +103,7 @@ export type TokenAssetMetadata = {
 };
 
 export type ClaimConditionsState = UserClaimConditions &
-  UserClaimRestrictions & { allowlistStatus: AllowlistStatus; phaseId: string | null };
+  UserClaimRestrictions & { allowlist: AllowlistStatus; phaseId: string | null };
 
 export type CollectionUserClaimState =
   | 'ok'

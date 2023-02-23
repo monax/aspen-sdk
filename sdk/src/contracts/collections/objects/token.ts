@@ -4,6 +4,7 @@ import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
 import {
   Addressish,
   asAddress,
+  ChainId,
   ClaimConditionsState,
   CollectionUserClaimState,
   IPFS_GATEWAY_PREFIX,
@@ -15,13 +16,22 @@ import {
   ZERO_BYTES32,
 } from '../..';
 import { publishingChainFromChainId } from '../../../apis';
-import { AllowlistStatus, getAllowlistStatus } from '../../../apis/publishing';
+import { ContractService, MerkleProofResponse } from '../../../apis/publishing';
 import { resolveIpfsUrl } from '../../../utils/ipfs';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import { CollectionContractClaimCondition, UserClaimConditions } from '../features';
 import { max, min } from '../number';
 import { ContractObject } from './object';
+
+export type AllowlistStatusGetter = {
+  (
+    chain: ChainId,
+    contractAddress: Addressish,
+    walletAddress: Addressish,
+    tokenId: BigNumberish | null,
+  ): Promise<AllowlistStatus>;
+};
 
 export class Token extends ContractObject {
   public constructor(protected readonly base: CollectionContract, readonly tokenId: BigNumberish | null) {
@@ -68,12 +78,16 @@ export class Token extends ContractObject {
   }
 
   /** Requires authenticated Publishing API */
-  async getFullUserClaimConditions(userAddress: Addressish): Promise<OperationStatus<ClaimConditionsState>> {
+  async getFullUserClaimConditions(
+    userAddress: Addressish,
+    allowlistStatusGetter: AllowlistStatusGetter = getAllowlistStatusV1,
+  ): Promise<OperationStatus<ClaimConditionsState>> {
     return await this.run(async () => {
       const userConditions = await this.base.getUserClaimConditions(userAddress, this.tokenId);
       const address = await asAddress(userAddress);
 
-      let allowlistStatus: AllowlistStatus = {
+      let allowlist: AllowlistStatus = {
+        enabled: false,
         status: 'no-allowlist',
         proofs: [],
         proofMaxQuantityPerTransaction: 0,
@@ -82,24 +96,20 @@ export class Token extends ContractObject {
       // @todo - update with Publishing API v2
       if (userConditions.merkleRoot !== ZERO_BYTES32) {
         try {
-          allowlistStatus = await getAllowlistStatus(
-            this.base.address,
-            address,
-            publishingChainFromChainId(this.base.chainId),
-            this.tokenId,
-          );
+          allowlist = await allowlistStatusGetter(this.base.chainId, this.base.address, address, this.tokenId);
         } catch {
-          allowlistStatus.status = 'excluded';
+          allowlist.enabled = true;
+          allowlist.status = 'excluded';
         }
       }
 
       const userRestrictions = await getUserRestrictions(
         userConditions,
-        allowlistStatus.proofs,
-        allowlistStatus.proofMaxQuantityPerTransaction,
+        allowlist.proofs,
+        allowlist.proofMaxQuantityPerTransaction,
       );
 
-      return { ...userConditions, ...userRestrictions, allowlistStatus };
+      return { ...userConditions, ...userRestrictions, allowlist };
     });
   }
 
@@ -259,3 +269,70 @@ const resolveTokenIpfsUris = (tokenMeta: TokenMetadata): TokenMetadata => {
 
   return newMeta;
 };
+
+export type AllowlistStatus =
+  | {
+      enabled: true;
+      status: 'included';
+      proofs: string[];
+      proofMaxQuantityPerTransaction: number;
+    }
+  | {
+      enabled: true;
+      status: 'excluded';
+      proofs: [];
+      proofMaxQuantityPerTransaction: 0;
+    }
+  | {
+      enabled: false;
+      status: 'no-active-phase';
+      proofs: [];
+      proofMaxQuantityPerTransaction: 0;
+    }
+  | {
+      enabled: false;
+      status: 'no-allowlist';
+      proofs: [];
+      proofMaxQuantityPerTransaction: 0;
+    };
+
+export async function getAllowlistStatusV1(
+  chainId: ChainId,
+  contractAddress: Addressish,
+  walletAddress: Addressish,
+  tokenId: BigNumberish | null = null,
+): Promise<AllowlistStatus> {
+  const noActivePhaseBodyText = 'Phase not found';
+  const chain = publishingChainFromChainId(chainId);
+
+  const { proofs, proofMaxQuantityPerTransaction, err }: MerkleProofResponse & { err?: any } =
+    await ContractService.getMerkleProofsFromContract({
+      contractAddress: await asAddress(contractAddress),
+      walletAddress: await asAddress(walletAddress),
+      chainName: chain,
+      tokenId: tokenId ? BigNumber.from(tokenId).toNumber() : undefined,
+    }).catch((err) => ({
+      err,
+      proofs: [],
+      proofMaxQuantityPerTransaction: 0,
+    }));
+
+  if (err) {
+    // Handle some 404s as non-error states
+    if (err.status === 404) {
+      if (err.body === noActivePhaseBodyText) {
+        return { enabled: false, status: 'no-active-phase', proofs: [], proofMaxQuantityPerTransaction: 0 };
+      }
+      return { enabled: true, status: 'excluded', proofs: [], proofMaxQuantityPerTransaction: 0 };
+    }
+
+    // Throw other errors
+    throw err;
+  }
+
+  if (!(proofs && proofs.length) || !proofMaxQuantityPerTransaction) {
+    return { enabled: true, status: 'excluded', proofs: [], proofMaxQuantityPerTransaction: 0 };
+  }
+
+  return { enabled: true, status: 'included', proofs, proofMaxQuantityPerTransaction };
+}
