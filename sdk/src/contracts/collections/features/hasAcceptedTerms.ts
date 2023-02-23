@@ -2,7 +2,7 @@ import { CallOverrides } from 'ethers';
 import { Address, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const HasAcceptedTermsFunctions = {
   v1: 'getAgreementStatus(address)[bool]',
@@ -35,7 +35,7 @@ export class HasAcceptedTerms extends ContractFunction<
     super(base, HasAcceptedTermsInterfaces, HasAcceptedTermsPartitions, HasAcceptedTermsFunctions);
   }
 
-  call(...args: HasAcceptedTermsCallArgs): Promise<HasAcceptedTermsResponse> {
+  execute(...args: HasAcceptedTermsCallArgs): Promise<HasAcceptedTermsResponse> {
     return this.hasAcceptedTerms(...args);
   }
 
@@ -60,3 +60,5 @@ export class HasAcceptedTerms extends ContractFunction<
     this.notSupported();
   }
 }
+
+export const hasAcceptedTerms = asCallableClass(HasAcceptedTerms);

@@ -2,7 +2,7 @@ import { CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const IsAspenFeaturesFunctions = {
   v1: 'isICedarFeaturesV0()[bool]',
@@ -33,7 +33,7 @@ export class IsAspenFeatures extends ContractFunction<
     super(base, IsAspenFeaturesInterfaces, IsAspenFeaturesPartitions, IsAspenFeaturesFunctions);
   }
 
-  call(...args: IsAspenFeaturesCallArgs): Promise<IsAspenFeaturesResponse> {
+  execute(...args: IsAspenFeaturesCallArgs): Promise<IsAspenFeaturesResponse> {
     return this.isAspenFeatures(...args);
   }
 
@@ -55,3 +55,5 @@ export class IsAspenFeatures extends ContractFunction<
     this.notSupported();
   }
 }
+
+export const isAspenFeatures = asCallableClass(IsAspenFeatures);

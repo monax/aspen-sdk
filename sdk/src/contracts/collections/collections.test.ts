@@ -184,6 +184,8 @@ describe('Collections - static tests', () => {
       'issuance/INFTSupply.sol:INFTSupplyV0',
     ]);
 
+    expect(erc721.totalSupply.supported).toBe(true);
+
     const iface = erc721.assumeFeature('issuance/INFTSupply.sol:INFTSupplyV0').interface;
 
     const exists = iface.encodeFunctionResult(iface.functions['exists(uint256)'], [true]);
@@ -202,6 +204,8 @@ describe('Collections - static tests', () => {
       'standard/IERC1155.sol:IERC1155V1',
       'standard/IERC1155.sol:IERC1155SupplyV2',
     ]);
+
+    expect(erc1155.totalSupply.supported).toBe(true);
 
     const iface = erc1155.assumeFeature('standard/IERC1155.sol:IERC1155SupplyV2').interface;
 

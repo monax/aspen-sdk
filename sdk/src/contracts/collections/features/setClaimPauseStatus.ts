@@ -3,7 +3,7 @@ import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const SetClaimPauseStatusFunctions = {
   v1a: 'pauseClaims()[]',
@@ -38,7 +38,7 @@ export class SetClaimPauseStatus extends ContractFunction<
     super(base, SetClaimPauseStatusInterfaces, SetClaimPauseStatusPartitions, SetClaimPauseStatusFunctions);
   }
 
-  call(...args: SetClaimPauseStatusCallArgs): Promise<SetClaimPauseStatusResponse> {
+  execute(...args: SetClaimPauseStatusCallArgs): Promise<SetClaimPauseStatusResponse> {
     return this.setClaimPauseStatus(...args);
   }
 
@@ -86,3 +86,5 @@ export class SetClaimPauseStatus extends ContractFunction<
     this.notSupported();
   }
 }
+
+export const setClaimPauseStatus = asCallableClass(SetClaimPauseStatus);

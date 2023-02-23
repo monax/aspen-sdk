@@ -3,7 +3,7 @@ import { Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { CatchAllInterfaces, ContractFunction } from './features';
+import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
 
 const BurnFunctions = {
   nft: 'burn(uint256)[]',
@@ -37,7 +37,7 @@ export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnC
     super(base, BurnInterfaces, BurnPartitions, BurnFunctions);
   }
 
-  call(...args: BurnCallArgs): Promise<BurnResponse> {
+  execute(...args: BurnCallArgs): Promise<BurnResponse> {
     return this.burn(...args);
   }
 
@@ -99,3 +99,5 @@ export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnC
     }
   }
 }
+
+export const burn = asCallableClass(Burn);

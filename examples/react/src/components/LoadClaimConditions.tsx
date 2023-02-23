@@ -1,4 +1,4 @@
-import { ClaimConditionsState } from "@monaxlabs/aspen-sdk/dist/contracts";
+import { ClaimConditionsState } from "@monaxlabs/aspen-sdk";
 import { ethers } from "ethers";
 import styles from "../styles/Home.module.css";
 

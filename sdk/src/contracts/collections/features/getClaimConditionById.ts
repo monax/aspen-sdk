@@ -3,7 +3,7 @@ import { Address, CollectionContract } from '../..';
 import { parse } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { CatchAllInterfaces, ContractFunction } from './features';
+import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
 
 const GetClaimConditionByIdFunctions = {
   nftV2: 'getClaimConditionById(uint256)[(uint256,uint256,uint256,uint256,uint256,bytes32,uint256,address,bytes32)]',
@@ -53,7 +53,7 @@ export class GetClaimConditionById extends ContractFunction<
     super(base, GetClaimConditionByIdInterfaces, GetClaimConditionByIdPartitions, GetClaimConditionByIdFunctions);
   }
 
-  call(...args: GetClaimConditionByIdCallArgs): Promise<GetClaimConditionByIdResponse> {
+  execute(...args: GetClaimConditionByIdCallArgs): Promise<GetClaimConditionByIdResponse> {
     return this.getClaimConditionById(...args);
   }
 
@@ -105,3 +105,5 @@ export class GetClaimConditionById extends ContractFunction<
     }
   }
 }
+
+export const getClaimConditionById = asCallableClass(GetClaimConditionById);

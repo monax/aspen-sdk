@@ -2,7 +2,7 @@ import { CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const SupportedFeaturesFunctions = {
   v1: 'supportedFeatures()[string[]]',
@@ -31,7 +31,7 @@ export class SupportedFeatures extends ContractFunction<
     super(base, SupportedFeaturesInterfaces, SupportedFeaturesPartitions, SupportedFeaturesFunctions);
   }
 
-  call(...args: SupportedFeaturesCallArgs): Promise<SupportedFeaturesResponse> {
+  execute(...args: SupportedFeaturesCallArgs): Promise<SupportedFeaturesResponse> {
     return this.supportedFeatures(...args);
   }
 
@@ -46,3 +46,5 @@ export class SupportedFeatures extends ContractFunction<
     }
   }
 }
+
+export const supportedFeatures = asCallableClass(SupportedFeatures);

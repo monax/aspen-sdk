@@ -2,7 +2,7 @@ import { BigNumber, CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const RoyaltyInfoFunctions = {
   v1: 'royaltyInfo(uint256,uint256)[address,uint256]',
@@ -36,7 +36,7 @@ export class RoyaltyInfo extends ContractFunction<
     super(base, RoyaltyInfoInterfaces, RoyaltyInfoPartitions, RoyaltyInfoFunctions);
   }
 
-  call(...args: RoyaltyInfoCallArgs): Promise<RoyaltyInfoResponse> {
+  execute(...args: RoyaltyInfoCallArgs): Promise<RoyaltyInfoResponse> {
     return this.royaltyInfo(...args);
   }
 
@@ -51,3 +51,5 @@ export class RoyaltyInfo extends ContractFunction<
     }
   }
 }
+
+export const royaltyInfo = asCallableClass(RoyaltyInfo);

@@ -5,70 +5,69 @@ import { Address, Addressish, asAddress } from '../address';
 import { ChainId } from '../network';
 import { SdkError, SdkErrorCode } from './errors';
 import {
-  AcceptTerms,
-  AcceptTermsFor,
-  AcceptTermsForMany,
-  AcceptTermsWithSignature,
-  asCallable,
-  BalanceOf,
-  Burn,
-  Claim,
+  acceptTerms,
+  acceptTermsFor,
+  acceptTermsForMany,
+  acceptTermsWithSignature,
+  balanceOf,
+  burn,
+  claim,
   ContractFunctionId,
   ContractFunctionIds,
-  ContractUri,
+  contractUri,
   ERC1155StandardInterfaces,
   ERC721StandardInterfaces,
-  Exists,
+  exists,
   extractKnownSupportedFeatures,
   FeatureFunctionId,
   FeatureInterface,
   FeatureInterfaceId,
-  GetBaseURIIndices,
-  GetClaimConditionById,
-  GetClaimPauseStatus,
-  GetDefaultRoyaltyInfo,
-  GetLargestTokenId,
-  GetPlatformFeeInfo,
-  GetPrimarySaleRecipient,
-  GetRoyaltyInfoForToken,
-  GetSmallestTokenId,
-  GetTermsDetails,
-  GetUserClaimConditions,
-  HasAcceptedTerms,
-  HasAcceptedTermsVersion,
-  ImplementationName,
-  ImplementationVersion,
-  IsAspenFeatures,
-  Issue,
-  IssueWithTokenUri,
-  LazyMint,
-  Multicall,
-  Name,
-  Owner,
-  OwnerOf,
-  RoyaltyInfo,
-  SetClaimConditions,
-  SetClaimPauseStatus,
-  SetContractUri,
-  SetDefaultRoyaltyInfo,
-  SetMaxTotalSupply,
-  SetOperatorFiltererStatus,
-  SetOwner,
-  SetPermanentTokenUri,
-  SetPlatformFeeInfo,
-  SetPrimarySaleRecipient,
-  SetRoyaltyInfoForToken,
-  SetTermsActivation,
-  SetTermsUri,
-  SetTokenNameAndSymbol,
-  SetTokenUri,
-  SupportedFeatures,
-  SupportsInterface,
-  Symbol,
-  TokenUri,
-  TotalSupply,
-  UpdateBaseUri,
-  VerifyClaim,
+  getBaseURIIndices,
+  getClaimConditionById,
+  getClaimPauseStatus,
+  getDefaultRoyaltyInfo,
+  getLargestTokenId,
+  getPlatformFeeInfo,
+  getPrimarySaleRecipient,
+  getRoyaltyInfoForToken,
+  getSmallestTokenId,
+  getTermsDetails,
+  getUserClaimConditions,
+  hasAcceptedTerms,
+  hasAcceptedTermsVersion,
+  implementationName,
+  implementationVersion,
+  isAspenFeatures,
+  issue,
+  issueWithTokenUri,
+  lazyMint,
+  multicall,
+  name,
+  owner,
+  ownerOf,
+  royaltyInfo,
+  setClaimConditions,
+  setClaimPauseStatus,
+  setContractUri,
+  setDefaultRoyaltyInfo,
+  setMaxTotalSupply,
+  setOperatorFiltererStatus,
+  setOwner,
+  setPermanentTokenUri,
+  setPlatformFeeInfo,
+  setPrimarySaleRecipient,
+  setRoyaltyInfoForToken,
+  setTermsActivation,
+  setTermsUri,
+  setTokenNameAndSymbol,
+  setTokenUri,
+  supportedFeatures,
+  supportsInterface,
+  symbol,
+  tokenUri,
+  totalSupply,
+  updateBaseUri,
+  verifyClaim,
 } from './features';
 
 import type { CollectionInfo, DebugHandler, TokenId, TokenStandard } from './types';
@@ -95,87 +94,87 @@ export class CollectionContract {
   //////
 
   // Contract
-  readonly isAspenFeatures = asCallable(new IsAspenFeatures(this));
-  readonly supportsInterface = asCallable(new SupportsInterface(this));
-  readonly supportedFeatures = asCallable(new SupportedFeatures(this));
-  readonly implementationName = asCallable(new ImplementationName(this));
-  readonly implementationVersion = asCallable(new ImplementationVersion(this));
-  readonly owner = asCallable(new Owner(this));
-  readonly setOwner = asCallable(new SetOwner(this));
+  readonly isAspenFeatures = isAspenFeatures(this);
+  readonly supportsInterface = supportsInterface(this);
+  readonly supportedFeatures = supportedFeatures(this);
+  readonly implementationName = implementationName(this);
+  readonly implementationVersion = implementationVersion(this);
+  readonly owner = owner(this);
+  readonly setOwner = setOwner(this);
 
   // Collection
-  readonly name = asCallable(new Name(this));
-  readonly symbol = asCallable(new Symbol(this));
-  readonly contractUri = asCallable(new ContractUri(this));
-  readonly setContractUri = asCallable(new SetContractUri(this));
-  readonly setTokenNameAndSymbol = asCallable(new SetTokenNameAndSymbol(this));
+  readonly name = name(this);
+  readonly symbol = symbol(this);
+  readonly contractUri = contractUri(this);
+  readonly setContractUri = setContractUri(this);
+  readonly setTokenNameAndSymbol = setTokenNameAndSymbol(this);
 
   // Multicall
-  readonly multicall = asCallable(new Multicall(this));
+  readonly multicall = multicall(this);
 
   // Terms
-  readonly acceptTerms = asCallable(new AcceptTerms(this));
-  readonly acceptTermsFor = asCallable(new AcceptTermsFor(this));
-  readonly acceptTermsForMany = asCallable(new AcceptTermsForMany(this));
-  readonly acceptTermsWithSignature = asCallable(new AcceptTermsWithSignature(this));
-  readonly getTermsDetails = asCallable(new GetTermsDetails(this));
-  readonly hasAcceptedTerms = asCallable(new HasAcceptedTerms(this));
-  readonly hasAcceptedTermsVersion = asCallable(new HasAcceptedTermsVersion(this));
-  readonly setTermsActivation = asCallable(new SetTermsActivation(this));
-  readonly setTermsUri = asCallable(new SetTermsUri(this));
+  readonly acceptTerms = acceptTerms(this);
+  readonly acceptTermsFor = acceptTermsFor(this);
+  readonly acceptTermsForMany = acceptTermsForMany(this);
+  readonly acceptTermsWithSignature = acceptTermsWithSignature(this);
+  readonly getTermsDetails = getTermsDetails(this);
+  readonly hasAcceptedTerms = hasAcceptedTerms(this);
+  readonly hasAcceptedTermsVersion = hasAcceptedTermsVersion(this);
+  readonly setTermsActivation = setTermsActivation(this);
+  readonly setTermsUri = setTermsUri(this);
 
   // Token
-  readonly exists = asCallable(new Exists(this));
-  readonly ownerOf = asCallable(new OwnerOf(this));
-  readonly balanceOf = asCallable(new BalanceOf(this));
-  readonly tokenUri = asCallable(new TokenUri(this));
-  readonly setTokenUri = asCallable(new SetTokenUri(this));
-  readonly setPermanentTokenUri = asCallable(new SetPermanentTokenUri(this));
-  readonly getBaseURIIndices = asCallable(new GetBaseURIIndices(this));
-  readonly updateBaseUri = asCallable(new UpdateBaseUri(this));
+  readonly exists = exists(this);
+  readonly ownerOf = ownerOf(this);
+  readonly balanceOf = balanceOf(this);
+  readonly tokenUri = tokenUri(this);
+  readonly setTokenUri = setTokenUri(this);
+  readonly setPermanentTokenUri = setPermanentTokenUri(this);
+  readonly getBaseURIIndices = getBaseURIIndices(this);
+  readonly updateBaseUri = updateBaseUri(this);
 
   // Supply
-  readonly totalSupply = asCallable(new TotalSupply(this));
-  readonly setMaxTotalSupply = asCallable(new SetMaxTotalSupply(this));
-  readonly getSmallestTokenId = asCallable(new GetSmallestTokenId(this));
-  readonly getLargestTokenId = asCallable(new GetLargestTokenId(this));
+  readonly totalSupply = totalSupply(this);
+  readonly setMaxTotalSupply = setMaxTotalSupply(this);
+  readonly getSmallestTokenId = getSmallestTokenId(this);
+  readonly getLargestTokenId = getLargestTokenId(this);
 
   // Mint
-  readonly lazyMint = asCallable(new LazyMint(this));
+  readonly lazyMint = lazyMint(this);
 
   // Claim
-  readonly claim = asCallable(new Claim(this));
-  readonly verifyClaim = asCallable(new VerifyClaim(this));
-  readonly getClaimConditionById = asCallable(new GetClaimConditionById(this));
-  readonly getUserClaimConditions = asCallable(new GetUserClaimConditions(this));
-  readonly setClaimConditions = asCallable(new SetClaimConditions(this));
-  readonly getClaimPauseStatus = asCallable(new GetClaimPauseStatus(this));
-  readonly setClaimPauseStatus = asCallable(new SetClaimPauseStatus(this));
+  readonly claim = claim(this);
+  readonly verifyClaim = verifyClaim(this);
+  readonly getClaimConditionById = getClaimConditionById(this);
+  readonly getUserClaimConditions = getUserClaimConditions(this);
+  readonly setClaimConditions = setClaimConditions(this);
+  readonly getClaimPauseStatus = getClaimPauseStatus(this);
+  readonly setClaimPauseStatus = setClaimPauseStatus(this);
 
   // Burn
-  readonly burn = asCallable(new Burn(this));
+  readonly burn = burn(this);
 
   // Issue
-  readonly issue = asCallable(new Issue(this));
-  readonly issueWithTokenUri = asCallable(new IssueWithTokenUri(this));
+  readonly issue = issue(this);
+  readonly issueWithTokenUri = issueWithTokenUri(this);
 
   // Royalties
-  readonly royaltyInfo = asCallable(new RoyaltyInfo(this));
-  readonly getDefaultRoyaltyInfo = asCallable(new GetDefaultRoyaltyInfo(this));
-  readonly setDefaultRoyaltyInfo = asCallable(new SetDefaultRoyaltyInfo(this));
-  readonly getRoyaltyInfoForToken = asCallable(new GetRoyaltyInfoForToken(this));
-  readonly setRoyaltyInfoForToken = asCallable(new SetRoyaltyInfoForToken(this));
+  readonly royaltyInfo = royaltyInfo(this);
+  readonly getDefaultRoyaltyInfo = getDefaultRoyaltyInfo(this);
+  readonly setDefaultRoyaltyInfo = setDefaultRoyaltyInfo(this);
+  readonly getRoyaltyInfoForToken = getRoyaltyInfoForToken(this);
+  readonly setRoyaltyInfoForToken = setRoyaltyInfoForToken(this);
 
   // Platform fee
-  readonly getPlatformFeeInfo = asCallable(new GetPlatformFeeInfo(this));
-  readonly setPlatformFeeInfo = asCallable(new SetPlatformFeeInfo(this));
+  readonly getPlatformFeeInfo = getPlatformFeeInfo(this);
+  readonly setPlatformFeeInfo = setPlatformFeeInfo(this);
 
   // Royalties
-  readonly getPrimarySaleRecipient = asCallable(new GetPrimarySaleRecipient(this));
-  readonly setPrimarySaleRecipient = asCallable(new SetPrimarySaleRecipient(this));
+  readonly getPrimarySaleRecipient = getPrimarySaleRecipient(this);
+  readonly setPrimarySaleRecipient = setPrimarySaleRecipient(this);
 
   // Operator filterer
-  readonly setOperatorFiltererStatus = asCallable(new SetOperatorFiltererStatus(this));
+  readonly setOperatorFiltererStatus = setOperatorFiltererStatus(this);
 
   static setDebugHandler(handler: DebugHandler | undefined) {
     CollectionContract._debugHandler = handler;

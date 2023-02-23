@@ -3,7 +3,7 @@ import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const MulticallFunctions = {
   v1: 'multicall(bytes[])[bytes[]]',
@@ -32,7 +32,7 @@ export class Multicall extends ContractFunction<
     super(base, MulticallInterfaces, MulticallPartitions, MulticallFunctions);
   }
 
-  call(...args: MulticallCallArgs): Promise<MulticallResponse> {
+  execute(...args: MulticallCallArgs): Promise<MulticallResponse> {
     return this.multicall(...args);
   }
 
@@ -58,3 +58,5 @@ export class Multicall extends ContractFunction<
     }
   }
 }
+
+export const multicall = asCallableClass(Multicall);

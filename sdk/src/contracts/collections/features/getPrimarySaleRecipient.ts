@@ -3,7 +3,7 @@ import { Address, CollectionContract } from '../..';
 import { parse } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const GetPrimarySaleRecipientFunctions = {
   v1: 'primarySaleRecipient()[address]',
@@ -32,7 +32,7 @@ export class GetPrimarySaleRecipient extends ContractFunction<
     super(base, GetPrimarySaleRecipientInterfaces, GetPrimarySaleRecipientPartitions, GetPrimarySaleRecipientFunctions);
   }
 
-  call(...args: GetPrimarySaleRecipientCallArgs): Promise<GetPrimarySaleRecipientResponse> {
+  execute(...args: GetPrimarySaleRecipientCallArgs): Promise<GetPrimarySaleRecipientResponse> {
     return this.getPrimarySaleRecipient(...args);
   }
 
@@ -47,3 +47,5 @@ export class GetPrimarySaleRecipient extends ContractFunction<
     }
   }
 }
+
+export const getPrimarySaleRecipient = asCallableClass(GetPrimarySaleRecipient);

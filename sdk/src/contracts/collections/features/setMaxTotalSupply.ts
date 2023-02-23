@@ -3,7 +3,7 @@ import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const SetMaxTotalSupplyFunctions = {
   nft: 'setMaxTotalSupply(uint256)[]',
@@ -40,7 +40,7 @@ export class SetMaxTotalSupply extends ContractFunction<
   }
 
   /** Set max total supply [ERC721: of all tokens] [ERC1155: per token] */
-  call(...args: SetMaxTotalSupplyCallArgs): Promise<SetMaxTotalSupplyResponse> {
+  execute(...args: SetMaxTotalSupplyCallArgs): Promise<SetMaxTotalSupplyResponse> {
     return this.setMaxTotalSupply(...args);
   }
 
@@ -94,3 +94,5 @@ export class SetMaxTotalSupply extends ContractFunction<
     this.notSupported();
   }
 }
+
+export const setMaxTotalSupply = asCallableClass(SetMaxTotalSupply);

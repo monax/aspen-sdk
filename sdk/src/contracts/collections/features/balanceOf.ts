@@ -2,7 +2,7 @@ import { BigNumber, BigNumberish, CallOverrides } from 'ethers';
 import { Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { CatchAllInterfaces, ContractFunction } from './features';
+import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
 
 const BalanceOfFunctions = {
   nft: 'balanceOf(address)[uint256]',
@@ -36,7 +36,7 @@ export class BalanceOf extends ContractFunction<
   }
 
   /** Get the token supply owned by a wallet [ERC721: across the collection] [ERC1155: for specific token] */
-  call(...args: BalanceOfCallArgs): Promise<BalanceOfResponse> {
+  execute(...args: BalanceOfCallArgs): Promise<BalanceOfResponse> {
     return this.balanceOf(...args);
   }
 
@@ -66,3 +66,5 @@ export class BalanceOf extends ContractFunction<
     }
   }
 }
+
+export const balanceOf = asCallableClass(BalanceOf);

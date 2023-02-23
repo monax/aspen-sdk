@@ -2,7 +2,7 @@ import { CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const ContractUriFunctions = {
   v1: 'contractURI()[string]',
@@ -31,7 +31,7 @@ export class ContractUri extends ContractFunction<
     super(base, ContractUriInterfaces, ContractUriPartitions, ContractUriFunctions);
   }
 
-  call(...args: ContractUriCallArgs): Promise<ContractUriResponse> {
+  execute(...args: ContractUriCallArgs): Promise<ContractUriResponse> {
     return this.contractUri(...args);
   }
 
@@ -46,3 +46,5 @@ export class ContractUri extends ContractFunction<
     }
   }
 }
+
+export const contractUri = asCallableClass(ContractUri);

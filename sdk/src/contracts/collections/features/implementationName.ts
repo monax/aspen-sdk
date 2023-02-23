@@ -2,7 +2,7 @@ import { CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const ImplementationNameFunctions = {
   v1: 'implementationInterfaceName()[string]',
@@ -33,7 +33,7 @@ export class ImplementationName extends ContractFunction<
     super(base, ImplementationNameInterfaces, ImplementationNamePartitions, ImplementationNameFunctions);
   }
 
-  call(...args: ImplementationNameCallArgs): Promise<ImplementationNameResponse> {
+  execute(...args: ImplementationNameCallArgs): Promise<ImplementationNameResponse> {
     return this.implementationName(...args);
   }
 
@@ -55,3 +55,5 @@ export class ImplementationName extends ContractFunction<
     this.notSupported();
   }
 }
+
+export const implementationName = asCallableClass(ImplementationName);

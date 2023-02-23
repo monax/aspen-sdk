@@ -3,7 +3,7 @@ import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const SetOperatorFiltererStatusFunctions = {
   v1: 'setOperatorFiltererStatus(bool)[]',
@@ -37,7 +37,7 @@ export class SetOperatorFiltererStatus extends ContractFunction<
     );
   }
 
-  call(...args: SetOperatorFiltererStatusCallArgs): Promise<SetOperatorFiltererStatusResponse> {
+  execute(...args: SetOperatorFiltererStatusCallArgs): Promise<SetOperatorFiltererStatusResponse> {
     return this.setOperatorFiltererStatus(...args);
   }
 
@@ -67,3 +67,5 @@ export class SetOperatorFiltererStatus extends ContractFunction<
     }
   }
 }
+
+export const setOperatorFiltererStatus = asCallableClass(SetOperatorFiltererStatus);

@@ -1,11 +1,7 @@
 import { buffer } from "micro";
 import Cors from "micro-cors";
 import { NextApiRequest, NextApiResponse } from "next";
-import {
-  authenticate,
-  issueToken,
-  PublishingAPI,
-} from "@monaxlabs/aspen-sdk/dist/apis";
+import { authenticate, issueToken, PublishingAPI } from "@monaxlabs/aspen-sdk";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -75,11 +71,11 @@ const webhookHandler = async (req: NextApiRequest, res: NextApiResponse) => {
             name: PUBLISHING_API_USERNAME,
             password: PUBLISHING_API_PASSWORD,
           });
-          const {tokenId: tokenIdIssued} = await issueToken(collectionGuid, {
+          const { tokenId: tokenIdIssued } = await issueToken(collectionGuid, {
             to: wallet,
             tokenId: tokenId ? Number.parseInt(tokenId) : undefined,
           });
-          console.log(`Issued token ${tokenIdIssued}`)
+          console.log(`Issued token ${tokenIdIssued}`);
         } catch (err) {
           console.log(`Error issuing token: ${err}`);
           return res.status(500).send(`Issuance error: ${err}`);

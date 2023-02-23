@@ -6,7 +6,7 @@ import { SdkError, SdkErrorCode } from '../errors';
 import { bnRange, One } from '../number';
 import type { Signerish, TokenId, TokenStandard, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const IssueFunctions = {
   nft: 'issue(address,uint256)[]',
@@ -49,7 +49,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     super(base, IssueInterfaces, IssuePartitions, IssueFunctions);
   }
 
-  call(...args: IssueCallArgs): Promise<IssueResponse> {
+  execute(...args: IssueCallArgs): Promise<IssueResponse> {
     return this.issue(...args);
   }
 
@@ -222,3 +222,5 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     return issueTokens;
   }
 }
+
+export const issue = asCallableClass(Issue);

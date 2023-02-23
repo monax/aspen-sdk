@@ -3,7 +3,7 @@ import { CollectionContract, IPFS_GATEWAY_PREFIX } from '../..';
 import { resolveIpfsUrl } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const GetTermsDetailsFunctions = {
   v1a: 'termsActivated()[bool]',
@@ -44,7 +44,7 @@ export class GetTermsDetails extends ContractFunction<
     super(base, GetTermsDetailsInterfaces, GetTermsDetailsPartitions, GetTermsDetailsFunctions);
   }
 
-  call(...args: GetTermsDetailsCallArgs): Promise<GetTermsDetailsResponse> {
+  execute(...args: GetTermsDetailsCallArgs): Promise<GetTermsDetailsResponse> {
     return this.getTermsDetails(...args);
   }
 
@@ -71,3 +71,5 @@ export class GetTermsDetails extends ContractFunction<
     this.notSupported();
   }
 }
+
+export const getTermsDetails = asCallableClass(GetTermsDetails);

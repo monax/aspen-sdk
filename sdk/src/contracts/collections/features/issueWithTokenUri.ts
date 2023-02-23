@@ -4,7 +4,7 @@ import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 import { IssuedToken } from './issue';
 
 const IssueWithTokenUriFunctions = {
@@ -39,7 +39,7 @@ export class IssueWithTokenUri extends ContractFunction<
     super(base, IssueWithTokenUriInterfaces, IssueWithTokenUriPartitions, IssueWithTokenUriFunctions);
   }
 
-  call(...args: IssueWithTokenUriCallArgs): Promise<IssueWithTokenUriResponse> {
+  execute(...args: IssueWithTokenUriCallArgs): Promise<IssueWithTokenUriResponse> {
     return this.issueWithTokenUri(...args);
   }
 
@@ -85,3 +85,5 @@ export class IssueWithTokenUri extends ContractFunction<
     return this.base.issue.parseReceiptLogs(receipt);
   }
 }
+
+export const issueWithTokenUri = asCallableClass(IssueWithTokenUri);

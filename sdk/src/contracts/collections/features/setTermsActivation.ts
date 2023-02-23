@@ -3,7 +3,7 @@ import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const SetTermsActivationFunctions = {
   v1: 'setTermsStatus(bool)[]',
@@ -34,7 +34,7 @@ export class SetTermsActivation extends ContractFunction<
     super(base, SetTermsActivationInterfaces, SetTermsActivationPartitions, SetTermsActivationFunctions);
   }
 
-  call(...args: SetTermsActivationCallArgs): Promise<SetTermsActivationResponse> {
+  execute(...args: SetTermsActivationCallArgs): Promise<SetTermsActivationResponse> {
     return this.setTermsActivation(...args);
   }
 
@@ -78,3 +78,5 @@ export class SetTermsActivation extends ContractFunction<
     this.notSupported();
   }
 }
+
+export const setTermsActivation = asCallableClass(SetTermsActivation);

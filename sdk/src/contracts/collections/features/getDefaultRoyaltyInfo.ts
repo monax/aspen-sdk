@@ -3,7 +3,7 @@ import { Address, CollectionContract } from '../..';
 import { parse } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const GetDefaultRoyaltyInfoFunctions = {
   v1: 'getDefaultRoyaltyInfo()[address,uint16]',
@@ -37,7 +37,7 @@ export class GetDefaultRoyaltyInfo extends ContractFunction<
     super(base, GetDefaultRoyaltyInfoInterfaces, GetDefaultRoyaltyInfoPartitions, GetDefaultRoyaltyInfoFunctions);
   }
 
-  call(...args: GetDefaultRoyaltyInfoCallArgs): Promise<GetDefaultRoyaltyInfoResponse> {
+  execute(...args: GetDefaultRoyaltyInfoCallArgs): Promise<GetDefaultRoyaltyInfoResponse> {
     return this.getDefaultRoyaltyInfo(...args);
   }
 
@@ -52,3 +52,5 @@ export class GetDefaultRoyaltyInfo extends ContractFunction<
     }
   }
 }
+
+export const getDefaultRoyaltyInfo = asCallableClass(GetDefaultRoyaltyInfo);

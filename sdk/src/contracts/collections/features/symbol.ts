@@ -2,7 +2,7 @@ import { CallOverrides, ethers } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { CatchAllInterfaces, ContractFunction } from './features';
+import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
 
 const SymbolFunctions = {
   v1: 'symbol()[string]',
@@ -28,7 +28,7 @@ export class Symbol extends ContractFunction<SymbolInterfaces, SymbolPartitions,
     super(base, SymbolInterfaces, SymbolPartitions, SymbolFunctions);
   }
 
-  call(...args: SymbolCallArgs): Promise<SymbolResponse> {
+  execute(...args: SymbolCallArgs): Promise<SymbolResponse> {
     return this.symbol(...args);
   }
 
@@ -43,3 +43,5 @@ export class Symbol extends ContractFunction<SymbolInterfaces, SymbolPartitions,
     }
   }
 }
+
+export const symbol = asCallableClass(Symbol);

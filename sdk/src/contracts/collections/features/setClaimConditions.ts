@@ -3,7 +3,7 @@ import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 import { CollectionContractClaimCondition } from './getClaimConditionById';
 
 const SetClaimConditionsFunctions = {
@@ -41,7 +41,7 @@ export class SetClaimConditions extends ContractFunction<
     super(base, SetClaimConditionsInterfaces, SetClaimConditionsPartitions, SetClaimConditionsFunctions);
   }
 
-  call(...args: SetClaimConditionsCallArgs): Promise<SetClaimConditionsResponse> {
+  execute(...args: SetClaimConditionsCallArgs): Promise<SetClaimConditionsResponse> {
     return this.setClaimConditions(...args);
   }
 
@@ -115,3 +115,5 @@ export class SetClaimConditions extends ContractFunction<
     this.notSupported();
   }
 }
+
+export const setClaimConditions = asCallableClass(SetClaimConditions);

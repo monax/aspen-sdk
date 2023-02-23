@@ -170,7 +170,7 @@ export type CallableContractFunction<
   C extends Record<string, T[]>,
   A extends unknown[],
   R,
-> = ContractFunction<T, C, A, R>['call'] & ContractFunction<T, C, A, R>;
+> = ContractFunction<T, C, A, R>['execute'] & ContractFunction<T, C, A, R>;
 
 export interface CallContractFunction<A extends unknown[], R> {
   (...args: A): R;
@@ -225,7 +225,7 @@ export abstract class ContractFunction<
     throw new SdkError(SdkErrorCode.FUNCTION_NOT_SUPPORTED, { function: this.functionName });
   }
 
-  abstract call(...args: A): Promise<R>;
+  abstract execute(...args: A): Promise<R>;
 }
 
 export function extractKnownSupportedFeatures(supportedFeaturesFromContract: string[]): FeatureInterfaceId[] {
@@ -399,6 +399,26 @@ function extendWithPrototype<TObj, TProto extends Object>(
   return Object.assign(Object.create(proto), obj, { __extendedWithPrototype: true });
 }
 
-export function asCallable<T extends { call: CallableFunction }>(obj: T): T['call'] & T {
-  return Object.assign(obj.call.bind(obj), obj);
-}
+type ExecutableFunction = { execute: CallableFunction };
+type FunctionClass<T> = new (base: CollectionContract) => T;
+
+export const asCallableClass = <O extends ExecutableFunction>(
+  classDefinition: FunctionClass<O>,
+): FunctionClass<O> & ((base: CollectionContract) => O['execute'] & O) => {
+  return new Proxy(classDefinition, {
+    apply: (target: FunctionClass<O>, _thisArg, argumentsList: [CollectionContract]) => {
+      return asExecutable(new target(...argumentsList));
+    },
+  }) as FunctionClass<O> & ((base: CollectionContract) => O['execute'] & O);
+};
+
+export const asExecutable = <T extends { execute: CallableFunction }>(obj: T): T['execute'] & T => {
+  return new Proxy(obj.execute.bind(obj), {
+    apply: (target, _thisArg, argumentsList) => {
+      return target(...argumentsList);
+    },
+    get: (target, prop, receiver) => {
+      return Reflect.get(obj, prop, obj);
+    },
+  }) as T['execute'] & T;
+};

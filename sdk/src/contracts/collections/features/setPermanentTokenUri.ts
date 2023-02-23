@@ -3,7 +3,7 @@ import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const SetPermanentTokenUriFunctions = {
   v1: 'setPermantentTokenURI(uint256,string)[]',
@@ -37,7 +37,7 @@ export class SetPermanentTokenUri extends ContractFunction<
     super(base, SetPermanentTokenUriInterfaces, SetPermanentTokenUriPartitions, SetPermanentTokenUriFunctions);
   }
 
-  call(...args: SetPermanentTokenUriCallArgs): Promise<SetPermanentTokenUriResponse> {
+  execute(...args: SetPermanentTokenUriCallArgs): Promise<SetPermanentTokenUriResponse> {
     return this.setPermanentTokenUri(...args);
   }
 
@@ -73,3 +73,5 @@ export class SetPermanentTokenUri extends ContractFunction<
     }
   }
 }
+
+export const setPermanentTokenUri = asCallableClass(SetPermanentTokenUri);

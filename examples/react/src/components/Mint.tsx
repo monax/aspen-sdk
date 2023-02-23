@@ -5,8 +5,8 @@ import {
   ClaimConditionsState,
   CollectionContract,
   PendingClaim,
-} from "@monaxlabs/aspen-sdk/dist/contracts";
-import { parse } from "@monaxlabs/aspen-sdk/dist/utils";
+  parse,
+} from "@monaxlabs/aspen-sdk";
 import { useWeb3React } from "@web3-react/core";
 import { useEffect, useMemo, useState } from "react";
 import { Options as ToastOptions, useToasts } from "react-toast-notifications";
