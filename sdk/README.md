@@ -216,8 +216,8 @@ async function main(): Promise<void> {
         // The price of the token
         pricePerToken: conditions.pricePerToken,
         // allowlist proofs
-        proofs: conditions.allowlistStatus.proofs,
-        proofMaxQuantityPerTransaction: conditions.allowlistStatus.proofMaxQuantityPerTransaction,
+        proofs: conditions.allowlist.proofs,
+        proofMaxQuantityPerTransaction: conditions.allowlist.proofMaxQuantityPerTransaction,
       },
     );
   }
@@ -357,8 +357,8 @@ async function main(contract: CollectionContract): Promise<void> {
       currency: conditions.currency,
       pricePerToken: conditions.pricePerToken,
       // allowlist proofs
-      proofs: conditions.allowlistStatus.proofs,
-      proofMaxQuantityPerTransaction: conditions.allowlistStatus.proofMaxQuantityPerTransaction,
+      proofs: conditions.allowlist.proofs,
+      proofMaxQuantityPerTransaction: conditions.allowlist.proofMaxQuantityPerTransaction,
     }
   );
 }

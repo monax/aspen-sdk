@@ -35,8 +35,8 @@ export class PendingClaim extends ContractObject {
       tokenId: this.tokenId,
       currency: c.currency,
       pricePerToken: c.pricePerToken,
-      proofs: c.allowlistStatus.proofs,
-      proofMaxQuantityPerTransaction: c.allowlistStatus.proofMaxQuantityPerTransaction,
+      proofs: c.allowlist.proofs,
+      proofMaxQuantityPerTransaction: c.allowlist.proofMaxQuantityPerTransaction,
     };
   }
 
