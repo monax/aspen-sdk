@@ -3,7 +3,7 @@ import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const UpdateBaseUriFunctions = {
   v1: 'updateBaseURI(uint256,string)[]',
@@ -37,7 +37,7 @@ export class UpdateBaseUri extends ContractFunction<
     super(base, UpdateBaseUriInterfaces, UpdateBaseUriPartitions, UpdateBaseUriFunctions);
   }
 
-  call(...args: UpdateBaseUriCallArgs): Promise<UpdateBaseUriResponse> {
+  execute(...args: UpdateBaseUriCallArgs): Promise<UpdateBaseUriResponse> {
     return this.updateBaseUri(...args);
   }
 
@@ -73,3 +73,5 @@ export class UpdateBaseUri extends ContractFunction<
     }
   }
 }
+
+export const updateBaseUri = asCallableClass(UpdateBaseUri);

@@ -2,7 +2,7 @@ import { BigNumberish, CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { CatchAllInterfaces, ContractFunction } from './features';
+import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
 
 const ExistsFunctions = {
   v1: 'exists(uint256)[bool]',
@@ -29,7 +29,7 @@ export class Exists extends ContractFunction<ExistsInterfaces, ExistsPartitions,
   }
 
   /** Check if a token exists */
-  call(...args: ExistsCallArgs): Promise<ExistsResponse> {
+  execute(...args: ExistsCallArgs): Promise<ExistsResponse> {
     return this.exists(...args);
   }
 
@@ -45,3 +45,5 @@ export class Exists extends ContractFunction<ExistsInterfaces, ExistsPartitions,
     }
   }
 }
+
+export const exists = asCallableClass(Exists);

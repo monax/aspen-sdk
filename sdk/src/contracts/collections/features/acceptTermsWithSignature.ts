@@ -3,7 +3,7 @@ import { Address, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const AcceptTermsWithSignatureFunctions = {
   v1: 'acceptTerms(address,bytes)[]',
@@ -44,7 +44,7 @@ export class AcceptTermsWithSignature extends ContractFunction<
     );
   }
 
-  call(...args: AcceptTermsWithSignatureCallArgs): Promise<AcceptTermsWithSignatureResponse> {
+  execute(...args: AcceptTermsWithSignatureCallArgs): Promise<AcceptTermsWithSignatureResponse> {
     return this.acceptTermsWithSignature(...args);
   }
 
@@ -94,3 +94,5 @@ export class AcceptTermsWithSignature extends ContractFunction<
     this.notSupported();
   }
 }
+
+export const acceptTermsWithSignature = asCallableClass(AcceptTermsWithSignature);

@@ -3,7 +3,7 @@ import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { Zero } from '../number';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const ImplementationVersionFunctions = {
   v1: 'minorVersion()[uint256,uint256]',
@@ -40,7 +40,7 @@ export class ImplementationVersion extends ContractFunction<
     super(base, ImplementationVersionInterfaces, ImplementationVersionPartitions, ImplementationVersionFunctions);
   }
 
-  call(...args: ImplementationVersionCallArgs): Promise<ImplementationVersionResponse> {
+  execute(...args: ImplementationVersionCallArgs): Promise<ImplementationVersionResponse> {
     return this.implementationVersion(...args);
   }
 
@@ -62,3 +62,5 @@ export class ImplementationVersion extends ContractFunction<
     this.notSupported();
   }
 }
+
+export const implementationVersion = asCallableClass(ImplementationVersion);

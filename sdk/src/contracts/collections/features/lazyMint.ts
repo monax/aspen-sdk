@@ -3,7 +3,7 @@ import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const LazyMintFunctions = {
   v1: 'lazyMint(uint256,string,bytes)[]',
@@ -40,7 +40,7 @@ export class LazyMint extends ContractFunction<
     super(base, LazyMintInterfaces, LazyMintPartitions, LazyMintFunctions);
   }
 
-  call(...args: LazyMintCallArgs): Promise<LazyMintResponse> {
+  execute(...args: LazyMintCallArgs): Promise<LazyMintResponse> {
     return this.lazyMint(...args);
   }
 
@@ -95,3 +95,5 @@ export class LazyMint extends ContractFunction<
     this.notSupported();
   }
 }
+
+export const lazyMint = asCallableClass(LazyMint);

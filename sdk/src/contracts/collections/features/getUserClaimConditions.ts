@@ -3,7 +3,7 @@ import { Address, Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { Zero } from '../number';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 import { CollectionContractClaimCondition } from './getClaimConditionById';
 
 // Reasonably large number to compare with
@@ -99,7 +99,7 @@ export class GetUserClaimConditions extends ContractFunction<
     super(base, GetUserClaimConditionsInterfaces, GetUserClaimConditionsPartitions, GetUserClaimConditionsFunctions);
   }
 
-  call(...args: GetUserClaimConditionsCallArgs): Promise<GetUserClaimConditionsResponse> {
+  execute(...args: GetUserClaimConditionsCallArgs): Promise<GetUserClaimConditionsResponse> {
     return this.getUserClaimConditions(...args);
   }
 
@@ -524,3 +524,5 @@ export class GetUserClaimConditions extends ContractFunction<
     this.notSupported();
   }
 }
+
+export const getUserClaimConditions = asCallableClass(GetUserClaimConditions);

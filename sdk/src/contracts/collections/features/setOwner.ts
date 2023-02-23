@@ -3,7 +3,7 @@ import { Address, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const SetOwnerFunctions = {
   v1: 'setOwner(address)[]',
@@ -32,7 +32,7 @@ export class SetOwner extends ContractFunction<
     super(base, SetOwnerInterfaces, SetOwnerPartitions, SetOwnerFunctions);
   }
 
-  call(...args: SetOwnerCallArgs): Promise<SetOwnerResponse> {
+  execute(...args: SetOwnerCallArgs): Promise<SetOwnerResponse> {
     return this.setOwner(...args);
   }
 
@@ -62,3 +62,5 @@ export class SetOwner extends ContractFunction<
     }
   }
 }
+
+export const setOwner = asCallableClass(SetOwner);

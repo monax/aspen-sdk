@@ -3,7 +3,7 @@ import { Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const SetPrimarySaleRecipientFunctions = {
   v1: 'setPrimarySaleRecipient(address)[]',
@@ -32,7 +32,7 @@ export class SetPrimarySaleRecipient extends ContractFunction<
     super(base, SetPrimarySaleRecipientInterfaces, SetPrimarySaleRecipientPartitions, SetPrimarySaleRecipientFunctions);
   }
 
-  call(...args: SetPrimarySaleRecipientCallArgs): Promise<SetPrimarySaleRecipientResponse> {
+  execute(...args: SetPrimarySaleRecipientCallArgs): Promise<SetPrimarySaleRecipientResponse> {
     return this.setPrimarySaleRecipient(...args);
   }
 
@@ -64,3 +64,5 @@ export class SetPrimarySaleRecipient extends ContractFunction<
     }
   }
 }
+
+export const setPrimarySaleRecipient = asCallableClass(SetPrimarySaleRecipient);

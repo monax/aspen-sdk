@@ -3,7 +3,7 @@ import { Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const SetPlatformFeeInfoFunctions = {
   v1: 'setPlatformFeeInfo(address,uint256)[]',
@@ -37,7 +37,7 @@ export class SetPlatformFeeInfo extends ContractFunction<
     super(base, SetPlatformFeeInfoInterfaces, SetPlatformFeeInfoPartitions, SetPlatformFeeInfoFunctions);
   }
 
-  call(...args: SetPlatformFeeInfoCallArgs): Promise<SetPlatformFeeInfoResponse> {
+  execute(...args: SetPlatformFeeInfoCallArgs): Promise<SetPlatformFeeInfoResponse> {
     return this.setPlatformFeeInfo(...args);
   }
 
@@ -75,3 +75,5 @@ export class SetPlatformFeeInfo extends ContractFunction<
     }
   }
 }
+
+export const setPlatformFeeInfo = asCallableClass(SetPlatformFeeInfo);

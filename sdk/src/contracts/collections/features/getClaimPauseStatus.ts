@@ -3,7 +3,7 @@ import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const GetClaimPauseStatusPartitions = {
   // 'claimIsPaused' has always been present but not actually exposed by the old interfaces
@@ -32,7 +32,7 @@ export class GetClaimPauseStatus extends ContractFunction<
     super(base, GetClaimPauseStatusInterfaces, GetClaimPauseStatusPartitions, {});
   }
 
-  call(...args: GetClaimPauseStatusCallArgs): Promise<GetClaimPauseStatusResponse> {
+  execute(...args: GetClaimPauseStatusCallArgs): Promise<GetClaimPauseStatusResponse> {
     return this.getClaimPauseStatus(...args);
   }
 
@@ -51,3 +51,5 @@ export class GetClaimPauseStatus extends ContractFunction<
     }
   }
 }
+
+export const getClaimPauseStatus = asCallableClass(GetClaimPauseStatus);

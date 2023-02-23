@@ -2,7 +2,7 @@ import { CallOverrides, ethers } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { CatchAllInterfaces, ContractFunction } from './features';
+import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
 
 const NameFunctions = {
   v1: 'name()[string]',
@@ -28,7 +28,7 @@ export class Name extends ContractFunction<NameInterfaces, NamePartitions, NameC
     super(base, NameInterfaces, NamePartitions, NameFunctions);
   }
 
-  call(...args: NameCallArgs): Promise<NameResponse> {
+  execute(...args: NameCallArgs): Promise<NameResponse> {
     return this.name(...args);
   }
 
@@ -43,3 +43,5 @@ export class Name extends ContractFunction<NameInterfaces, NamePartitions, NameC
     }
   }
 }
+
+export const name = asCallableClass(Name);

@@ -2,7 +2,7 @@ import { BytesLike, CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const SupportsInterfaceFunctions = {
   v1: 'supportsInterface(bytes4)[bool]',
@@ -31,7 +31,7 @@ export class SupportsInterface extends ContractFunction<
     super(base, SupportsInterfaceInterfaces, SupportsInterfacePartitions, SupportsInterfaceFunctions);
   }
 
-  call(...args: SupportsInterfaceCallArgs): Promise<SupportsInterfaceResponse> {
+  execute(...args: SupportsInterfaceCallArgs): Promise<SupportsInterfaceResponse> {
     return this.supportsInterface(...args);
   }
 
@@ -46,3 +46,5 @@ export class SupportsInterface extends ContractFunction<
     }
   }
 }
+
+export const supportsInterface = asCallableClass(SupportsInterface);

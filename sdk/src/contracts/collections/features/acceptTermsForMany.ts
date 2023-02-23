@@ -3,7 +3,7 @@ import { Address, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const AcceptTermsForManyFunctions = {
   v1: 'batchAcceptTerms(address[])[]',
@@ -32,7 +32,7 @@ export class AcceptTermsForMany extends ContractFunction<
     super(base, AcceptTermsForManyInterfaces, AcceptTermsForManyPartitions, AcceptTermsForManyFunctions);
   }
 
-  call(...args: AcceptTermsForManyCallArgs): Promise<AcceptTermsForManyResponse> {
+  execute(...args: AcceptTermsForManyCallArgs): Promise<AcceptTermsForManyResponse> {
     return this.acceptTermsForMany(...args);
   }
 
@@ -62,3 +62,5 @@ export class AcceptTermsForMany extends ContractFunction<
     }
   }
 }
+
+export const acceptTermsForMany = asCallableClass(AcceptTermsForMany);

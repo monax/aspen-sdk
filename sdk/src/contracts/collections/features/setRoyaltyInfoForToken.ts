@@ -3,7 +3,7 @@ import { Address, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const SetRoyaltyInfoForTokenFunctions = {
   v1: 'setRoyaltyInfoForToken(uint256,address,uint256)[]',
@@ -38,7 +38,7 @@ export class SetRoyaltyInfoForToken extends ContractFunction<
     super(base, SetRoyaltyInfoForTokenInterfaces, SetRoyaltyInfoForTokenPartitions, SetRoyaltyInfoForTokenFunctions);
   }
 
-  call(...args: SetRoyaltyInfoForTokenCallArgs): Promise<SetRoyaltyInfoForTokenResponse> {
+  execute(...args: SetRoyaltyInfoForTokenCallArgs): Promise<SetRoyaltyInfoForTokenResponse> {
     return this.setRoyaltyInfoForToken(...args);
   }
 
@@ -78,3 +78,5 @@ export class SetRoyaltyInfoForToken extends ContractFunction<
     }
   }
 }
+
+export const setRoyaltyInfoForToken = asCallableClass(SetRoyaltyInfoForToken);

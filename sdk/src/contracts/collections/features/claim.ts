@@ -6,7 +6,7 @@ import { SdkError, SdkErrorCode } from '../errors';
 import { bnRange, One } from '../number';
 import type { Signerish, TokenId, TokenStandard } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const ClaimFunctions = {
   nft: 'claim(address,uint256,address,uint256,bytes32[],uint256)[]',
@@ -52,7 +52,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     super(base, ClaimInterfaces, ClaimPartitions, ClaimFunctions);
   }
 
-  call(...args: ClaimCallArgs): Promise<ClaimResponse> {
+  execute(...args: ClaimCallArgs): Promise<ClaimResponse> {
     return this.claim(...args);
   }
 
@@ -247,3 +247,5 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     return issueTokens;
   }
 }
+
+export const claim = asCallableClass(Claim);

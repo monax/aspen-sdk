@@ -2,7 +2,7 @@ import { CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const GetSmallestTokenIdFunctions = {
   v1: 'getSmallestTokenId()[uint8]',
@@ -32,7 +32,7 @@ export class GetSmallestTokenId extends ContractFunction<
   }
 
   /** Get the number of unique tokens in the collection */
-  call(...args: GetSmallestTokenIdCallArgs): Promise<GetSmallestTokenIdResponse> {
+  execute(...args: GetSmallestTokenIdCallArgs): Promise<GetSmallestTokenIdResponse> {
     return this.getSmallestTokenId(...args);
   }
 
@@ -47,3 +47,5 @@ export class GetSmallestTokenId extends ContractFunction<
     }
   }
 }
+
+export const getSmallestTokenId = asCallableClass(GetSmallestTokenId);

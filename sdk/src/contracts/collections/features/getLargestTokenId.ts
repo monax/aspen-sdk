@@ -2,7 +2,7 @@ import { BigNumber, CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const GetLargestTokenIdFunctions = {
   v1: 'getLargestTokenId()[uint256]',
@@ -32,7 +32,7 @@ export class GetLargestTokenId extends ContractFunction<
   }
 
   /** Get the number of unique tokens in the collection */
-  call(...args: GetLargestTokenIdCallArgs): Promise<GetLargestTokenIdResponse> {
+  execute(...args: GetLargestTokenIdCallArgs): Promise<GetLargestTokenIdResponse> {
     return this.getLargestTokenId(...args);
   }
 
@@ -47,3 +47,5 @@ export class GetLargestTokenId extends ContractFunction<
     }
   }
 }
+
+export const getLargestTokenId = asCallableClass(GetLargestTokenId);

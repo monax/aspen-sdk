@@ -11,8 +11,10 @@ import {
   Token,
   TokenMetadata,
   ZERO_ADDRESS,
-} from "@monaxlabs/aspen-sdk/dist/contracts";
-import { parse } from "@monaxlabs/aspen-sdk/dist/utils";
+  parse,
+  TermsDetails,
+  SdkError,
+} from "@monaxlabs/aspen-sdk";
 import { useWeb3React } from "@web3-react/core";
 import AcceptTerms from "components/AcceptTerms";
 import Select from "components/common/Select";
@@ -21,8 +23,6 @@ import LoadClaimConditions from "components/LoadClaimConditions";
 import Mint from "components/Mint";
 import { useToasts } from "react-toast-notifications";
 import { useAsyncEffect } from "hooks/useAsyncEffect";
-import { TermsDetails } from "@monaxlabs/aspen-sdk/dist/contracts/collections/features";
-import { SdkError } from "@monaxlabs/aspen-sdk/dist/contracts/collections/errors";
 
 type Metadata = {
   uri: string | null;

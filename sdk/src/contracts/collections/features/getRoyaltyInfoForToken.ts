@@ -3,7 +3,7 @@ import { Address, CollectionContract } from '../..';
 import { parse } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 import { DefaultRoyaltyInfo } from './getDefaultRoyaltyInfo';
 
 const GetRoyaltyInfoForTokenFunctions = {
@@ -33,7 +33,7 @@ export class GetRoyaltyInfoForToken extends ContractFunction<
     super(base, GetRoyaltyInfoForTokenInterfaces, GetRoyaltyInfoForTokenPartitions, GetRoyaltyInfoForTokenFunctions);
   }
 
-  call(...args: GetRoyaltyInfoForTokenCallArgs): Promise<GetRoyaltyInfoForTokenResponse> {
+  execute(...args: GetRoyaltyInfoForTokenCallArgs): Promise<GetRoyaltyInfoForTokenResponse> {
     return this.getRoyaltyInfoForToken(...args);
   }
 
@@ -48,3 +48,5 @@ export class GetRoyaltyInfoForToken extends ContractFunction<
     }
   }
 }
+
+export const getRoyaltyInfoForToken = asCallableClass(GetRoyaltyInfoForToken);

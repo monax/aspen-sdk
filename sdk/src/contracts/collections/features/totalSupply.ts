@@ -2,7 +2,7 @@ import { BigNumber, BigNumberish, CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const TotalSupplyFunctions = {
   nft: 'totalSupply()[uint256]',
@@ -34,7 +34,7 @@ export class TotalSupply extends ContractFunction<
   }
 
   /** Get the token supply [ERC721: across the collection] [ERC1155: for specific token] */
-  call(...args: TotalSupplyCallArgs): Promise<TotalSupplyResponse> {
+  execute(...args: TotalSupplyCallArgs): Promise<TotalSupplyResponse> {
     return this.totalSupply(...args);
   }
 
@@ -59,3 +59,5 @@ export class TotalSupply extends ContractFunction<
     this.notSupported();
   }
 }
+
+export const totalSupply = asCallableClass(TotalSupply);

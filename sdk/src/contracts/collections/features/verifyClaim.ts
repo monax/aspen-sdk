@@ -3,7 +3,7 @@ import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import { ClaimArgs } from './claim';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const VerifyClaimFunctions = {
   nft: 'verifyClaim(uint256,address,uint256,address,uint256,bool)[]',
@@ -34,7 +34,7 @@ export class VerifyClaim extends ContractFunction<
     super(base, VerifyClaimInterfaces, VerifyClaimPartitions, VerifyClaimFunctions);
   }
 
-  call(...args: VerifyClaimCallArgs): Promise<VerifyClaimResponse> {
+  execute(...args: VerifyClaimCallArgs): Promise<VerifyClaimResponse> {
     return this.verifyClaim(...args);
   }
 
@@ -108,3 +108,5 @@ export class VerifyClaim extends ContractFunction<
     }
   }
 }
+
+export const verifyClaim = asCallableClass(VerifyClaim);

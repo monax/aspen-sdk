@@ -2,7 +2,7 @@ import { BigNumberish, CallOverrides } from 'ethers';
 import { Address, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const HasAcceptedTermsVersionFunctions = {
   v1: 'hasAcceptedTerms(address,uint8)+[bool]',
@@ -31,7 +31,7 @@ export class HasAcceptedTermsVersion extends ContractFunction<
     super(base, HasAcceptedTermsVersionInterfaces, HasAcceptedTermsVersionPartitions, HasAcceptedTermsVersionFunctions);
   }
 
-  call(...args: HasAcceptedTermsVersionCallArgs): Promise<HasAcceptedTermsVersionResponse> {
+  execute(...args: HasAcceptedTermsVersionCallArgs): Promise<HasAcceptedTermsVersionResponse> {
     return this.hasAcceptedTermsVersion(...args);
   }
 
@@ -50,3 +50,5 @@ export class HasAcceptedTermsVersion extends ContractFunction<
     }
   }
 }
+
+export const hasAcceptedTermsVersion = asCallableClass(HasAcceptedTermsVersion);

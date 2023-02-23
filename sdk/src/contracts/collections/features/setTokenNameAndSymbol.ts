@@ -3,7 +3,7 @@ import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const SetTokenNameAndSymbolFunctions = {
   v1: 'setTokenNameAndSymbol(string,string)[]',
@@ -37,7 +37,7 @@ export class SetTokenNameAndSymbol extends ContractFunction<
     super(base, SetTokenNameAndSymbolInterfaces, SetTokenNameAndSymbolPartitions, SetTokenNameAndSymbolFunctions);
   }
 
-  call(...args: SetTokenNameAndSymbolCallArgs): Promise<SetTokenNameAndSymbolResponse> {
+  execute(...args: SetTokenNameAndSymbolCallArgs): Promise<SetTokenNameAndSymbolResponse> {
     return this.setTokenNameAndSymbol(...args);
   }
 
@@ -73,3 +73,5 @@ export class SetTokenNameAndSymbol extends ContractFunction<
     }
   }
 }
+
+export const setTokenNameAndSymbol = asCallableClass(SetTokenNameAndSymbol);

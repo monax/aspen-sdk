@@ -5,9 +5,9 @@ import { Web3Provider } from "@ethersproject/providers";
 import {
   CollectionContract,
   DefaultDebugHandler,
-} from "@monaxlabs/aspen-sdk/dist/contracts";
+  PublishingAPI,
+} from "@monaxlabs/aspen-sdk";
 import { ToastProvider } from "react-toast-notifications";
-import { PublishingAPI } from "@monaxlabs/aspen-sdk/dist/apis";
 
 CollectionContract.setDebugHandler(DefaultDebugHandler);
 

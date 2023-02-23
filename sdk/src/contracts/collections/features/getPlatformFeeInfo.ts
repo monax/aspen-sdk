@@ -4,7 +4,7 @@ import { parse } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const GetPlatformFeeInfoFunctions = {
   v1: 'getPlatformFeeInfo()[address,uint16]',
@@ -38,7 +38,7 @@ export class GetPlatformFeeInfo extends ContractFunction<
     super(base, GetPlatformFeeInfoInterfaces, GetPlatformFeeInfoPartitions, GetPlatformFeeInfoFunctions);
   }
 
-  call(...args: GetPlatformFeeInfoCallArgs): Promise<GetPlatformFeeInfoResponse> {
+  execute(...args: GetPlatformFeeInfoCallArgs): Promise<GetPlatformFeeInfoResponse> {
     return this.getPlatformFeeInfo(...args);
   }
 
@@ -53,3 +53,5 @@ export class GetPlatformFeeInfo extends ContractFunction<
     }
   }
 }
+
+export const getPlatformFeeInfo = asCallableClass(GetPlatformFeeInfo);

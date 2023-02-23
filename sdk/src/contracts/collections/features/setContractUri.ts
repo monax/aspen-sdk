@@ -3,7 +3,7 @@ import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const SetContractUriFunctions = {
   v1: 'setContractURI(string)[]',
@@ -32,7 +32,7 @@ export class SetContractUri extends ContractFunction<
     super(base, SetContractUriInterfaces, SetContractUriPartitions, SetContractUriFunctions);
   }
 
-  call(...args: SetContractUriCallArgs): Promise<SetContractUriResponse> {
+  execute(...args: SetContractUriCallArgs): Promise<SetContractUriResponse> {
     return this.setContractUri(...args);
   }
 
@@ -58,3 +58,5 @@ export class SetContractUri extends ContractFunction<
     }
   }
 }
+
+export const setContractUri = asCallableClass(SetContractUri);

@@ -3,7 +3,7 @@ import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const SetTokenUriFunctions = {
   v1: 'setTokenURI(uint256,string)[]',
@@ -37,7 +37,7 @@ export class SetTokenUri extends ContractFunction<
     super(base, SetTokenUriInterfaces, SetTokenUriPartitions, SetTokenUriFunctions);
   }
 
-  call(...args: SetTokenUriCallArgs): Promise<SetTokenUriResponse> {
+  execute(...args: SetTokenUriCallArgs): Promise<SetTokenUriResponse> {
     return this.setTokenUri(...args);
   }
 
@@ -73,3 +73,5 @@ export class SetTokenUri extends ContractFunction<
     }
   }
 }
+
+export const setTokenUri = asCallableClass(SetTokenUri);

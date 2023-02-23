@@ -3,7 +3,7 @@ import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const AcceptTermsFunctions = {
   v1: 'acceptTerms()+[]',
@@ -35,7 +35,7 @@ export class AcceptTerms extends ContractFunction<
   }
 
   /** The signing wallet accepts the terms of the collection */
-  call(...args: AcceptTermsCallArgs): Promise<AcceptTermsResponse> {
+  execute(...args: AcceptTermsCallArgs): Promise<AcceptTermsResponse> {
     return this.acceptTerms(...args);
   }
 
@@ -75,3 +75,5 @@ export class AcceptTerms extends ContractFunction<
     this.notSupported();
   }
 }
+
+export const acceptTerms = asCallableClass(AcceptTerms);

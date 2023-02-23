@@ -3,7 +3,7 @@ import { Address, CollectionContract } from '../..';
 import { parse } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const OwnerFunctions = {
   v1: 'owner()[address]',
@@ -28,7 +28,7 @@ export class Owner extends ContractFunction<OwnerInterfaces, OwnerPartitions, Ow
   }
 
   /** Get contract owner */
-  call(...args: OwnerCallArgs): Promise<OwnerResponse> {
+  execute(...args: OwnerCallArgs): Promise<OwnerResponse> {
     return this.owner(...args);
   }
 
@@ -43,3 +43,5 @@ export class Owner extends ContractFunction<OwnerInterfaces, OwnerPartitions, Ow
     }
   }
 }
+
+export const owner = asCallableClass(Owner);

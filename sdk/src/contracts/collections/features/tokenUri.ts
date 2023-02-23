@@ -2,7 +2,7 @@ import { BigNumberish, CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction, ERC1155StandardInterfaces } from './features';
+import { asCallableClass, ContractFunction, ERC1155StandardInterfaces } from './features';
 
 const TokenUriFunctions = {
   nft: 'tokenURI(uint256)[string]',
@@ -36,7 +36,7 @@ export class TokenUri extends ContractFunction<
     super(base, TokenUriInterfaces, TokenUriPartitions, TokenUriFunctions);
   }
 
-  call(...args: TokenUriCallArgs): Promise<TokenUriResponse> {
+  execute(...args: TokenUriCallArgs): Promise<TokenUriResponse> {
     return this.tokenUri(...args);
   }
 
@@ -58,3 +58,5 @@ export class TokenUri extends ContractFunction<
     this.notSupported();
   }
 }
+
+export const tokenUri = asCallableClass(TokenUri);

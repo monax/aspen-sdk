@@ -2,7 +2,7 @@ import { BigNumber, CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { ContractFunction } from './features';
+import { asCallableClass, ContractFunction } from './features';
 
 const GetBaseURIIndicesFunctions = {
   v1: 'getBaseURIIndices()[uint256[]]',
@@ -31,7 +31,7 @@ export class GetBaseURIIndices extends ContractFunction<
     super(base, GetBaseURIIndicesInterfaces, GetBaseURIIndicesPartitions, GetBaseURIIndicesFunctions);
   }
 
-  call(...args: GetBaseURIIndicesCallArgs): Promise<GetBaseURIIndicesResponse> {
+  execute(...args: GetBaseURIIndicesCallArgs): Promise<GetBaseURIIndicesResponse> {
     return this.getBaseURIIndices(...args);
   }
 
@@ -46,3 +46,5 @@ export class GetBaseURIIndices extends ContractFunction<
     }
   }
 }
+
+export const getBaseURIIndices = asCallableClass(GetBaseURIIndices);
