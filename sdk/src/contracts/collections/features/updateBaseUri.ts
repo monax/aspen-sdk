@@ -19,8 +19,8 @@ type UpdateBaseUriInterfaces = (typeof UpdateBaseUriInterfaces)[number];
 
 export type UpdateBaseUriCallArgs = [
   signer: Signerish,
-  tokenId: BigNumberish,
-  tokenUri: string,
+  baseURIIndex: BigNumberish,
+  baseURI: string,
   overrides?: WriteOverrides,
 ];
 export type UpdateBaseUriResponse = ContractTransaction;
@@ -43,14 +43,14 @@ export class UpdateBaseUri extends ContractFunction<
 
   async updateBaseUri(
     signer: Signerish,
-    tokenId: BigNumberish,
-    tokenUri: string,
+    baseURIIndex: BigNumberish,
+    baseURI: string,
     overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const v1 = this.partition('v1');
 
     try {
-      const tx = await v1.connectWith(signer).updateBaseURI(tokenId, tokenUri, overrides);
+      const tx = await v1.connectWith(signer).updateBaseURI(baseURIIndex, baseURI, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -59,14 +59,14 @@ export class UpdateBaseUri extends ContractFunction<
 
   async estitamateGas(
     signer: Signerish,
-    tokenId: BigNumberish,
-    tokenUri: string,
+    baseURIIndex: BigNumberish,
+    baseURI: string,
     overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
     const v1 = this.partition('v1');
 
     try {
-      const estimate = await v1.connectWith(signer).estimateGas.updateBaseURI(tokenId, tokenUri, overrides);
+      const estimate = await v1.connectWith(signer).estimateGas.updateBaseURI(baseURIIndex, baseURI, overrides);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
