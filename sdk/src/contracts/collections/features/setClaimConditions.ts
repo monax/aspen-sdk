@@ -66,7 +66,6 @@ export class SetClaimConditions extends ContractFunction<
         case 'ERC721':
           if (nft) {
             this.base.rejectTokenId(tokenId, this.functionName);
-            tokenId = this.base.requireTokenId(tokenId, this.functionName);
             const tx = await nft.connectWith(signer).setClaimConditions(conditions, resetClaimEligibility, overrides);
             return tx;
           }
@@ -100,7 +99,6 @@ export class SetClaimConditions extends ContractFunction<
         case 'ERC721':
           if (nft) {
             this.base.rejectTokenId(tokenId, this.functionName);
-            tokenId = this.base.requireTokenId(tokenId, this.functionName);
             const estimate = await nft
               .connectWith(signer)
               .estimateGas.setClaimConditions(conditions, resetClaimEligibility, overrides);
