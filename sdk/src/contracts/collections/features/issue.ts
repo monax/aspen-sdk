@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, ContractReceipt, ContractTransaction } from 'ethers';
+import { BigNumber, BigNumberish, ContractReceipt, ContractTransaction, PopulatedTransaction } from 'ethers';
 import { Address, ChainId, extractEventsFromLogs, isSameAddress, ZERO_ADDRESS } from '../..';
 import { parse } from '../../../utils';
 import { CollectionContract } from '../collections';
@@ -132,6 +132,52 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     try {
       const gas = await nft.connectWith(signer).estimateGas.issue(receiver, quantity, overrides);
       return gas;
+    } catch (err) {
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, quantity });
+    }
+  }
+
+  async populateTransaction(
+    signer: Signerish,
+    args: IssueArgs,
+    overrides: WriteOverrides = {},
+  ): Promise<PopulatedTransaction> {
+    this.validateArgs(args);
+
+    switch (this.base.tokenStandard) {
+      case 'ERC1155':
+        return this.populateTransactionERC1155(signer, args, overrides);
+      case 'ERC721':
+        return this.populateTransactionERC721(signer, args, overrides);
+    }
+  }
+
+  protected async populateTransactionERC1155(
+    signer: Signerish,
+    { receiver, tokenId, quantity }: IssueArgs,
+    overrides: WriteOverrides = {},
+  ): Promise<PopulatedTransaction> {
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
+    const sft = this.partition('sft');
+
+    try {
+      const tx = await sft.connectWith(signer).populateTransaction.issue(receiver, tokenId, quantity, overrides);
+      return tx;
+    } catch (err) {
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, tokenId, quantity });
+    }
+  }
+
+  protected async populateTransactionERC721(
+    signer: Signerish,
+    { receiver, quantity }: IssueArgs,
+    overrides: WriteOverrides = {},
+  ): Promise<PopulatedTransaction> {
+    const nft = this.partition('nft');
+
+    try {
+      const tx = await nft.connectWith(signer).populateTransaction.issue(receiver, quantity, overrides);
+      return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, quantity });
     }

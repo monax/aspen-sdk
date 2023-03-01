@@ -1,4 +1,4 @@
-import { BigNumber, ContractTransaction } from 'ethers';
+import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
@@ -62,6 +62,21 @@ export class SetOperatorFiltererStatus extends ContractFunction<
     try {
       const estimate = await v1.connectWith(signer).estimateGas.setOperatorFiltererStatus(enabled, overrides);
       return estimate;
+    } catch (err) {
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
+    }
+  }
+
+  async populateTransaction(
+    signer: Signerish,
+    enabled: boolean,
+    overrides: WriteOverrides = {},
+  ): Promise<PopulatedTransaction> {
+    const v1 = this.partition('v1');
+
+    try {
+      const tx = await v1.connectWith(signer).populateTransaction.setOperatorFiltererStatus(enabled, overrides);
+      return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

@@ -1,4 +1,4 @@
-import { BigNumber, ContractTransaction } from 'ethers';
+import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
@@ -70,6 +70,28 @@ export class SetTermsActivation extends ContractFunction<
       } else if (v1) {
         const estimate = await v1.connectWith(signer).estimateGas.setTermsStatus(termsEnabled, overrides);
         return estimate;
+      }
+    } catch (err) {
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
+    }
+
+    this.notSupported();
+  }
+
+  async populateTransaction(
+    signer: Signerish,
+    termsEnabled: boolean,
+    overrides: WriteOverrides = {},
+  ): Promise<PopulatedTransaction> {
+    const { v1, v2 } = this.partitions;
+
+    try {
+      if (v2) {
+        const tx = await v2.connectWith(signer).populateTransaction.setTermsActivation(termsEnabled, overrides);
+        return tx;
+      } else if (v1) {
+        const tx = await v1.connectWith(signer).populateTransaction.setTermsStatus(termsEnabled, overrides);
+        return tx;
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

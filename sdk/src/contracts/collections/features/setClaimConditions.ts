@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
+import { BigNumber, BigNumberish, ContractTransaction, PopulatedTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
@@ -103,6 +103,41 @@ export class SetClaimConditions extends ContractFunction<
               .connectWith(signer)
               .estimateGas.setClaimConditions(conditions, resetClaimEligibility, overrides);
             return estimate;
+          }
+          break;
+      }
+    } catch (err) {
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { conditions, tokenId, resetClaimEligibility });
+    }
+
+    this.notSupported();
+  }
+
+  async populateTransaction(
+    signer: Signerish,
+    { conditions, tokenId, resetClaimEligibility }: ConditionArgs,
+    overrides: WriteOverrides = {},
+  ): Promise<PopulatedTransaction> {
+    const { nft, sft } = this.partitions;
+
+    try {
+      switch (this.base.tokenStandard) {
+        case 'ERC1155':
+          if (sft) {
+            tokenId = this.base.requireTokenId(tokenId, this.functionName);
+            const tx = await sft
+              .connectWith(signer)
+              .populateTransaction.setClaimConditions(tokenId, conditions, resetClaimEligibility, overrides);
+            return tx;
+          }
+          break;
+        case 'ERC721':
+          if (nft) {
+            this.base.rejectTokenId(tokenId, this.functionName);
+            const tx = await nft
+              .connectWith(signer)
+              .populateTransaction.setClaimConditions(conditions, resetClaimEligibility, overrides);
+            return tx;
           }
           break;
       }

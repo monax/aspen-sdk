@@ -1,4 +1,4 @@
-import { BigNumber, BytesLike, ContractTransaction } from 'ethers';
+import { BigNumber, BytesLike, ContractTransaction, PopulatedTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
@@ -84,9 +84,37 @@ export class LazyMint extends ContractFunction<
         if (encryptedBaseURI === undefined) {
           throw new SdkError(SdkErrorCode.INVALID_DATA, undefined, new Error('encryptedBaseURI is required'));
         }
-        const estimator = v1.connectWith(signer).estimateGas;
-        const estimate = await estimator.lazyMint(amount, baseURI, encryptedBaseURI, overrides);
+        const estimate = await v1
+          .connectWith(signer)
+          .estimateGas.lazyMint(amount, baseURI, encryptedBaseURI, overrides);
         return estimate;
+      }
+    } catch (err) {
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { amount, baseURI, encryptedBaseURI });
+    }
+
+    this.notSupported();
+  }
+
+  async populateTransaction(
+    signer: Signerish,
+    { amount, baseURI, encryptedBaseURI }: MintAgs,
+    overrides: WriteOverrides = {},
+  ): Promise<PopulatedTransaction> {
+    const { v1, v2 } = this.partitions;
+
+    try {
+      if (v2) {
+        const tx = await v2.connectWith(signer).populateTransaction.lazyMint(amount, baseURI, overrides);
+        return tx;
+      } else if (v1) {
+        if (encryptedBaseURI === undefined) {
+          throw new SdkError(SdkErrorCode.INVALID_DATA, undefined, new Error('encryptedBaseURI is required'));
+        }
+        const tx = await v1
+          .connectWith(signer)
+          .populateTransaction.lazyMint(amount, baseURI, encryptedBaseURI, overrides);
+        return tx;
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { amount, baseURI, encryptedBaseURI });

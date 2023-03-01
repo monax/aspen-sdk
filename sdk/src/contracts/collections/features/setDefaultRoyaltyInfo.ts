@@ -1,4 +1,4 @@
-import { BigNumber, ContractTransaction } from 'ethers';
+import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
 import { Address, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
@@ -66,9 +66,28 @@ export class SetDefaultRoyaltyInfo extends ContractFunction<
     const v1 = this.partition('v1');
 
     try {
-      const estimator = v1.connectWith(signer).estimateGas;
-      const estimate = await estimator.setDefaultRoyaltyInfo(royaltyRecipient, basisPoints, overrides);
+      const estimate = await v1
+        .connectWith(signer)
+        .estimateGas.setDefaultRoyaltyInfo(royaltyRecipient, basisPoints, overrides);
       return estimate;
+    } catch (err) {
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
+    }
+  }
+
+  async populateTransaction(
+    signer: Signerish,
+    royaltyRecipient: Address,
+    basisPoints: BigNumber,
+    overrides: WriteOverrides = {},
+  ): Promise<PopulatedTransaction> {
+    const v1 = this.partition('v1');
+
+    try {
+      const tx = await v1
+        .connectWith(signer)
+        .populateTransaction.setDefaultRoyaltyInfo(royaltyRecipient, basisPoints, overrides);
+      return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

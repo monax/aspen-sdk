@@ -1,4 +1,4 @@
-import { BigNumber, ContractTransaction } from 'ethers';
+import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
@@ -68,6 +68,22 @@ export class SetTokenNameAndSymbol extends ContractFunction<
     try {
       const estimate = v1.connectWith(signer).estimateGas.setTokenNameAndSymbol(name, symbol, overrides);
       return estimate;
+    } catch (err) {
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
+    }
+  }
+
+  async populateTransaction(
+    signer: Signerish,
+    name: string,
+    symbol: string,
+    overrides: WriteOverrides = {},
+  ): Promise<PopulatedTransaction> {
+    const v1 = this.partition('v1');
+
+    try {
+      const tx = v1.connectWith(signer).populateTransaction.setTokenNameAndSymbol(name, symbol, overrides);
+      return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

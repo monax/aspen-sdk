@@ -1,4 +1,4 @@
-import { BigNumber, ContractTransaction } from 'ethers';
+import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
@@ -78,6 +78,30 @@ export class SetClaimPauseStatus extends ContractFunction<
           ? v1.connectWith(signer).estimateGas.pauseClaims(overrides)
           : v1.connectWith(signer).estimateGas.unpauseClaims(overrides));
         return estimate;
+      }
+    } catch (err) {
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
+    }
+
+    this.notSupported();
+  }
+
+  async populateTransaction(
+    signer: Signerish,
+    pauseStatus: boolean,
+    overrides: WriteOverrides = {},
+  ): Promise<PopulatedTransaction> {
+    const { v1, v2 } = this.partitions;
+
+    try {
+      if (v2) {
+        const tx = await v2.connectWith(signer).populateTransaction.setClaimPauseStatus(pauseStatus, overrides);
+        return tx;
+      } else if (v1) {
+        const tx = await (pauseStatus
+          ? v1.connectWith(signer).populateTransaction.pauseClaims(overrides)
+          : v1.connectWith(signer).populateTransaction.unpauseClaims(overrides));
+        return tx;
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
