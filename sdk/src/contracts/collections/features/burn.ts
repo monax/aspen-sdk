@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
+import { BigNumber, BigNumberish, ContractTransaction, PopulatedTransaction } from 'ethers';
 import { Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
@@ -92,6 +92,35 @@ export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnC
           const nft = this.base.assumeFeature('standard/IERC721.sol:IERC721V2');
           const estimate = nft.connectWith(signer).estimateGas.burn(tokenId, overrides);
           return estimate;
+        }
+      }
+    } catch (err) {
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
+    }
+  }
+
+  async populateTransaction(
+    signer: Signerish,
+    tokenId: BigNumberish,
+    wallet?: Addressish,
+    amount?: BigNumberish,
+    overrides: WriteOverrides = {},
+  ): Promise<PopulatedTransaction> {
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
+
+    try {
+      switch (this.base.tokenStandard) {
+        case 'ERC1155': {
+          const sft = this.base.assumeFeature('standard/IERC1155.sol:IERC1155SupplyV2');
+          const account = await asAddress(wallet || '');
+          const tx = sft.connectWith(signer).populateTransaction.burn(account, tokenId, amount || 0);
+          return tx;
+        }
+
+        case 'ERC721': {
+          const nft = this.base.assumeFeature('standard/IERC721.sol:IERC721V2');
+          const tx = nft.connectWith(signer).populateTransaction.burn(tokenId, overrides);
+          return tx;
         }
       }
     } catch (err) {

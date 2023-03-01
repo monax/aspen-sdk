@@ -1,4 +1,11 @@
-import { BigNumber, BigNumberish, ContractReceipt, ContractTransaction, PayableOverrides } from 'ethers';
+import {
+  BigNumber,
+  BigNumberish,
+  ContractReceipt,
+  ContractTransaction,
+  PayableOverrides,
+  PopulatedTransaction,
+} from 'ethers';
 import { Address, ChainId, extractEventsFromLogs, isSameAddress, NATIVE_TOKEN } from '../..';
 import { parse } from '../../../utils';
 import { CollectionContract } from '../collections';
@@ -178,6 +185,77 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
 
       const iNft = nft.connectWith(signer);
       return await iNft.estimateGas.claim(
+        receiver,
+        quantity,
+        currency,
+        pricePerToken,
+        proofs,
+        proofMaxQuantityPerTransaction,
+        overrides,
+      );
+    } catch (err) {
+      const args = { receiver, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction };
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
+    }
+  }
+
+  async populateTransaction(
+    signer: Signerish,
+    args: ClaimArgs,
+    overrides: PayableOverrides = {},
+  ): Promise<PopulatedTransaction> {
+    switch (this.base.tokenStandard) {
+      case 'ERC1155':
+        return this.populateTransactionERC1155(signer, args, overrides);
+      case 'ERC721':
+        return this.populateTransactionERC721(signer, args, overrides);
+    }
+  }
+
+  protected async populateTransactionERC1155(
+    signer: Signerish,
+    { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction }: ClaimArgs,
+    overrides: PayableOverrides = {},
+  ): Promise<PopulatedTransaction> {
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
+    const sft = this.partition('sft');
+
+    try {
+      if (isSameAddress(currency, NATIVE_TOKEN)) {
+        overrides.value = BigNumber.from(pricePerToken).mul(quantity);
+      }
+
+      const iSft = sft.connectWith(signer);
+      return await iSft.populateTransaction.claim(
+        receiver,
+        tokenId,
+        quantity,
+        currency,
+        pricePerToken,
+        proofs,
+        proofMaxQuantityPerTransaction,
+        overrides,
+      );
+    } catch (err) {
+      const args = { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction };
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
+    }
+  }
+
+  protected async populateTransactionERC721(
+    signer: Signerish,
+    { receiver, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction }: ClaimArgs,
+    overrides: PayableOverrides = {},
+  ): Promise<PopulatedTransaction> {
+    const nft = this.partition('nft');
+
+    try {
+      if (isSameAddress(currency, NATIVE_TOKEN)) {
+        overrides.value = BigNumber.from(pricePerToken).mul(quantity);
+      }
+
+      const iNft = nft.connectWith(signer);
+      return await iNft.populateTransaction.claim(
         receiver,
         quantity,
         currency,
