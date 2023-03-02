@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { BigNumber } from 'ethers';
-import { CollectionContract, CollectionMetadata, CollectionMetaImageType, OperationStatus } from '..';
-import { IPFS_GATEWAY_PREFIX } from '../..';
+import { CollectionContract, CollectionMetadata, CollectionMetaImageType, OperationStatus, TermsState } from '..';
+import { Addressish, asAddress, IPFS_GATEWAY_PREFIX, ZERO_ADDRESS } from '../..';
 import { resolveIpfsUrl } from '../../../utils/ipfs';
 import { SdkError, SdkErrorCode } from '../errors';
 import { ContractObject } from './object';
@@ -23,6 +23,40 @@ export class Collection extends ContractObject {
         const uniqueCount = this.base.totalSupply();
         return uniqueCount;
     }
+  }
+
+  async getTermsState(walletAddress?: Addressish): Promise<OperationStatus<TermsState>> {
+    return await this.run(async () => {
+      const userAddress = await asAddress(walletAddress || ZERO_ADDRESS);
+
+      if (
+        this.base.acceptTerms.supported &&
+        this.base.getTermsDetails.supported &&
+        this.base.hasAcceptedTerms.supported
+      ) {
+        try {
+          const details = await this.base.getTermsDetails();
+          if (details.termsActivated) {
+            const termsAccepted = await this.base.hasAcceptedTerms(userAddress);
+            return {
+              termsActivated: true,
+              termsLink: details.termsLink,
+              termsAccepted,
+              userAddress,
+            };
+          }
+        } catch (err) {
+          throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { walletAddress });
+        }
+      }
+
+      return {
+        termsActivated: false,
+        termsLink: null,
+        termsAccepted: false,
+        userAddress,
+      };
+    });
   }
 
   async getMetadata(): Promise<OperationStatus<{ uri: string; metadata: CollectionMetadata }>> {

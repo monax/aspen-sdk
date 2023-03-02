@@ -142,3 +142,10 @@ export type OperationStatus<T> =
       result: null;
       error: SdkError;
     };
+
+export type TermsState = (
+  | { termsActivated: true; termsLink: string; termsAccepted: boolean }
+  | { termsActivated: false; termsLink: null; termsAccepted: false }
+) & {
+  userAddress: Address;
+};
