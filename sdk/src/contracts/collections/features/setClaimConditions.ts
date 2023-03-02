@@ -1,5 +1,5 @@
 import { BigNumber, BigNumberish, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -23,8 +23,12 @@ type SetClaimConditionsInterfaces = (typeof SetClaimConditionsInterfaces)[number
 export type SetClaimConditionsCallArgs = [signer: Signerish, args: ConditionArgs, overrides?: WriteOverrides];
 export type SetClaimConditionsResponse = ContractTransaction;
 
+export type LooseCollectionContractClaimCondition = Omit<CollectionContractClaimCondition, 'currency'> & {
+  currency: Addressish;
+};
+
 export type ConditionArgs = {
-  conditions: CollectionContractClaimCondition[];
+  conditions: LooseCollectionContractClaimCondition[];
   tokenId: BigNumberish | null;
   resetClaimEligibility: boolean;
 };
@@ -51,6 +55,9 @@ export class SetClaimConditions extends ContractFunction<
     overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const { nft, sft } = this.partitions;
+    const strictConditions: CollectionContractClaimCondition[] = await Promise.all(
+      conditions.map(async (c) => ({ ...c, currency: await asAddress(c.currency) })),
+    );
 
     try {
       switch (this.base.tokenStandard) {
@@ -59,14 +66,16 @@ export class SetClaimConditions extends ContractFunction<
             tokenId = this.base.requireTokenId(tokenId, this.functionName);
             const tx = await sft
               .connectWith(signer)
-              .setClaimConditions(tokenId, conditions, resetClaimEligibility, overrides);
+              .setClaimConditions(tokenId, strictConditions, resetClaimEligibility, overrides);
             return tx;
           }
           break;
         case 'ERC721':
           if (nft) {
             this.base.rejectTokenId(tokenId, this.functionName);
-            const tx = await nft.connectWith(signer).setClaimConditions(conditions, resetClaimEligibility, overrides);
+            const tx = await nft
+              .connectWith(signer)
+              .setClaimConditions(strictConditions, resetClaimEligibility, overrides);
             return tx;
           }
           break;
@@ -84,6 +93,9 @@ export class SetClaimConditions extends ContractFunction<
     overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
     const { nft, sft } = this.partitions;
+    const strictConditions: CollectionContractClaimCondition[] = await Promise.all(
+      conditions.map(async (c) => ({ ...c, currency: await asAddress(c.currency) })),
+    );
 
     try {
       switch (this.base.tokenStandard) {
@@ -92,7 +104,7 @@ export class SetClaimConditions extends ContractFunction<
             tokenId = this.base.requireTokenId(tokenId, this.functionName);
             const estimate = await sft
               .connectWith(signer)
-              .estimateGas.setClaimConditions(tokenId, conditions, resetClaimEligibility, overrides);
+              .estimateGas.setClaimConditions(tokenId, strictConditions, resetClaimEligibility, overrides);
             return estimate;
           }
           break;
@@ -101,7 +113,7 @@ export class SetClaimConditions extends ContractFunction<
             this.base.rejectTokenId(tokenId, this.functionName);
             const estimate = await nft
               .connectWith(signer)
-              .estimateGas.setClaimConditions(conditions, resetClaimEligibility, overrides);
+              .estimateGas.setClaimConditions(strictConditions, resetClaimEligibility, overrides);
             return estimate;
           }
           break;
@@ -119,6 +131,9 @@ export class SetClaimConditions extends ContractFunction<
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
     const { nft, sft } = this.partitions;
+    const strictConditions: CollectionContractClaimCondition[] = await Promise.all(
+      conditions.map(async (c) => ({ ...c, currency: await asAddress(c.currency) })),
+    );
 
     try {
       switch (this.base.tokenStandard) {
@@ -127,7 +142,7 @@ export class SetClaimConditions extends ContractFunction<
             tokenId = this.base.requireTokenId(tokenId, this.functionName);
             const tx = await sft
               .connectWith(signer)
-              .populateTransaction.setClaimConditions(tokenId, conditions, resetClaimEligibility, overrides);
+              .populateTransaction.setClaimConditions(tokenId, strictConditions, resetClaimEligibility, overrides);
             return tx;
           }
           break;
@@ -136,7 +151,7 @@ export class SetClaimConditions extends ContractFunction<
             this.base.rejectTokenId(tokenId, this.functionName);
             const tx = await nft
               .connectWith(signer)
-              .populateTransaction.setClaimConditions(conditions, resetClaimEligibility, overrides);
+              .populateTransaction.setClaimConditions(strictConditions, resetClaimEligibility, overrides);
             return tx;
           }
           break;

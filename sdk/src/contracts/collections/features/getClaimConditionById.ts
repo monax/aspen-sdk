@@ -1,6 +1,5 @@
 import { BigNumber, BigNumberish, CallOverrides } from 'ethers';
-import { Address, CollectionContract } from '../..';
-import { parse } from '../../../utils';
+import { Address, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
@@ -79,7 +78,7 @@ export class GetClaimConditionById extends ContractFunction<
             waitTimeInSecondsBetweenClaims: conditionSft.waitTimeInSecondsBetweenClaims.toNumber(),
             merkleRoot: conditionSft.merkleRoot,
             pricePerToken: conditionSft.pricePerToken,
-            currency: parse(Address, conditionSft.currency),
+            currency: await asAddress(conditionSft.currency),
             phaseId: conditionSft.phaseId ?? null, // 'phaseId' isn't returned by old interfaces
           };
 
@@ -96,7 +95,7 @@ export class GetClaimConditionById extends ContractFunction<
             waitTimeInSecondsBetweenClaims: conditionNft.waitTimeInSecondsBetweenClaims.toNumber(),
             merkleRoot: conditionNft.merkleRoot,
             pricePerToken: conditionNft.pricePerToken,
-            currency: parse(Address, conditionNft.currency),
+            currency: await asAddress(conditionNft.currency),
             phaseId: conditionNft.phaseId ?? null, // 'phaseId' isn't returned by old interfaces
           };
       }

@@ -1,5 +1,5 @@
 import { BigNumber, BigNumberish, ContractReceipt, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { Address, ChainId, extractEventsFromLogs, isSameAddress, ZERO_ADDRESS } from '../..';
+import { Address, Addressish, asAddress, ChainId, extractEventsFromLogs, isSameAddress, ZERO_ADDRESS } from '../..';
 import { parse } from '../../../utils';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
@@ -26,7 +26,7 @@ export type IssueCallArgs = [signer: Signerish, args: IssueArgs, overrides?: Wri
 export type IssueResponse = ContractTransaction;
 
 export type IssueArgs = {
-  receiver: Address;
+  receiver: Addressish;
   tokenId?: TokenId;
   quantity: BigNumberish;
 };
@@ -71,9 +71,10 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
   ): Promise<ContractTransaction> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
+    const wallet = await asAddress(receiver);
 
     try {
-      const tx = await sft.connectWith(signer).issue(receiver, tokenId, quantity, overrides);
+      const tx = await sft.connectWith(signer).issue(wallet, tokenId, quantity, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, tokenId, quantity });
@@ -86,9 +87,10 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const nft = this.partition('nft');
+    const wallet = await asAddress(receiver);
 
     try {
-      const tx = await nft.connectWith(signer).issue(receiver, quantity, overrides);
+      const tx = await nft.connectWith(signer).issue(wallet, quantity, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, quantity });
@@ -113,9 +115,10 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
   ): Promise<BigNumber> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
+    const wallet = await asAddress(receiver);
 
     try {
-      const gas = await sft.connectWith(signer).estimateGas.issue(receiver, tokenId, quantity, overrides);
+      const gas = await sft.connectWith(signer).estimateGas.issue(wallet, tokenId, quantity, overrides);
       return gas;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, tokenId, quantity });
@@ -128,9 +131,10 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
     const nft = this.partition('nft');
+    const wallet = await asAddress(receiver);
 
     try {
-      const gas = await nft.connectWith(signer).estimateGas.issue(receiver, quantity, overrides);
+      const gas = await nft.connectWith(signer).estimateGas.issue(wallet, quantity, overrides);
       return gas;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, quantity });
@@ -159,9 +163,10 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
   ): Promise<PopulatedTransaction> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
+    const wallet = await asAddress(receiver);
 
     try {
-      const tx = await sft.connectWith(signer).populateTransaction.issue(receiver, tokenId, quantity, overrides);
+      const tx = await sft.connectWith(signer).populateTransaction.issue(wallet, tokenId, quantity, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, tokenId, quantity });
@@ -174,9 +179,10 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
     const nft = this.partition('nft');
+    const wallet = await asAddress(receiver);
 
     try {
-      const tx = await nft.connectWith(signer).populateTransaction.issue(receiver, quantity, overrides);
+      const tx = await nft.connectWith(signer).populateTransaction.issue(wallet, quantity, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, quantity });
@@ -184,7 +190,8 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
   }
 
   protected async validateArgs({ receiver }: IssueArgs) {
-    if (isSameAddress(receiver, ZERO_ADDRESS)) {
+    const wallet = await asAddress(receiver);
+    if (isSameAddress(wallet, ZERO_ADDRESS)) {
       throw new SdkError(SdkErrorCode.INVALID_DATA, { receiver }, new Error('Receiver cannot be an empty address'));
     }
   }

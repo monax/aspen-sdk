@@ -1,5 +1,5 @@
 import { CallOverrides } from 'ethers';
-import { Address, CollectionContract } from '../..';
+import { Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -20,7 +20,7 @@ type HasAcceptedTermsPartitions = typeof HasAcceptedTermsPartitions;
 const HasAcceptedTermsInterfaces = Object.values(HasAcceptedTermsPartitions).flat();
 type HasAcceptedTermsInterfaces = (typeof HasAcceptedTermsInterfaces)[number];
 
-export type HasAcceptedTermsCallArgs = [userAddress: Address, overrides?: CallOverrides];
+export type HasAcceptedTermsCallArgs = [userAddress: Addressish, overrides?: CallOverrides];
 export type HasAcceptedTermsResponse = boolean;
 
 export class HasAcceptedTerms extends ContractFunction<
@@ -39,18 +39,19 @@ export class HasAcceptedTerms extends ContractFunction<
     return this.hasAcceptedTerms(...args);
   }
 
-  async hasAcceptedTerms(userAddress: Address, overrides: CallOverrides = {}): Promise<boolean> {
+  async hasAcceptedTerms(userAddress: Addressish, overrides: CallOverrides = {}): Promise<boolean> {
     const { v1, v2, v3 } = this.partitions;
+    const wallet = await asAddress(userAddress);
 
     try {
       if (v3) {
-        const status = await v3.connectReadOnly()['hasAcceptedTerms(address)'](userAddress, overrides);
+        const status = await v3.connectReadOnly()['hasAcceptedTerms(address)'](wallet, overrides);
         return status;
       } else if (v2) {
-        const status = await v2.connectReadOnly().hasAcceptedTerms(userAddress, overrides);
+        const status = await v2.connectReadOnly().hasAcceptedTerms(wallet, overrides);
         return status;
       } else if (v1) {
-        const status = await v1.connectReadOnly().getAgreementStatus(userAddress, overrides);
+        const status = await v1.connectReadOnly().getAgreementStatus(wallet, overrides);
         return status;
       }
     } catch (err) {

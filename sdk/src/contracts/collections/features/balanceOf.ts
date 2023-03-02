@@ -45,19 +45,21 @@ export class BalanceOf extends ContractFunction<
     tokenId: BigNumberish | null = null,
     overrides: CallOverrides = {},
   ): Promise<BigNumber> {
+    const wallet = await asAddress(address);
+
     try {
       switch (this.base.tokenStandard) {
         case 'ERC1155': {
           tokenId = this.base.requireTokenId(tokenId, this.functionName);
           const sft = this.base.assumeFeature('standard/IERC1155.sol:IERC1155V2').connectReadOnly();
-          const balance = await sft.balanceOf(asAddress(address), tokenId, overrides);
+          const balance = await sft.balanceOf(wallet, tokenId, overrides);
           return balance;
         }
 
         case 'ERC721': {
           this.base.rejectTokenId(tokenId, this.functionName);
           const nft = this.base.assumeFeature('standard/IERC721.sol:IERC721V2').connectReadOnly();
-          const balance = await nft.balanceOf(asAddress(address), overrides);
+          const balance = await nft.balanceOf(wallet, overrides);
           return balance;
         }
       }
