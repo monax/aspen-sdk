@@ -57,7 +57,7 @@ export class UpdateBaseUri extends ContractFunction<
     }
   }
 
-  async estitamateGas(
+  async estimateGas(
     signer: Signerish,
     baseURIIndex: BigNumberish,
     baseURI: string,
@@ -87,8 +87,6 @@ export class UpdateBaseUri extends ContractFunction<
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
-
-    this.notSupported();
   }
 }
 
