@@ -1,5 +1,5 @@
 import { BigNumber, ContractReceipt, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { Address, isSameAddress, ZERO_ADDRESS } from '../..';
+import { Addressish, asAddress, isSameAddress, ZERO_ADDRESS } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
@@ -23,7 +23,7 @@ export type IssueWithTokenUriCallArgs = [signer: Signerish, args: IssueWithToken
 export type IssueWithTokenUriResponse = ContractTransaction;
 
 export type IssueWithTokenUriArgs = {
-  receiver: Address;
+  receiver: Addressish;
   tokenURI: string;
 };
 
@@ -50,9 +50,10 @@ export class IssueWithTokenUri extends ContractFunction<
   ): Promise<ContractTransaction> {
     this.validateArgs(args);
     const nft = this.partition('nft');
+    const wallet = await asAddress(args.receiver);
 
     try {
-      const tx = await nft.connectWith(signer).issueWithTokenURI(args.receiver, args.tokenURI, overrides);
+      const tx = await nft.connectWith(signer).issueWithTokenURI(wallet, args.tokenURI, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
@@ -66,9 +67,10 @@ export class IssueWithTokenUri extends ContractFunction<
   ): Promise<BigNumber> {
     this.validateArgs(args);
     const nft = this.partition('nft');
+    const wallet = await asAddress(args.receiver);
 
     try {
-      const gas = await nft.connectWith(signer).estimateGas.issueWithTokenURI(args.receiver, args.tokenURI, overrides);
+      const gas = await nft.connectWith(signer).estimateGas.issueWithTokenURI(wallet, args.tokenURI, overrides);
       return gas;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
@@ -82,11 +84,10 @@ export class IssueWithTokenUri extends ContractFunction<
   ): Promise<PopulatedTransaction> {
     this.validateArgs(args);
     const nft = this.partition('nft');
+    const wallet = await asAddress(args.receiver);
 
     try {
-      const tx = await nft
-        .connectWith(signer)
-        .populateTransaction.issueWithTokenURI(args.receiver, args.tokenURI, overrides);
+      const tx = await nft.connectWith(signer).populateTransaction.issueWithTokenURI(wallet, args.tokenURI, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
@@ -94,7 +95,8 @@ export class IssueWithTokenUri extends ContractFunction<
   }
 
   protected async validateArgs({ receiver }: IssueWithTokenUriArgs) {
-    if (isSameAddress(receiver, ZERO_ADDRESS)) {
+    const wallet = await asAddress(receiver);
+    if (isSameAddress(wallet, ZERO_ADDRESS)) {
       throw new SdkError(SdkErrorCode.INVALID_DATA, { receiver }, new Error('Receiver cannot be an empty address'));
     }
   }

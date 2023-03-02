@@ -1,5 +1,5 @@
 import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { Address, CollectionContract } from '../..';
+import { Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -17,7 +17,7 @@ type AcceptTermsForManyPartitions = typeof AcceptTermsForManyPartitions;
 const AcceptTermsForManyInterfaces = Object.values(AcceptTermsForManyPartitions).flat();
 type AcceptTermsForManyInterfaces = (typeof AcceptTermsForManyInterfaces)[number];
 
-export type AcceptTermsForManyCallArgs = [signer: Signerish, acceptors: Address[], overrides?: WriteOverrides];
+export type AcceptTermsForManyCallArgs = [signer: Signerish, acceptors: Addressish[], overrides?: WriteOverrides];
 export type AcceptTermsForManyResponse = ContractTransaction;
 
 export class AcceptTermsForMany extends ContractFunction<
@@ -38,24 +38,26 @@ export class AcceptTermsForMany extends ContractFunction<
 
   async acceptTermsForMany(
     signer: Signerish,
-    acceptors: Address[],
+    acceptors: Addressish[],
     overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const v1 = this.partition('v1');
+    const wallets = await Promise.all(acceptors.map((a) => asAddress(a)));
 
     try {
-      const tx = await v1.connectWith(signer).batchAcceptTerms(acceptors, overrides);
+      const tx = await v1.connectWith(signer).batchAcceptTerms(wallets, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async estimateGas(signer: Signerish, acceptors: Address[], overrides: WriteOverrides = {}): Promise<BigNumber> {
+  async estimateGas(signer: Signerish, acceptors: Addressish[], overrides: WriteOverrides = {}): Promise<BigNumber> {
     const v1 = this.partition('v1');
+    const wallets = await Promise.all(acceptors.map((a) => asAddress(a)));
 
     try {
-      const estimate = await v1.connectWith(signer).estimateGas.batchAcceptTerms(acceptors, overrides);
+      const estimate = await v1.connectWith(signer).estimateGas.batchAcceptTerms(wallets, overrides);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -64,13 +66,14 @@ export class AcceptTermsForMany extends ContractFunction<
 
   async populateTransaction(
     signer: Signerish,
-    acceptors: Address[],
+    acceptors: Addressish[],
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
     const v1 = this.partition('v1');
+    const wallets = await Promise.all(acceptors.map((a) => asAddress(a)));
 
     try {
-      const tx = await v1.connectWith(signer).populateTransaction.batchAcceptTerms(acceptors, overrides);
+      const tx = await v1.connectWith(signer).populateTransaction.batchAcceptTerms(wallets, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

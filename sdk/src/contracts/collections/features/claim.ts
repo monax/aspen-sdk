@@ -6,7 +6,7 @@ import {
   PayableOverrides,
   PopulatedTransaction,
 } from 'ethers';
-import { Address, ChainId, extractEventsFromLogs, isSameAddress, NATIVE_TOKEN } from '../..';
+import { Address, Addressish, asAddress, ChainId, extractEventsFromLogs, isSameAddress, NATIVE_TOKEN } from '../..';
 import { parse } from '../../../utils';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
@@ -34,10 +34,10 @@ export type ClaimResponse = ContractTransaction;
 
 export type ClaimArgs = {
   conditionId: number;
-  receiver: Address;
+  receiver: Addressish;
   tokenId?: TokenId;
   quantity: BigNumberish;
-  currency: Address;
+  currency: Addressish;
   pricePerToken: BigNumberish;
   proofs: string[];
   proofMaxQuantityPerTransaction: BigNumberish;
@@ -79,18 +79,20 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
   ): Promise<ContractTransaction> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
+    const wallet = await asAddress(receiver);
+    const tokenAddress = await asAddress(currency);
 
     try {
-      if (isSameAddress(currency, NATIVE_TOKEN)) {
+      if (isSameAddress(tokenAddress, NATIVE_TOKEN)) {
         overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
       const iSft = await sft.connectWith(signer);
       const tx = await iSft.claim(
-        receiver,
+        wallet,
         tokenId,
         quantity,
-        currency,
+        tokenAddress,
         pricePerToken,
         proofs,
         proofMaxQuantityPerTransaction,
@@ -109,17 +111,19 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     overrides: PayableOverrides = {},
   ): Promise<ContractTransaction> {
     const nft = this.partition('nft');
+    const wallet = await asAddress(receiver);
+    const tokenAddress = await asAddress(currency);
 
     try {
-      if (isSameAddress(currency, NATIVE_TOKEN)) {
+      if (isSameAddress(tokenAddress, NATIVE_TOKEN)) {
         overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
       const iNft = nft.connectWith(signer);
       const tx = await iNft.claim(
-        receiver,
+        wallet,
         quantity,
-        currency,
+        tokenAddress,
         pricePerToken,
         proofs,
         proofMaxQuantityPerTransaction,
@@ -148,18 +152,20 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
   ): Promise<BigNumber> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
+    const wallet = await asAddress(receiver);
+    const tokenAddress = await asAddress(currency);
 
     try {
-      if (isSameAddress(currency, NATIVE_TOKEN)) {
+      if (isSameAddress(tokenAddress, NATIVE_TOKEN)) {
         overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
       const iSft = sft.connectWith(signer);
       return await iSft.estimateGas.claim(
-        receiver,
+        wallet,
         tokenId,
         quantity,
-        currency,
+        tokenAddress,
         pricePerToken,
         proofs,
         proofMaxQuantityPerTransaction,
@@ -177,17 +183,19 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     overrides: PayableOverrides = {},
   ): Promise<BigNumber> {
     const nft = this.partition('nft');
+    const wallet = await asAddress(receiver);
+    const tokenAddress = await asAddress(currency);
 
     try {
-      if (isSameAddress(currency, NATIVE_TOKEN)) {
+      if (isSameAddress(tokenAddress, NATIVE_TOKEN)) {
         overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
       const iNft = nft.connectWith(signer);
       return await iNft.estimateGas.claim(
-        receiver,
+        wallet,
         quantity,
-        currency,
+        tokenAddress,
         pricePerToken,
         proofs,
         proofMaxQuantityPerTransaction,
@@ -219,18 +227,20 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
   ): Promise<PopulatedTransaction> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
+    const wallet = await asAddress(receiver);
+    const tokenAddress = await asAddress(currency);
 
     try {
-      if (isSameAddress(currency, NATIVE_TOKEN)) {
+      if (isSameAddress(tokenAddress, NATIVE_TOKEN)) {
         overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
       const iSft = sft.connectWith(signer);
       return await iSft.populateTransaction.claim(
-        receiver,
+        wallet,
         tokenId,
         quantity,
-        currency,
+        tokenAddress,
         pricePerToken,
         proofs,
         proofMaxQuantityPerTransaction,
@@ -248,17 +258,19 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     overrides: PayableOverrides = {},
   ): Promise<PopulatedTransaction> {
     const nft = this.partition('nft');
+    const wallet = await asAddress(receiver);
+    const tokenAddress = await asAddress(currency);
 
     try {
-      if (isSameAddress(currency, NATIVE_TOKEN)) {
+      if (isSameAddress(tokenAddress, NATIVE_TOKEN)) {
         overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
       const iNft = nft.connectWith(signer);
       return await iNft.populateTransaction.claim(
-        receiver,
+        wallet,
         quantity,
-        currency,
+        tokenAddress,
         pricePerToken,
         proofs,
         proofMaxQuantityPerTransaction,

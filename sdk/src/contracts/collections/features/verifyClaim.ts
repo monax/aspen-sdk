@@ -1,4 +1,5 @@
 import { CallOverrides } from 'ethers';
+import { asAddress } from '../../address';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import { ClaimArgs } from './claim';
@@ -61,16 +62,18 @@ export class VerifyClaim extends ContractFunction<
   ): Promise<boolean> {
     args.tokenId = this.base.requireTokenId(args.tokenId, this.functionName);
     const sft = this.partition('sft');
+    const wallet = await asAddress(args.receiver);
+    const tokenAddress = await asAddress(args.currency);
 
     try {
       await sft
         .connectReadOnly()
         .verifyClaim(
           args.conditionId,
-          args.receiver,
+          wallet,
           args.tokenId,
           args.quantity,
-          args.currency,
+          tokenAddress,
           args.pricePerToken,
           verifyMaxQuantity,
           overrides,
@@ -88,15 +91,17 @@ export class VerifyClaim extends ContractFunction<
     overrides: CallOverrides = {},
   ): Promise<boolean> {
     const nft = this.partition('nft');
+    const wallet = await asAddress(args.receiver);
+    const tokenAddress = await asAddress(args.currency);
 
     try {
       await nft
         .connectReadOnly()
         .verifyClaim(
           args.conditionId,
-          args.receiver,
+          wallet,
           args.quantity,
-          args.currency,
+          tokenAddress,
           args.pricePerToken,
           verifyMaxQuantity,
           overrides,

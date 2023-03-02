@@ -1,5 +1,5 @@
 import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { Address, CollectionContract } from '../..';
+import { Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -21,7 +21,7 @@ type AcceptTermsWithSignatureInterfaces = (typeof AcceptTermsWithSignatureInterf
 
 export type AcceptTermsWithSignatureCallArgs = [
   signer: Signerish,
-  acceptor: Address,
+  acceptor: Addressish,
   signature: string,
   overrides?: WriteOverrides,
 ];
@@ -50,18 +50,19 @@ export class AcceptTermsWithSignature extends ContractFunction<
 
   async acceptTermsWithSignature(
     signer: Signerish,
-    acceptor: Address,
+    acceptor: Addressish,
     signature: string,
     overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const { v1, v2 } = this.partitions;
+    const wallet = await asAddress(acceptor);
 
     try {
       if (v1) {
-        const tx = await v1.connectWith(signer).acceptTerms(acceptor, signature, overrides);
+        const tx = await v1.connectWith(signer).acceptTerms(wallet, signature, overrides);
         return tx;
       } else if (v2) {
-        const tx = await v2.connectWith(signer).storeTermsAccepted(acceptor, signature, overrides);
+        const tx = await v2.connectWith(signer).storeTermsAccepted(wallet, signature, overrides);
         return tx;
       }
     } catch (err) {
@@ -73,18 +74,19 @@ export class AcceptTermsWithSignature extends ContractFunction<
 
   async estimateGas(
     signer: Signerish,
-    acceptor: Address,
+    acceptor: Addressish,
     signature: string,
     overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
     const { v1, v2 } = this.partitions;
+    const wallet = await asAddress(acceptor);
 
     try {
       if (v1) {
-        const estimate = await v1.connectWith(signer).estimateGas.acceptTerms(acceptor, signature, overrides);
+        const estimate = await v1.connectWith(signer).estimateGas.acceptTerms(wallet, signature, overrides);
         return estimate;
       } else if (v2) {
-        const estimate = await v2.connectWith(signer).estimateGas.storeTermsAccepted(acceptor, signature, overrides);
+        const estimate = await v2.connectWith(signer).estimateGas.storeTermsAccepted(wallet, signature, overrides);
         return estimate;
       }
     } catch (err) {
@@ -96,18 +98,19 @@ export class AcceptTermsWithSignature extends ContractFunction<
 
   async populateTransaction(
     signer: Signerish,
-    acceptor: Address,
+    acceptor: Addressish,
     signature: string,
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
     const { v1, v2 } = this.partitions;
+    const wallet = await asAddress(acceptor);
 
     try {
       if (v1) {
-        const tx = await v1.connectWith(signer).populateTransaction.acceptTerms(acceptor, signature, overrides);
+        const tx = await v1.connectWith(signer).populateTransaction.acceptTerms(wallet, signature, overrides);
         return tx;
       } else if (v2) {
-        const tx = await v2.connectWith(signer).populateTransaction.storeTermsAccepted(acceptor, signature, overrides);
+        const tx = await v2.connectWith(signer).populateTransaction.storeTermsAccepted(wallet, signature, overrides);
         return tx;
       }
     } catch (err) {

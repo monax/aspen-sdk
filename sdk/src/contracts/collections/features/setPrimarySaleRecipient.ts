@@ -42,9 +42,10 @@ export class SetPrimarySaleRecipient extends ContractFunction<
     overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const v1 = this.partition('v1');
+    const wallet = await asAddress(recipient);
 
     try {
-      const tx = await v1.connectWith(signer).setPrimarySaleRecipient(asAddress(recipient), overrides);
+      const tx = await v1.connectWith(signer).setPrimarySaleRecipient(wallet, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -53,11 +54,10 @@ export class SetPrimarySaleRecipient extends ContractFunction<
 
   async estimateGas(signer: Signerish, recipient: Addressish, overrides: WriteOverrides = {}): Promise<BigNumber> {
     const v1 = this.partition('v1');
+    const wallet = await asAddress(recipient);
 
     try {
-      const estimate = await v1
-        .connectWith(signer)
-        .estimateGas.setPrimarySaleRecipient(asAddress(recipient), overrides);
+      const estimate = await v1.connectWith(signer).estimateGas.setPrimarySaleRecipient(wallet, overrides);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -70,11 +70,10 @@ export class SetPrimarySaleRecipient extends ContractFunction<
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
     const v1 = this.partition('v1');
+    const wallet = await asAddress(recipient);
 
     try {
-      const tx = await v1
-        .connectWith(signer)
-        .populateTransaction.setPrimarySaleRecipient(asAddress(recipient), overrides);
+      const tx = await v1.connectWith(signer).populateTransaction.setPrimarySaleRecipient(wallet, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

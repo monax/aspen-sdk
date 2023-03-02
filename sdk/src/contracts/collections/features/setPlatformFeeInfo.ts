@@ -48,9 +48,10 @@ export class SetPlatformFeeInfo extends ContractFunction<
     overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const v1 = this.partition('v1');
+    const wallet = await asAddress(recipient);
 
     try {
-      const tx = await v1.connectWith(signer).setPlatformFeeInfo(asAddress(recipient), basisPoints, overrides);
+      const tx = await v1.connectWith(signer).setPlatformFeeInfo(wallet, basisPoints, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -64,11 +65,10 @@ export class SetPlatformFeeInfo extends ContractFunction<
     overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
     const v1 = this.partition('v1');
+    const wallet = await asAddress(recipient);
 
     try {
-      const estimate = await v1
-        .connectWith(signer)
-        .estimateGas.setPlatformFeeInfo(asAddress(recipient), basisPoints, overrides);
+      const estimate = await v1.connectWith(signer).estimateGas.setPlatformFeeInfo(wallet, basisPoints, overrides);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -82,11 +82,10 @@ export class SetPlatformFeeInfo extends ContractFunction<
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
     const v1 = this.partition('v1');
+    const wallet = await asAddress(recipient);
 
     try {
-      const tx = await v1
-        .connectWith(signer)
-        .populateTransaction.setPlatformFeeInfo(asAddress(recipient), basisPoints, overrides);
+      const tx = await v1.connectWith(signer).populateTransaction.setPlatformFeeInfo(wallet, basisPoints, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

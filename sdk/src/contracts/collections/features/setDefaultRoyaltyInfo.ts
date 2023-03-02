@@ -1,5 +1,5 @@
 import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { Address, CollectionContract } from '../..';
+import { Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -19,7 +19,7 @@ type SetDefaultRoyaltyInfoInterfaces = (typeof SetDefaultRoyaltyInfoInterfaces)[
 
 export type SetDefaultRoyaltyInfoCallArgs = [
   signer: Signerish,
-  royaltyRecipient: Address,
+  royaltyRecipient: Addressish,
   basisPoints: BigNumber,
   overrides?: WriteOverrides,
 ];
@@ -43,14 +43,15 @@ export class SetDefaultRoyaltyInfo extends ContractFunction<
 
   async setDefaultRoyaltyInfo(
     signer: Signerish,
-    royaltyRecipient: Address,
+    royaltyRecipient: Addressish,
     basisPoints: BigNumber,
     overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const v1 = this.partition('v1');
+    const wallet = await asAddress(royaltyRecipient);
 
     try {
-      const tx = await v1.connectWith(signer).setDefaultRoyaltyInfo(royaltyRecipient, basisPoints, overrides);
+      const tx = await v1.connectWith(signer).setDefaultRoyaltyInfo(wallet, basisPoints, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -59,16 +60,15 @@ export class SetDefaultRoyaltyInfo extends ContractFunction<
 
   async estimateGas(
     signer: Signerish,
-    royaltyRecipient: Address,
+    royaltyRecipient: Addressish,
     basisPoints: BigNumber,
     overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
     const v1 = this.partition('v1');
+    const wallet = await asAddress(royaltyRecipient);
 
     try {
-      const estimate = await v1
-        .connectWith(signer)
-        .estimateGas.setDefaultRoyaltyInfo(royaltyRecipient, basisPoints, overrides);
+      const estimate = await v1.connectWith(signer).estimateGas.setDefaultRoyaltyInfo(wallet, basisPoints, overrides);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -77,16 +77,15 @@ export class SetDefaultRoyaltyInfo extends ContractFunction<
 
   async populateTransaction(
     signer: Signerish,
-    royaltyRecipient: Address,
+    royaltyRecipient: Addressish,
     basisPoints: BigNumber,
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
     const v1 = this.partition('v1');
+    const wallet = await asAddress(royaltyRecipient);
 
     try {
-      const tx = await v1
-        .connectWith(signer)
-        .populateTransaction.setDefaultRoyaltyInfo(royaltyRecipient, basisPoints, overrides);
+      const tx = await v1.connectWith(signer).populateTransaction.setDefaultRoyaltyInfo(wallet, basisPoints, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

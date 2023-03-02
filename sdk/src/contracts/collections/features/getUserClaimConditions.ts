@@ -1,5 +1,6 @@
 import { BigNumber, BigNumberish, CallOverrides, constants } from 'ethers';
 import { Address, Addressish, asAddress, CollectionContract } from '../..';
+import { parse } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
 import { Zero } from '../number';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -163,7 +164,7 @@ export class GetUserClaimConditions extends ContractFunction<
           maxAvailableSupply: maxAvailableSupply,
           activeClaimConditionId: conditionId.toNumber(),
           activeClaimCondition: {
-            currency: condition.currency as Address,
+            currency: parse(Address, condition.currency),
             maxClaimableSupply: condition.maxClaimableSupply,
             supplyClaimed: condition.supplyClaimed,
             merkleRoot: condition.merkleRoot,
@@ -196,7 +197,7 @@ export class GetUserClaimConditions extends ContractFunction<
           maxAvailableSupply: maxAvailableSupply,
           activeClaimConditionId: conditionId.toNumber(),
           activeClaimCondition: {
-            currency: condition.currency as Address,
+            currency: parse(Address, condition.currency),
             maxClaimableSupply: condition.maxClaimableSupply,
             supplyClaimed: condition.supplyClaimed,
             merkleRoot: condition.merkleRoot,
@@ -236,7 +237,7 @@ export class GetUserClaimConditions extends ContractFunction<
           maxAvailableSupply: maxAvailableSupply,
           activeClaimConditionId: conditionId.toNumber(),
           activeClaimCondition: {
-            currency: condition.currency as Address,
+            currency: parse(Address, condition.currency),
             maxClaimableSupply: condition.maxClaimableSupply,
             supplyClaimed: condition.supplyClaimed,
             merkleRoot: condition.merkleRoot,
@@ -267,7 +268,7 @@ export class GetUserClaimConditions extends ContractFunction<
           maxAvailableSupply: maxAvailableSupply,
           activeClaimConditionId: conditionId.toNumber(),
           activeClaimCondition: {
-            currency: condition.currency as Address,
+            currency: parse(Address, condition.currency),
             maxClaimableSupply: condition.maxClaimableSupply,
             supplyClaimed: condition.supplyClaimed,
             merkleRoot: condition.merkleRoot,
@@ -360,7 +361,7 @@ export class GetUserClaimConditions extends ContractFunction<
           maxAvailableSupply: maxAvailableSupply,
           activeClaimConditionId: conditionId.toNumber(),
           activeClaimCondition: {
-            currency: condition.currency as Address,
+            currency: parse(Address, condition.currency),
             maxClaimableSupply: condition.maxClaimableSupply,
             supplyClaimed: condition.supplyClaimed,
             merkleRoot: condition.merkleRoot,
@@ -393,7 +394,7 @@ export class GetUserClaimConditions extends ContractFunction<
           maxAvailableSupply: maxAvailableSupply,
           activeClaimConditionId: conditionId.toNumber(),
           activeClaimCondition: {
-            currency: condition.currency as Address,
+            currency: parse(Address, condition.currency),
             maxClaimableSupply: condition.maxClaimableSupply,
             supplyClaimed: condition.supplyClaimed,
             merkleRoot: condition.merkleRoot,
@@ -424,7 +425,7 @@ export class GetUserClaimConditions extends ContractFunction<
           maxAvailableSupply: maxAvailableSupply,
           activeClaimConditionId: conditionId.toNumber(),
           activeClaimCondition: {
-            currency: condition.currency as Address,
+            currency: parse(Address, condition.currency),
             maxClaimableSupply: condition.maxClaimableSupply,
             supplyClaimed: condition.supplyClaimed,
             merkleRoot: condition.merkleRoot,
@@ -455,7 +456,7 @@ export class GetUserClaimConditions extends ContractFunction<
           maxAvailableSupply: maxAvailableSupply,
           activeClaimConditionId: conditionId.toNumber(),
           activeClaimCondition: {
-            currency: condition.currency as Address,
+            currency: parse(Address, condition.currency),
             maxClaimableSupply: condition.maxClaimableSupply,
             supplyClaimed: condition.supplyClaimed,
             merkleRoot: condition.merkleRoot,

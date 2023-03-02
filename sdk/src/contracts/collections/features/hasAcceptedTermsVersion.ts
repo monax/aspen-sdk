@@ -1,5 +1,5 @@
 import { BigNumberish, CallOverrides } from 'ethers';
-import { Address, CollectionContract } from '../..';
+import { Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -16,7 +16,11 @@ type HasAcceptedTermsVersionPartitions = typeof HasAcceptedTermsVersionPartition
 const HasAcceptedTermsVersionInterfaces = Object.values(HasAcceptedTermsVersionPartitions).flat();
 type HasAcceptedTermsVersionInterfaces = (typeof HasAcceptedTermsVersionInterfaces)[number];
 
-export type HasAcceptedTermsVersionCallArgs = [userAddress: Address, version: BigNumberish, overrides?: CallOverrides];
+export type HasAcceptedTermsVersionCallArgs = [
+  userAddress: Addressish,
+  version: BigNumberish,
+  overrides?: CallOverrides,
+];
 export type HasAcceptedTermsVersionResponse = boolean;
 
 export class HasAcceptedTermsVersion extends ContractFunction<
@@ -36,14 +40,15 @@ export class HasAcceptedTermsVersion extends ContractFunction<
   }
 
   async hasAcceptedTermsVersion(
-    userAddress: Address,
+    userAddress: Addressish,
     version: BigNumberish,
     overrides: CallOverrides = {},
   ): Promise<boolean> {
     const v1 = this.partition('v1');
+    const wallet = await asAddress(userAddress);
 
     try {
-      const status = await v1.connectReadOnly()['hasAcceptedTerms(address,uint8)'](userAddress, version, overrides);
+      const status = await v1.connectReadOnly()['hasAcceptedTerms(address,uint8)'](wallet, version, overrides);
       return status;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

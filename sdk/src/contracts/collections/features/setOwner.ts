@@ -1,5 +1,5 @@
 import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { Address, CollectionContract } from '../..';
+import { Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -17,7 +17,7 @@ type SetOwnerPartitions = typeof SetOwnerPartitions;
 const SetOwnerInterfaces = Object.values(SetOwnerPartitions).flat();
 type SetOwnerInterfaces = (typeof SetOwnerInterfaces)[number];
 
-export type SetOwnerCallArgs = [signer: Signerish, ownerAddress: Address, overrides?: WriteOverrides];
+export type SetOwnerCallArgs = [signer: Signerish, ownerAddress: Addressish, overrides?: WriteOverrides];
 export type SetOwnerResponse = ContractTransaction;
 
 export class SetOwner extends ContractFunction<
@@ -38,24 +38,26 @@ export class SetOwner extends ContractFunction<
 
   async setOwner(
     signer: Signerish,
-    ownerAddress: Address,
+    ownerAddress: Addressish,
     overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const v1 = this.partition('v1');
+    const owner = await asAddress(ownerAddress);
 
     try {
-      const tx = await v1.connectWith(signer).setOwner(ownerAddress, overrides);
+      const tx = await v1.connectWith(signer).setOwner(owner, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async estimateGas(signer: Signerish, ownerAddress: Address, overrides: WriteOverrides = {}): Promise<BigNumber> {
+  async estimateGas(signer: Signerish, ownerAddress: Addressish, overrides: WriteOverrides = {}): Promise<BigNumber> {
     const v1 = this.partition('v1');
+    const owner = await asAddress(ownerAddress);
 
     try {
-      const estimate = await v1.connectWith(signer).estimateGas.setOwner(ownerAddress, overrides);
+      const estimate = await v1.connectWith(signer).estimateGas.setOwner(owner, overrides);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -64,13 +66,14 @@ export class SetOwner extends ContractFunction<
 
   async populateTransaction(
     signer: Signerish,
-    ownerAddress: Address,
+    ownerAddress: Addressish,
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
     const v1 = this.partition('v1');
+    const owner = await asAddress(ownerAddress);
 
     try {
-      const tx = await v1.connectWith(signer).populateTransaction.setOwner(ownerAddress, overrides);
+      const tx = await v1.connectWith(signer).populateTransaction.setOwner(owner, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
