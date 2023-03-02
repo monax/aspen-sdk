@@ -16,13 +16,13 @@ import { FeatureFactories } from './features/feature-factories.gen';
 import { FeatureFunctionsMap } from './features/feature-functions.gen';
 import { Token } from './objects';
 
-const PROVIDER_URL = 'http://localhost:8545';
-const TESTNET: Network = {
+export const PROVIDER_URL = 'http://localhost:8545';
+export const TESTNET: Network = {
   chainId: 63,
   name: 'classicMordor',
 };
 
-const CONTRACT_ADDRESS = parse(Address, '0xB2Af02eC55E2ba5afe246Ed51b8aBdBBa5F7937C');
+export const CONTRACT_ADDRESS = parse(Address, '0xB2Af02eC55E2ba5afe246Ed51b8aBdBBa5F7937C');
 
 const NON_DROP_CONTRACT_INTERFACE_FILES = [
   'standard/IERC4906.sol',
