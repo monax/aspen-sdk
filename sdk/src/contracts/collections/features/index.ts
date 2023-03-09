@@ -32,6 +32,7 @@ export * from './name';
 export * from './owner';
 export * from './ownerOf';
 export * from './royaltyInfo';
+export * from './safeTransferFrom';
 export * from './setClaimConditions';
 export * from './setClaimPauseStatus';
 export * from './setContractUri';

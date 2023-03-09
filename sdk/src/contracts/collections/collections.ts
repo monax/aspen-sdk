@@ -46,6 +46,7 @@ import {
   owner,
   ownerOf,
   royaltyInfo,
+  safeTransferFrom,
   setClaimConditions,
   setClaimPauseStatus,
   setContractUri,
@@ -132,6 +133,7 @@ export class CollectionContract {
   readonly setPermanentTokenUri = setPermanentTokenUri(this);
   readonly getBaseURIIndices = getBaseURIIndices(this);
   readonly updateBaseUri = updateBaseUri(this);
+  readonly safeTransferFrom = safeTransferFrom(this);
 
   // Supply
   readonly totalSupply = totalSupply(this);
