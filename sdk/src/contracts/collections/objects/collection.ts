@@ -1,10 +1,17 @@
 import axios from 'axios';
 import { BigNumber } from 'ethers';
 import { CollectionContract, CollectionMetadata, CollectionMetaImageType, OperationStatus, TermsState } from '..';
-import { Addressish, asAddress, IPFS_GATEWAY_PREFIX, ZERO_ADDRESS } from '../..';
+import { Addressish, asAddress, IPFS_GATEWAY_PREFIX, ZERO_ADDRESS, ZERO_ADDRESS_BRANDED } from '../..';
 import { resolveIpfsUrl } from '../../../utils/ipfs';
 import { SdkError, SdkErrorCode } from '../errors';
 import { ContractObject } from './object';
+
+export const EMPTY_TERMS_STATE: TermsState = {
+  termsActivated: false,
+  termsLink: null,
+  termsAccepted: false,
+  userAddress: ZERO_ADDRESS_BRANDED,
+};
 
 export class Collection extends ContractObject {
   public constructor(protected readonly base: CollectionContract) {
@@ -50,12 +57,7 @@ export class Collection extends ContractObject {
         }
       }
 
-      return {
-        termsActivated: false,
-        termsLink: null,
-        termsAccepted: false,
-        userAddress,
-      };
+      return { ...EMPTY_TERMS_STATE, userAddress };
     });
   }
 
