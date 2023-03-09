@@ -19,16 +19,16 @@ type SafeTransferFromPartitions = typeof SafeTransferFromPartitions;
 const SafeTransferFromInterfaces = Object.values(SafeTransferFromPartitions).flat();
 type SafeTransferFromInterfaces = (typeof SafeTransferFromInterfaces)[number];
 
-export type SafeTransferFromCallArgs = [
-  signer: Signerish,
-  fromAddress: Addressish,
-  toAddress: Addressish,
-  tokenId: BigNumberish,
-  bytes: BytesLike,
-  amount?: BigNumberish,
-  overrides?: WriteOverrides,
-];
+export type SafeTransferFromCallArgs = [signer: Signerish, args: SafeTransferFromArgs, overrides?: WriteOverrides];
 export type SafeTransferFromResponse = ContractTransaction;
+
+export interface SafeTransferFromArgs {
+  fromAddress: Addressish;
+  toAddress: Addressish;
+  tokenId: BigNumberish;
+  bytes: BytesLike;
+  amount?: BigNumberish;
+}
 
 export class SafeTransferFrom extends ContractFunction<
   SafeTransferFromInterfaces,
@@ -48,111 +48,108 @@ export class SafeTransferFrom extends ContractFunction<
 
   async safeTransferFrom(
     signer: Signerish,
-    fromAddress: Addressish,
-    toAddress: Addressish,
-    tokenId: BigNumberish,
-    bytes: BytesLike,
-    amount?: BigNumberish,
+    { fromAddress, toAddress, tokenId, bytes, amount }: SafeTransferFromArgs,
     overrides?: WriteOverrides,
   ): Promise<ContractTransaction> {
+    const { nft, sft } = this.partitions;
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
       switch (this.base.tokenStandard) {
-        case 'ERC1155': {
-          const sft = this.base.assumeFeature('standard/IERC1155.sol:IERC1155SupplyV2');
-          const tx = sft.connectWith(signer).safeTransferFrom(from, to, tokenId, amount || 0, bytes, overrides);
-          return tx;
-        }
-        case 'ERC721': {
-          const nft = this.base.assumeFeature('standard/IERC721.sol:IERC721V2');
-          const tx = nft
-            .connectWith(signer)
-            ['safeTransferFrom(address,address,uint256,bytes)'](from, to, tokenId, bytes, overrides);
-          return tx;
-        }
+        case 'ERC1155':
+          if (sft) {
+            const tx = sft.connectWith(signer).safeTransferFrom(from, to, tokenId, amount || 0, bytes, overrides);
+            return tx;
+          }
+        case 'ERC721':
+          if (nft) {
+            const tx = nft
+              .connectWith(signer)
+              ['safeTransferFrom(address,address,uint256,bytes)'](from, to, tokenId, bytes, overrides);
+            return tx;
+          }
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
+
+    this.notSupported();
   }
 
   async estimateGas(
     signer: Signerish,
-    fromAddress: Addressish,
-    toAddress: Addressish,
-    tokenId: BigNumberish,
-    bytes: BytesLike,
-    amount?: BigNumberish,
+    { fromAddress, toAddress, tokenId, bytes, amount }: SafeTransferFromArgs,
     overrides?: WriteOverrides,
   ) {
+    const { nft, sft } = this.partitions;
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
       switch (this.base.tokenStandard) {
-        case 'ERC1155': {
-          const sft = this.base.assumeFeature('standard/IERC1155.sol:IERC1155SupplyV2');
-          const tx = sft
-            .connectWith(signer)
-            .estimateGas.safeTransferFrom(from, to, tokenId, amount || 0, bytes, overrides);
-          return tx;
-        }
-        case 'ERC721': {
-          const nft = this.base.assumeFeature('standard/IERC721.sol:IERC721V2');
-          const tx = nft
-            .connectWith(signer)
-            .estimateGas['safeTransferFrom(address,address,uint256,bytes)'](from, to, tokenId, bytes, overrides);
-          return tx;
-        }
+        case 'ERC1155':
+          if (sft) {
+            const tx = sft
+              .connectWith(signer)
+              .estimateGas.safeTransferFrom(from, to, tokenId, amount || 0, bytes, overrides);
+            return tx;
+          }
+        case 'ERC721':
+          if (nft) {
+            const tx = nft
+              .connectWith(signer)
+              .estimateGas['safeTransferFrom(address,address,uint256,bytes)'](from, to, tokenId, bytes, overrides);
+            return tx;
+          }
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
+
+    this.notSupported();
   }
 
   async populateTransaction(
     signer: Signerish,
-    fromAddress: Addressish,
-    toAddress: Addressish,
-    tokenId: BigNumberish,
-    bytes: BytesLike,
-    amount?: BigNumberish,
+    { fromAddress, toAddress, tokenId, bytes, amount }: SafeTransferFromArgs,
     overrides?: WriteOverrides,
   ) {
+    const { nft, sft } = this.partitions;
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
       switch (this.base.tokenStandard) {
-        case 'ERC1155': {
-          const sft = this.base.assumeFeature('standard/IERC1155.sol:IERC1155SupplyV2');
-          const tx = sft
-            .connectWith(signer)
-            .populateTransaction.safeTransferFrom(from, to, tokenId, amount || 0, bytes, overrides);
-          return tx;
-        }
-        case 'ERC721': {
-          const nft = this.base.assumeFeature('standard/IERC721.sol:IERC721V2');
-          const tx = nft
-            .connectWith(signer)
-            .populateTransaction['safeTransferFrom(address,address,uint256,bytes)'](
-              from,
-              to,
-              tokenId,
-              bytes,
-              overrides,
-            );
-          return tx;
-        }
+        case 'ERC1155':
+          if (sft) {
+            const tx = sft
+              .connectWith(signer)
+              .populateTransaction.safeTransferFrom(from, to, tokenId, amount || 0, bytes, overrides);
+            return tx;
+          }
+        case 'ERC721':
+          if (nft) {
+            const tx = nft
+              .connectWith(signer)
+              .populateTransaction['safeTransferFrom(address,address,uint256,bytes)'](
+                from,
+                to,
+                tokenId,
+                bytes,
+                overrides,
+              );
+            return tx;
+          }
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
+
+    this.notSupported();
   }
 }
 
