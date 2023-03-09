@@ -75,6 +75,7 @@ export const ContractFunctionIds = [
   'setPermanentTokenUri',
   'getBaseURIIndices',
   'updateBaseUri',
+  'safeTransferFrom',
 
   // Supply
   'totalSupply',

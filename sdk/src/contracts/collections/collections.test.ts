@@ -105,8 +105,6 @@ describe('Collections - static tests', () => {
       'burnBatch(address,uint256[],uint256[])[]',
       'transferFrom(address,address,uint256)[]',
       'safeTransferFrom(address,address,uint256)+[]',
-      'safeTransferFrom(address,address,uint256,bytes)+[]',
-      'safeTransferFrom(address,address,uint256,uint256,bytes)[]',
       'safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)[]',
     ];
 
