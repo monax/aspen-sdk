@@ -22,13 +22,13 @@ type SafeTransferFromInterfaces = (typeof SafeTransferFromInterfaces)[number];
 export type SafeTransferFromCallArgs = [signer: Signerish, args: SafeTransferFromArgs, overrides?: WriteOverrides];
 export type SafeTransferFromResponse = ContractTransaction;
 
-export interface SafeTransferFromArgs {
+export type SafeTransferFromArgs = {
   fromAddress: Addressish;
   toAddress: Addressish;
   tokenId: BigNumberish;
   bytes: BytesLike;
   amount?: BigNumberish;
-}
+};
 
 export class SafeTransferFrom extends ContractFunction<
   SafeTransferFromInterfaces,
@@ -63,6 +63,7 @@ export class SafeTransferFrom extends ContractFunction<
             const tx = sft.connectWith(signer).safeTransferFrom(from, to, tokenId, amount || 0, bytes, overrides);
             return tx;
           }
+          break;
         case 'ERC721':
           if (nft) {
             const tx = nft
@@ -70,6 +71,7 @@ export class SafeTransferFrom extends ContractFunction<
               ['safeTransferFrom(address,address,uint256,bytes)'](from, to, tokenId, bytes, overrides);
             return tx;
           }
+          break;
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -97,6 +99,7 @@ export class SafeTransferFrom extends ContractFunction<
               .estimateGas.safeTransferFrom(from, to, tokenId, amount || 0, bytes, overrides);
             return tx;
           }
+          break;
         case 'ERC721':
           if (nft) {
             const tx = nft
@@ -104,6 +107,7 @@ export class SafeTransferFrom extends ContractFunction<
               .estimateGas['safeTransferFrom(address,address,uint256,bytes)'](from, to, tokenId, bytes, overrides);
             return tx;
           }
+          break;
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -131,6 +135,7 @@ export class SafeTransferFrom extends ContractFunction<
               .populateTransaction.safeTransferFrom(from, to, tokenId, amount || 0, bytes, overrides);
             return tx;
           }
+          break;
         case 'ERC721':
           if (nft) {
             const tx = nft
@@ -144,6 +149,7 @@ export class SafeTransferFrom extends ContractFunction<
               );
             return tx;
           }
+          break;
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
