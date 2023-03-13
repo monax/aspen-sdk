@@ -52,6 +52,7 @@ import {
   setContractUri,
   setDefaultRoyaltyInfo,
   setMaxTotalSupply,
+  setMaxWalletClaimCount,
   setOperatorFiltererStatus,
   setOwner,
   setPermanentTokenUri,
@@ -152,6 +153,7 @@ export class CollectionContract {
   readonly setClaimConditions = setClaimConditions(this);
   readonly getClaimPauseStatus = getClaimPauseStatus(this);
   readonly setClaimPauseStatus = setClaimPauseStatus(this);
+  readonly setMaxWalletClaimCount = setMaxWalletClaimCount(this);
 
   // Burn
   readonly burn = burn(this);

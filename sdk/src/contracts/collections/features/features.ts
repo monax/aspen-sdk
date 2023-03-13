@@ -94,6 +94,7 @@ export const ContractFunctionIds = [
   'setClaimConditions',
   'getClaimPauseStatus',
   'setClaimPauseStatus',
+  'setMaxWalletClaimCount',
 
   // Burn
   'burn',
