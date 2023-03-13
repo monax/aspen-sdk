@@ -38,6 +38,7 @@ export * from './setClaimPauseStatus';
 export * from './setContractUri';
 export * from './setDefaultRoyaltyInfo';
 export * from './setMaxTotalSupply';
+export * from './setMaxWalletClaimCount';
 export * from './setOperatorFiltererStatus';
 export * from './setOwner';
 export * from './setPermanentTokenUri';
