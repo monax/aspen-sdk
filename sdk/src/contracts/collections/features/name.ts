@@ -34,9 +34,9 @@ export class Name extends ContractFunction<NameInterfaces, NamePartitions, NameC
 
   async name(overrides: CallOverrides = {}): Promise<string> {
     try {
-      const abi = ['function name() external returns (string)'];
+      const abi = ['function name() external view returns (string)'];
       const contract = new ethers.Contract(this.base.address, abi, this.base.provider);
-      const name = await contract.name(overrides);
+      const name = String(await contract.name(overrides));
       return name;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
