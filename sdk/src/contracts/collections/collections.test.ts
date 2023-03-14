@@ -249,4 +249,21 @@ describe('Collections - static tests', () => {
     provider.addMock('call', supply);
     expect(await new Token(erc1155, 0).getUri()).toBe(ipfsUri);
   });
+
+  test('ERC721 Contract name and symbol', async () => {
+    const provider = new MockJsonRpcProvider();
+    const erc721 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, ['standard/IERC721.sol:IERC721V2']);
+
+    const contractName = 'Aspen T&Cs Demo';
+    const contractSymbol = 'ATD';
+    const iface = erc721.assumeFeature('standard/IERC721.sol:IERC721V2').interface;
+
+    const nameResponse = iface.encodeFunctionResult(iface.functions['name()'], [contractName]);
+    provider.addMock('call', nameResponse);
+    expect(await erc721.name()).toBe(contractName);
+
+    const symbolResponse = iface.encodeFunctionResult(iface.functions['symbol()'], [contractSymbol]);
+    provider.addMock('call', symbolResponse);
+    expect(await erc721.symbol()).toBe(contractSymbol);
+  });
 });

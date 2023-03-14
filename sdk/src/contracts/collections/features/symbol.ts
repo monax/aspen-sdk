@@ -34,9 +34,9 @@ export class Symbol extends ContractFunction<SymbolInterfaces, SymbolPartitions,
 
   async symbol(overrides: CallOverrides = {}): Promise<string> {
     try {
-      const abi = ['function symbol() external returns (string)'];
+      const abi = ['function symbol() external view returns (string)'];
       const contract = new ethers.Contract(this.base.address, abi, this.base.provider);
-      const symbol = await contract.symbol(overrides);
+      const symbol = String(await contract.symbol(overrides));
       return symbol;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
