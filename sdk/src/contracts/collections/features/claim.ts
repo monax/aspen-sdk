@@ -207,21 +207,16 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     }
   }
 
-  async populateTransaction(
-    signer: Signerish,
-    args: ClaimArgs,
-    overrides: PayableOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction(args: ClaimArgs, overrides: PayableOverrides = {}): Promise<PopulatedTransaction> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return this.populateTransactionERC1155(signer, args, overrides);
+        return this.populateTransactionERC1155(args, overrides);
       case 'ERC721':
-        return this.populateTransactionERC721(signer, args, overrides);
+        return this.populateTransactionERC721(args, overrides);
     }
   }
 
   protected async populateTransactionERC1155(
-    signer: Signerish,
     { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction }: ClaimArgs,
     overrides: PayableOverrides = {},
   ): Promise<PopulatedTransaction> {
@@ -235,17 +230,19 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
         overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
-      const iSft = sft.connectWith(signer);
-      return await iSft.populateTransaction.claim(
-        wallet,
-        tokenId,
-        quantity,
-        tokenAddress,
-        pricePerToken,
-        proofs,
-        proofMaxQuantityPerTransaction,
-        overrides,
-      );
+      const tx = await sft
+        .connectReadOnly()
+        .populateTransaction.claim(
+          wallet,
+          tokenId,
+          quantity,
+          tokenAddress,
+          pricePerToken,
+          proofs,
+          proofMaxQuantityPerTransaction,
+          overrides,
+        );
+      return tx;
     } catch (err) {
       const args = { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction };
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
@@ -253,7 +250,6 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
   }
 
   protected async populateTransactionERC721(
-    signer: Signerish,
     { receiver, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction }: ClaimArgs,
     overrides: PayableOverrides = {},
   ): Promise<PopulatedTransaction> {
@@ -266,16 +262,18 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
         overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
-      const iNft = nft.connectWith(signer);
-      return await iNft.populateTransaction.claim(
-        wallet,
-        quantity,
-        tokenAddress,
-        pricePerToken,
-        proofs,
-        proofMaxQuantityPerTransaction,
-        overrides,
-      );
+      const tx = await nft
+        .connectReadOnly()
+        .populateTransaction.claim(
+          wallet,
+          quantity,
+          tokenAddress,
+          pricePerToken,
+          proofs,
+          proofMaxQuantityPerTransaction,
+          overrides,
+        );
+      return tx;
     } catch (err) {
       const args = { receiver, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction };
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);

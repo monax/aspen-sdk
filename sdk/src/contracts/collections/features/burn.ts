@@ -100,7 +100,6 @@ export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnC
   }
 
   async populateTransaction(
-    signer: Signerish,
     tokenId: BigNumberish,
     wallet?: Addressish,
     amount?: BigNumberish,
@@ -113,13 +112,13 @@ export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnC
         case 'ERC1155': {
           const sft = this.base.assumeFeature('standard/IERC1155.sol:IERC1155SupplyV2');
           const account = await asAddress(wallet || '');
-          const tx = sft.connectWith(signer).populateTransaction.burn(account, tokenId, amount || 0);
+          const tx = sft.connectReadOnly().populateTransaction.burn(account, tokenId, amount || 0);
           return tx;
         }
 
         case 'ERC721': {
           const nft = this.base.assumeFeature('standard/IERC721.sol:IERC721V2');
-          const tx = nft.connectWith(signer).populateTransaction.burn(tokenId, overrides);
+          const tx = nft.connectReadOnly().populateTransaction.burn(tokenId, overrides);
           return tx;
         }
       }

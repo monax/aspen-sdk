@@ -74,7 +74,6 @@ export class SetTokenNameAndSymbol extends ContractFunction<
   }
 
   async populateTransaction(
-    signer: Signerish,
     name: string,
     symbol: string,
     overrides: WriteOverrides = {},
@@ -82,7 +81,7 @@ export class SetTokenNameAndSymbol extends ContractFunction<
     const v1 = this.partition('v1');
 
     try {
-      const tx = v1.connectWith(signer).populateTransaction.setTokenNameAndSymbol(name, symbol, overrides);
+      const tx = v1.connectReadOnly().populateTransaction.setTokenNameAndSymbol(name, symbol, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

@@ -74,7 +74,6 @@ export class UpdateBaseUri extends ContractFunction<
   }
 
   async populateTransaction(
-    signer: Signerish,
     baseURIIndex: BigNumberish,
     baseURI: string,
     overrides: WriteOverrides = {},
@@ -82,7 +81,7 @@ export class UpdateBaseUri extends ContractFunction<
     const v1 = this.partition('v1');
 
     try {
-      const tx = await v1.connectWith(signer).populateTransaction.updateBaseURI(baseURIIndex, baseURI, overrides);
+      const tx = await v1.connectReadOnly().populateTransaction.updateBaseURI(baseURIIndex, baseURI, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

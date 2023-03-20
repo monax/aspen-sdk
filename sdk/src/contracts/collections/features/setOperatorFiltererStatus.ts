@@ -67,15 +67,11 @@ export class SetOperatorFiltererStatus extends ContractFunction<
     }
   }
 
-  async populateTransaction(
-    signer: Signerish,
-    enabled: boolean,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction(enabled: boolean, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
     const v1 = this.partition('v1');
 
     try {
-      const tx = await v1.connectWith(signer).populateTransaction.setOperatorFiltererStatus(enabled, overrides);
+      const tx = await v1.connectReadOnly().populateTransaction.setOperatorFiltererStatus(enabled, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

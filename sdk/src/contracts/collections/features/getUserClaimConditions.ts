@@ -22,6 +22,8 @@ const GetUserClaimConditionsFunctions = {
     'getActiveClaimConditions()[(uint256,uint256,uint256,uint256,uint256,bytes32,uint256,address,bytes32),uint256,uint256,uint256,uint256,bool]',
   userNftV1: 'getUserClaimConditions(address)[uint256,uint256,uint256,uint256]',
   userNftV2: 'getUserClaimConditions(address)[uint256,uint256,uint256,uint256,uint256]',
+  userNftV3:
+    'getUserClaimConditions(address)[(uint256,uint256,uint256,uint256,uint256,bytes32,uint256,address,bytes32),uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool]',
   // SFT
   activeSftV1:
     'getActiveClaimConditions(uint256)[(uint256,uint256,uint256,uint256,uint256,bytes32,uint256,address),uint256,uint256,uint256]',
@@ -33,6 +35,8 @@ const GetUserClaimConditionsFunctions = {
     'getActiveClaimConditions(uint256)[(uint256,uint256,uint256,uint256,uint256,bytes32,uint256,address,bytes32),uint256,uint256,uint256,uint256,bool]',
   userSftV1: 'getUserClaimConditions(uint256,address)[uint256,uint256,uint256,uint256]',
   userSftV2: 'getUserClaimConditions(uint256,address)[uint256,uint256,uint256,uint256,uint256]',
+  userSftV3:
+    'getUserClaimConditions(uint256,address)[(uint256,uint256,uint256,uint256,uint256,bytes32,uint256,address,bytes32),uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool]',
 } as const;
 
 const GetUserClaimConditionsPartitions = {
@@ -43,6 +47,7 @@ const GetUserClaimConditionsPartitions = {
   activeNftV4: [...FeatureFunctionsMap[GetUserClaimConditionsFunctions.activeNftV4].drop],
   userNftV1: [...FeatureFunctionsMap[GetUserClaimConditionsFunctions.userNftV1].drop],
   userNftV2: [...FeatureFunctionsMap[GetUserClaimConditionsFunctions.userNftV2].drop],
+  userNftV3: [...FeatureFunctionsMap[GetUserClaimConditionsFunctions.userNftV3].drop],
 
   // SFT conditions
   activeSftV1: [...FeatureFunctionsMap[GetUserClaimConditionsFunctions.activeSftV1].drop],
@@ -51,6 +56,7 @@ const GetUserClaimConditionsPartitions = {
   activeSftV4: [...FeatureFunctionsMap[GetUserClaimConditionsFunctions.activeSftV4].drop],
   userSftV1: [...FeatureFunctionsMap[GetUserClaimConditionsFunctions.userSftV1].drop],
   userSftV2: [...FeatureFunctionsMap[GetUserClaimConditionsFunctions.userSftV2].drop],
+  userSftV3: [...FeatureFunctionsMap[GetUserClaimConditionsFunctions.userSftV3].drop],
 };
 type GetUserClaimConditionsPartitions = typeof GetUserClaimConditionsPartitions;
 
@@ -110,10 +116,15 @@ export class GetUserClaimConditions extends ContractFunction<
     overrides: CallOverrides = {},
   ): Promise<UserClaimConditions> {
     const address = await asAddress(userAddress);
+    const { userNftV3, userSftV3 } = this.partitions;
 
     switch (this.base.tokenStandard) {
       case 'ERC1155': {
         tokenId = this.base.requireTokenId(tokenId, this.functionName);
+
+        if (userSftV3) {
+          return await this.getForUserERC1155V2(address, tokenId, overrides);
+        }
 
         const [activeConditions, userConditions] = await Promise.all([
           this.getActiveERC1155(tokenId, overrides),
@@ -126,6 +137,10 @@ export class GetUserClaimConditions extends ContractFunction<
 
       case 'ERC721': {
         this.base.rejectTokenId(tokenId, this.functionName);
+
+        if (userNftV3) {
+          return await this.getForUserERC721V2(address, overrides);
+        }
 
         const [activeConditions, userConditions] = await Promise.all([
           this.getActiveERC721(overrides),
@@ -474,6 +489,127 @@ export class GetUserClaimConditions extends ContractFunction<
     }
 
     this.notSupported();
+  }
+
+  protected async getForUserERC721V2(
+    userAddress: Address,
+    overrides: CallOverrides = {},
+  ): Promise<UserClaimConditions> {
+    const userNftV3 = this.partition('userNftV3');
+
+    const {
+      condition,
+      conditionId,
+      walletMaxClaimCount,
+      tokenSupply,
+      maxTotalSupply,
+      walletClaimedCount,
+      walletClaimedCountInPhase,
+      lastClaimTimestamp,
+      nextValidClaimTimestamp,
+      isClaimPaused,
+    } = await userNftV3.connectReadOnly().getUserClaimConditions(userAddress, overrides);
+
+    const {
+      startTimestamp,
+      maxClaimableSupply,
+      supplyClaimed,
+      quantityLimitPerTransaction,
+      waitTimeInSecondsBetweenClaims,
+      merkleRoot,
+      pricePerToken,
+      currency,
+      phaseId,
+    } = condition;
+
+    const remainingSupply = maxTotalSupply.eq(0) ? SUPPLY_THRESHOLD : maxTotalSupply.sub(tokenSupply);
+    const claimableSupply = condition.maxClaimableSupply.eq(0)
+      ? SUPPLY_THRESHOLD
+      : condition.maxClaimableSupply.sub(condition.supplyClaimed);
+    const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
+
+    return {
+      startTimestamp: startTimestamp.toNumber(),
+      waitTimeInSecondsBetweenClaims: waitTimeInSecondsBetweenClaims.toNumber(),
+      currency: parse(Address, currency),
+      maxClaimableSupply,
+      supplyClaimed,
+      quantityLimitPerTransaction,
+      merkleRoot,
+      pricePerToken,
+      phaseId,
+      tokenSupply,
+      maxTotalSupply,
+      maxAvailableSupply,
+      maxWalletClaimCount: walletMaxClaimCount,
+      activeClaimConditionId: conditionId.toNumber(),
+      walletClaimCount: walletClaimedCount,
+      walletClaimedCountInPhase,
+      lastClaimTimestamp: lastClaimTimestamp.toNumber(),
+      nextClaimTimestamp: nextValidClaimTimestamp.toNumber(),
+      isClaimingPaused: isClaimPaused,
+    };
+  }
+
+  protected async getForUserERC1155V2(
+    userAddress: Address,
+    tokenId: BigNumber,
+    overrides: CallOverrides = {},
+  ): Promise<UserClaimConditions> {
+    const userSftV3 = this.partition('userSftV3');
+
+    const {
+      condition,
+      conditionId,
+      walletMaxClaimCount,
+      tokenSupply,
+      maxTotalSupply,
+      walletClaimedCount,
+      walletClaimedCountInPhase,
+      lastClaimTimestamp,
+      nextValidClaimTimestamp,
+      isClaimPaused,
+    } = await userSftV3.connectReadOnly().getUserClaimConditions(tokenId, userAddress, overrides);
+
+    const {
+      startTimestamp,
+      maxClaimableSupply,
+      supplyClaimed,
+      quantityLimitPerTransaction,
+      waitTimeInSecondsBetweenClaims,
+      merkleRoot,
+      pricePerToken,
+      currency,
+      phaseId,
+    } = condition;
+
+    const remainingSupply = maxTotalSupply.eq(0) ? SUPPLY_THRESHOLD : maxTotalSupply.sub(tokenSupply);
+    const claimableSupply = condition.maxClaimableSupply.eq(0)
+      ? SUPPLY_THRESHOLD
+      : condition.maxClaimableSupply.sub(condition.supplyClaimed);
+    const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
+
+    return {
+      startTimestamp: startTimestamp.toNumber(),
+      waitTimeInSecondsBetweenClaims: waitTimeInSecondsBetweenClaims.toNumber(),
+      currency: parse(Address, currency),
+      maxClaimableSupply,
+      supplyClaimed,
+      quantityLimitPerTransaction,
+      merkleRoot,
+      pricePerToken,
+      phaseId,
+      tokenSupply,
+      maxTotalSupply,
+      maxAvailableSupply,
+      maxWalletClaimCount: walletMaxClaimCount,
+      activeClaimConditionId: conditionId.toNumber(),
+      walletClaimCount: walletClaimedCount,
+      walletClaimedCountInPhase,
+      lastClaimTimestamp: lastClaimTimestamp.toNumber(),
+      nextClaimTimestamp: nextValidClaimTimestamp.toNumber(),
+      isClaimingPaused: isClaimPaused,
+    };
   }
 
   protected async getForUserERC1155(

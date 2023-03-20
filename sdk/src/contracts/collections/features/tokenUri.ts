@@ -10,7 +10,7 @@ const TokenUriFunctions = {
 } as const;
 
 const TokenUriPartitions = {
-  // @todo - waiting on manifest update
+  // TODO - waiting on manifest update
   nft: [...FeatureFunctionsMap[TokenUriFunctions.nft].drop],
   sft: [...FeatureFunctionsMap[TokenUriFunctions.sft].drop],
   // some SFT contracts don't explicitly state support for metadata interfaces

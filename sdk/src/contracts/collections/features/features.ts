@@ -89,12 +89,15 @@ export const ContractFunctionIds = [
   // Claim
   'claim',
   'verifyClaim',
+  'getClaimData',
+  'getClaimConditions',
   'getClaimConditionById',
   'getUserClaimConditions',
   'setClaimConditions',
   'getClaimPauseStatus',
   'setClaimPauseStatus',
   'setMaxWalletClaimCount',
+  'setWalletClaimCount',
 
   // Burn
   'burn',
@@ -111,8 +114,8 @@ export const ContractFunctionIds = [
   'setRoyaltyInfoForToken',
 
   // Platform fee
-  'getPlatformFeeInfo',
-  'setPlatformFeeInfo',
+  'getPlatformFees',
+  'setPlatformFees',
 
   // Royalties
   'getPrimarySaleRecipient',

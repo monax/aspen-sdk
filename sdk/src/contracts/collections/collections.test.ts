@@ -38,6 +38,15 @@ const NON_DROP_CONTRACT_INTERFACE_FILES = [
   'subscriptions/IPaymentNotary.sol',
   'agreement/IAgreementsRegistry.sol',
   'baseURI/ICedarUpgradeBaseURI.sol',
+  // Config
+  'config/IOperatorFilterersConfig.sol',
+  // Error interfaces
+  'errors/ICoreErrors.sol',
+  'errors/IDropErrors.sol',
+  'errors/IPaymentsErrors.sol',
+  'errors/ISplitPaymentErrors.sol',
+  'errors/ITermsErrors.sol',
+  'errors/IUUPSUpgradeableErrors.sol',
 ];
 
 const isDropInterface = (iface: FeatureInterfaceId): boolean => {
@@ -95,7 +104,7 @@ describe('Collections - static tests', () => {
       .map(Object.values)
       .flat();
 
-    // @todo - those need implementing
+    // TODO - those need implementing
     const notImplementedStandardFunctions: FeatureFunctionId[] = [
       'balanceOfBatch(address[],uint256[])[uint256[]]',
       'isApprovedForAll(address,address)[bool]',
@@ -106,6 +115,20 @@ describe('Collections - static tests', () => {
       'transferFrom(address,address,uint256)[]',
       'safeTransferFrom(address,address,uint256)+[]',
       'safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)[]',
+      // functions added in V2
+      'addOperatorFilterer((bytes32,string,address,address))[]',
+      'getOperatorFilterer(bytes32)[(bytes32,string,address,address)]',
+      'getOperatorFiltererIds()[bytes32[]]',
+      'getOperatorFiltererOrDie(bytes32)[(bytes32,string,address,address)]',
+      'issueWithinPhase(address,uint256)[]',
+      'issueWithinPhase(address,uint256,uint256)[]',
+      'issueWithinPhaseWithTokenURI(address,string)[]',
+      'operatorRestriction()[bool]',
+      'pay(address,bytes32,address,uint256)[]',
+      'pay(string,address,bytes32,address,uint256)[]',
+      'setOperatorFilterer(bytes32)[]',
+      'setOperatorRestriction(bool)[]',
+      'setSaleRecipientForToken(uint256,address)[]',
     ];
 
     const missingFunctions = Object.keys(FeatureFunctionsMap).filter(
@@ -144,7 +167,17 @@ describe('Collections - static tests', () => {
     const allImplementedFeatures = Object.values(erc721.getFunctionsProps('handledFeatures')).flat();
 
     // The following interfaces don't relate to any drop contract and so they don't need implementing
-    const nonDropContractFeatures: FeatureInterfaceId[] = ['ownable/IOwnable.sol:IOwnableEventV0'];
+    const nonDropContractFeatures: FeatureInterfaceId[] = [
+      'ownable/IOwnable.sol:IOwnableEventV0',
+      // TODO - the following are temporarily disabled, until respective functions are implemented
+      'config/IOperatorFilterersConfig.sol:IOperatorFiltererConfigV0',
+      'payments/IPaymentNotary.sol:IPaymentNotaryV0',
+      'payments/IPaymentNotary.sol:IPaymentNotaryV1',
+      'primarysale/IPrimarySale.sol:IRestrictedSFTPrimarySaleV0',
+      'royalties/IRoyalty.sol:IPublicOperatorFilterToggleV0',
+      'royalties/IRoyalty.sol:IRestrictedOperatorFilterToggleV0',
+      'royalties/IRoyalty.sol:IRestrictedOperatorFiltererV0',
+    ];
 
     const missingFeatures = Object.keys(FeatureFactories).filter(
       (f) =>

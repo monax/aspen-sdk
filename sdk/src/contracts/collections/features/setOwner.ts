@@ -64,16 +64,12 @@ export class SetOwner extends ContractFunction<
     }
   }
 
-  async populateTransaction(
-    signer: Signerish,
-    ownerAddress: Addressish,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction(ownerAddress: Addressish, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
     const v1 = this.partition('v1');
     const owner = await asAddress(ownerAddress);
 
     try {
-      const tx = await v1.connectWith(signer).populateTransaction.setOwner(owner, overrides);
+      const tx = await v1.connectReadOnly().populateTransaction.setOwner(owner, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

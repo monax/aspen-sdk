@@ -58,15 +58,11 @@ export class SetContractUri extends ContractFunction<
     }
   }
 
-  async populateTransaction(
-    signer: Signerish,
-    uri: string,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction(uri: string, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
     const v1 = this.partition('v1');
 
     try {
-      const tx = await v1.connectWith(signer).populateTransaction.setContractURI(uri, overrides);
+      const tx = await v1.connectReadOnly().populateTransaction.setContractURI(uri, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { uri });

@@ -1,12 +1,18 @@
-import { BigNumber, BigNumberish, Contract, ContractTransaction, PopulatedTransaction } from 'ethers';
+import { BigNumber, BigNumberish, ContractTransaction, PopulatedTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
+import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
 
-const SetMaxWalletClaimCountFunctions = {} as const;
+const SetMaxWalletClaimCountFunctions = {
+  nft: 'setMaxWalletClaimCount(uint256)[]',
+  sft: 'setMaxWalletClaimCount(uint256,uint256)[]',
+} as const;
 
 const SetMaxWalletClaimCountPartitions = {
+  nft: [...FeatureFunctionsMap[SetMaxWalletClaimCountFunctions.nft].drop],
+  sft: [...FeatureFunctionsMap[SetMaxWalletClaimCountFunctions.sft].drop],
   catchAll: CatchAllInterfaces,
 };
 type SetMaxWalletClaimCountPartitions = typeof SetMaxWalletClaimCountPartitions;
@@ -44,21 +50,21 @@ export class SetMaxWalletClaimCount extends ContractFunction<
     tokenId: BigNumberish | null = null,
     overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
+    const { nft, sft } = this.partitions;
+
     try {
       switch (this.base.tokenStandard) {
         case 'ERC1155': {
           tokenId = this.base.requireTokenId(tokenId, this.functionName);
-          const abi = ['function setMaxWalletClaimCount(uint256 _tokenId, uint256 _count)'];
-          const contract = new Contract(this.base.address, abi, signer);
-          const tx = await contract.setMaxWalletClaimCount(tokenId, maxWalletClaimCount, overrides);
+          const iSft = sft ?? this.base.assumeFeature('issuance/ISFTClaimCount.sol:IRestrictedSFTClaimCountV0');
+          const tx = await iSft.connectWith(signer).setMaxWalletClaimCount(tokenId, maxWalletClaimCount, overrides);
           return tx;
         }
 
         case 'ERC721': {
           this.base.rejectTokenId(tokenId, this.functionName);
-          const abi = ['function setMaxWalletClaimCount(uint256 _count)'];
-          const contract = new Contract(this.base.address, abi, signer);
-          const tx = await contract.setMaxWalletClaimCount(maxWalletClaimCount, overrides);
+          const iNft = nft ?? this.base.assumeFeature('issuance/INFTClaimCount.sol:IRestrictedNFTClaimCountV0');
+          const tx = iNft.connectWith(signer).setMaxWalletClaimCount(maxWalletClaimCount, overrides);
           return tx;
         }
       }
@@ -73,21 +79,25 @@ export class SetMaxWalletClaimCount extends ContractFunction<
     tokenId: BigNumberish | null = null,
     overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
+    const { nft, sft } = this.partitions;
+
     try {
       switch (this.base.tokenStandard) {
         case 'ERC1155': {
           tokenId = this.base.requireTokenId(tokenId, this.functionName);
-          const abi = ['function setMaxWalletClaimCount(uint256 _tokenId, uint256 _count)'];
-          const contract = new Contract(this.base.address, abi, signer);
-          const estimate = await contract.estimateGas.setMaxWalletClaimCount(tokenId, maxWalletClaimCount, overrides);
+          const iSft = sft ?? this.base.assumeFeature('issuance/ISFTClaimCount.sol:IRestrictedSFTClaimCountV0');
+          const estimate = await iSft
+            .connectWith(signer)
+            .estimateGas.setMaxWalletClaimCount(tokenId, maxWalletClaimCount, overrides);
           return estimate;
         }
 
         case 'ERC721': {
           this.base.rejectTokenId(tokenId, this.functionName);
-          const abi = ['function setMaxWalletClaimCount(uint256 _count)'];
-          const contract = new Contract(this.base.address, abi, signer);
-          const estimate = await contract.estimateGas.setMaxWalletClaimCount(maxWalletClaimCount, overrides);
+          const iNft = nft ?? this.base.assumeFeature('issuance/INFTClaimCount.sol:IRestrictedNFTClaimCountV0');
+          const estimate = await iNft
+            .connectWith(signer)
+            .estimateGas.setMaxWalletClaimCount(maxWalletClaimCount, overrides);
           return estimate;
         }
       }
@@ -97,31 +107,30 @@ export class SetMaxWalletClaimCount extends ContractFunction<
   }
 
   async populateTransaction(
-    signer: Signerish,
     maxWalletClaimCount: BigNumberish,
     tokenId: BigNumberish | null = null,
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
+    const { nft, sft } = this.partitions;
+
     try {
       switch (this.base.tokenStandard) {
         case 'ERC1155': {
           tokenId = this.base.requireTokenId(tokenId, this.functionName);
-          const abi = ['function setMaxWalletClaimCount(uint256 _tokenId, uint256 _count)'];
-          const contract = new Contract(this.base.address, abi, signer);
-          const estimate = await contract.populateTransaction.setMaxWalletClaimCount(
-            tokenId,
-            maxWalletClaimCount,
-            overrides,
-          );
-          return estimate;
+          const iSft = sft ?? this.base.assumeFeature('issuance/ISFTClaimCount.sol:IRestrictedSFTClaimCountV0');
+          const tx = await iSft
+            .connectReadOnly()
+            .populateTransaction.setMaxWalletClaimCount(tokenId, maxWalletClaimCount, overrides);
+          return tx;
         }
 
         case 'ERC721': {
           this.base.rejectTokenId(tokenId, this.functionName);
-          const abi = ['function setMaxWalletClaimCount(uint256 _count)'];
-          const contract = new Contract(this.base.address, abi, signer);
-          const estimate = await contract.populateTransaction.setMaxWalletClaimCount(maxWalletClaimCount, overrides);
-          return estimate;
+          const iNft = nft ?? this.base.assumeFeature('issuance/INFTClaimCount.sol:IRestrictedNFTClaimCountV0');
+          const tx = await iNft
+            .connectReadOnly()
+            .populateTransaction.setMaxWalletClaimCount(maxWalletClaimCount, overrides);
+          return tx;
         }
       }
     } catch (err) {

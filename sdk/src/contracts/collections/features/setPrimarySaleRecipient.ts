@@ -64,16 +64,12 @@ export class SetPrimarySaleRecipient extends ContractFunction<
     }
   }
 
-  async populateTransaction(
-    signer: Signerish,
-    recipient: Addressish,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction(recipient: Addressish, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(recipient);
 
     try {
-      const tx = await v1.connectWith(signer).populateTransaction.setPrimarySaleRecipient(wallet, overrides);
+      const tx = await v1.connectReadOnly().populateTransaction.setPrimarySaleRecipient(wallet, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

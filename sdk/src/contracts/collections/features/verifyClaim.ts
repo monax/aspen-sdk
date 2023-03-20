@@ -7,13 +7,17 @@ import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
 const VerifyClaimFunctions = {
-  nft: 'verifyClaim(uint256,address,uint256,address,uint256,bool)[]',
-  sft: 'verifyClaim(uint256,address,uint256,uint256,address,uint256,bool)[]',
+  nftV1: 'verifyClaim(uint256,address,uint256,address,uint256,bool)[]',
+  nftV2: 'verifyClaim(address,uint256,address,uint256,bytes32[],uint256)[]',
+  sftV1: 'verifyClaim(uint256,address,uint256,uint256,address,uint256,bool)[]',
+  sftV2: 'verifyClaim(address,uint256,uint256,address,uint256,bytes32[],uint256)[]',
 } as const;
 
 const VerifyClaimPartitions = {
-  nft: [...FeatureFunctionsMap[VerifyClaimFunctions.nft].drop],
-  sft: [...FeatureFunctionsMap[VerifyClaimFunctions.sft].drop],
+  nftV1: [...FeatureFunctionsMap[VerifyClaimFunctions.nftV1].drop],
+  nftV2: [...FeatureFunctionsMap[VerifyClaimFunctions.nftV2].drop],
+  sftV1: [...FeatureFunctionsMap[VerifyClaimFunctions.sftV1].drop],
+  sftV2: [...FeatureFunctionsMap[VerifyClaimFunctions.sftV2].drop],
 };
 type VerifyClaimPartitions = typeof VerifyClaimPartitions;
 
@@ -61,28 +65,47 @@ export class VerifyClaim extends ContractFunction<
     overrides: CallOverrides = {},
   ): Promise<boolean> {
     args.tokenId = this.base.requireTokenId(args.tokenId, this.functionName);
-    const sft = this.partition('sft');
+    const { sftV1, sftV2 } = this.partitions;
     const wallet = await asAddress(args.receiver);
     const tokenAddress = await asAddress(args.currency);
 
     try {
-      await sft
-        .connectReadOnly()
-        .verifyClaim(
-          args.conditionId,
-          wallet,
-          args.tokenId,
-          args.quantity,
-          tokenAddress,
-          args.pricePerToken,
-          verifyMaxQuantity,
-          overrides,
-        );
+      if (sftV2) {
+        await sftV2
+          .connectReadOnly()
+          .verifyClaim(
+            wallet,
+            args.tokenId,
+            args.quantity,
+            tokenAddress,
+            args.pricePerToken,
+            args.proofs,
+            args.proofMaxQuantityPerTransaction,
+            overrides,
+          );
 
-      return true;
+        return true;
+      } else if (sftV1) {
+        await sftV1
+          .connectReadOnly()
+          .verifyClaim(
+            args.conditionId,
+            wallet,
+            args.tokenId,
+            args.quantity,
+            tokenAddress,
+            args.pricePerToken,
+            verifyMaxQuantity,
+            overrides,
+          );
+
+        return true;
+      }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
+
+    this.notSupported();
   }
 
   protected async verifyERC721(
@@ -90,27 +113,44 @@ export class VerifyClaim extends ContractFunction<
     verifyMaxQuantity: boolean,
     overrides: CallOverrides = {},
   ): Promise<boolean> {
-    const nft = this.partition('nft');
+    const { nftV1, nftV2 } = this.partitions;
     const wallet = await asAddress(args.receiver);
     const tokenAddress = await asAddress(args.currency);
 
     try {
-      await nft
-        .connectReadOnly()
-        .verifyClaim(
-          args.conditionId,
-          wallet,
-          args.quantity,
-          tokenAddress,
-          args.pricePerToken,
-          verifyMaxQuantity,
-          overrides,
-        );
+      if (nftV2) {
+        await nftV2
+          .connectReadOnly()
+          .verifyClaim(
+            wallet,
+            args.quantity,
+            tokenAddress,
+            args.pricePerToken,
+            args.proofs,
+            args.proofMaxQuantityPerTransaction,
+            overrides,
+          );
 
-      return true;
+        return true;
+      } else if (nftV1) {
+        await nftV1
+          .connectReadOnly()
+          .verifyClaim(
+            args.conditionId,
+            wallet,
+            args.quantity,
+            tokenAddress,
+            args.pricePerToken,
+            verifyMaxQuantity,
+            overrides,
+          );
+        return true;
+      }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
+
+    this.notSupported();
   }
 }
 
