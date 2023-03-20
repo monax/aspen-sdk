@@ -24,10 +24,12 @@ import {
   FeatureInterfaceId,
   getBaseURIIndices,
   getClaimConditionById,
+  getClaimConditions,
+  getClaimData,
   getClaimPauseStatus,
   getDefaultRoyaltyInfo,
   getLargestTokenId,
-  getPlatformFeeInfo,
+  getPlatformFees,
   getPrimarySaleRecipient,
   getRoyaltyInfoForToken,
   getSmallestTokenId,
@@ -56,13 +58,14 @@ import {
   setOperatorFiltererStatus,
   setOwner,
   setPermanentTokenUri,
-  setPlatformFeeInfo,
+  setPlatformFees,
   setPrimarySaleRecipient,
   setRoyaltyInfoForToken,
   setTermsActivation,
   setTermsUri,
   setTokenNameAndSymbol,
   setTokenUri,
+  setWalletClaimCount,
   supportedFeatures,
   supportsInterface,
   symbol,
@@ -154,6 +157,9 @@ export class CollectionContract {
   readonly getClaimPauseStatus = getClaimPauseStatus(this);
   readonly setClaimPauseStatus = setClaimPauseStatus(this);
   readonly setMaxWalletClaimCount = setMaxWalletClaimCount(this);
+  readonly setWalletClaimCount = setWalletClaimCount(this);
+  readonly getClaimConditions = getClaimConditions(this);
+  readonly getClaimData = getClaimData(this);
 
   // Burn
   readonly burn = burn(this);
@@ -170,8 +176,8 @@ export class CollectionContract {
   readonly setRoyaltyInfoForToken = setRoyaltyInfoForToken(this);
 
   // Platform fee
-  readonly getPlatformFeeInfo = getPlatformFeeInfo(this);
-  readonly setPlatformFeeInfo = setPlatformFeeInfo(this);
+  readonly getPlatformFees = getPlatformFees(this);
+  readonly setPlatformFees = setPlatformFees(this);
 
   // Royalties
   readonly getPrimarySaleRecipient = getPrimarySaleRecipient(this);

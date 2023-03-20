@@ -80,20 +80,16 @@ export class AcceptTermsFor extends ContractFunction<
     this.notSupported();
   }
 
-  async populateTransaction(
-    signer: Signerish,
-    acceptor: Addressish,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction(acceptor: Addressish, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
     const { v1, v2 } = this.partitions;
     const wallet = await asAddress(acceptor);
 
     try {
       if (v1) {
-        const tx = await v1.connectWith(signer).populateTransaction['acceptTerms(address)'](wallet, overrides);
+        const tx = await v1.connectReadOnly().populateTransaction['acceptTerms(address)'](wallet, overrides);
         return tx;
       } else if (v2) {
-        const tx = await v2.connectWith(signer).populateTransaction.acceptTerms(wallet, overrides);
+        const tx = await v2.connectReadOnly().populateTransaction.acceptTerms(wallet, overrides);
         return tx;
       }
     } catch (err) {

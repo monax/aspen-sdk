@@ -1,5 +1,7 @@
 import { BigNumber, BigNumberish, CallOverrides } from 'ethers';
-import { Address, asAddress, CollectionContract } from '../..';
+import { Address, CollectionContract } from '../..';
+import { parse } from '../../../utils';
+import { IDropClaimConditionV1 } from '../../generated/impl/IAspenERC1155Drop.sol/IAspenERC1155DropV1';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
@@ -69,35 +71,13 @@ export class GetClaimConditionById extends ContractFunction<
           tokenId = this.base.requireTokenId(tokenId, this.functionName);
           const iface = sftV2 ?? this.base.assumeFeature('issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2');
           const conditionSft = await iface.connectReadOnly().getClaimConditionById(tokenId, conditionId, overrides);
-
-          return {
-            startTimestamp: conditionSft.startTimestamp.toNumber(),
-            maxClaimableSupply: conditionSft.maxClaimableSupply,
-            supplyClaimed: conditionSft.supplyClaimed,
-            quantityLimitPerTransaction: conditionSft.quantityLimitPerTransaction,
-            waitTimeInSecondsBetweenClaims: conditionSft.waitTimeInSecondsBetweenClaims.toNumber(),
-            merkleRoot: conditionSft.merkleRoot,
-            pricePerToken: conditionSft.pricePerToken,
-            currency: await asAddress(conditionSft.currency),
-            phaseId: conditionSft.phaseId ?? null, // 'phaseId' isn't returned by old interfaces
-          };
+          return transformClaimConditions(conditionSft);
 
         case 'ERC721':
           this.base.rejectTokenId(tokenId, this.functionName);
           const nft = nftV2 ?? this.base.assumeFeature('issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2');
           const conditionNft = await nft.connectReadOnly().getClaimConditionById(conditionId, overrides);
-
-          return {
-            startTimestamp: conditionNft.startTimestamp.toNumber(),
-            maxClaimableSupply: conditionNft.maxClaimableSupply,
-            supplyClaimed: conditionNft.supplyClaimed,
-            quantityLimitPerTransaction: conditionNft.quantityLimitPerTransaction,
-            waitTimeInSecondsBetweenClaims: conditionNft.waitTimeInSecondsBetweenClaims.toNumber(),
-            merkleRoot: conditionNft.merkleRoot,
-            pricePerToken: conditionNft.pricePerToken,
-            currency: await asAddress(conditionNft.currency),
-            phaseId: conditionNft.phaseId ?? null, // 'phaseId' isn't returned by old interfaces
-          };
+          return transformClaimConditions(conditionNft);
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -106,3 +86,19 @@ export class GetClaimConditionById extends ContractFunction<
 }
 
 export const getClaimConditionById = asCallableClass(GetClaimConditionById);
+
+export const transformClaimConditions = (
+  condition: IDropClaimConditionV1.ClaimConditionStructOutput,
+): CollectionContractClaimCondition => {
+  return {
+    startTimestamp: condition.startTimestamp.toNumber(),
+    maxClaimableSupply: condition.maxClaimableSupply,
+    supplyClaimed: condition.supplyClaimed,
+    quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
+    waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+    merkleRoot: condition.merkleRoot,
+    pricePerToken: condition.pricePerToken,
+    currency: parse(Address, condition.currency),
+    phaseId: condition.phaseId ?? null,
+  };
+};

@@ -29,7 +29,7 @@ export type CollectionCreator = {
   creator_email: string;
 };
 
-// @todo - use spec for parsing
+// TODO - use spec for parsing
 export type CollectionMetadata = {
   schema?: string | null;
   kind?: MetadataKind;

@@ -97,7 +97,6 @@ export class LazyMint extends ContractFunction<
   }
 
   async populateTransaction(
-    signer: Signerish,
     { amount, baseURI, encryptedBaseURI }: MintAgs,
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
@@ -105,14 +104,14 @@ export class LazyMint extends ContractFunction<
 
     try {
       if (v2) {
-        const tx = await v2.connectWith(signer).populateTransaction.lazyMint(amount, baseURI, overrides);
+        const tx = await v2.connectReadOnly().populateTransaction.lazyMint(amount, baseURI, overrides);
         return tx;
       } else if (v1) {
         if (encryptedBaseURI === undefined) {
           throw new SdkError(SdkErrorCode.INVALID_DATA, undefined, new Error('encryptedBaseURI is required'));
         }
         const tx = await v1
-          .connectWith(signer)
+          .connectReadOnly()
           .populateTransaction.lazyMint(amount, baseURI, encryptedBaseURI, overrides);
         return tx;
       }

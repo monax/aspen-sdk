@@ -5,7 +5,12 @@ import type { WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
+const GetClaimPauseStatusFunctions = {
+  v1: 'getClaimPauseStatus()[bool]',
+} as const;
+
 const GetClaimPauseStatusPartitions = {
+  v1: [...FeatureFunctionsMap[GetClaimPauseStatusFunctions.v1].drop],
   // 'claimIsPaused' has always been present but not actually exposed by the old interfaces
   catchAll: [
     ...FeatureFunctionsMap['pauseClaims()[]'].drop,
@@ -29,7 +34,7 @@ export class GetClaimPauseStatus extends ContractFunction<
   readonly functionName = 'getClaimPauseStatus';
 
   constructor(base: CollectionContract) {
-    super(base, GetClaimPauseStatusInterfaces, GetClaimPauseStatusPartitions, {});
+    super(base, GetClaimPauseStatusInterfaces, GetClaimPauseStatusPartitions, GetClaimPauseStatusFunctions);
   }
 
   execute(...args: GetClaimPauseStatusCallArgs): Promise<GetClaimPauseStatusResponse> {
@@ -37,15 +42,18 @@ export class GetClaimPauseStatus extends ContractFunction<
   }
 
   async getClaimPauseStatus(overrides: WriteOverrides = {}): Promise<boolean> {
-    if (!this.supported) {
-      this.notSupported();
-    }
+    const { v1 } = this.partitions;
 
     try {
-      const abi = ['function claimIsPaused() public view returns (bool)'];
-      const contract = new ethers.Contract(this.base.address, abi, this.base.provider);
-      const paused = await contract.claimIsPaused(overrides);
-      return paused;
+      if (v1) {
+        const paused = await v1.connectReadOnly().getClaimPauseStatus();
+        return paused;
+      } else {
+        const abi = ['function claimIsPaused() public view returns (bool)'];
+        const contract = new ethers.Contract(this.base.address, abi, this.base.provider);
+        const paused = await contract.claimIsPaused(overrides);
+        return paused;
+      }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

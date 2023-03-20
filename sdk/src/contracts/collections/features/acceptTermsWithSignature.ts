@@ -97,7 +97,6 @@ export class AcceptTermsWithSignature extends ContractFunction<
   }
 
   async populateTransaction(
-    signer: Signerish,
     acceptor: Addressish,
     signature: string,
     overrides: WriteOverrides = {},
@@ -107,10 +106,10 @@ export class AcceptTermsWithSignature extends ContractFunction<
 
     try {
       if (v1) {
-        const tx = await v1.connectWith(signer).populateTransaction.acceptTerms(wallet, signature, overrides);
+        const tx = await v1.connectReadOnly().populateTransaction.acceptTerms(wallet, signature, overrides);
         return tx;
       } else if (v2) {
-        const tx = await v2.connectWith(signer).populateTransaction.storeTermsAccepted(wallet, signature, overrides);
+        const tx = await v2.connectReadOnly().populateTransaction.storeTermsAccepted(wallet, signature, overrides);
         return tx;
       }
     } catch (err) {

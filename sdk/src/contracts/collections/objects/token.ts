@@ -93,7 +93,7 @@ export class Token extends ContractObject {
         proofMaxQuantityPerTransaction: 0,
       };
 
-      // @todo - update with Publishing API v2
+      // TODO - update with Publishing API v2
       if (userConditions.merkleRoot !== ZERO_BYTES32) {
         try {
           allowlist = await allowlistStatusGetter(this.base.chainId, this.base.address, address, this.tokenId);

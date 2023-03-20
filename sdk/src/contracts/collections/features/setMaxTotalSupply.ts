@@ -95,7 +95,6 @@ export class SetMaxTotalSupply extends ContractFunction<
   }
 
   async populateTransaction(
-    signer: Signerish,
     totalSupply: BigNumberish,
     tokenId: BigNumberish | null = null,
     overrides: WriteOverrides = {},
@@ -105,11 +104,11 @@ export class SetMaxTotalSupply extends ContractFunction<
     try {
       if (sft) {
         tokenId = this.base.requireTokenId(tokenId, this.functionName);
-        const tx = await sft.connectWith(signer).populateTransaction.setMaxTotalSupply(tokenId, totalSupply, overrides);
+        const tx = await sft.connectReadOnly().populateTransaction.setMaxTotalSupply(tokenId, totalSupply, overrides);
         return tx;
       } else if (nft) {
         this.base.rejectTokenId(tokenId, this.functionName);
-        const tx = await nft.connectWith(signer).populateTransaction.setMaxTotalSupply(totalSupply, overrides);
+        const tx = await nft.connectReadOnly().populateTransaction.setMaxTotalSupply(totalSupply, overrides);
         return tx;
       }
     } catch (err) {

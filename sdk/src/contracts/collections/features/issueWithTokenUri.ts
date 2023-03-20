@@ -78,7 +78,6 @@ export class IssueWithTokenUri extends ContractFunction<
   }
 
   async populateTransaction(
-    signer: Signerish,
     args: IssueWithTokenUriArgs,
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
@@ -87,7 +86,7 @@ export class IssueWithTokenUri extends ContractFunction<
     const wallet = await asAddress(args.receiver);
 
     try {
-      const tx = await nft.connectWith(signer).populateTransaction.issueWithTokenURI(wallet, args.tokenURI, overrides);
+      const tx = await nft.connectReadOnly().populateTransaction.issueWithTokenURI(wallet, args.tokenURI, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);

@@ -64,16 +64,12 @@ export class AcceptTermsForMany extends ContractFunction<
     }
   }
 
-  async populateTransaction(
-    signer: Signerish,
-    acceptors: Addressish[],
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction(acceptors: Addressish[], overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
     const v1 = this.partition('v1');
     const wallets = await Promise.all(acceptors.map((a) => asAddress(a)));
 
     try {
-      const tx = await v1.connectWith(signer).populateTransaction.batchAcceptTerms(wallets, overrides);
+      const tx = await v1.connectReadOnly().populateTransaction.batchAcceptTerms(wallets, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

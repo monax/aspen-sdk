@@ -81,7 +81,6 @@ export class SetRoyaltyInfoForToken extends ContractFunction<
   }
 
   async populateTransaction(
-    signer: Signerish,
     tokenId: BigNumber,
     royaltyRecipient: Addressish,
     basisPoints: BigNumber,
@@ -92,7 +91,7 @@ export class SetRoyaltyInfoForToken extends ContractFunction<
 
     try {
       const tx = await v1
-        .connectWith(signer)
+        .connectReadOnly()
         .populateTransaction.setRoyaltyInfoForToken(tokenId, wallet, basisPoints, overrides);
       return tx;
     } catch (err) {

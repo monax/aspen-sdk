@@ -5,43 +5,45 @@ import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
-const SetPlatformFeeInfoFunctions = {
+const SetPlatformFeesFunctions = {
   v1: 'setPlatformFeeInfo(address,uint256)[]',
+  v2: 'setPlatformFees(address,uint16)[]',
 } as const;
 
-const SetPlatformFeeInfoPartitions = {
-  v1: [...FeatureFunctionsMap[SetPlatformFeeInfoFunctions.v1].drop],
+const SetPlatformFeesPartitions = {
+  v1: [...FeatureFunctionsMap[SetPlatformFeesFunctions.v1].drop],
+  v2: [...FeatureFunctionsMap[SetPlatformFeesFunctions.v2].drop],
 };
-type SetPlatformFeeInfoPartitions = typeof SetPlatformFeeInfoPartitions;
+type SetPlatformFeesPartitions = typeof SetPlatformFeesPartitions;
 
-const SetPlatformFeeInfoInterfaces = Object.values(SetPlatformFeeInfoPartitions).flat();
-type SetPlatformFeeInfoInterfaces = (typeof SetPlatformFeeInfoInterfaces)[number];
+const SetPlatformFeesInterfaces = Object.values(SetPlatformFeesPartitions).flat();
+type SetPlatformFeesInterfaces = (typeof SetPlatformFeesInterfaces)[number];
 
-export type SetPlatformFeeInfoCallArgs = [
+export type SetPlatformFeesCallArgs = [
   signer: Signerish,
   recipient: Addressish,
   basisPoints: BigNumber,
   overrides?: WriteOverrides,
 ];
-export type SetPlatformFeeInfoResponse = ContractTransaction;
+export type SetPlatformFeesResponse = ContractTransaction;
 
-export class SetPlatformFeeInfo extends ContractFunction<
-  SetPlatformFeeInfoInterfaces,
-  SetPlatformFeeInfoPartitions,
-  SetPlatformFeeInfoCallArgs,
-  SetPlatformFeeInfoResponse
+export class SetPlatformFees extends ContractFunction<
+  SetPlatformFeesInterfaces,
+  SetPlatformFeesPartitions,
+  SetPlatformFeesCallArgs,
+  SetPlatformFeesResponse
 > {
-  readonly functionName = 'setPlatformFeeInfo';
+  readonly functionName = 'setPlatformFees';
 
   constructor(base: CollectionContract) {
-    super(base, SetPlatformFeeInfoInterfaces, SetPlatformFeeInfoPartitions, SetPlatformFeeInfoFunctions);
+    super(base, SetPlatformFeesInterfaces, SetPlatformFeesPartitions, SetPlatformFeesFunctions);
   }
 
-  execute(...args: SetPlatformFeeInfoCallArgs): Promise<SetPlatformFeeInfoResponse> {
-    return this.setPlatformFeeInfo(...args);
+  execute(...args: SetPlatformFeesCallArgs): Promise<SetPlatformFeesResponse> {
+    return this.setPlatformFees(...args);
   }
 
-  async setPlatformFeeInfo(
+  async setPlatformFees(
     signer: Signerish,
     recipient: Addressish,
     basisPoints: BigNumber,
@@ -76,7 +78,6 @@ export class SetPlatformFeeInfo extends ContractFunction<
   }
 
   async populateTransaction(
-    signer: Signerish,
     recipient: Addressish,
     basisPoints: BigNumber,
     overrides: WriteOverrides = {},
@@ -85,7 +86,7 @@ export class SetPlatformFeeInfo extends ContractFunction<
     const wallet = await asAddress(recipient);
 
     try {
-      const tx = await v1.connectWith(signer).populateTransaction.setPlatformFeeInfo(wallet, basisPoints, overrides);
+      const tx = await v1.connectReadOnly().populateTransaction.setPlatformFeeInfo(wallet, basisPoints, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -93,4 +94,4 @@ export class SetPlatformFeeInfo extends ContractFunction<
   }
 }
 
-export const setPlatformFeeInfo = asCallableClass(SetPlatformFeeInfo);
+export const setPlatformFees = asCallableClass(SetPlatformFees);

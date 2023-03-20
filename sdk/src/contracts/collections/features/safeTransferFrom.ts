@@ -117,7 +117,6 @@ export class SafeTransferFrom extends ContractFunction<
   }
 
   async populateTransaction(
-    signer: Signerish,
     { fromAddress, toAddress, tokenId, bytes, amount }: SafeTransferFromArgs,
     overrides?: WriteOverrides,
   ) {
@@ -131,7 +130,7 @@ export class SafeTransferFrom extends ContractFunction<
         case 'ERC1155':
           if (sft) {
             const tx = sft
-              .connectWith(signer)
+              .connectReadOnly()
               .populateTransaction.safeTransferFrom(from, to, tokenId, amount || 0, bytes, overrides);
             return tx;
           }
@@ -139,7 +138,7 @@ export class SafeTransferFrom extends ContractFunction<
         case 'ERC721':
           if (nft) {
             const tx = nft
-              .connectWith(signer)
+              .connectReadOnly()
               .populateTransaction['safeTransferFrom(address,address,uint256,bytes)'](
                 from,
                 to,

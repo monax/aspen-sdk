@@ -141,23 +141,18 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     }
   }
 
-  async populateTransaction(
-    signer: Signerish,
-    args: IssueArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction(args: IssueArgs, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
     this.validateArgs(args);
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return this.populateTransactionERC1155(signer, args, overrides);
+        return this.populateTransactionERC1155(args, overrides);
       case 'ERC721':
-        return this.populateTransactionERC721(signer, args, overrides);
+        return this.populateTransactionERC721(args, overrides);
     }
   }
 
   protected async populateTransactionERC1155(
-    signer: Signerish,
     { receiver, tokenId, quantity }: IssueArgs,
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
@@ -166,7 +161,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     const wallet = await asAddress(receiver);
 
     try {
-      const tx = await sft.connectWith(signer).populateTransaction.issue(wallet, tokenId, quantity, overrides);
+      const tx = await sft.connectReadOnly().populateTransaction.issue(wallet, tokenId, quantity, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, tokenId, quantity });
@@ -174,7 +169,6 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
   }
 
   protected async populateTransactionERC721(
-    signer: Signerish,
     { receiver, quantity }: IssueArgs,
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
@@ -182,7 +176,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     const wallet = await asAddress(receiver);
 
     try {
-      const tx = await nft.connectWith(signer).populateTransaction.issue(wallet, quantity, overrides);
+      const tx = await nft.connectReadOnly().populateTransaction.issue(wallet, quantity, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, quantity });
@@ -203,7 +197,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
 
     try {
       if (nft) {
-        // @todo
+        // TODO
         const nftEvents = this.base.assumeFeature('issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2');
         const contract = nftEvents.connectReadOnly();
 
@@ -246,7 +240,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
           ),
         );
       } else if (sft) {
-        // @todo
+        // TODO
         const sftEvents = this.base.assumeFeature('issuance/ICedarSFTIssuance.sol:IRestrictedSFTIssuanceV3');
         const contract = sftEvents.connectReadOnly();
 

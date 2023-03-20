@@ -58,15 +58,11 @@ export class SetTermsUri extends ContractFunction<
     }
   }
 
-  async populateTransaction(
-    signer: Signerish,
-    termsUri: string,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction(termsUri: string, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
     const v1 = this.partition('v1');
 
     try {
-      const tx = await v1.connectWith(signer).populateTransaction.setTermsURI(termsUri, overrides);
+      const tx = await v1.connectReadOnly().populateTransaction.setTermsURI(termsUri, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

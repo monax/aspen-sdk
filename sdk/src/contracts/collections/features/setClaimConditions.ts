@@ -126,7 +126,6 @@ export class SetClaimConditions extends ContractFunction<
   }
 
   async populateTransaction(
-    signer: Signerish,
     { conditions, tokenId, resetClaimEligibility }: ConditionArgs,
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
@@ -141,7 +140,7 @@ export class SetClaimConditions extends ContractFunction<
           if (sft) {
             tokenId = this.base.requireTokenId(tokenId, this.functionName);
             const tx = await sft
-              .connectWith(signer)
+              .connectReadOnly()
               .populateTransaction.setClaimConditions(tokenId, strictConditions, resetClaimEligibility, overrides);
             return tx;
           }
@@ -150,7 +149,7 @@ export class SetClaimConditions extends ContractFunction<
           if (nft) {
             this.base.rejectTokenId(tokenId, this.functionName);
             const tx = await nft
-              .connectWith(signer)
+              .connectReadOnly()
               .populateTransaction.setClaimConditions(strictConditions, resetClaimEligibility, overrides);
             return tx;
           }
