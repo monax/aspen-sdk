@@ -59,6 +59,7 @@ export class GetClaimConditions extends ContractFunction<
             const conditions = await nft.connectReadOnly().getClaimConditions(overrides);
             return conditions.map(transformClaimConditions);
           }
+          break;
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
