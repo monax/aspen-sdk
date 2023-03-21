@@ -6,11 +6,11 @@ import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
 const SetSaleRecipientForTokenFunctions = {
-  sft: 'setSaleRecipientForToken(uint256,address)[]',
+  v1: 'setSaleRecipientForToken(uint256,address)[]',
 } as const;
 
 const SetSaleRecipientForTokenPartitions = {
-  sft: [...FeatureFunctionsMap[SetSaleRecipientForTokenFunctions.sft].drop],
+  v1: [...FeatureFunctionsMap[SetSaleRecipientForTokenFunctions.v1].drop],
 };
 type SetSaleRecipientForTokenPartitions = typeof SetSaleRecipientForTokenPartitions;
 
@@ -48,7 +48,7 @@ export class SetSaleRecipientForToken extends ContractFunction<
     saleRecipient: Addressish,
     overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
-    const v1 = this.partition('sft');
+    const v1 = this.partition('v1');
     const wallet = await asAddress(saleRecipient);
 
     try {
@@ -60,7 +60,7 @@ export class SetSaleRecipientForToken extends ContractFunction<
   }
 
   async estimateGas(signer: Signerish, tokenId: BigNumber, saleRecipient: Addressish, overrides: WriteOverrides = {}): Promise<BigNumber> {
-    const v1 = this.partition('sft');
+    const v1 = this.partition('v1');
     const wallet = await asAddress(saleRecipient);
 
     try {
@@ -72,7 +72,7 @@ export class SetSaleRecipientForToken extends ContractFunction<
   }
 
   async populateTransaction(tokenId: BigNumber, saleRecipient: Addressish, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
-    const v1 = this.partition('sft');
+    const v1 = this.partition('v1');
     const wallet = await asAddress(saleRecipient);
 
     try {

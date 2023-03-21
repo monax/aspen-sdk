@@ -96,7 +96,7 @@ export class IssueWithinPhaseWithTokenUri extends ContractFunction<
   }
 
   async parseReceiptLogs(receipt: ContractReceipt): Promise<IssuedToken[]> {
-    return this.base.issue.parseReceiptLogs(receipt);
+    return this.base.issueWithinPhase.parseReceiptLogs(receipt);
   }
 }
 

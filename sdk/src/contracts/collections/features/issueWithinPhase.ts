@@ -180,9 +180,7 @@ export class IssueWithinPhase extends ContractFunction<IssueWithinPhaseInterface
 
     try {
       if (nft) {
-        // TODO
-        const nftEvents = this.base.assumeFeature('issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV4');
-        const contract = nftEvents.connectReadOnly();
+        const contract = nft.connectReadOnly();
 
         issueWithinPhaseTokens.push(
           ...extractEventsFromLogs(contract.filters.TokensIssued(), contract.interface, receipt.logs)
@@ -223,9 +221,7 @@ export class IssueWithinPhase extends ContractFunction<IssueWithinPhaseInterface
           ),
         );
       } else if (sft) {
-        // TODO
-        const sftEvents = this.base.assumeFeature('issuance/ICedarSFTIssuance.sol:IRestrictedSFTIssuanceV4');
-        const contract = sftEvents.connectReadOnly();
+        const contract = sft.connectReadOnly();
 
         issueWithinPhaseTokens.push(
           ...extractEventsFromLogs(contract.filters.TokensIssued(), contract.interface, receipt.logs).map(
