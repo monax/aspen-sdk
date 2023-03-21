@@ -105,6 +105,8 @@ export const ContractFunctionIds = [
   // Issue
   'issue',
   'issueWithTokenUri',
+  'issueWithinPhase',
+  'issueWithinPhaseWithTokenUri',
 
   // Royalties
   'royaltyInfo',
@@ -117,11 +119,12 @@ export const ContractFunctionIds = [
   'getPlatformFees',
   'setPlatformFees',
 
-  // Royalties
+  // Primary Sales
   'getPrimarySaleRecipient',
   'setPrimarySaleRecipient',
+  'setSaleRecipientForToken',
 
-  //
+  // Operator Filterer
   'setOperatorFiltererStatus',
 ] as const;
 
