@@ -42,6 +42,8 @@ import {
   isAspenFeatures,
   issue,
   issueWithTokenUri,
+  issueWithinPhase,
+  issueWithinPhaseWithTokenUri,
   lazyMint,
   multicall,
   name,
@@ -61,6 +63,7 @@ import {
   setPlatformFees,
   setPrimarySaleRecipient,
   setRoyaltyInfoForToken,
+  setSaleRecipientForToken,
   setTermsActivation,
   setTermsUri,
   setTokenNameAndSymbol,
@@ -167,6 +170,8 @@ export class CollectionContract {
   // Issue
   readonly issue = issue(this);
   readonly issueWithTokenUri = issueWithTokenUri(this);
+  readonly issueWithinPhase = issueWithinPhase(this);
+  readonly issueWithinPhaseWithTokenUri = issueWithinPhaseWithTokenUri(this);
 
   // Royalties
   readonly royaltyInfo = royaltyInfo(this);
@@ -178,6 +183,7 @@ export class CollectionContract {
   // Platform fee
   readonly getPlatformFees = getPlatformFees(this);
   readonly setPlatformFees = setPlatformFees(this);
+  readonly setSaleRecipientForToken = setSaleRecipientForToken(this);
 
   // Royalties
   readonly getPrimarySaleRecipient = getPrimarySaleRecipient(this);

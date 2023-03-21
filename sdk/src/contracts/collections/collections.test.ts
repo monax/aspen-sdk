@@ -116,19 +116,17 @@ describe('Collections - static tests', () => {
       'safeTransferFrom(address,address,uint256)+[]',
       'safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)[]',
       // functions added in V2
+      'setOperatorFilterer(bytes32)[]',
+      'setOperatorRestriction(bool)[]',
+      'operatorRestriction()[bool]',
+      // Aspen Core Registry
       'addOperatorFilterer((bytes32,string,address,address))[]',
       'getOperatorFilterer(bytes32)[(bytes32,string,address,address)]',
       'getOperatorFiltererIds()[bytes32[]]',
       'getOperatorFiltererOrDie(bytes32)[(bytes32,string,address,address)]',
-      'issueWithinPhase(address,uint256)[]',
-      'issueWithinPhase(address,uint256,uint256)[]',
-      'issueWithinPhaseWithTokenURI(address,string)[]',
-      'operatorRestriction()[bool]',
+      // Payment Notary
       'pay(address,bytes32,address,uint256)[]',
       'pay(string,address,bytes32,address,uint256)[]',
-      'setOperatorFilterer(bytes32)[]',
-      'setOperatorRestriction(bool)[]',
-      'setSaleRecipientForToken(uint256,address)[]',
     ];
 
     const missingFunctions = Object.keys(FeatureFunctionsMap).filter(
