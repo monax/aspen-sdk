@@ -125,7 +125,9 @@ export const ContractFunctionIds = [
   'setSaleRecipientForToken',
 
   // Operator Filterer
-  'setOperatorFiltererStatus',
+  'setOperatorFilterer',
+  'setOperatorRestriction',
+  'operatorRestriction',
 ] as const;
 
 export interface FeatureInterfaceFactory<T extends FeatureInterfaceId> {

@@ -47,6 +47,7 @@ import {
   lazyMint,
   multicall,
   name,
+  operatorRestriction,
   owner,
   ownerOf,
   royaltyInfo,
@@ -57,7 +58,8 @@ import {
   setDefaultRoyaltyInfo,
   setMaxTotalSupply,
   setMaxWalletClaimCount,
-  setOperatorFiltererStatus,
+  setOperatorFilterer,
+  setOperatorRestriction,
   setOwner,
   setPermanentTokenUri,
   setPlatformFees,
@@ -190,7 +192,9 @@ export class CollectionContract {
   readonly setPrimarySaleRecipient = setPrimarySaleRecipient(this);
 
   // Operator filterer
-  readonly setOperatorFiltererStatus = setOperatorFiltererStatus(this);
+  readonly setOperatorRestriction = setOperatorRestriction(this);
+  readonly setOperatorFilterer = setOperatorFilterer(this);
+  readonly operatorRestriction = operatorRestriction(this);
 
   static setDebugHandler(handler: DebugHandler | undefined) {
     CollectionContract._debugHandler = handler;

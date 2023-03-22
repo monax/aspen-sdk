@@ -116,17 +116,14 @@ describe('Collections - static tests', () => {
       'safeTransferFrom(address,address,uint256)+[]',
       'safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)[]',
       // functions added in V2
-      'setOperatorFilterer(bytes32)[]',
-      'setOperatorRestriction(bool)[]',
-      'operatorRestriction()[bool]',
       // Aspen Core Registry
       'addOperatorFilterer((bytes32,string,address,address))[]',
       'getOperatorFilterer(bytes32)[(bytes32,string,address,address)]',
       'getOperatorFiltererIds()[bytes32[]]',
       'getOperatorFiltererOrDie(bytes32)[(bytes32,string,address,address)]',
       // Payment Notary
-      'pay(address,bytes32,address,uint256)[]',
-      'pay(string,address,bytes32,address,uint256)[]',
+      'pay(address,bytes32,address,uint256)[]', // v0 
+      'pay(string,address,bytes32,address,uint256)[]', // v1
     ];
 
     const missingFunctions = Object.keys(FeatureFunctionsMap).filter(
@@ -171,10 +168,6 @@ describe('Collections - static tests', () => {
       'config/IOperatorFilterersConfig.sol:IOperatorFiltererConfigV0',
       'payments/IPaymentNotary.sol:IPaymentNotaryV0',
       'payments/IPaymentNotary.sol:IPaymentNotaryV1',
-      'primarysale/IPrimarySale.sol:IRestrictedSFTPrimarySaleV0',
-      'royalties/IRoyalty.sol:IPublicOperatorFilterToggleV0',
-      'royalties/IRoyalty.sol:IRestrictedOperatorFilterToggleV0',
-      'royalties/IRoyalty.sol:IRestrictedOperatorFiltererV0',
     ];
 
     const missingFeatures = Object.keys(FeatureFactories).filter(
