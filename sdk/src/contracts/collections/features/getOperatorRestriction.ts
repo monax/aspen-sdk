@@ -32,10 +32,10 @@ export class GetOperatorRestriction extends ContractFunction<
   }
 
   execute(...args: GetOperatorRestrictionCallArgs): Promise<GetOperatorRestrictionResponse> {
-    return this.operatorRestriction(...args);
+    return this.getOperatorRestriction(...args);
   }
 
-  async operatorRestriction(overrides: WriteOverrides = {}): Promise<boolean> {
+  async getOperatorRestriction(overrides: WriteOverrides = {}): Promise<boolean> {
     const v1 = this.partition('v1');
 
     try {
