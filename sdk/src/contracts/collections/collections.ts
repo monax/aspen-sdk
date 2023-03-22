@@ -29,6 +29,7 @@ import {
   getClaimPauseStatus,
   getDefaultRoyaltyInfo,
   getLargestTokenId,
+  getOperatorRestriction,
   getPlatformFees,
   getPrimarySaleRecipient,
   getRoyaltyInfoForToken,
@@ -57,7 +58,8 @@ import {
   setDefaultRoyaltyInfo,
   setMaxTotalSupply,
   setMaxWalletClaimCount,
-  setOperatorFiltererStatus,
+  setOperatorFilterer,
+  setOperatorRestriction,
   setOwner,
   setPermanentTokenUri,
   setPlatformFees,
@@ -190,7 +192,9 @@ export class CollectionContract {
   readonly setPrimarySaleRecipient = setPrimarySaleRecipient(this);
 
   // Operator filterer
-  readonly setOperatorFiltererStatus = setOperatorFiltererStatus(this);
+  readonly setOperatorRestriction = setOperatorRestriction(this);
+  readonly getOperatorRestriction = getOperatorRestriction(this);
+  readonly setOperatorFilterer = setOperatorFilterer(this);
 
   static setDebugHandler(handler: DebugHandler | undefined) {
     CollectionContract._debugHandler = handler;
