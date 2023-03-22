@@ -49,7 +49,7 @@ export class SafeTransferFrom extends ContractFunction<
   async safeTransferFrom(
     signer: Signerish,
     { fromAddress, toAddress, tokenId, bytes, amount }: SafeTransferFromArgs,
-    overrides?: WriteOverrides,
+    overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const { nft, sft } = this.partitions;
     const from = await asAddress(fromAddress);
@@ -83,7 +83,7 @@ export class SafeTransferFrom extends ContractFunction<
   async estimateGas(
     signer: Signerish,
     { fromAddress, toAddress, tokenId, bytes, amount }: SafeTransferFromArgs,
-    overrides?: WriteOverrides,
+    overrides: WriteOverrides = {},
   ) {
     const { nft, sft } = this.partitions;
     const from = await asAddress(fromAddress);
@@ -118,7 +118,7 @@ export class SafeTransferFrom extends ContractFunction<
 
   async populateTransaction(
     { fromAddress, toAddress, tokenId, bytes, amount }: SafeTransferFromArgs,
-    overrides?: WriteOverrides,
+    overrides: WriteOverrides = {},
   ) {
     const { nft, sft } = this.partitions;
     const from = await asAddress(fromAddress);
