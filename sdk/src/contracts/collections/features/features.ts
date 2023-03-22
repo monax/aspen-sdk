@@ -127,7 +127,7 @@ export const ContractFunctionIds = [
   // Operator Filterer
   'setOperatorFilterer',
   'setOperatorRestriction',
-  'operatorRestriction',
+  'getOperatorRestriction',
 ] as const;
 
 export interface FeatureInterfaceFactory<T extends FeatureInterfaceId> {

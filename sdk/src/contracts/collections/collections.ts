@@ -29,6 +29,7 @@ import {
   getClaimPauseStatus,
   getDefaultRoyaltyInfo,
   getLargestTokenId,
+  getOperatorRestriction,
   getPlatformFees,
   getPrimarySaleRecipient,
   getRoyaltyInfoForToken,
@@ -47,7 +48,6 @@ import {
   lazyMint,
   multicall,
   name,
-  operatorRestriction,
   owner,
   ownerOf,
   royaltyInfo,
@@ -193,8 +193,8 @@ export class CollectionContract {
 
   // Operator filterer
   readonly setOperatorRestriction = setOperatorRestriction(this);
+  readonly getOperatorRestriction = getOperatorRestriction(this);
   readonly setOperatorFilterer = setOperatorFilterer(this);
-  readonly operatorRestriction = operatorRestriction(this);
 
   static setDebugHandler(handler: DebugHandler | undefined) {
     CollectionContract._debugHandler = handler;
