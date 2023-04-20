@@ -6,11 +6,14 @@ import { Address } from '../address';
 import { CollectionContract } from './collections';
 import { SdkErrorCode } from './errors';
 import {
+  asExecutable,
   ContractFunctionId,
   ERC1155StandardInterfaces,
   ERC721StandardInterfaces,
   FeatureFunctionId,
   FeatureInterfaceId,
+  HasAcceptedTerms,
+  hasAcceptedTerms,
 } from './features';
 import { FeatureFactories } from './features/feature-factories.gen';
 import { FeatureFunctionsMap } from './features/feature-functions.gen';
@@ -122,7 +125,7 @@ describe('Collections - static tests', () => {
       'getOperatorFiltererIds()[bytes32[]]',
       'getOperatorFiltererOrDie(bytes32)[(bytes32,string,address,address)]',
       // Payment Notary
-      'pay(address,bytes32,address,uint256)[]', // v0 
+      'pay(address,bytes32,address,uint256)[]', // v0
       'pay(string,address,bytes32,address,uint256)[]', // v1
     ];
 
@@ -289,5 +292,26 @@ describe('Collections - static tests', () => {
     const symbolResponse = iface.encodeFunctionResult(iface.functions['symbol()'], [contractSymbol]);
     provider.addMock('call', symbolResponse);
     expect(await erc721.symbol()).toBe(contractSymbol);
+  });
+
+  test.only('Callable class instance', async () => {
+    const provider = new MockJsonRpcProvider();
+    const erc721 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, [
+      'standard/IERC721.sol:IERC721V0',
+      'agreement/IAgreement.sol:IPublicAgreementV1',
+    ]);
+
+    const iface = erc721.assumeFeature('agreement/IAgreement.sol:IPublicAgreementV1').interface;
+    const doesExist = iface.encodeFunctionResult(iface.functions['hasAcceptedTerms(address)'], [true]);
+    provider.addMock('call', doesExist);
+    provider.addMock('call', doesExist);
+    provider.addMock('call', doesExist);
+
+    const callable = asExecutable(new HasAcceptedTerms(erc721));
+    const applyTrap = hasAcceptedTerms(erc721);
+    const constructTrap = new hasAcceptedTerms(erc721);
+    expect(await callable(CONTRACT_ADDRESS)).toBe(true);
+    expect(await applyTrap(CONTRACT_ADDRESS)).toBe(true);
+    expect(await constructTrap(CONTRACT_ADDRESS)).toBe(true);
   });
 });

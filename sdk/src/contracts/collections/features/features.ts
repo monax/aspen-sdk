@@ -414,12 +414,15 @@ type FunctionClass<T> = new (base: CollectionContract) => T;
 
 export const asCallableClass = <O extends ExecutableFunction>(
   classDefinition: FunctionClass<O>,
-): FunctionClass<O> & ((base: CollectionContract) => O['execute'] & O) => {
+): FunctionClass<O['execute'] & O> & ((base: CollectionContract) => O['execute'] & O) => {
   return new Proxy(classDefinition, {
+    construct: (target: FunctionClass<O>, argumentsList: [CollectionContract]) => {
+      return asExecutable(new target(...argumentsList));
+    },
     apply: (target: FunctionClass<O>, _thisArg, argumentsList: [CollectionContract]) => {
       return asExecutable(new target(...argumentsList));
     },
-  }) as FunctionClass<O> & ((base: CollectionContract) => O['execute'] & O);
+  }) as FunctionClass<O['execute'] & O> & ((base: CollectionContract) => O['execute'] & O);
 };
 
 export const asExecutable = <T extends { execute: CallableFunction }>(obj: T): T['execute'] & T => {
