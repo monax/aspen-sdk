@@ -1,5 +1,4 @@
 import * as path from 'path';
-import * as url from 'url';
 import { parse } from '../../utils';
 import { DeployersManifest } from '../deployers';
 import {
