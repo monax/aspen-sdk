@@ -294,7 +294,7 @@ describe('Collections - static tests', () => {
     expect(await erc721.symbol()).toBe(contractSymbol);
   });
 
-  test.only('Callable class instance', async () => {
+  test('Callable class instance', async () => {
     const provider = new MockJsonRpcProvider();
     const erc721 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, [
       'standard/IERC721.sol:IERC721V0',
