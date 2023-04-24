@@ -44,6 +44,10 @@ export const ContractFunctionIds = [
   'implementationVersion',
   'owner',
   'setOwner',
+  'grantRole',
+  'revokeRole',
+  'renounceRole',
+  'hasRole',
 
   // Collection
   'name',

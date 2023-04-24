@@ -36,20 +36,24 @@ import {
   getSmallestTokenId,
   getTermsDetails,
   getUserClaimConditions,
+  grantRole,
   hasAcceptedTerms,
   hasAcceptedTermsVersion,
+  hasRole,
   implementationName,
   implementationVersion,
   isAspenFeatures,
   issue,
-  issueWithTokenUri,
   issueWithinPhase,
   issueWithinPhaseWithTokenUri,
+  issueWithTokenUri,
   lazyMint,
   multicall,
   name,
   owner,
   ownerOf,
+  renounceRole,
+  revokeRole,
   royaltyInfo,
   safeTransferFrom,
   setClaimConditions,
@@ -111,6 +115,10 @@ export class CollectionContract {
   readonly implementationVersion = implementationVersion(this);
   readonly owner = owner(this);
   readonly setOwner = setOwner(this);
+  readonly grantRole = grantRole(this);
+  readonly revokeRole = revokeRole(this);
+  readonly renounceRole = renounceRole(this);
+  readonly hasRole = hasRole(this);
 
   // Collection
   readonly name = name(this);
