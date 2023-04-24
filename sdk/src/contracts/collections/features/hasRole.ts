@@ -37,7 +37,7 @@ export class HasRole extends ContractFunction<HasRoleInterfaces, HasRolePartitio
     const wallet = await asAddress(account);
 
     try {
-      const abi = ['function hasRole(bytes32 role, address account)'];
+      const abi = ['function hasRole(bytes32 role, address account) public view'];
       const contract = new ethers.Contract(this.base.address, abi, signer) as AccessControl;
       return contract.hasRole(role, wallet, overrides);
     } catch (err) {
@@ -47,3 +47,4 @@ export class HasRole extends ContractFunction<HasRoleInterfaces, HasRolePartitio
 }
 
 export const hasRole = asCallableClass(HasRole);
+

@@ -42,7 +42,7 @@ export class GrantRole extends ContractFunction<
     const wallet = await asAddress(account);
 
     try {
-      const abi = ['function grantRole(bytes32 role, address account)'];
+      const abi = ['function grantRole(bytes32 role, address account) public'];
       const contract = new ethers.Contract(this.base.address, abi, signer) as AccessControl;
       const tx = contract.grantRole(role, wallet, overrides);
       return tx;
@@ -60,7 +60,7 @@ export class GrantRole extends ContractFunction<
     const wallet = await asAddress(account);
 
     try {
-      const abi = ['function grantRole(bytes32 role, address account)'];
+      const abi = ['function grantRole(bytes32 role, address account) public'];
       const contract = new ethers.Contract(this.base.address, abi, signer) as AccessControl;
       const estimate = await contract.estimateGas.grantRole(role, wallet, overrides);
       return estimate;
@@ -70,7 +70,6 @@ export class GrantRole extends ContractFunction<
   }
 
   async populateTransaction(
-    signer: Signerish,
     role: BytesLike,
     account: Addressish,
     overrides: CallOverrides = {},
@@ -78,8 +77,8 @@ export class GrantRole extends ContractFunction<
     const wallet = await asAddress(account);
 
     try {
-      const abi = ['function grantRole(bytes32 role, address account)'];
-      const contract = new ethers.Contract(this.base.address, abi, signer) as AccessControl;
+      const abi = ['function grantRole(bytes32 role, address account) public'];
+      const contract = new ethers.Contract(this.base.address, abi, this.base.provider) as AccessControl;
       const tx = await contract.populateTransaction.grantRole(role, wallet, overrides);
       return tx;
     } catch (err) {
@@ -89,3 +88,4 @@ export class GrantRole extends ContractFunction<
 }
 
 export const grantRole = asCallableClass(GrantRole);
+

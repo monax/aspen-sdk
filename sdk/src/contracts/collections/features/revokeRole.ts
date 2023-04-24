@@ -42,7 +42,7 @@ export class RevokeRole extends ContractFunction<
     const wallet = await asAddress(account);
 
     try {
-      const abi = ['function revokeRole(bytes32 role, address account)'];
+      const abi = ['function revokeRole(bytes32 role, address account) public'];
       const contract = new ethers.Contract(this.base.address, abi, signer) as AccessControl;
       const tx = contract.revokeRole(role, wallet, overrides);
       return tx;
@@ -60,7 +60,7 @@ export class RevokeRole extends ContractFunction<
     const wallet = await asAddress(account);
 
     try {
-      const abi = ['function revokeRole(bytes32 role, address account)'];
+      const abi = ['function revokeRole(bytes32 role, address account) public'];
       const contract = new ethers.Contract(this.base.address, abi, signer) as AccessControl;
       const estimate = await contract.estimateGas.revokeRole(role, wallet, overrides);
       return estimate;
@@ -70,16 +70,15 @@ export class RevokeRole extends ContractFunction<
   }
 
   async populateTransaction(
-    signer: Signerish,
     role: BytesLike,
     account: Addressish,
     overrides: CallOverrides = {},
   ): Promise<PopulatedTransaction> {
     const wallet = await asAddress(account);
-    const abi = ['function revokeRole(bytes32 role, address account)'];
 
     try {
-      const contract = new ethers.Contract(this.base.address, abi, signer) as AccessControl;
+      const abi = ['function revokeRole(bytes32 role, address account) public'];
+      const contract = new ethers.Contract(this.base.address, abi, this.base.provider) as AccessControl;
       const tx = await contract.populateTransaction.revokeRole(role, wallet, overrides);
       return tx;
     } catch (err) {
@@ -89,3 +88,4 @@ export class RevokeRole extends ContractFunction<
 }
 
 export const revokeRole = asCallableClass(RevokeRole);
+
