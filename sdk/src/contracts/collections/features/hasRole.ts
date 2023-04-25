@@ -1,5 +1,5 @@
-import { BytesLike, CallOverrides, ethers } from 'ethers';
-import { AccessControl, Addressish, asAddress, CollectionContract, Signerish } from '../..';
+import { BytesLike, CallOverrides } from 'ethers';
+import { AccessControl__factory, Addressish, asAddress, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
 
@@ -14,7 +14,7 @@ type HasRolePartitions = typeof HasRolePartitions;
 const HasRoleInterfaces = Object.values(HasRolePartitions).flat();
 type HasRoleInterfaces = (typeof HasRoleInterfaces)[number];
 
-export type HasRoleCallArgs = [signer: Signerish, role: BytesLike, account: Addressish, overrides?: CallOverrides];
+export type HasRoleCallArgs = [role: BytesLike, account: Addressish, overrides?: CallOverrides];
 export type HasRoleResponse = boolean;
 
 export class HasRole extends ContractFunction<HasRoleInterfaces, HasRolePartitions, HasRoleCallArgs, HasRoleResponse> {
@@ -28,18 +28,12 @@ export class HasRole extends ContractFunction<HasRoleInterfaces, HasRolePartitio
     return this.hasRole(...args);
   }
 
-  async hasRole(
-    signer: Signerish,
-    role: BytesLike,
-    account: Addressish,
-    overrides: CallOverrides = {},
-  ): Promise<boolean> {
+  async hasRole(role: BytesLike, account: Addressish, overrides: CallOverrides = {}): Promise<boolean> {
     const wallet = await asAddress(account);
 
     try {
-      const abi = ['function hasRole(bytes32 role, address account) public view'];
-      const contract = new ethers.Contract(this.base.address, abi, signer) as AccessControl;
-      return contract.hasRole(role, wallet, overrides);
+      const contract = AccessControl__factory.connect(this.base.address, this.base.provider);
+      return await contract.hasRole(role, wallet, overrides);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
@@ -47,4 +41,3 @@ export class HasRole extends ContractFunction<HasRoleInterfaces, HasRolePartitio
 }
 
 export const hasRole = asCallableClass(HasRole);
-

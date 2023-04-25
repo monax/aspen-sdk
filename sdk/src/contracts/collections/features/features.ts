@@ -48,6 +48,7 @@ export const ContractFunctionIds = [
   'revokeRole',
   'renounceRole',
   'hasRole',
+  'getRoleAdmin',
 
   // Collection
   'name',

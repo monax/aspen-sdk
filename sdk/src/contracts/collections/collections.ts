@@ -32,6 +32,7 @@ import {
   getOperatorRestriction,
   getPlatformFees,
   getPrimarySaleRecipient,
+  getRoleAdmin,
   getRoyaltyInfoForToken,
   getSmallestTokenId,
   getTermsDetails,
@@ -119,6 +120,7 @@ export class CollectionContract {
   readonly revokeRole = revokeRole(this);
   readonly renounceRole = renounceRole(this);
   readonly hasRole = hasRole(this);
+  readonly getRoleAdmin = getRoleAdmin(this);
 
   // Collection
   readonly name = name(this);

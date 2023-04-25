@@ -18,6 +18,7 @@ export * from './getLargestTokenId';
 export * from './getOperatorRestriction';
 export * from './getPlatformFees';
 export * from './getPrimarySaleRecipient';
+export * from './getRoleAdmin';
 export * from './getRoyaltyInfoForToken';
 export * from './getSmallestTokenId';
 export * from './getTermsDetails';
