@@ -1,5 +1,5 @@
-import { BigNumber, BytesLike, CallOverrides, ContractTransaction, ethers, PopulatedTransaction } from 'ethers';
-import { AccessControl, Addressish, asAddress, CollectionContract, Signerish } from '../..';
+import { BigNumber, BytesLike, ContractTransaction, PopulatedTransaction } from 'ethers';
+import { AccessControl__factory, Addressish, asAddress, CollectionContract, Signerish, WriteOverrides } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
 
@@ -14,7 +14,12 @@ type RenounceRolePartitions = typeof RenounceRolePartitions;
 const RenounceRoleInterfaces = Object.values(RenounceRolePartitions).flat();
 type RenounceRoleInterfaces = (typeof RenounceRoleInterfaces)[number];
 
-export type RenounceRoleCallArgs = [signer: Signerish, role: BytesLike, account: Addressish, overrides?: CallOverrides];
+export type RenounceRoleCallArgs = [
+  signer: Signerish,
+  role: BytesLike,
+  account: Addressish,
+  overrides?: WriteOverrides,
+];
 export type RenounceRoleResponse = ContractTransaction;
 
 export class RenounceRole extends ContractFunction<
@@ -37,14 +42,13 @@ export class RenounceRole extends ContractFunction<
     signer: Signerish,
     role: BytesLike,
     account: Addressish,
-    overrides: CallOverrides = {},
+    overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const wallet = await asAddress(account);
 
     try {
-      const abi = ['function renounceRole(bytes32 role, address account) public'];
-      const contract = new ethers.Contract(this.base.address, abi, signer) as AccessControl;
-      const tx = contract.renounceRole(role, wallet, overrides);
+      const contract = AccessControl__factory.connect(this.base.address, signer);
+      const tx = await contract.renounceRole(role, wallet, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -55,13 +59,12 @@ export class RenounceRole extends ContractFunction<
     signer: Signerish,
     role: BytesLike,
     account: Addressish,
-    overrides: CallOverrides = {},
+    overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
     const wallet = await asAddress(account);
 
     try {
-      const abi = ['function renounceRole(bytes32 role, address account) public'];
-      const contract = new ethers.Contract(this.base.address, abi, signer) as AccessControl;
+      const contract = AccessControl__factory.connect(this.base.address, signer);
       const estimate = await contract.estimateGas.renounceRole(role, wallet, overrides);
       return estimate;
     } catch (err) {
@@ -72,13 +75,12 @@ export class RenounceRole extends ContractFunction<
   async populateTransaction(
     role: BytesLike,
     account: Addressish,
-    overrides: CallOverrides = {},
+    overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
     const wallet = await asAddress(account);
 
     try {
-      const abi = ['function renounceRole(bytes32 role, address account) public'];
-      const contract = new ethers.Contract(this.base.address, abi, this.base.provider) as AccessControl;
+      const contract = AccessControl__factory.connect(this.base.address, this.base.provider);
       const tx = await contract.populateTransaction.renounceRole(role, wallet, overrides);
       return tx;
     } catch (err) {
@@ -88,4 +90,3 @@ export class RenounceRole extends ContractFunction<
 }
 
 export const renounceRole = asCallableClass(RenounceRole);
-

@@ -1,5 +1,5 @@
-import { BytesLike, CallOverrides, ethers } from 'ethers';
-import { AccessControl, Addressish, asAddress, CollectionContract, Signerish } from '../..';
+import { BytesLike, CallOverrides } from 'ethers';
+import { AccessControl__factory, Addressish, asAddress, CollectionContract, Signerish } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
 
@@ -37,9 +37,8 @@ export class HasRole extends ContractFunction<HasRoleInterfaces, HasRolePartitio
     const wallet = await asAddress(account);
 
     try {
-      const abi = ['function hasRole(bytes32 role, address account) public view'];
-      const contract = new ethers.Contract(this.base.address, abi, signer) as AccessControl;
-      return contract.hasRole(role, wallet, overrides);
+      const contract = AccessControl__factory.connect(this.base.address, signer);
+      return await contract.hasRole(role, wallet, overrides);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
@@ -47,4 +46,3 @@ export class HasRole extends ContractFunction<HasRoleInterfaces, HasRolePartitio
 }
 
 export const hasRole = asCallableClass(HasRole);
-
