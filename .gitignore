@@ -1,6 +1,7 @@
 tsconfig.tsbuildinfo
 .DS_Store
 .envrc
+.idea/
 
 # Generated code
 generated/
