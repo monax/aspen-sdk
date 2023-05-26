@@ -15,8 +15,6 @@ import {
   WriteOverrides,
   ZERO_BYTES32,
 } from '../..';
-import { publishingChainFromChainId } from '../../../apis';
-import { ContractService, MerkleProofResponse } from '../../../apis/publishing';
 import { resolveIpfsUrl } from '../../../utils/ipfs';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
@@ -80,7 +78,7 @@ export class Token extends ContractObject {
   /** Requires authenticated Publishing API */
   async getFullUserClaimConditions(
     userAddress: Addressish,
-    allowlistStatusGetter: AllowlistStatusGetter = getAllowlistStatusV1,
+    allowlistStatusGetter: AllowlistStatusGetter,
   ): Promise<OperationStatus<ClaimConditionsState>> {
     return await this.run(async () => {
       const userConditions = await this.base.getUserClaimConditions(userAddress, this.tokenId);
@@ -295,44 +293,3 @@ export type AllowlistStatus =
       proofs: [];
       proofMaxQuantityPerTransaction: 0;
     };
-
-export async function getAllowlistStatusV1(
-  chainId: ChainId,
-  contractAddress: Addressish,
-  walletAddress: Addressish,
-  tokenId: BigNumberish | null = null,
-): Promise<AllowlistStatus> {
-  const noActivePhaseBodyText = 'Phase not found';
-  const chain = publishingChainFromChainId(chainId);
-
-  const { proofs, proofMaxQuantityPerTransaction, err }: MerkleProofResponse & { err?: any } =
-    await ContractService.getMerkleProofsFromContract({
-      contractAddress: await asAddress(contractAddress),
-      walletAddress: await asAddress(walletAddress),
-      chainName: chain,
-      tokenId: tokenId ? BigNumber.from(tokenId).toNumber() : undefined,
-    }).catch((err) => ({
-      err,
-      proofs: [],
-      proofMaxQuantityPerTransaction: 0,
-    }));
-
-  if (err) {
-    // Handle some 404s as non-error states
-    if (err.status === 404) {
-      if (err.body === noActivePhaseBodyText) {
-        return { enabled: false, status: 'no-active-phase', proofs: [], proofMaxQuantityPerTransaction: 0 };
-      }
-      return { enabled: true, status: 'excluded', proofs: [], proofMaxQuantityPerTransaction: 0 };
-    }
-
-    // Throw other errors
-    throw err;
-  }
-
-  if (!(proofs && proofs.length) || !proofMaxQuantityPerTransaction) {
-    return { enabled: true, status: 'excluded', proofs: [], proofMaxQuantityPerTransaction: 0 };
-  }
-
-  return { enabled: true, status: 'included', proofs, proofMaxQuantityPerTransaction };
-}

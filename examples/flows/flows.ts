@@ -4,21 +4,16 @@ import {
   getProvider,
   getProviderConfig,
   getSigner,
-  PostFileResponse,
-  uploadFile,
 } from '@monaxlabs/aspen-sdk/dist/api-utils';
 import {
   AspenEnvironment,
   authenticateForGate,
   configureGate,
   GatingAPI,
-  issueToken,
   parseAndVerifyJWT,
   ProviderConfig,
-  PublishingAPI,
   SupportedNetwork,
 } from '@monaxlabs/aspen-sdk/dist/apis';
-import { Currency } from '@monaxlabs/aspen-sdk/dist/apis/publishing';
 import { ClaimBalance, getClaimBalances } from '@monaxlabs/aspen-sdk/dist/claimgraph';
 import {
   Address,
@@ -31,29 +26,18 @@ import {
   ICedarERC721DropV7,
   ICedarERC721DropV7__factory,
   IssueSuccessState,
-  PendingClaim,
   PendingIssue,
-  Token,
-  ZERO_ADDRESS,
 } from '@monaxlabs/aspen-sdk/dist/contracts';
 import { parse } from '@monaxlabs/aspen-sdk/dist/utils';
 import { BigNumber, BigNumberish, Signer } from 'ethers';
 import { providers } from 'ethers/lib/ethers';
 import { formatEther } from 'ethers/lib/utils';
-import { createReadStream } from 'fs';
 import { GraphQLClient } from 'graphql-request';
 import { format } from 'util';
 import { demoMnemonic } from './keys';
 import { credentialsFile, providersFile } from './secrets';
-import {
-  collectionInfoFile,
-  CollectionPair,
-  readCollectionInfo,
-  readIssuanceInfo,
-  writeCollectionInfo,
-  writeIssuanceInfo,
-} from './state';
-import { deployERC1155, deployERC721, wait } from './utils/collection';
+import { collectionInfoFile, CollectionPair, readCollectionInfo, writeCollectionInfo } from './state';
+import { deployERC721 } from './utils/collection';
 
 // Global config for flows
 const network: SupportedNetwork = 'Goerli';
@@ -75,10 +59,8 @@ const placeHolderFile = __dirname + '/assets/tokens/0.jpg';
 const flows = {
   1: { cmd: cmdDeployCollections, desc: 'Contract creation via API of collections A and B (done once on our end)' },
   2: { cmd: cmdClaimA, desc: 'Claiming some A tokens to some different addresses (client-side flow)' },
-  3: { cmd: cmdIssueB, desc: 'Issue B based on looking up claims on A from claimgraph (server-side flow)' },
   4: { cmd: cmdDirectIssueB, desc: 'Issue B directly from contract' },
   5: { cmd: cmdGateA, desc: 'Gating something on A/B (server-side flow)' },
-  6: { cmd: cmdDeployAllowlistAndClaim, desc: 'Deploy collection with allowlist and claim' },
 } as const;
 
 // Change this to perform a different run
@@ -152,55 +134,6 @@ async function cmdClaimA(): Promise<void> {
   }
 }
 
-// Issue B based on claims of A
-async function cmdIssueB(): Promise<void> {
-  const { collections } = await readCollectionInfo();
-  // Stub for an actual database - this should have its state saved every issue to avoid double-issuance after a crash
-  const issuanceInfo = await readIssuanceInfo();
-  const committer = async (issuee: string, tokenId: number) => {
-    issuanceInfo[issuee] = (issuanceInfo[issuee] ?? 0) + 1;
-  };
-  // Grab a random file to demonstrate upload
-  const stream = createReadStream(placeHolderFile);
-  const uploaded = await uploadFile(stream);
-  // Here we are reading all claim balances for all user addresses from A - filter this down by looking at the users
-  // address (typically `web3.eth.accounts[0]`)
-  const balances = await claimGraphQuery(collections.map((c) => c.a.address));
-
-  const collectionsByAddressOfA: Record<string, CollectionPair> = Object.fromEntries(
-    collections.map((c) => [c.a.address.toLowerCase(), c]),
-  );
-
-  const tokensIssued = await Promise.all(
-    balances.flatMap(({ tokenId: baseTokenId, receiver, totalClaimed, contractAddress }, i) => {
-      // Calculate the unclaimed balance based on previously stored value
-      const remainingToClaim = BigNumber.from(totalClaimed)
-        .sub(issuanceInfo[receiver] ?? 0)
-        .toNumber();
-      if (remainingToClaim <= 0) {
-        return [];
-      }
-      const collection = collectionsByAddressOfA[contractAddress];
-      return new Array(remainingToClaim).fill(null).map(() =>
-        issueTokenFlow(collection.b.guid, receiver, Number(baseTokenId), committer, uploaded).then(
-          ({ tokenId, collectionGuid }) => ({
-            receiver,
-            issuedTokenId: tokenId,
-            collectionGuid,
-          }),
-        ),
-      );
-    }),
-  );
-  const tokenURIs = await Promise.all(
-    tokensIssued.map(({ issuedTokenId, collectionGuid }) => checkTokenURI(collectionGuid, issuedTokenId)),
-  );
-  await writeIssuanceInfo(issuanceInfo);
-  console.error(`The following token Bs have been issued:\n${JSON.stringify(issuanceInfo, null, 2)}`);
-  console.error(`Total tokens issued: ${Object.values(issuanceInfo ?? []).reduce((sum, v) => sum + v, 0)}`);
-  console.error(tokenURIs);
-}
-
 async function cmdDirectIssueB(): Promise<void> {
   const {
     collections: [{ b }],
@@ -263,93 +196,11 @@ async function cmdGateA(): Promise<void> {
   }
 }
 
-async function cmdDeployAllowlistAndClaim(): Promise<void> {
-  const provider = await getProvider(network, providerConfig);
-  const accounts = generateAccounts(4, { mnemonic: demoMnemonic, provider });
-  const allowlist = Object.fromEntries(accounts.slice(0, 2).map((w) => [parse(Address, w.address), 3]));
-  const contractAddress = await deployERC1155WithAllowlist(allowlist);
-  // TODO: test address, can be removed
-  // const contractAddress = parse(Address, '0xf098f440273037097bFA258e7A6D52125F3C1a5d');
-  console.error(`Deployed contract with allowlist to ${contractAddress}`);
-  // We have only defined a single token
-  const tokenId = 0;
-
-  const contract = await CollectionContract.from(provider, contractAddress);
-
-  //
-  const phase = await contract.getUserClaimConditions(ZERO_ADDRESS, tokenId);
-  if (!phase) {
-    throw new Error(`No active phase`);
-  }
-
-  const gasStrategy = await getGasStrategy(provider);
-
-  const reserve = await getSigner(network, providerConfig);
-  for (const claimer of accounts) {
-    const receiver = parse(Address, claimer.address);
-    console.error(`Considering allowlist claim for ${receiver}`);
-
-    const maxClaimable = allowlist[claimer.address] || 0;
-    if (maxClaimable) {
-      console.error(`Receiver should be on allow list, retrieving proof`);
-
-      const { success, result: conditions } = await new Token(contract, tokenId).getFullUserClaimConditions(receiver);
-      if (!success) {
-        throw new Error(`Couldn't get user conditions`);
-      } else if (conditions.claimState !== 'ok') {
-        throw new Error(`Claim state not ok: ${conditions.claimState}`);
-      }
-
-      const pendingClaim = new PendingClaim(contract, tokenId, conditions);
-      const verify = await pendingClaim.verify(receiver, maxClaimable);
-
-      if (!verify.success) {
-        throw new Error(`Claim did not verify!`);
-      }
-
-      const gas = await pendingClaim.estimateGas(claimer, receiver, maxClaimable);
-      await gasClaimerWallet(reserve, provider, gas.result || 0, claimer.address, phase.pricePerToken, gasStrategy);
-      console.error(`Performing claim for ${receiver}`);
-
-      const claimTx = await pendingClaim.execute(claimer, receiver, maxClaimable);
-      if (!claimTx.success) {
-        throw claimTx.error;
-      }
-
-      // wait for the transaction
-      await claimTx.result.wait();
-
-      console.error(`Allowlist claim successful for ${receiver}`);
-    }
-  }
-}
-
 // Support functions
 
-async function deployERC1155WithAllowlist(allowlist: Record<string, number>): Promise<Address> {
-  const now = new Date();
-  const collection = await deployERC1155(
-    network,
-    [
-      {
-        name: 'Allowlist Mint',
-        currency: Currency.NATIVE_COIN,
-        pricePerToken: 0.00001,
-        startTimestamp: now.toISOString(),
-        maxClaimableSupply: 0,
-        quantityLimitPerTransaction: 100,
-        waitTimeInSecondsBetweenClaims: 1,
-        allowlist,
-      },
-    ],
-    { tokenCount: 1, maxSupplyPerToken: 100 },
-  );
-  return parse(Address, collection.address);
-}
-
 async function deployERC721Pair(): Promise<CollectionPair> {
-  const a = await deployERC721(network, undefined, { maxTokens: numberOfTokensPerCollection });
-  const b = await deployERC721(network, undefined, { maxTokens: numberOfTokensPerCollection });
+  const a = await deployERC721(network, { maxTokens: numberOfTokensPerCollection });
+  const b = await deployERC721(network, { maxTokens: numberOfTokensPerCollection });
   return { a, b };
 }
 
@@ -437,40 +288,6 @@ async function claimGraphQuery(contractAddresses: string[], userAddress?: string
   });
 }
 
-async function issueTokenFlow(
-  collectionGuid: string,
-  issuee: string,
-  baseTokenId: number,
-  commitIssue: (issuee: string, tokenId: number) => Promise<void>,
-  { ipfsUrl, web2Url, contentType, extension }: PostFileResponse,
-): Promise<{ tokenId: number; collectionGuid: string }> {
-  const { address } = await PublishingAPI.CollectionService.getCollectionById({ guid: collectionGuid });
-  const tokenData = {
-    files: [{ fileType: PublishingAPI.FileType.IMAGE, url: web2Url, contentType, extension }],
-    // No need for you to do this just showing you what it looks like
-    attributes: [
-      { trait_type: 'ipfs_backup', traitObject: { name: 'image', value: ipfsUrl } },
-      {
-        trait_type: 'base_token_id',
-        traitObject: { value: baseTokenId },
-      },
-      {
-        trait_type: 'base_contract_address',
-        traitObject: { value: address },
-      },
-    ],
-  };
-  const { tokenId } = await issueToken(collectionGuid, {
-    to: issuee,
-    // NOTE: Uncomment to issue with token data
-    // tokenData,
-  });
-  // NOTE: Checkpoint - now we must save the issuee balance to a database
-  await commitIssue(issuee, tokenId);
-  console.error(`Issued token ${tokenId} at ${address}`);
-  return { tokenId, collectionGuid };
-}
-
 async function acceptTerms(
   dropPayer: Drop,
   dropReceiver: Drop,
@@ -496,15 +313,6 @@ async function acceptTerms(
   await tx.wait();
 }
 
-async function checkTokenURI(collectionGuid: string, tokenId: number): Promise<string> {
-  const { address } = await PublishingAPI.CollectionService.getCollectionById({ guid: collectionGuid });
-  if (!address) {
-    throw new Error(`Collection has no address, is it deployed?`);
-  }
-  const drop = Drop721__factory.connect(address, await getProvider(network, providerConfig));
-  return await drop.tokenURI(tokenId);
-}
-
 // Mod-biased random number in [min, sup)
 function rnd(min: number, sup: number): number {
   return Math.floor(min + Math.random() * (sup - min));
@@ -514,3 +322,10 @@ main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
+
+export function wait(ms: number, reason?: string): Promise<void> {
+  if (reason) {
+    console.error(`Waiting ${ms}ms for ${reason}...`);
+  }
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}

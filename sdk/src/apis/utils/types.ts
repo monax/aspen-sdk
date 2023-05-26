@@ -1,6 +1,5 @@
 import * as t from 'io-ts';
 import { ChainId } from '../../contracts';
-import { Chain } from '../publishing';
 
 export const NetworkSecrets = t.partial({
   Mumbai: t.string,
@@ -20,12 +19,6 @@ export type ProviderConfig = t.TypeOf<typeof ProviderConfig>;
 
 export type SupportedNetwork = keyof NetworkSecrets;
 export const SupportedNetwork = t.keyof(NetworkSecrets.props);
-
-export type ChainMapEntry = {
-  network: SupportedNetwork;
-  chain: Chain;
-  chainId: ChainId;
-};
 
 export const Credential = t.type({
   baseUrl: t.string,

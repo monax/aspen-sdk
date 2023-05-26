@@ -61,7 +61,15 @@ const Home: NextPage = () => {
     try {
       const address = parse(Address, account ?? ZERO_ADDRESS);
       const token = new Token(contract, selectedToken);
-      const conditions = await token.getFullUserClaimConditions(address);
+      const conditions = await token.getFullUserClaimConditions(
+        address,
+        async () => ({
+          enabled: false,
+          status: "no-allowlist",
+          proofs: [],
+          proofMaxQuantityPerTransaction: 0,
+        })
+      );
       setConditions(conditions.result);
 
       if (contract.tokenStandard === "ERC1155" && selectedToken) {

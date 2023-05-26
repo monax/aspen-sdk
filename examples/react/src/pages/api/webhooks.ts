@@ -1,7 +1,6 @@
 import { buffer } from "micro";
 import Cors from "micro-cors";
 import { NextApiRequest, NextApiResponse } from "next";
-import { authenticate, issueToken, PublishingAPI } from "@monaxlabs/aspen-sdk";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -10,9 +9,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 const webhookSecret: string = process.env.STRIPE_WEBHOOK_SECRET!;
-const PUBLISHING_API_BASEURI = process.env.NEXT_PUBLIC_PUBLISHING_API_BASEURI!;
-const PUBLISHING_API_USERNAME = process.env.PUBLISHING_API_USERNAME!;
-const PUBLISHING_API_PASSWORD = process.env.PUBLISHING_API_PASSWORD!;
+// const PUBLISHING_API_BASEURI = process.env.NEXT_PUBLIC_PUBLISHING_API_BASEURI!;
+// const PUBLISHING_API_USERNAME = process.env.PUBLISHING_API_USERNAME!;
+// const PUBLISHING_API_PASSWORD = process.env.PUBLISHING_API_PASSWORD!;
 
 // Stripe requires the raw body to construct the event.
 export const config = {
@@ -66,16 +65,17 @@ const webhookHandler = async (req: NextApiRequest, res: NextApiResponse) => {
         console.log("Event id:", event.id);
 
         try {
-          await authenticate(PublishingAPI.OpenAPI, {
-            baseUrl: PUBLISHING_API_BASEURI,
-            name: PUBLISHING_API_USERNAME,
-            password: PUBLISHING_API_PASSWORD,
-          });
-          const { tokenId: tokenIdIssued } = await issueToken(collectionGuid, {
-            to: wallet,
-            tokenId: tokenId ? Number.parseInt(tokenId) : undefined,
-          });
-          console.log(`Issued token ${tokenIdIssued}`);
+          throw new Error("Implement against Aspen");
+          // await authenticate(PublishingAPI.OpenAPI, {
+          //   baseUrl: PUBLISHING_API_BASEURI,
+          //   name: PUBLISHING_API_USERNAME,
+          //   password: PUBLISHING_API_PASSWORD,
+          // });
+          // const { tokenId: tokenIdIssued } = await issueToken(collectionGuid, {
+          //   to: wallet,
+          //   tokenId: tokenId ? Number.parseInt(tokenId) : undefined,
+          // });
+          // console.log(`Issued token ${tokenIdIssued}`);
         } catch (err) {
           console.log(`Error issuing token: ${err}`);
           return res.status(500).send(`Issuance error: ${err}`);

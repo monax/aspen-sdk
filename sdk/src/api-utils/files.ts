@@ -1,7 +1,5 @@
 import * as t from 'io-ts';
 import { Readable, ReadableOptions } from 'stream';
-import { PublishingAPI } from '../apis';
-import { parse } from '../utils';
 
 export interface NamedReadable extends Readable {
   readonly name: string;
@@ -51,14 +49,4 @@ export function coerceToBlob(iterable: Iterable<any> | AsyncIterable<any>, filen
     iterable = namedReadableFrom(filename, iterable);
   }
   return iterable as unknown as Blob;
-}
-
-export async function uploadFile(
-  iterable: Iterable<any> | AsyncIterable<any>,
-  filename?: string,
-): Promise<PostFileResponse> {
-  const jsonPretendingToBeString = await PublishingAPI.UtilityService.postUtilityFiles({
-    formData: { file: coerceToBlob(iterable, filename) },
-  });
-  return parse(PostFileResponse, jsonPretendingToBeString);
 }
