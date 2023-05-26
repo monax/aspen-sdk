@@ -4,7 +4,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import prettier from 'prettier';
 import ts from 'typescript';
-import { parse } from '../utils';
 import { AdditionalABIs } from './abis';
 import { DeployerManifest, DeployersManifest } from './deployers';
 import { ContractManifest, ContractsManifest } from './manifest';
@@ -83,26 +82,26 @@ export function exportType(name: string, type: ts.TypeNode, opts?: { comment?: s
 
 export async function generateTsFile(
   constName: string,
-  pathToJson: string,
+  obj: object,
   prettierConfigFile: string,
   outputFileTs: string,
 ): Promise<unknown> {
-  const obj = JSON.parse(fs.readFileSync(pathToJson).toString());
   const ts = await printJsonObjectAsTypescriptConst(constName, prettierConfigFile, obj);
   fs.writeFileSync(outputFileTs, ts);
   return obj;
 }
 
-export async function dumpLatestABIs(abiDir: string, pathToManifestJson: string): Promise<void> {
+export async function dumpLatestABIs(abiDir: string, ...manifests: ContractsManifest[]): Promise<void> {
   fs.rmSync(abiDir, { recursive: true, force: true });
   fs.mkdirSync(abiDir, { recursive: true });
-  const manifest = parse(ContractsManifest, JSON.parse(fs.readFileSync(pathToManifestJson).toString()));
-  for (const m of Object.values(manifest)) {
-    writeABI(abiDir, m);
-  }
-  const additionalDir = path.join(abiDir, 'additional');
-  for (const [name, abi] of Object.entries(AdditionalABIs)) {
-    writeABI(additionalDir, { name, abi, file: name + '.sol' });
+  for (const manifest of manifests) {
+    for (const m of Object.values(manifest)) {
+      writeABI(abiDir, m);
+    }
+    const additionalDir = path.join(abiDir, 'additional');
+    for (const [name, abi] of Object.entries(AdditionalABIs)) {
+      writeABI(additionalDir, { name, abi, file: name + '.sol' });
+    }
   }
 }
 

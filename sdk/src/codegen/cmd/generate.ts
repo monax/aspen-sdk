@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+import * as t from 'io-ts';
 import * as path from 'path';
 import { parse } from '../../utils';
 import { DeployersManifest } from '../deployers';
@@ -14,29 +16,66 @@ import { ContractsManifest } from '../manifest';
 
 const sdkDir = path.join(__dirname, '..', '..', '..');
 const srcDir = path.join(sdkDir, 'src');
-
-const manifestFileTs = path.join(srcDir, 'codegen', 'manifest.gen.ts');
-const deployersFileTs = path.join(srcDir, 'contracts', 'deployer', 'deployers.gen.ts');
-const deployerFactoriesTs = path.join(srcDir, 'contracts', 'deployer', 'deployer-factories.gen.ts');
 const contractsAbiDir = path.join(srcDir, 'contracts', 'abis');
-const featureFactoriesTs = path.join(srcDir, 'contracts', 'collections', 'features', 'feature-factories.gen.ts');
-const featureFunctionsTs = path.join(srcDir, 'contracts', 'collections', 'features', 'feature-functions.gen.ts');
-
 const specDir = path.join(sdkDir, 'node_modules', '@monaxlabs', 'spec');
 const pathToDeploymentsJson = path.join(specDir, 'contracts/deployments.json');
-const pathToManifestJson = path.join(specDir, 'contracts/manifest.json');
 const prettierConfigFile = path.join(sdkDir, '.prettierrc');
+const pathToManifestJson = path.join(specDir, 'contracts/manifest.json');
+const pathToExperimentalManifestJson = path.join(specDir, 'contracts/manifest.experimental.json');
 
-async function generate(): Promise<void> {
-  await Promise.all([dumpLatestABIs(contractsAbiDir, pathToManifestJson)]);
+async function generateForManifest(manifest: ContractsManifest, prefix = '') {
+  const featureFactoriesTs = path.join(
+    srcDir,
+    'contracts',
+    'collections',
+    'features',
+    prefix,
+    'feature-factories.gen.ts',
+  );
+  const featureFunctionsTs = path.join(
+    srcDir,
+    'contracts',
+    'collections',
+    'features',
+    prefix,
+    'feature-functions.gen.ts',
+  );
+  await generateTsFile(
+    'manifest',
+    manifest,
+    prettierConfigFile,
+    path.join(srcDir, 'codegen', prefix, 'manifest.gen.ts'),
+  );
 
-  const manifestJson = await generateTsFile('manifest', pathToManifestJson, prettierConfigFile, manifestFileTs);
-  const manifest = parse(ContractsManifest, manifestJson);
   await writeFeaturesFactoriesMap(manifest, prettierConfigFile, featureFactoriesTs);
   await writeFeaturesFunctionsMap(manifest, prettierConfigFile, featureFunctionsTs);
+}
 
-  const deploymentsJson = await generateTsFile('deployers', pathToDeploymentsJson, prettierConfigFile, deployersFileTs);
-  const deployments = parse(DeployersManifest, deploymentsJson);
+function parseFile<A, O, I>(schema: t.Type<A, O, I>, pathToManifest: string): A {
+  return parse(schema, JSON.parse(fs.readFileSync(pathToManifest).toString()));
+}
+
+async function generate(): Promise<void> {
+  // Pull in manifests from @monaxlabs/spec
+  const manifest = parseFile(ContractsManifest, pathToManifestJson);
+  const experimentalManifest = parseFile(ContractsManifest, pathToExperimentalManifestJson);
+  // Dump joint ABIs for Typechain
+  await Promise.all([dumpLatestABIs(contractsAbiDir, manifest, experimentalManifest)]);
+  // Generate various contingent typescript artefacts based on manifests
+  await generateForManifest({ ...manifest, ...experimentalManifest });
+  // Drop list of those interfaces that should be marked as experimental (subject to change at any time)
+  await generateTsFile(
+    'experimentalManifest',
+    experimentalManifest,
+    prettierConfigFile,
+    path.join(srcDir, 'codegen', 'experimental.gen.ts'),
+  );
+  // Drop deployments consts
+  const deployersFileTs = path.join(srcDir, 'contracts', 'deployer', 'deployers.gen.ts');
+  const deployments = parseFile(DeployersManifest, pathToDeploymentsJson);
+  await generateTsFile('deployers', deployments, prettierConfigFile, deployersFileTs);
+  const deployerFactoriesTs = path.join(srcDir, 'contracts', 'deployer', 'deployer-factories.gen.ts');
+  // Write map to typechain factory contracts from interfaces
   await writeDeployerFactoriesMap(deployments, prettierConfigFile, deployerFactoriesTs);
 }
 
