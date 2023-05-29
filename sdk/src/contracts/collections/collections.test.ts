@@ -30,7 +30,25 @@ export const TESTNET: Network = {
 export const CONTRACT_ADDRESS = parse(Address, '0xB2Af02eC55E2ba5afe246Ed51b8aBdBBa5F7937C');
 
 const NON_DROP_CONTRACT_INTERFACE_FILES = [
+  // Standards
+  'standard/IERC20.sol',
   'standard/IERC4906.sol',
+  // Payment Notary
+  'payments/IPaymentNotary.sol',
+  'subscriptions/IPaymentNotary.sol',
+  // Config
+  'config/IGlobalConfig.sol',
+  'config/ITieredPricing.sol',
+  'config/IOperatorFilterersConfig.sol',
+  // Error interfaces
+  'errors/ICoreErrors.sol',
+  'errors/IDropErrors.sol',
+  'errors/IPaymentsErrors.sol',
+  'errors/ISplitPaymentErrors.sol',
+  'errors/ITermsErrors.sol',
+  'errors/IUUPSUpgradeableErrors.sol',
+  'errors/IAspenFactoryErrors.sol',
+  // Other
   'pausable/ICedarPausable.sol',
   'splitpayment/ISplitPayment.sol',
   'splitpayment/ICedarSplitPayment.sol',
@@ -40,31 +58,15 @@ const NON_DROP_CONTRACT_INTERFACE_FILES = [
   'issuance/ICedarOrderFiller.sol',
   'issuance/ICedarNativePayable.sol',
   'issuance/ICedarClaimable.sol',
-  'subscriptions/IPaymentNotary.sol',
   'agreement/IAgreementsRegistry.sol',
   'baseURI/ICedarUpgradeBaseURI.sol',
-  // Config
-  'config/IOperatorFilterersConfig.sol',
-  // Error interfaces
-  'errors/ICoreErrors.sol',
-  'errors/IDropErrors.sol',
-  'errors/IPaymentsErrors.sol',
-  'errors/ISplitPaymentErrors.sol',
-  'errors/ITermsErrors.sol',
-  'errors/IUUPSUpgradeableErrors.sol',
 ];
 
 // The following interfaces don't relate to any drop contract and so they don't need implementing
-const NON_DROP_CONTRACT_INTERFACES: FeatureInterfaceId[] = [
-  'ownable/IOwnable.sol:IOwnableEventV0',
-  // TODO - the following are temporarily disabled, until respective functions are implemented
-  'config/IOperatorFilterersConfig.sol:IOperatorFiltererConfigV0',
-  'payments/IPaymentNotary.sol:IPaymentNotaryV0',
-  'payments/IPaymentNotary.sol:IPaymentNotaryV1',
-];
+const NON_DROP_CONTRACT_INTERFACES: FeatureInterfaceId[] = ['ownable/IOwnable.sol:IOwnableEventV0'];
 
-// TODO - those need implementing
 const NOT_IMPLEMENTED_FUNCTIONS: FeatureFunctionId[] = [
+  // ERC721 and ERC1155 standards functions that are not implemented yet
   'balanceOfBatch(address[],uint256[])[uint256[]]',
   'isApprovedForAll(address,address)[bool]',
   'approve(address,uint256)[]',
@@ -74,15 +76,6 @@ const NOT_IMPLEMENTED_FUNCTIONS: FeatureFunctionId[] = [
   'transferFrom(address,address,uint256)[]',
   'safeTransferFrom(address,address,uint256)+[]',
   'safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)[]',
-  // functions added in V2
-  // Aspen Core Registry
-  'addOperatorFilterer((bytes32,string,address,address))[]',
-  'getOperatorFilterer(bytes32)[(bytes32,string,address,address)]',
-  'getOperatorFiltererIds()[bytes32[]]',
-  'getOperatorFiltererOrDie(bytes32)[(bytes32,string,address,address)]',
-  // Payment Notary
-  'pay(address,bytes32,address,uint256)[]', // v0
-  'pay(string,address,bytes32,address,uint256)[]', // v1
 ];
 
 const isDropInterface = (iface: FeatureInterfaceId, allowExperimental: boolean): boolean => {
@@ -201,7 +194,7 @@ describe('Collections - static tests', () => {
     expect(missingFeatures).toStrictEqual([]);
   });
 
-  test.skip('Check that all experimental features are implemented', async () => {
+  test('Check that all experimental features are implemented', async () => {
     const provider = new MockJsonRpcProvider();
     const erc721 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, ['standard/IERC721.sol:IERC721V0']);
 
@@ -214,6 +207,18 @@ describe('Collections - static tests', () => {
 
     // immediately show what's not implemened
     expect(missingFeatures).toStrictEqual([]);
+  });
+
+  test('Experimental flag', async () => {
+    const provider = new MockJsonRpcProvider();
+    const regular = ['standard/IERC721.sol:IERC721V0'];
+    const combinedInterfaces = [...regular, ...ExperimentalFeatures];
+
+    const contractRegular = new CollectionContract(provider, 1, CONTRACT_ADDRESS, combinedInterfaces);
+    expect(contractRegular.supportedFeaturesList).toStrictEqual([...regular]);
+
+    const contractExperimental = new CollectionContract(provider, 1, CONTRACT_ADDRESS, combinedInterfaces, true);
+    expect(contractExperimental.supportedFeaturesList).toStrictEqual(combinedInterfaces);
   });
 
   test('Token standard detection', async () => {
