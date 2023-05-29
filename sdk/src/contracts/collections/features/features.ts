@@ -7,6 +7,7 @@ import { Address } from '../../address';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import { Signerish } from '../types';
+import { ExperimentalFeatures } from './experimental-features.gen';
 import { FeatureFactories } from './feature-factories.gen';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 
@@ -16,17 +17,41 @@ export type FeatureFactories = typeof FeatureFactories;
 export type FeatureFactory<T extends FeatureInterfaceId> = FeatureFactories[T];
 export type FeatureContract<T extends FeatureInterfaceId> = ReturnType<FeatureFactory<T>['connect']>;
 
+export type ExperimentalFeatureInterfaceId = (typeof ExperimentalFeatures)[number];
+export interface ReleasedFeatureInterfaceIdBrand {
+  readonly ReleasedFeatureInterfaceId: unique symbol;
+}
+export const ReleasedFeatureInterfaceId = t.brand(
+  FeatureInterfaceId,
+  (id): id is t.Branded<FeatureInterfaceId, ReleasedFeatureInterfaceIdBrand> =>
+    !ExperimentalFeatures.includes(id as ExperimentalFeatureInterfaceId),
+  'ReleasedFeatureInterfaceId',
+);
+export type ReleasedFeatureInterfaceId = Exclude<FeatureInterfaceId, ExperimentalFeatureInterfaceId>;
+
 export const FeatureFunctionId = t.keyof(FeatureFunctionsMap);
 export type FeatureFunctionId = t.TypeOf<typeof FeatureFunctionId>;
 
-export const ERC721StandardInterfaces: FeatureInterfaceId[] = [
-  ...FeatureFunctionsMap['approve(address,uint256)[]'].drop,
-  ...FeatureFunctionsMap['totalSupply()[uint256]'].drop,
-];
-export const ERC1155StandardInterfaces: FeatureInterfaceId[] = [
-  ...FeatureFunctionsMap['balanceOf(address,uint256)[uint256]'].drop,
-  ...FeatureFunctionsMap['totalSupply(uint256)[uint256]'].drop,
-];
+export const ERC721StandardInterfaces: FeatureInterfaceId[] = Array.from(
+  new Set(
+    [
+      ...FeatureFunctionsMap['approve(address,uint256)[]'].drop,
+      ...FeatureFunctionsMap['totalSupply()[uint256]'].drop,
+      ...FeatureFunctionsMap['exists(uint256)[bool]'].drop,
+    ].filter((id) => /(ERC721|NFT)/.test(id)),
+  ),
+);
+
+export const ERC1155StandardInterfaces: FeatureInterfaceId[] = Array.from(
+  new Set(
+    [
+      ...FeatureFunctionsMap['balanceOf(address,uint256)[uint256]'].drop,
+      ...FeatureFunctionsMap['totalSupply(uint256)[uint256]'].drop,
+      ...FeatureFunctionsMap['exists(uint256)[bool]'].drop,
+    ].filter((id) => /(ERC1155|SFT)/.test(id)),
+  ),
+);
+
 export const CatchAllInterfaces: FeatureInterfaceId[] = [
   ...FeatureFunctionsMap['isIAspenFeaturesV0()[bool]'].drop,
   ...FeatureFunctionsMap['isICedarFeaturesV0()[bool]'].drop,
@@ -243,17 +268,27 @@ export abstract class ContractFunction<
   abstract execute(...args: A): Promise<R>;
 }
 
-export function extractKnownSupportedFeatures(supportedFeaturesFromContract: string[]): FeatureInterfaceId[] {
-  return supportedFeaturesFromContract
-    .map((f) =>
-      parseThenOrElse(
-        FeatureInterfaceId,
-        f,
-        (f) => f,
-        () => null,
-      ),
-    )
-    .filter((f): f is FeatureInterfaceId => Boolean(f));
+export function extractKnownSupportedFeatures(
+  supportedFeaturesFromContract: string[],
+  withExperimental: boolean,
+): FeatureInterfaceId[] {
+  const mapper = withExperimental
+    ? (f: string) =>
+        parseThenOrElse(
+          FeatureInterfaceId,
+          f,
+          (f) => f,
+          () => null,
+        )
+    : (f: string) =>
+        parseThenOrElse(
+          ReleasedFeatureInterfaceId,
+          f,
+          (f) => f,
+          () => null,
+        );
+
+  return supportedFeaturesFromContract.map(mapper).filter((f): f is FeatureInterfaceId => Boolean(f));
 }
 
 const getPartition = <T extends FeatureInterfaceId, C extends Record<string, T[]>>(

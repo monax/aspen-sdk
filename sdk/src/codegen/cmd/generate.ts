@@ -9,6 +9,7 @@ import {
   writeDeployerFactoriesMap,
   writeFeaturesFactoriesMap,
   writeFeaturesFunctionsMap,
+  writeFeaturesList,
 } from '../generate';
 import { ContractsManifest } from '../manifest';
 
@@ -23,32 +24,20 @@ const prettierConfigFile = path.join(sdkDir, '.prettierrc');
 const pathToManifestJson = path.join(specDir, 'contracts/manifest.json');
 const pathToExperimentalManifestJson = path.join(specDir, 'contracts/manifest.experimental.json');
 
-async function generateForManifest(manifest: ContractsManifest, prefix = '') {
-  const featureFactoriesTs = path.join(
-    srcDir,
-    'contracts',
-    'collections',
-    'features',
-    prefix,
-    'feature-factories.gen.ts',
-  );
-  const featureFunctionsTs = path.join(
-    srcDir,
-    'contracts',
-    'collections',
-    'features',
-    prefix,
-    'feature-functions.gen.ts',
-  );
-  await generateTsFile(
-    'manifest',
-    manifest,
-    prettierConfigFile,
-    path.join(srcDir, 'codegen', prefix, 'manifest.gen.ts'),
-  );
+async function generateForManifests(manifest: ContractsManifest, experimentalManifest: ContractsManifest) {
+  const combinedManifest = { ...manifest, ...experimentalManifest };
+  const manifestTs = path.join(srcDir, 'codegen', 'manifest.gen.ts');
+  await generateTsFile('manifest', combinedManifest, prettierConfigFile, manifestTs);
 
-  await writeFeaturesFactoriesMap(manifest, prettierConfigFile, featureFactoriesTs);
-  await writeFeaturesFunctionsMap(manifest, prettierConfigFile, featureFunctionsTs);
+  const featuresDir = path.join(srcDir, 'contracts', 'collections', 'features');
+  const featureFactoriesTs = path.join(featuresDir, 'feature-factories.gen.ts');
+  const featureFunctionsTs = path.join(featuresDir, 'feature-functions.gen.ts');
+  const experimentalFeaturesTs = path.join(featuresDir, 'experimental-features.gen.ts');
+
+  await writeFeaturesFactoriesMap(combinedManifest, prettierConfigFile, featureFactoriesTs);
+  await writeFeaturesFunctionsMap(combinedManifest, prettierConfigFile, featureFunctionsTs);
+  // Drop list of those interfaces that should be marked as experimental (subject to change at any time)
+  await writeFeaturesList(experimentalManifest, prettierConfigFile, experimentalFeaturesTs);
 }
 
 function parseFile<A, O, I>(schema: t.Type<A, O, I>, pathToManifest: string): A {
@@ -62,21 +51,15 @@ async function generate(): Promise<void> {
   // Dump joint ABIs for Typechain
   await Promise.all([dumpLatestABIs(contractsAbiDir, manifest, experimentalManifest)]);
   // Generate various contingent typescript artefacts based on manifests
-  await generateForManifest({ ...manifest, ...experimentalManifest });
-  // Drop list of those interfaces that should be marked as experimental (subject to change at any time)
-  await generateTsFile(
-    'experimentalManifest',
-    experimentalManifest,
-    prettierConfigFile,
-    path.join(srcDir, 'codegen', 'experimental.gen.ts'),
-  );
+  await generateForManifests(manifest, experimentalManifest);
+
   // Drop deployments consts
   const deployersFileTs = path.join(srcDir, 'contracts', 'deployer', 'deployers.gen.ts');
   const deployments = parseFile(DeployersManifest, pathToDeploymentsJson);
   await generateTsFile('deployers', deployments, prettierConfigFile, deployersFileTs);
   const deployerFactoriesTs = path.join(srcDir, 'contracts', 'deployer', 'deployer-factories.gen.ts');
   // Write map to typechain factory contracts from interfaces
-  await writeDeployerFactoriesMap(deployments, prettierConfigFile, deployerFactoriesTs);
+  await writeDeployerFactoriesMap(deployments, prettierConfigFile, deployerFactoriesTs, experimentalManifest);
 }
 
 generate().catch((err) => {

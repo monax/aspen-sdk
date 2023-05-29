@@ -210,7 +210,11 @@ export class CollectionContract {
     CollectionContract._debugHandler = handler;
   }
 
-  static async from(provider: Provider, collectionAddress: Addressish): Promise<CollectionContract> {
+  static async from(
+    provider: Provider,
+    collectionAddress: Addressish,
+    withExperimental = false,
+  ): Promise<CollectionContract> {
     try {
       const { chainId } = await provider.getNetwork();
       const chain = parse(ChainId, chainId);
@@ -219,18 +223,18 @@ export class CollectionContract {
       const iFeatures = FeatureInterface.fromFeature('IAspenFeatures.sol:IAspenFeaturesV0', address, provider);
       const features = await iFeatures.connectReadOnly().supportedFeatures();
 
-      return new CollectionContract(provider, chain, address, features);
+      return new CollectionContract(provider, chain, address, features, withExperimental);
     } catch (err) {
       throw new SdkError(SdkErrorCode.FAILED_TO_LOAD_FEATURES, undefined, err as Error);
     }
   }
 
-  constructor(provider: Provider, chain: ChainId, address: Address, features: string[]) {
+  constructor(provider: Provider, chain: ChainId, address: Address, features: string[], withExperimental = false) {
     this.chainId = chain;
     this.address = address;
     this._provider = provider;
 
-    this._supportedFeaturesList = extractKnownSupportedFeatures(features);
+    this._supportedFeaturesList = extractKnownSupportedFeatures(features, withExperimental);
     this._interfaces = this.getInterfaces();
     this.debug('Loaded supported features', this._supportedFeaturesList);
 
