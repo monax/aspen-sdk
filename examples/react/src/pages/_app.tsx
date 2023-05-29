@@ -5,13 +5,10 @@ import { Web3Provider } from "@ethersproject/providers";
 import {
   CollectionContract,
   DefaultDebugHandler,
-  PublishingAPI,
 } from "@monaxlabs/aspen-sdk";
 import { ToastProvider } from "react-toast-notifications";
 
 CollectionContract.setDebugHandler(DefaultDebugHandler);
-
-PublishingAPI.OpenAPI.BASE = process.env.NEXT_PUBLIC_PUBLISHING_API_BASEURI!;
 
 function getLibrary(provider: any): Web3Provider {
   const library = new Web3Provider(provider);

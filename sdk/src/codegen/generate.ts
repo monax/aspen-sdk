@@ -4,7 +4,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import prettier from 'prettier';
 import ts from 'typescript';
-import { parse } from '../utils';
 import { AdditionalABIs } from './abis';
 import { DeployerManifest, DeployersManifest } from './deployers';
 import { ContractManifest, ContractsManifest } from './manifest';
@@ -83,22 +82,22 @@ export function exportType(name: string, type: ts.TypeNode, opts?: { comment?: s
 
 export async function generateTsFile(
   constName: string,
-  pathToJson: string,
+  obj: object,
   prettierConfigFile: string,
   outputFileTs: string,
 ): Promise<unknown> {
-  const obj = JSON.parse(fs.readFileSync(pathToJson).toString());
   const ts = await printJsonObjectAsTypescriptConst(constName, prettierConfigFile, obj);
   fs.writeFileSync(outputFileTs, ts);
   return obj;
 }
 
-export async function dumpLatestABIs(abiDir: string, pathToManifestJson: string): Promise<void> {
+export async function dumpLatestABIs(abiDir: string, ...manifests: ContractsManifest[]): Promise<void> {
   fs.rmSync(abiDir, { recursive: true, force: true });
   fs.mkdirSync(abiDir, { recursive: true });
-  const manifest = parse(ContractsManifest, JSON.parse(fs.readFileSync(pathToManifestJson).toString()));
-  for (const m of Object.values(manifest)) {
-    writeABI(abiDir, m);
+  for (const manifest of manifests) {
+    for (const m of Object.values(manifest)) {
+      writeABI(abiDir, m);
+    }
   }
   const additionalDir = path.join(abiDir, 'additional');
   for (const [name, abi] of Object.entries(AdditionalABIs)) {
@@ -112,7 +111,12 @@ function writeABI(abiDir: string, manifest: { name: string; abi: unknown; file: 
   fs.writeFileSync(path.join(dir, manifest.name + '.json'), JSON.stringify(manifest.abi, null, 2));
 }
 
-export function generateDeployerFactoriesMapTs(manifest: DeployersManifest): ts.Node[] {
+export function generateDeployerFactoriesMapTs(
+  manifest: DeployersManifest,
+  experimentalManifest: ContractsManifest,
+): ts.Node[] {
+  const experimentalInterfaceIds = Object.values(experimentalManifest).map((m) => m.id);
+
   const deployers = Object.values(manifest).map((d) => {
     const [file, interfaceName] = d.interfaceId.split(':');
     return { file, interfaceName, ...d };
@@ -164,7 +168,11 @@ export function generateDeployerFactoriesMapTs(manifest: DeployersManifest): ts.
   let currentMajorVersion = 0;
   const networks: string[] = [];
   const interfaceByFamilyVersion = deployers.reduce<Record<string, Record<number, string>>>((imap, d) => {
-    if (d.interfaceFamily === currentFamily && d.version.major > currentMajorVersion) {
+    if (
+      d.interfaceFamily === currentFamily &&
+      d.version.major > currentMajorVersion &&
+      !experimentalInterfaceIds.includes(d.interfaceId)
+    ) {
       currentMajorVersion = d.version.major;
     }
 
@@ -225,12 +233,13 @@ export async function writeDeployerFactoriesMap(
   manifest: DeployersManifest,
   prettierConfigFile: string,
   deployersFactoryMapFile: string,
+  experimentalManifest: ContractsManifest,
 ): Promise<void> {
   const options = await prettier.resolveConfig(prettierConfigFile);
 
   fs.writeFileSync(
     deployersFactoryMapFile,
-    prettier.format(printNodes(...generateDeployerFactoriesMapTs(manifest)), {
+    prettier.format(printNodes(...generateDeployerFactoriesMapTs(manifest, experimentalManifest)), {
       parser: 'typescript',
       ...options,
     }),
@@ -362,6 +371,35 @@ export async function writeFeaturesFunctionsMap(
   fs.writeFileSync(
     functionsMapFile,
     prettier.format(printNodes(generateFeatureFunctionsMapTs(manifest)), {
+      parser: 'typescript',
+      ...options,
+    }),
+  );
+}
+
+export function generateFeaturesListTs(manifest: ContractsManifest): ts.Node {
+  // Only include features with current Solidity code that Typechain will process and exclude
+  // the cedar interfaces that are not features (those under impl, deploy, and standard)
+  const currentFeatures = Object.values(manifest).filter(isFeature);
+
+  const constNode = exportConst(
+    'ExperimentalFeatures',
+    ts.factory.createArrayLiteralExpression(currentFeatures.map((m) => ts.factory.createStringLiteral(m.id))),
+    { asConst: true },
+  );
+  return constNode;
+}
+
+export async function writeFeaturesList(
+  manifest: ContractsManifest,
+  prettierConfigFile: string,
+  functionsMapFile: string,
+): Promise<void> {
+  const options = await prettier.resolveConfig(prettierConfigFile);
+
+  fs.writeFileSync(
+    functionsMapFile,
+    prettier.format(printNodes(generateFeaturesListTs(manifest)), {
       parser: 'typescript',
       ...options,
     }),

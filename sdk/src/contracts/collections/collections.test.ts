@@ -10,11 +10,13 @@ import {
   ContractFunctionId,
   ERC1155StandardInterfaces,
   ERC721StandardInterfaces,
+  ExperimentalFeatureInterfaceId,
   FeatureFunctionId,
   FeatureInterfaceId,
   HasAcceptedTerms,
   hasAcceptedTerms,
 } from './features';
+import { ExperimentalFeatures } from './features/experimental-features.gen';
 import { FeatureFactories } from './features/feature-factories.gen';
 import { FeatureFunctionsMap } from './features/feature-functions.gen';
 import { Token } from './objects';
@@ -52,13 +54,46 @@ const NON_DROP_CONTRACT_INTERFACE_FILES = [
   'errors/IUUPSUpgradeableErrors.sol',
 ];
 
-const isDropInterface = (iface: FeatureInterfaceId): boolean => {
+// The following interfaces don't relate to any drop contract and so they don't need implementing
+const NON_DROP_CONTRACT_INTERFACES: FeatureInterfaceId[] = [
+  'ownable/IOwnable.sol:IOwnableEventV0',
+  // TODO - the following are temporarily disabled, until respective functions are implemented
+  'config/IOperatorFilterersConfig.sol:IOperatorFiltererConfigV0',
+  'payments/IPaymentNotary.sol:IPaymentNotaryV0',
+  'payments/IPaymentNotary.sol:IPaymentNotaryV1',
+];
+
+// TODO - those need implementing
+const NOT_IMPLEMENTED_FUNCTIONS: FeatureFunctionId[] = [
+  'balanceOfBatch(address[],uint256[])[uint256[]]',
+  'isApprovedForAll(address,address)[bool]',
+  'approve(address,uint256)[]',
+  'getApproved(uint256)[address]',
+  'setApprovalForAll(address,bool)[]',
+  'burnBatch(address,uint256[],uint256[])[]',
+  'transferFrom(address,address,uint256)[]',
+  'safeTransferFrom(address,address,uint256)+[]',
+  'safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)[]',
+  // functions added in V2
+  // Aspen Core Registry
+  'addOperatorFilterer((bytes32,string,address,address))[]',
+  'getOperatorFilterer(bytes32)[(bytes32,string,address,address)]',
+  'getOperatorFiltererIds()[bytes32[]]',
+  'getOperatorFiltererOrDie(bytes32)[(bytes32,string,address,address)]',
+  // Payment Notary
+  'pay(address,bytes32,address,uint256)[]', // v0
+  'pay(string,address,bytes32,address,uint256)[]', // v1
+];
+
+const isDropInterface = (iface: FeatureInterfaceId, allowExperimental: boolean): boolean => {
   const file = iface.split(/[:]/).shift() as string;
-  return !NON_DROP_CONTRACT_INTERFACE_FILES.includes(file);
+  const isExperimental = ExperimentalFeatures.includes(iface as ExperimentalFeatureInterfaceId);
+  return !NON_DROP_CONTRACT_INTERFACE_FILES.includes(file) && (allowExperimental || !isExperimental);
 };
 
-const isDropFunction = (func: FeatureFunctionId): boolean => {
-  return Object.values(FeatureFunctionsMap[func].drop).filter(isDropInterface).length !== 0;
+const isDropFunction = (func: FeatureFunctionId, allowExperimental: boolean): boolean => {
+  const interfaces = Object.values(FeatureFunctionsMap[func].drop);
+  return interfaces.filter((f) => isDropInterface(f, allowExperimental)).length !== 0;
 };
 
 export class MockJsonRpcProvider extends ethers.providers.StaticJsonRpcProvider {
@@ -92,14 +127,17 @@ describe('Collections - static tests', () => {
     const combinedExpected = [
       ...FeatureFunctionsMap['isApprovedForAll(address,address)[bool]'].drop,
       ...FeatureFunctionsMap['exists(uint256)[bool]'].drop,
-    ];
+      ...FeatureFunctionsMap['totalSupply()[uint256]'].drop,
+      ...FeatureFunctionsMap['totalSupply(uint256)[uint256]'].drop,
+    ].filter((id) => /(ERC721|NFT|ERC1155|SFT)/.test(id));
+
     expect(Array.from(new Set(combinedActual)).sort()).toStrictEqual(Array.from(new Set(combinedExpected)).sort());
 
     const overlap = ERC721StandardInterfaces.filter((f) => ERC1155StandardInterfaces.includes(f));
     expect(overlap).toStrictEqual([]);
   });
 
-  test('Check that all functions are implemented', () => {
+  test('Check that all released functions are implemented', () => {
     const provider = new MockJsonRpcProvider();
     const erc721 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, ['standard/IERC721.sol:IERC721V0']);
 
@@ -107,35 +145,25 @@ describe('Collections - static tests', () => {
       .map(Object.values)
       .flat();
 
-    // TODO - those need implementing
-    const notImplementedStandardFunctions: FeatureFunctionId[] = [
-      'balanceOfBatch(address[],uint256[])[uint256[]]',
-      'isApprovedForAll(address,address)[bool]',
-      'approve(address,uint256)[]',
-      'getApproved(uint256)[address]',
-      'setApprovalForAll(address,bool)[]',
-      'burnBatch(address,uint256[],uint256[])[]',
-      'transferFrom(address,address,uint256)[]',
-      'safeTransferFrom(address,address,uint256)+[]',
-      'safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)[]',
-      // functions added in V2
-      // Aspen Core Registry
-      'addOperatorFilterer((bytes32,string,address,address))[]',
-      'getOperatorFilterer(bytes32)[(bytes32,string,address,address)]',
-      'getOperatorFiltererIds()[bytes32[]]',
-      'getOperatorFiltererOrDie(bytes32)[(bytes32,string,address,address)]',
-      // Payment Notary
-      'pay(address,bytes32,address,uint256)[]', // v0
-      'pay(string,address,bytes32,address,uint256)[]', // v1
-    ];
-
-    const missingFunctions = Object.keys(FeatureFunctionsMap).filter(
+    const missingFunctions = (Object.keys(FeatureFunctionsMap) as FeatureFunctionId[]).filter(
       (f) =>
-        isDropFunction(f as FeatureFunctionId) &&
-        !(
-          allImplementedFunctions.includes(f as FeatureFunctionId) ||
-          notImplementedStandardFunctions.includes(f as FeatureFunctionId)
-        ),
+        isDropFunction(f, false) && !(allImplementedFunctions.includes(f) || NOT_IMPLEMENTED_FUNCTIONS.includes(f)),
+    );
+
+    // immediately show what's not implemened
+    expect(missingFunctions).toStrictEqual([]);
+  });
+
+  test.skip('Check that all experimental functions are implemented', () => {
+    const provider = new MockJsonRpcProvider();
+    const erc721 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, ['standard/IERC721.sol:IERC721V0']);
+
+    const allImplementedFunctions: FeatureFunctionId[] = Object.values(erc721.getFunctionsProps('handledFunctions'))
+      .map(Object.values)
+      .flat();
+
+    const missingFunctions = (Object.keys(FeatureFunctionsMap) as FeatureFunctionId[]).filter(
+      (f) => isDropFunction(f, true) && !(allImplementedFunctions.includes(f) || NOT_IMPLEMENTED_FUNCTIONS.includes(f)),
     );
 
     // immediately show what's not implemened
@@ -158,28 +186,30 @@ describe('Collections - static tests', () => {
     });
   });
 
-  test('Check that all features are implemented', async () => {
+  test('Check that all released features are implemented', async () => {
     const provider = new MockJsonRpcProvider();
     const erc721 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, ['standard/IERC721.sol:IERC721V0']);
 
     const allImplementedFeatures = Object.values(erc721.getFunctionsProps('handledFeatures')).flat();
 
-    // The following interfaces don't relate to any drop contract and so they don't need implementing
-    const nonDropContractFeatures: FeatureInterfaceId[] = [
-      'ownable/IOwnable.sol:IOwnableEventV0',
-      // TODO - the following are temporarily disabled, until respective functions are implemented
-      'config/IOperatorFilterersConfig.sol:IOperatorFiltererConfigV0',
-      'payments/IPaymentNotary.sol:IPaymentNotaryV0',
-      'payments/IPaymentNotary.sol:IPaymentNotaryV1',
-    ];
-
-    const missingFeatures = Object.keys(FeatureFactories).filter(
+    const missingFeatures = (Object.keys(FeatureFactories) as FeatureInterfaceId[]).filter(
       (f) =>
-        isDropInterface(f as FeatureInterfaceId) &&
-        !(
-          allImplementedFeatures.includes(f as FeatureInterfaceId) ||
-          nonDropContractFeatures.includes(f as FeatureInterfaceId)
-        ),
+        isDropInterface(f, false) && !(allImplementedFeatures.includes(f) || NON_DROP_CONTRACT_INTERFACES.includes(f)),
+    );
+
+    // immediately show what's not implemened
+    expect(missingFeatures).toStrictEqual([]);
+  });
+
+  test.skip('Check that all experimental features are implemented', async () => {
+    const provider = new MockJsonRpcProvider();
+    const erc721 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, ['standard/IERC721.sol:IERC721V0']);
+
+    const allImplementedFeatures = Object.values(erc721.getFunctionsProps('handledFeatures')).flat();
+
+    const missingFeatures = (Object.keys(FeatureFactories) as FeatureInterfaceId[]).filter(
+      (f) =>
+        isDropInterface(f, true) && !(allImplementedFeatures.includes(f) || NON_DROP_CONTRACT_INTERFACES.includes(f)),
     );
 
     // immediately show what's not implemened
