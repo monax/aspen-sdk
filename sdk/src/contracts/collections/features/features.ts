@@ -104,6 +104,7 @@ export const ContractFunctionIds = [
   'setTokenUri',
   'setPermanentTokenUri',
   'getBaseURIIndices',
+  'getBaseURICount',
   'updateBaseUri',
   'safeTransferFrom',
 
@@ -128,6 +129,7 @@ export const ContractFunctionIds = [
   'setClaimPauseStatus',
   'setMaxWalletClaimCount',
   'setWalletClaimCount',
+  'getClaimPaymentDetails',
 
   // Burn
   'burn',

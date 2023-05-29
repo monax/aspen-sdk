@@ -22,11 +22,13 @@ import {
   FeatureFunctionId,
   FeatureInterface,
   FeatureInterfaceId,
+  getBaseURICount,
   getBaseURIIndices,
   getClaimConditionById,
   getClaimConditions,
   getClaimData,
   getClaimPauseStatus,
+  getClaimPaymentDetails,
   getDefaultRoyaltyInfo,
   getLargestTokenId,
   getOperatorRestriction,
@@ -151,6 +153,7 @@ export class CollectionContract {
   readonly setTokenUri = setTokenUri(this);
   readonly setPermanentTokenUri = setPermanentTokenUri(this);
   readonly getBaseURIIndices = getBaseURIIndices(this);
+  readonly getBaseURICount = getBaseURICount(this);
   readonly updateBaseUri = updateBaseUri(this);
   readonly safeTransferFrom = safeTransferFrom(this);
 
@@ -175,6 +178,7 @@ export class CollectionContract {
   readonly setWalletClaimCount = setWalletClaimCount(this);
   readonly getClaimConditions = getClaimConditions(this);
   readonly getClaimData = getClaimData(this);
+  readonly getClaimPaymentDetails = getClaimPaymentDetails(this);
 
   // Burn
   readonly burn = burn(this);

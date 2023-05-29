@@ -8,11 +8,13 @@ import { asCallableClass, ContractFunction } from './features';
 const AcceptTermsWithSignatureFunctions = {
   v1: 'acceptTerms(address,bytes)[]',
   v2: 'storeTermsAccepted(address,bytes)[]',
+  v3: 'acceptTerms(address,bytes)+[]',
 } as const;
 
 const AcceptTermsWithSignaturePartitions = {
   v1: [...FeatureFunctionsMap[AcceptTermsWithSignatureFunctions.v1].drop],
   v2: [...FeatureFunctionsMap[AcceptTermsWithSignatureFunctions.v2].drop],
+  v3: [...FeatureFunctionsMap[AcceptTermsWithSignatureFunctions.v3].drop],
 };
 type AcceptTermsWithSignaturePartitions = typeof AcceptTermsWithSignaturePartitions;
 
@@ -54,7 +56,7 @@ export class AcceptTermsWithSignature extends ContractFunction<
     signature: string,
     overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
-    const { v1, v2 } = this.partitions;
+    const { v1, v2, v3 } = this.partitions;
     const wallet = await asAddress(acceptor);
 
     try {
@@ -63,6 +65,9 @@ export class AcceptTermsWithSignature extends ContractFunction<
         return tx;
       } else if (v2) {
         const tx = await v2.connectWith(signer).storeTermsAccepted(wallet, signature, overrides);
+        return tx;
+      } else if (v3) {
+        const tx = await v3.connectWith(signer)['acceptTerms(address,bytes)'](wallet, signature, overrides);
         return tx;
       }
     } catch (err) {
@@ -78,7 +83,7 @@ export class AcceptTermsWithSignature extends ContractFunction<
     signature: string,
     overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
-    const { v1, v2 } = this.partitions;
+    const { v1, v2, v3 } = this.partitions;
     const wallet = await asAddress(acceptor);
 
     try {
@@ -87,6 +92,11 @@ export class AcceptTermsWithSignature extends ContractFunction<
         return estimate;
       } else if (v2) {
         const estimate = await v2.connectWith(signer).estimateGas.storeTermsAccepted(wallet, signature, overrides);
+        return estimate;
+      } else if (v3) {
+        const estimate = await v3
+          .connectWith(signer)
+          .estimateGas['acceptTerms(address,bytes)'](wallet, signature, overrides);
         return estimate;
       }
     } catch (err) {
@@ -101,7 +111,7 @@ export class AcceptTermsWithSignature extends ContractFunction<
     signature: string,
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
-    const { v1, v2 } = this.partitions;
+    const { v1, v2, v3 } = this.partitions;
     const wallet = await asAddress(acceptor);
 
     try {
@@ -110,6 +120,11 @@ export class AcceptTermsWithSignature extends ContractFunction<
         return tx;
       } else if (v2) {
         const tx = await v2.connectReadOnly().populateTransaction.storeTermsAccepted(wallet, signature, overrides);
+        return tx;
+      } else if (v3) {
+        const tx = await v3
+          .connectReadOnly()
+          .populateTransaction['acceptTerms(address,bytes)'](wallet, signature, overrides);
         return tx;
       }
     } catch (err) {
