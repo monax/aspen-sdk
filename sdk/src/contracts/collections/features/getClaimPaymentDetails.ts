@@ -1,5 +1,5 @@
 import { BigNumber, BigNumberish, CallOverrides } from 'ethers';
-import { Addressish, asAddress, CollectionContract, isSameAddress, NATIVE_TOKEN } from '../..';
+import { Addressish, asAddress, CollectionContract, isSameAddress } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -53,7 +53,7 @@ export class GetClaimPaymentDetails extends ContractFunction<
     overrides: CallOverrides = {},
   ): Promise<GetClaimPaymentDetailsResponse> {
     const v1 = this.partition('v1');
-    const claimCurrency = await asAddress('currency');
+    const claimCurrency = await asAddress(currency);
 
     try {
       const paymentDetails = await v1
@@ -63,14 +63,6 @@ export class GetClaimPaymentDetails extends ContractFunction<
       if (!isSameAddress(paymentDetails.claimCurrency, claimCurrency)) {
         throw new SdkError(SdkErrorCode.CHAIN_ERROR, {
           message: 'Claim currency mismatch',
-          paymentDetails,
-          arguments: { quantity, pricePerToken, currency },
-        });
-      }
-
-      if (!isSameAddress(paymentDetails.collectorFeeCurrency, NATIVE_TOKEN)) {
-        throw new SdkError(SdkErrorCode.CHAIN_ERROR, {
-          message: 'Collector fee currency mismatch',
           paymentDetails,
           arguments: { quantity, pricePerToken, currency },
         });
