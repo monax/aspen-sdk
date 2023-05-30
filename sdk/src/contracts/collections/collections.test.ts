@@ -147,7 +147,7 @@ describe('Collections - static tests', () => {
     expect(missingFunctions).toStrictEqual([]);
   });
 
-  test.skip('Check that all experimental functions are implemented', () => {
+  test('Check that all experimental functions are implemented', () => {
     const provider = new MockJsonRpcProvider();
     const erc721 = new CollectionContract(provider, 1, CONTRACT_ADDRESS, ['standard/IERC721.sol:IERC721V0']);
 

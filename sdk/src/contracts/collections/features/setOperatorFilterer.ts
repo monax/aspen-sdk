@@ -29,12 +29,7 @@ export class SetOperatorFilterer extends ContractFunction<
   readonly functionName = 'setOperatorFilterer';
 
   constructor(base: CollectionContract) {
-    super(
-      base,
-      SetOperatorFiltererInterfaces,
-      SetOperatorFiltererPartitions,
-      SetOperatorFiltererFunctions,
-    );
+    super(base, SetOperatorFiltererInterfaces, SetOperatorFiltererPartitions, SetOperatorFiltererFunctions);
   }
 
   execute(...args: SetOperatorFiltererCallArgs): Promise<SetOperatorFiltererResponse> {

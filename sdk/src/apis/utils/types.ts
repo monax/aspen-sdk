@@ -1,5 +1,4 @@
 import * as t from 'io-ts';
-import { ChainId } from '../../contracts';
 
 export const NetworkSecrets = t.partial({
   Mumbai: t.string,

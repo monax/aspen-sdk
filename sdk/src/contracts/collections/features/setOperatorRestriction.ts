@@ -31,12 +31,7 @@ export class SetOperatorRestriction extends ContractFunction<
   readonly functionName = 'setOperatorRestriction';
 
   constructor(base: CollectionContract) {
-    super(
-      base,
-      SetOperatorRestrictionInterfaces,
-      SetOperatorRestrictionPartitions,
-      SetOperatorRestrictionFunctions,
-    );
+    super(base, SetOperatorRestrictionInterfaces, SetOperatorRestrictionPartitions, SetOperatorRestrictionFunctions);
   }
 
   execute(...args: SetOperatorRestrictionCallArgs): Promise<SetOperatorRestrictionResponse> {
@@ -48,7 +43,7 @@ export class SetOperatorRestriction extends ContractFunction<
     enabled: boolean,
     overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
-    const {v1, v2} = this.partitions;
+    const { v1, v2 } = this.partitions;
 
     try {
       if (v2) {
@@ -66,7 +61,7 @@ export class SetOperatorRestriction extends ContractFunction<
   }
 
   async estimateGas(signer: Signerish, enabled: boolean, overrides: WriteOverrides = {}): Promise<BigNumber> {
-    const {v1, v2} = this.partitions;
+    const { v1, v2 } = this.partitions;
 
     try {
       if (v2) {
@@ -79,20 +74,20 @@ export class SetOperatorRestriction extends ContractFunction<
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
-    
+
     this.notSupported();
   }
 
   async populateTransaction(enabled: boolean, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
-    const {v1, v2} = this.partitions;
+    const { v1, v2 } = this.partitions;
 
     try {
-      if (v2) { 
+      if (v2) {
         const tx = await v2.connectReadOnly().populateTransaction.setOperatorRestriction(enabled, overrides);
         return tx;
       } else if (v1) {
         const tx = await v1.connectReadOnly().populateTransaction.setOperatorFiltererStatus(enabled, overrides);
-        return tx; 
+        return tx;
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
