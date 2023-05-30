@@ -43,10 +43,10 @@ export class Collection extends ContractObject {
       ) {
         try {
           const details = await this.base.getTermsDetails();
-          if (details.termsActivated) {
+          if (details.termsActivated || details.termsLink) {
             const termsAccepted = await this.base.hasAcceptedTerms(userAddress);
             return {
-              termsActivated: true,
+              termsActivated: details.termsActivated,
               termsLink: details.termsLink,
               termsAccepted,
               userAddress,
