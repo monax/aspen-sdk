@@ -24,7 +24,7 @@ describe('Collection - Terms details', () => {
     expect(new Collection(erc721).getTermsState(ZERO_ADDRESS)).resolves.toStrictEqual({
       success: true,
       result: {
-        termsActivated: true,
+        termsRequired: true,
         termsLink: 'ipfs://Qmxxxx',
         termsAccepted: true,
         userAddress: ZERO_ADDRESS,
@@ -47,7 +47,7 @@ describe('Collection - Terms details', () => {
     expect(new Collection(erc721).getTermsState(ZERO_ADDRESS)).resolves.toStrictEqual({
       success: true,
       result: {
-        termsActivated: false,
+        termsRequired: false,
         termsLink: null,
         termsAccepted: false,
         userAddress: ZERO_ADDRESS,

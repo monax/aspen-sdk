@@ -7,7 +7,7 @@ import { SdkError, SdkErrorCode } from '../errors';
 import { ContractObject } from './object';
 
 export const EMPTY_TERMS_STATE: TermsState = {
-  termsActivated: false,
+  termsRequired: false,
   termsLink: null,
   termsAccepted: false,
   userAddress: ZERO_ADDRESS_BRANDED,
@@ -43,10 +43,10 @@ export class Collection extends ContractObject {
       ) {
         try {
           const details = await this.base.getTermsDetails();
-          if (details.termsActivated || details.termsLink) {
+          if (details.termsLink) {
             const termsAccepted = await this.base.hasAcceptedTerms(userAddress);
             return {
-              termsActivated: details.termsActivated,
+              termsRequired: details.termsActivated,
               termsLink: details.termsLink,
               termsAccepted,
               userAddress,

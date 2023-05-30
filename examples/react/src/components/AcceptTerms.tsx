@@ -13,7 +13,7 @@ const AcceptTerms: React.FC<{
   const { addToast } = useToasts();
 
   if (!library) {
-    addToast("web3React library unexpectedly nulln", {
+    addToast("web3React library unexpectedly null", {
       appearance: "error",
       autoDismiss: true,
     });
