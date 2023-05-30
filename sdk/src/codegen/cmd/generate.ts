@@ -2,11 +2,11 @@ import * as fs from 'fs';
 import * as t from 'io-ts';
 import * as path from 'path';
 import { parse } from '../../utils';
-import { DeployersManifest } from '../deployers';
+import { CoreContractsManifest } from '../core-contracts';
 import {
   dumpLatestABIs,
   generateTsFile,
-  writeDeployerFactoriesMap,
+  writeCoreContracsFactoriesMap,
   writeFeaturesFactoriesMap,
   writeFeaturesFunctionsMap,
   writeFeaturesList,
@@ -54,12 +54,12 @@ async function generate(): Promise<void> {
   await generateForManifests(manifest, experimentalManifest);
 
   // Drop deployments consts
-  const deployersFileTs = path.join(srcDir, 'contracts', 'deployer', 'deployers.gen.ts');
-  const deployments = parseFile(DeployersManifest, pathToDeploymentsJson);
-  await generateTsFile('deployers', deployments, prettierConfigFile, deployersFileTs);
-  const deployerFactoriesTs = path.join(srcDir, 'contracts', 'deployer', 'deployer-factories.gen.ts');
+  const coreContractsFileTs = path.join(srcDir, 'contracts', 'core', 'core.gen.ts');
+  const deployments = parseFile(CoreContractsManifest, pathToDeploymentsJson);
+  await generateTsFile('coreContracts', deployments, prettierConfigFile, coreContractsFileTs);
+  const deployerFactoriesTs = path.join(srcDir, 'contracts', 'core', 'core-factories.gen.ts');
   // Write map to typechain factory contracts from interfaces
-  await writeDeployerFactoriesMap(deployments, prettierConfigFile, deployerFactoriesTs, experimentalManifest);
+  await writeCoreContracsFactoriesMap(deployments, prettierConfigFile, deployerFactoriesTs, experimentalManifest);
 }
 
 generate().catch((err) => {

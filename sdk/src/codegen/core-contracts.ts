@@ -1,14 +1,14 @@
 import * as t from 'io-ts';
 
-export const DeployerVersion = t.type({
+export const CoreContractVersion = t.type({
   major: t.number,
   minor: t.number,
   patch: t.number,
 });
 
-export type DeployerVersion = t.TypeOf<typeof DeployerVersion>;
+export type CoreContractVersion = t.TypeOf<typeof CoreContractVersion>;
 
-export const DeployerManifest = t.type({
+export const CoreContractManifest = t.type({
   // The address where the deployer contract is deployed
   contractAddress: t.string,
   // The concrete interface that this deployer contract implements
@@ -20,11 +20,11 @@ export const DeployerManifest = t.type({
   // The id of the chain where the deployer contract is deployed
   chainId: t.number,
   // The version of this contract
-  version: DeployerVersion,
+  version: CoreContractVersion,
 });
 
-export type DeployerManifest = t.TypeOf<typeof DeployerManifest>;
+export type CoreContractManifest = t.TypeOf<typeof CoreContractManifest>;
 
-export const DeployersManifest = t.array(DeployerManifest);
+export const CoreContractsManifest = t.array(CoreContractManifest);
 
-export type DeployersManifest = t.TypeOf<typeof DeployersManifest>;
+export type CoreContractsManifest = t.TypeOf<typeof CoreContractsManifest>;

@@ -83,7 +83,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     const tokenAddress = await asAddress(currency);
 
     try {
-      if (isSameAddress(tokenAddress, NATIVE_TOKEN)) {
+      if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !overrides.value) {
         overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
@@ -115,7 +115,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     const tokenAddress = await asAddress(currency);
 
     try {
-      if (isSameAddress(tokenAddress, NATIVE_TOKEN)) {
+      if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !overrides.value) {
         overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
@@ -156,7 +156,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     const tokenAddress = await asAddress(currency);
 
     try {
-      if (isSameAddress(tokenAddress, NATIVE_TOKEN)) {
+      if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !overrides.value) {
         overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
@@ -187,7 +187,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     const tokenAddress = await asAddress(currency);
 
     try {
-      if (isSameAddress(tokenAddress, NATIVE_TOKEN)) {
+      if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !overrides.value) {
         overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
@@ -226,7 +226,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     const tokenAddress = await asAddress(currency);
 
     try {
-      if (isSameAddress(tokenAddress, NATIVE_TOKEN)) {
+      if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !overrides.value) {
         overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
@@ -258,7 +258,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     const tokenAddress = await asAddress(currency);
 
     try {
-      if (isSameAddress(tokenAddress, NATIVE_TOKEN)) {
+      if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !overrides.value) {
         overrides.value = BigNumber.from(pricePerToken).mul(quantity);
       }
 
