@@ -145,6 +145,7 @@ export type OperationStatus<T> =
 
 export type TermsState = (
   | { termsActivated: true; termsLink: string; termsAccepted: boolean }
+  | { termsActivated: false; termsLink: string; termsAccepted: boolean }
   | { termsActivated: false; termsLink: null; termsAccepted: false }
 ) & {
   userAddress: Address;
