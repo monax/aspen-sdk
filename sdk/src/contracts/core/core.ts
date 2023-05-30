@@ -21,7 +21,7 @@ export type CoreContractsFamilyVersions = typeof CoreContractsFamilyVersions;
 export type CoreContractFamilyId = keyof CoreContractsFamilyVersions;
 export type CoreContractVersion = { major: number; minor: number; patch: number };
 
-export function getCoreContract<
+export function getAspenContract<
   F extends CoreContractFamilyId,
   V extends keyof CoreContractsFamilyVersions[F],
   I extends CoreContractsFamilyVersions[F][V] & CoreContractInterfaceId,
@@ -57,21 +57,21 @@ const versionToNumber = ({ major, minor, patch }: CoreContractVersion): number =
 };
 
 export function getCurrentCedarDeployer(signerOrProvider: Signer | providers.Provider, network: CoreContractNetworks) {
-  return getCoreContract(signerOrProvider, network, 'CedarDeployer', CurrentCedarDeployerVersion);
+  return getAspenContract(signerOrProvider, network, 'CedarDeployer', CurrentCedarDeployerVersion);
 }
 
 export function getCurrentDeployer(signerOrProvider: Signer | providers.Provider, network: CoreContractNetworks) {
-  return getCoreContract(signerOrProvider, network, 'AspenDeployer', CurrentAspenDeployerVersion);
+  return getAspenContract(signerOrProvider, network, 'AspenDeployer', CurrentAspenDeployerVersion);
 }
 
 export function getCurrentCoreRegistry(signerOrProvider: Signer | providers.Provider, network: CoreContractNetworks) {
-  return getCoreContract(signerOrProvider, network, 'AspenCoreRegistry', CurrentAspenCoreRegistryVersion);
+  return getAspenContract(signerOrProvider, network, 'AspenCoreRegistry', CurrentAspenCoreRegistryVersion);
 }
 
 export function getCurrentPaymentsNotary(signerOrProvider: Signer | providers.Provider, network: CoreContractNetworks) {
-  return getCoreContract(signerOrProvider, network, 'AspenPaymentsNotary', CurrentAspenPaymentsNotaryVersion);
+  return getAspenContract(signerOrProvider, network, 'AspenPaymentsNotary', CurrentAspenPaymentsNotaryVersion);
 }
 
 export function getCurrentTermsRegistry(signerOrProvider: Signer | providers.Provider, network: CoreContractNetworks) {
-  return getCoreContract(signerOrProvider, network, 'TermsRegistry', CurrentTermsRegistryVersion);
+  return getAspenContract(signerOrProvider, network, 'TermsRegistry', CurrentTermsRegistryVersion);
 }
