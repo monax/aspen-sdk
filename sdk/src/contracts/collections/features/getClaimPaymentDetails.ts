@@ -53,12 +53,14 @@ export class GetClaimPaymentDetails extends ContractFunction<
     overrides: CallOverrides = {},
   ): Promise<GetClaimPaymentDetailsResponse> {
     const v1 = this.partition('v1');
-    const claimCurrency = await asAddress(currency);
+    const currencyAddress = await asAddress(currency);
 
     try {
-      const paymentDetails = await v1
+      const { claimCurrency, claimFee, claimPrice, collectorFee, collectorFeeCurrency } = await v1
         .connectReadOnly()
-        .getClaimPaymentDetails(quantity, pricePerToken, claimCurrency, overrides);
+        .getClaimPaymentDetails(quantity, pricePerToken, currencyAddress, overrides);
+
+      const paymentDetails = { claimCurrency, claimFee, claimPrice, collectorFee, collectorFeeCurrency };
 
       if (!isSameAddress(paymentDetails.claimCurrency, claimCurrency)) {
         throw new SdkError(SdkErrorCode.CHAIN_ERROR, {
