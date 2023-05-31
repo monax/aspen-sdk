@@ -50,9 +50,9 @@ export class IssueWithinPhase extends ContractFunction<
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return this.issueWithinPhaseERC1155(signer, args, overrides);
+        return await this.issueWithinPhaseERC1155(signer, args, overrides);
       case 'ERC721':
-        return this.issueWithinPhaseERC721(signer, args, overrides);
+        return await this.issueWithinPhaseERC721(signer, args, overrides);
     }
   }
 
@@ -94,9 +94,9 @@ export class IssueWithinPhase extends ContractFunction<
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return this.estimateGasERC1155(signer, args, overrides);
+        return await this.estimateGasERC1155(signer, args, overrides);
       case 'ERC721':
-        return this.estimateGasERC721(signer, args, overrides);
+        return await this.estimateGasERC721(signer, args, overrides);
     }
   }
 
@@ -110,8 +110,8 @@ export class IssueWithinPhase extends ContractFunction<
     const wallet = await asAddress(receiver);
 
     try {
-      const gas = await sft.connectWith(signer).estimateGas.issueWithinPhase(wallet, tokenId, quantity, overrides);
-      return gas;
+      const estimate = await sft.connectWith(signer).estimateGas.issueWithinPhase(wallet, tokenId, quantity, overrides);
+      return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, tokenId, quantity });
     }
@@ -126,8 +126,8 @@ export class IssueWithinPhase extends ContractFunction<
     const wallet = await asAddress(receiver);
 
     try {
-      const gas = await nft.connectWith(signer).estimateGas.issueWithinPhase(wallet, quantity, overrides);
-      return gas;
+      const estimate = await nft.connectWith(signer).estimateGas.issueWithinPhase(wallet, quantity, overrides);
+      return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, quantity });
     }
@@ -138,9 +138,9 @@ export class IssueWithinPhase extends ContractFunction<
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return this.populateTransactionERC1155(args, overrides);
+        return await this.populateTransactionERC1155(args, overrides);
       case 'ERC721':
-        return this.populateTransactionERC721(args, overrides);
+        return await this.populateTransactionERC721(args, overrides);
     }
   }
 

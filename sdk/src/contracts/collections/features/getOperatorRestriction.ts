@@ -1,6 +1,6 @@
+import { CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -18,7 +18,7 @@ type GetOperatorRestrictionPartitions = typeof GetOperatorRestrictionPartitions;
 const GetOperatorRestrictionInterfaces = Object.values(GetOperatorRestrictionPartitions).flat();
 type GetOperatorRestrictionInterfaces = (typeof GetOperatorRestrictionInterfaces)[number];
 
-export type GetOperatorRestrictionCallArgs = [overrides?: WriteOverrides];
+export type GetOperatorRestrictionCallArgs = [overrides?: CallOverrides];
 export type GetOperatorRestrictionResponse = boolean;
 
 export class GetOperatorRestriction extends ContractFunction<
@@ -37,7 +37,7 @@ export class GetOperatorRestriction extends ContractFunction<
     return this.getOperatorRestriction(...args);
   }
 
-  async getOperatorRestriction(overrides: WriteOverrides = {}): Promise<boolean> {
+  async getOperatorRestriction(overrides: CallOverrides = {}): Promise<boolean> {
     const { v1, v2 } = this.partitions;
 
     try {

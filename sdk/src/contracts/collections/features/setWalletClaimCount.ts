@@ -70,7 +70,7 @@ export class SetWalletClaimCount extends ContractFunction<
         case 'ERC721':
           if (nft) {
             this.base.rejectTokenId(tokenId, this.functionName);
-            const tx = nft.connectWith(signer).setWalletClaimCount(address, maxWalletClaimCount, overrides);
+            const tx = await nft.connectWith(signer).setWalletClaimCount(address, maxWalletClaimCount, overrides);
             return tx;
           }
           break;

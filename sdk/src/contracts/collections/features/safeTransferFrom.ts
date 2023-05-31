@@ -60,15 +60,15 @@ export class SafeTransferFrom extends ContractFunction<
       switch (this.base.tokenStandard) {
         case 'ERC1155':
           if (sft) {
-            const tx = sft.connectWith(signer).safeTransferFrom(from, to, tokenId, amount || 0, bytes, overrides);
+            const tx = await sft.connectWith(signer).safeTransferFrom(from, to, tokenId, amount || 0, bytes, overrides);
             return tx;
           }
           break;
         case 'ERC721':
           if (nft) {
-            const tx = nft
+            const tx = await nft
               .connectWith(signer)
-              ['safeTransferFrom(address,address,uint256,bytes)'](from, to, tokenId, bytes, overrides);
+            ['safeTransferFrom(address,address,uint256,bytes)'](from, to, tokenId, bytes, overrides);
             return tx;
           }
           break;
@@ -94,7 +94,7 @@ export class SafeTransferFrom extends ContractFunction<
       switch (this.base.tokenStandard) {
         case 'ERC1155':
           if (sft) {
-            const tx = sft
+            const tx = await sft
               .connectWith(signer)
               .estimateGas.safeTransferFrom(from, to, tokenId, amount || 0, bytes, overrides);
             return tx;
@@ -102,7 +102,7 @@ export class SafeTransferFrom extends ContractFunction<
           break;
         case 'ERC721':
           if (nft) {
-            const tx = nft
+            const tx = await nft
               .connectWith(signer)
               .estimateGas['safeTransferFrom(address,address,uint256,bytes)'](from, to, tokenId, bytes, overrides);
             return tx;
@@ -129,7 +129,7 @@ export class SafeTransferFrom extends ContractFunction<
       switch (this.base.tokenStandard) {
         case 'ERC1155':
           if (sft) {
-            const tx = sft
+            const tx = await sft
               .connectReadOnly()
               .populateTransaction.safeTransferFrom(from, to, tokenId, amount || 0, bytes, overrides);
             return tx;
@@ -137,7 +137,7 @@ export class SafeTransferFrom extends ContractFunction<
           break;
         case 'ERC721':
           if (nft) {
-            const tx = nft
+            const tx = await nft
               .connectReadOnly()
               .populateTransaction['safeTransferFrom(address,address,uint256,bytes)'](
                 from,

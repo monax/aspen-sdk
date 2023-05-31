@@ -1,4 +1,4 @@
-import { BigNumber, BytesLike, ContractTransaction } from 'ethers';
+import { BigNumber, BytesLike, ContractTransaction, PopulatedTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
@@ -53,6 +53,17 @@ export class Multicall extends ContractFunction<
     try {
       const estimate = await v1.connectWith(signer).estimateGas.multicall(data, overrides);
       return estimate;
+    } catch (err) {
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
+    }
+  }
+
+  async populateTransaction(data: BytesLike[], overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
+    const v1 = this.partition('v1');
+
+    try {
+      const tx = await v1.connectReadOnly().populateTransaction.multicall(data, overrides);
+      return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

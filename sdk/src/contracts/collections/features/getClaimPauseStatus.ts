@@ -1,7 +1,6 @@
-import { ethers } from 'ethers';
+import { ethers, CallOverrides } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -22,7 +21,7 @@ type GetClaimPauseStatusPartitions = typeof GetClaimPauseStatusPartitions;
 const GetClaimPauseStatusInterfaces = Object.values(GetClaimPauseStatusPartitions).flat();
 type GetClaimPauseStatusInterfaces = (typeof GetClaimPauseStatusInterfaces)[number];
 
-export type GetClaimPauseStatusCallArgs = [overrides?: WriteOverrides];
+export type GetClaimPauseStatusCallArgs = [overrides?: CallOverrides];
 export type GetClaimPauseStatusResponse = boolean;
 
 export class GetClaimPauseStatus extends ContractFunction<
@@ -41,7 +40,7 @@ export class GetClaimPauseStatus extends ContractFunction<
     return this.getClaimPauseStatus(...args);
   }
 
-  async getClaimPauseStatus(overrides: WriteOverrides = {}): Promise<boolean> {
+  async getClaimPauseStatus(overrides: CallOverrides = {}): Promise<boolean> {
     const { v1 } = this.partitions;
 
     try {
