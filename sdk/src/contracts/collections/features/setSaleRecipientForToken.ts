@@ -17,12 +17,11 @@ type SetSaleRecipientForTokenPartitions = typeof SetSaleRecipientForTokenPartiti
 const SetSaleRecipientForTokenInterfaces = Object.values(SetSaleRecipientForTokenPartitions).flat();
 type SetSaleRecipientForTokenInterfaces = (typeof SetSaleRecipientForTokenInterfaces)[number];
 
-
 export type SetSaleRecipientForTokenCallArgs = [
   signer: Signerish,
   tokenId: BigNumber,
   saleRecipient: Addressish,
-  overrides?: WriteOverrides
+  overrides?: WriteOverrides,
 ];
 export type SetSaleRecipientForTokenResponse = ContractTransaction;
 
@@ -35,7 +34,12 @@ export class SetSaleRecipientForToken extends ContractFunction<
   readonly functionName = 'setSaleRecipientForToken';
 
   constructor(base: CollectionContract) {
-    super(base, SetSaleRecipientForTokenInterfaces, SetSaleRecipientForTokenPartitions, SetSaleRecipientForTokenFunctions);
+    super(
+      base,
+      SetSaleRecipientForTokenInterfaces,
+      SetSaleRecipientForTokenPartitions,
+      SetSaleRecipientForTokenFunctions,
+    );
   }
 
   execute(...args: SetSaleRecipientForTokenCallArgs): Promise<SetSaleRecipientForTokenResponse> {
@@ -59,7 +63,12 @@ export class SetSaleRecipientForToken extends ContractFunction<
     }
   }
 
-  async estimateGas(signer: Signerish, tokenId: BigNumber, saleRecipient: Addressish, overrides: WriteOverrides = {}): Promise<BigNumber> {
+  async estimateGas(
+    signer: Signerish,
+    tokenId: BigNumber,
+    saleRecipient: Addressish,
+    overrides: WriteOverrides = {},
+  ): Promise<BigNumber> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(saleRecipient);
 
@@ -71,7 +80,11 @@ export class SetSaleRecipientForToken extends ContractFunction<
     }
   }
 
-  async populateTransaction(tokenId: BigNumber, saleRecipient: Addressish, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
+  async populateTransaction(
+    tokenId: BigNumber,
+    saleRecipient: Addressish,
+    overrides: WriteOverrides = {},
+  ): Promise<PopulatedTransaction> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(saleRecipient);
 

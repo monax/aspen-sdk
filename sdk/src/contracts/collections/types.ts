@@ -8,6 +8,8 @@ import { UserClaimConditions } from './features';
 
 export type TokenId = BigNumberish | null | undefined;
 
+export type RequiredTokenId = BigNumberish;
+
 export type Signerish = Signer | Provider;
 
 export type TokenStandard = 'ERC721' | 'ERC1155';
@@ -133,15 +135,15 @@ export type DebugHandler = (collection: CollectionInfo, message: string, ...opti
 
 export type OperationStatus<T> =
   | {
-      success: true;
-      result: T;
-      error: null;
-    }
+    success: true;
+    result: T;
+    error: null;
+  }
   | {
-      success: false;
-      result: null;
-      error: SdkError;
-    };
+    success: false;
+    result: null;
+    error: SdkError;
+  };
 
 export type TermsState = (
   | { termsRequired: true; termsLink: string; termsAccepted: boolean }

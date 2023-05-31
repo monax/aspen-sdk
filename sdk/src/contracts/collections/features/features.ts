@@ -139,6 +139,11 @@ export const ContractFunctionIds = [
   'issueWithTokenUri',
   'issueWithinPhase',
   'issueWithinPhaseWithTokenUri',
+  'chargebackWithdrawal',
+  'updateChargebackProtectionPeriod',
+  'getTransferTimesForToken',
+  'getIssueBufferSizeForAddressAndToken',
+  'getChargebackProtectionPeriod',
 
   // Royalties
   'royaltyInfo',

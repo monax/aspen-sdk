@@ -19,7 +19,11 @@ type IssueWithinPhaseWithTokenUriPartitions = typeof IssueWithinPhaseWithTokenUr
 const IssueWithinPhaseWithTokenUriInterfaces = Object.values(IssueWithinPhaseWithTokenUriPartitions).flat();
 type IssueWithinPhaseWithTokenUriInterfaces = (typeof IssueWithinPhaseWithTokenUriInterfaces)[number];
 
-export type IssueWithinPhaseWithTokenUriCallArgs = [signer: Signerish, args: IssueWithTokenUriArgs, overrides?: WriteOverrides];
+export type IssueWithinPhaseWithTokenUriCallArgs = [
+  signer: Signerish,
+  args: IssueWithTokenUriArgs,
+  overrides?: WriteOverrides,
+];
 export type IssueWithinPhaseWithTokenUriResponse = ContractTransaction;
 
 export class IssueWithinPhaseWithTokenUri extends ContractFunction<
@@ -31,7 +35,12 @@ export class IssueWithinPhaseWithTokenUri extends ContractFunction<
   readonly functionName = 'issueWithinPhaseWithTokenUri';
 
   constructor(base: CollectionContract) {
-    super(base, IssueWithinPhaseWithTokenUriInterfaces, IssueWithinPhaseWithTokenUriPartitions, IssueWithinPhaseWithTokenUriFunctions);
+    super(
+      base,
+      IssueWithinPhaseWithTokenUriInterfaces,
+      IssueWithinPhaseWithTokenUriPartitions,
+      IssueWithinPhaseWithTokenUriFunctions,
+    );
   }
 
   execute(...args: IssueWithinPhaseWithTokenUriCallArgs): Promise<IssueWithinPhaseWithTokenUriResponse> {
@@ -65,7 +74,9 @@ export class IssueWithinPhaseWithTokenUri extends ContractFunction<
     const wallet = await asAddress(args.receiver);
 
     try {
-      const gas = await nft.connectWith(signer).estimateGas.issueWithinPhaseWithTokenURI(wallet, args.tokenURI, overrides);
+      const gas = await nft
+        .connectWith(signer)
+        .estimateGas.issueWithinPhaseWithTokenURI(wallet, args.tokenURI, overrides);
       return gas;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
@@ -81,7 +92,9 @@ export class IssueWithinPhaseWithTokenUri extends ContractFunction<
     const wallet = await asAddress(args.receiver);
 
     try {
-      const tx = await nft.connectReadOnly().populateTransaction.issueWithinPhaseWithTokenURI(wallet, args.tokenURI, overrides);
+      const tx = await nft
+        .connectReadOnly()
+        .populateTransaction.issueWithinPhaseWithTokenURI(wallet, args.tokenURI, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);

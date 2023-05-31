@@ -11,6 +11,7 @@ import {
   acceptTermsWithSignature,
   balanceOf,
   burn,
+  chargebackWithdrawal,
   claim,
   ContractFunctionId,
   ContractFunctionIds,
@@ -24,12 +25,14 @@ import {
   FeatureInterfaceId,
   getBaseURICount,
   getBaseURIIndices,
+  getChargebackProtectionPeriod,
   getClaimConditionById,
   getClaimConditions,
   getClaimData,
   getClaimPauseStatus,
   getClaimPaymentDetails,
   getDefaultRoyaltyInfo,
+  getIssueBufferSizeForAddressAndToken,
   getLargestTokenId,
   getOperatorRestriction,
   getPlatformFees,
@@ -38,6 +41,7 @@ import {
   getRoyaltyInfoForToken,
   getSmallestTokenId,
   getTermsDetails,
+  getTransferTimesForToken,
   getUserClaimConditions,
   grantRole,
   hasAcceptedTerms,
@@ -84,6 +88,7 @@ import {
   tokenUri,
   totalSupply,
   updateBaseUri,
+  updateChargebackProtectionPeriod,
   verifyClaim,
 } from './features';
 
@@ -188,6 +193,11 @@ export class CollectionContract {
   readonly issueWithTokenUri = issueWithTokenUri(this);
   readonly issueWithinPhase = issueWithinPhase(this);
   readonly issueWithinPhaseWithTokenUri = issueWithinPhaseWithTokenUri(this);
+  readonly chargebackWithdrawal = chargebackWithdrawal(this);
+  readonly updateChargebackProtectionPeriod = updateChargebackProtectionPeriod(this);
+  readonly getTransferTimesForToken = getTransferTimesForToken(this);
+  readonly getIssueBufferSizeForAddressAndToken = getIssueBufferSizeForAddressAndToken(this);
+  readonly getChargebackProtectionPeriod = getChargebackProtectionPeriod(this);
 
   // Royalties
   readonly royaltyInfo = royaltyInfo(this);

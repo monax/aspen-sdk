@@ -25,7 +25,12 @@ type IssueWithinPhaseInterfaces = (typeof IssueWithinPhaseInterfaces)[number];
 export type IssueWithinPhaseCallArgs = [signer: Signerish, args: IssueArgs, overrides?: WriteOverrides];
 export type IssueWithinPhaseResponse = ContractTransaction;
 
-export class IssueWithinPhase extends ContractFunction<IssueWithinPhaseInterfaces, IssueWithinPhasePartitions, IssueWithinPhaseCallArgs, IssueWithinPhaseResponse> {
+export class IssueWithinPhase extends ContractFunction<
+  IssueWithinPhaseInterfaces,
+  IssueWithinPhasePartitions,
+  IssueWithinPhaseCallArgs,
+  IssueWithinPhaseResponse
+> {
   readonly functionName = 'issueWithinPhase';
 
   constructor(base: CollectionContract) {
@@ -36,7 +41,11 @@ export class IssueWithinPhase extends ContractFunction<IssueWithinPhaseInterface
     return this.issueWithinPhase(...args);
   }
 
-  async issueWithinPhase(signer: Signerish, args: IssueArgs, overrides: WriteOverrides = {}): Promise<ContractTransaction> {
+  async issueWithinPhase(
+    signer: Signerish,
+    args: IssueArgs,
+    overrides: WriteOverrides = {},
+  ): Promise<ContractTransaction> {
     this.validateArgs(args);
 
     switch (this.base.tokenStandard) {
