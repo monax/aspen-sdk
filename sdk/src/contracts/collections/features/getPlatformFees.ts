@@ -2,7 +2,6 @@ import { BigNumber, CallOverrides } from 'ethers';
 import { Address, CollectionContract } from '../..';
 import { parse } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -44,7 +43,7 @@ export class GetPlatformFees extends ContractFunction<
     return this.getPlatformFees(...args);
   }
 
-  async getPlatformFees(overrides: WriteOverrides = {}): Promise<PlatformFee> {
+  async getPlatformFees(overrides: CallOverrides = {}): Promise<PlatformFee> {
     const { v1, v2 } = this.partitions;
 
     try {

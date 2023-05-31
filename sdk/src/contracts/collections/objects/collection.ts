@@ -27,7 +27,7 @@ export class Collection extends ContractObject {
         return largest.add(1 - offset);
 
       case 'ERC721':
-        const uniqueCount = this.base.totalSupply();
+        const uniqueCount = await this.base.totalSupply();
         return uniqueCount;
     }
   }

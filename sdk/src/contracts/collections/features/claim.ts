@@ -66,9 +66,9 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
   protected async claim(...[signer, args, overrides = {}]: ClaimCallArgs): Promise<ContractTransaction> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return this.claimERC1155(signer, args, overrides);
+        return await this.claimERC1155(signer, args, overrides);
       case 'ERC721':
-        return this.claimERC721(signer, args, overrides);
+        return await this.claimERC721(signer, args, overrides);
     }
   }
 
@@ -139,9 +139,9 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
   async estimateGas(signer: Signerish, args: ClaimArgs, overrides: PayableOverrides = {}): Promise<BigNumber> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return this.estimateGasERC1155(signer, args, overrides);
+        return await this.estimateGasERC1155(signer, args, overrides);
       case 'ERC721':
-        return this.estimateGasERC721(signer, args, overrides);
+        return await this.estimateGasERC721(signer, args, overrides);
     }
   }
 
@@ -210,9 +210,9 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
   async populateTransaction(args: ClaimArgs, overrides: PayableOverrides = {}): Promise<PopulatedTransaction> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return this.populateTransactionERC1155(args, overrides);
+        return await this.populateTransactionERC1155(args, overrides);
       case 'ERC721':
-        return this.populateTransactionERC721(args, overrides);
+        return await this.populateTransactionERC721(args, overrides);
     }
   }
 

@@ -64,7 +64,7 @@ export class SetMaxWalletClaimCount extends ContractFunction<
         case 'ERC721': {
           this.base.rejectTokenId(tokenId, this.functionName);
           const iNft = nft ?? this.base.assumeFeature('issuance/INFTClaimCount.sol:IRestrictedNFTClaimCountV0');
-          const tx = iNft.connectWith(signer).setMaxWalletClaimCount(maxWalletClaimCount, overrides);
+          const tx = await iNft.connectWith(signer).setMaxWalletClaimCount(maxWalletClaimCount, overrides);
           return tx;
         }
       }

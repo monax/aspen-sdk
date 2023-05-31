@@ -55,13 +55,13 @@ export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnC
         case 'ERC1155': {
           const sft = this.base.assumeFeature('standard/IERC1155.sol:IERC1155SupplyV2');
           const account = await asAddress(wallet || '');
-          const tx = sft.connectWith(signer).burn(account, tokenId, amount || 0);
+          const tx = await sft.connectWith(signer).burn(account, tokenId, amount || 0);
           return tx;
         }
 
         case 'ERC721': {
           const nft = this.base.assumeFeature('standard/IERC721.sol:IERC721V2');
-          const tx = nft.connectWith(signer).burn(tokenId, overrides);
+          const tx = await nft.connectWith(signer).burn(tokenId, overrides);
           return tx;
         }
       }
@@ -84,13 +84,13 @@ export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnC
         case 'ERC1155': {
           const sft = this.base.assumeFeature('standard/IERC1155.sol:IERC1155SupplyV2');
           const account = await asAddress(wallet || '');
-          const estimate = sft.connectWith(signer).estimateGas.burn(account, tokenId, amount || 0);
+          const estimate = await sft.connectWith(signer).estimateGas.burn(account, tokenId, amount || 0);
           return estimate;
         }
 
         case 'ERC721': {
           const nft = this.base.assumeFeature('standard/IERC721.sol:IERC721V2');
-          const estimate = nft.connectWith(signer).estimateGas.burn(tokenId, overrides);
+          const estimate = await nft.connectWith(signer).estimateGas.burn(tokenId, overrides);
           return estimate;
         }
       }
@@ -112,13 +112,13 @@ export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnC
         case 'ERC1155': {
           const sft = this.base.assumeFeature('standard/IERC1155.sol:IERC1155SupplyV2');
           const account = await asAddress(wallet || '');
-          const tx = sft.connectReadOnly().populateTransaction.burn(account, tokenId, amount || 0);
+          const tx = await sft.connectReadOnly().populateTransaction.burn(account, tokenId, amount || 0);
           return tx;
         }
 
         case 'ERC721': {
           const nft = this.base.assumeFeature('standard/IERC721.sol:IERC721V2');
-          const tx = nft.connectReadOnly().populateTransaction.burn(tokenId, overrides);
+          const tx = await nft.connectReadOnly().populateTransaction.burn(tokenId, overrides);
           return tx;
         }
       }

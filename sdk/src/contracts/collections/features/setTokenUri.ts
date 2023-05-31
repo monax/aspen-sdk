@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
+import { BigNumber, BigNumberish, ContractTransaction, PopulatedTransaction } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
@@ -57,7 +57,7 @@ export class SetTokenUri extends ContractFunction<
     }
   }
 
-  async estitamateGas(
+  async estimateGas(
     signer: Signerish,
     tokenId: BigNumberish,
     tokenUri: string,
@@ -68,6 +68,21 @@ export class SetTokenUri extends ContractFunction<
     try {
       const estimate = await v1.connectWith(signer).estimateGas.setTokenURI(tokenId, tokenUri, overrides);
       return estimate;
+    } catch (err) {
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
+    }
+  }
+
+  async populateTransaction(
+    tokenId: BigNumberish,
+    tokenUri: string,
+    overrides: WriteOverrides = {},
+  ): Promise<PopulatedTransaction> {
+    const v1 = this.partition('v1');
+
+    try {
+      const tx = await v1.connectReadOnly().populateTransaction.setTokenURI(tokenId, tokenUri, overrides);
+      return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

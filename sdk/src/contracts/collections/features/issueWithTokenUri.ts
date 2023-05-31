@@ -1,5 +1,5 @@
 import { BigNumber, ContractReceipt, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { Addressish, asAddress, isSameAddress, ZERO_ADDRESS } from '../..';
+import { Addressish, asAddress, isZeroAddress } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
@@ -70,8 +70,8 @@ export class IssueWithTokenUri extends ContractFunction<
     const wallet = await asAddress(args.receiver);
 
     try {
-      const gas = await nft.connectWith(signer).estimateGas.issueWithTokenURI(wallet, args.tokenURI, overrides);
-      return gas;
+      const estimate = await nft.connectWith(signer).estimateGas.issueWithTokenURI(wallet, args.tokenURI, overrides);
+      return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
@@ -95,7 +95,7 @@ export class IssueWithTokenUri extends ContractFunction<
 
   protected async validateArgs({ receiver }: IssueWithTokenUriArgs) {
     const wallet = await asAddress(receiver);
-    if (isSameAddress(wallet, ZERO_ADDRESS)) {
+    if (isZeroAddress(wallet)) {
       throw new SdkError(SdkErrorCode.INVALID_DATA, { receiver }, new Error('Receiver cannot be an empty address'));
     }
   }

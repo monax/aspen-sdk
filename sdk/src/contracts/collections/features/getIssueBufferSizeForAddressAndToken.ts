@@ -1,5 +1,5 @@
 import { BigNumber, CallOverrides } from 'ethers';
-import { asAddress, isZeroAddress } from '../..';
+import { Addressish, asAddress, isZeroAddress } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { TokenId } from '../types';
@@ -21,7 +21,7 @@ const GetIssueBufferSizeForAddressAndTokenInterfaces = Object.values(
 type GetIssueBufferSizeForAddressAndTokenInterfaces = (typeof GetIssueBufferSizeForAddressAndTokenInterfaces)[number];
 
 export type GetIssueBufferSizeForAddressAndTokenArgs = {
-  owner: string;
+  owner: Addressish;
   tokenId: TokenId;
 };
 
@@ -73,7 +73,8 @@ export class GetIssueBufferSizeForAddressAndToken extends ContractFunction<
   ): Promise<IssueBufferSize> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
-    if (isZeroAddress(owner)) {
+    const wallet = await asAddress(owner);
+    if (isZeroAddress(wallet)) {
       throw new SdkError(SdkErrorCode.INVALID_DATA, { owner }, new Error('Owner cannot be an empty address'));
     }
     const tokenOwner = await asAddress(owner);

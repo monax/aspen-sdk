@@ -50,7 +50,7 @@ export class SetTokenNameAndSymbol extends ContractFunction<
     const v1 = this.partition('v1');
 
     try {
-      const tx = v1.connectWith(signer).setTokenNameAndSymbol(name, symbol, overrides);
+      const tx = await v1.connectWith(signer).setTokenNameAndSymbol(name, symbol, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -66,7 +66,7 @@ export class SetTokenNameAndSymbol extends ContractFunction<
     const v1 = this.partition('v1');
 
     try {
-      const estimate = v1.connectWith(signer).estimateGas.setTokenNameAndSymbol(name, symbol, overrides);
+      const estimate = await v1.connectWith(signer).estimateGas.setTokenNameAndSymbol(name, symbol, overrides);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -81,7 +81,7 @@ export class SetTokenNameAndSymbol extends ContractFunction<
     const v1 = this.partition('v1');
 
     try {
-      const tx = v1.connectReadOnly().populateTransaction.setTokenNameAndSymbol(name, symbol, overrides);
+      const tx = await v1.connectReadOnly().populateTransaction.setTokenNameAndSymbol(name, symbol, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
