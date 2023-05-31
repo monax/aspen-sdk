@@ -1,7 +1,6 @@
-import { BigNumber } from 'ethers';
+import { BigNumber, CallOverrides } from 'ethers';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -17,7 +16,7 @@ type GetChargebackProtectionPeriodPartitions = typeof GetChargebackProtectionPer
 const GetChargebackProtectionPeriodInterfaces = Object.values(GetChargebackProtectionPeriodPartitions).flat();
 type GetChargebackProtectionPeriodInterfaces = (typeof GetChargebackProtectionPeriodInterfaces)[number];
 
-export type GetChargebackProtectionPeriodCallArgs = [overrides?: WriteOverrides];
+export type GetChargebackProtectionPeriodCallArgs = [overrides?: CallOverrides];
 export type GetChargebackProtectionPeriodResponse = ChargebackProtectionPeriod;
 
 export type ChargebackProtectionPeriod = BigNumber;
@@ -43,7 +42,7 @@ export class GetChargebackProtectionPeriod extends ContractFunction<
     return this.getChargebackProtectionPeriod(...args);
   }
 
-  async getChargebackProtectionPeriod(overrides: WriteOverrides = {}): Promise<ChargebackProtectionPeriod> {
+  async getChargebackProtectionPeriod(overrides: CallOverrides = {}): Promise<ChargebackProtectionPeriod> {
     const v1 = this.partition('v1');
 
     try {

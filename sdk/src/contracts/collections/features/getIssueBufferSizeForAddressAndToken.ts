@@ -1,8 +1,8 @@
-import { BigNumber } from 'ethers';
-import { asAddress, isSameAddress, ZERO_ADDRESS } from '../..';
+import { BigNumber, CallOverrides } from 'ethers';
+import { asAddress, isZeroAddress } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { TokenId, WriteOverrides } from '../types';
+import type { TokenId } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -27,7 +27,7 @@ export type GetIssueBufferSizeForAddressAndTokenArgs = {
 
 export type GetIssueBufferSizeForAddressAndTokenCallArgs = [
   args: GetIssueBufferSizeForAddressAndTokenArgs,
-  overrides?: WriteOverrides,
+  overrides?: CallOverrides,
 ];
 export type GetIssueBufferSizeForAddressAndTokenResponse = IssueBufferSize;
 
@@ -58,7 +58,7 @@ export class GetIssueBufferSizeForAddressAndToken extends ContractFunction<
 
   async getIssueBufferSizeForAddressAndToken(
     args: GetIssueBufferSizeForAddressAndTokenArgs,
-    overrides: WriteOverrides = {},
+    overrides: CallOverrides = {},
   ): Promise<IssueBufferSize> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
@@ -69,11 +69,11 @@ export class GetIssueBufferSizeForAddressAndToken extends ContractFunction<
 
   protected async getIssueBufferSizeForAddressAndTokenERC1155(
     { owner, tokenId }: GetIssueBufferSizeForAddressAndTokenArgs,
-    overrides: WriteOverrides = {},
+    overrides: CallOverrides = {},
   ): Promise<IssueBufferSize> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
-    if (isSameAddress(owner, ZERO_ADDRESS)) {
+    if (isZeroAddress(owner)) {
       throw new SdkError(SdkErrorCode.INVALID_DATA, { owner }, new Error('Owner cannot be an empty address'));
     }
     const tokenOwner = await asAddress(owner);

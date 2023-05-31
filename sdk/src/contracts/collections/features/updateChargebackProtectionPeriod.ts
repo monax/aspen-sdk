@@ -74,14 +74,13 @@ export class UpdateChargebackProtectionPeriod extends ContractFunction<
   }
 
   async populateTransaction(
-    signer: Signerish,
     newPeriodInSeconds: number,
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
     const v1 = this.partition('v1');
     try {
       const tx = await v1
-        .connectWith(signer)
+        .connectReadOnly()
         .populateTransaction.updateChargebackProtectionPeriod(newPeriodInSeconds, overrides);
       return tx;
     } catch (err) {

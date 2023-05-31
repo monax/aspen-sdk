@@ -1,8 +1,8 @@
-import { BigNumber } from 'ethers';
-import { Addressish, asAddress, isSameAddress, ZERO_ADDRESS } from '../..';
+import { BigNumber, CallOverrides } from 'ethers';
+import { Addressish, asAddress, isZeroAddress } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { RequiredTokenId, WriteOverrides } from '../types';
+import type { RequiredTokenId } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -25,14 +25,15 @@ export type GetTransferTimesForTokenArgs = {
   owner?: Addressish;
 };
 
-export type GetTransferTimesForTokenCallArgs = [args: GetTransferTimesForTokenArgs, overrides?: WriteOverrides];
+export type GetTransferTimesForTokenCallArgs = [args: GetTransferTimesForTokenArgs, overrides?: CallOverrides];
 export type GetTransferTimesForTokenResponse = TransferTimesForToken;
 
-export type TransferTimesForToken = {
-  quantityOfTokens?: BigNumber[];
-  transferableAt?: BigNumber[];
-  transferTimestamp?: BigNumber;
+export type TransferTimesForERC721Token = { transferTimestamp: BigNumber };
+export type TransferTimesForERC1155Token = {
+  quantityOfTokens: BigNumber[];
+  transferableAt: BigNumber[];
 };
+export type TransferTimesForToken = TransferTimesForERC721Token | TransferTimesForERC1155Token;
 
 export class GetTransferTimesForToken extends ContractFunction<
   GetTransferTimesForTokenInterfaces,
@@ -57,7 +58,7 @@ export class GetTransferTimesForToken extends ContractFunction<
 
   async getTransferTimesForToken(
     args: GetTransferTimesForTokenArgs,
-    overrides: WriteOverrides = {},
+    overrides: CallOverrides = {},
   ): Promise<TransferTimesForToken> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
@@ -69,7 +70,7 @@ export class GetTransferTimesForToken extends ContractFunction<
 
   protected async getTransferTimesForTokenERC1155(
     { owner, tokenId }: GetTransferTimesForTokenArgs,
-    overrides: WriteOverrides = {},
+    overrides: CallOverrides = {},
   ): Promise<TransferTimesForToken> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
@@ -77,7 +78,7 @@ export class GetTransferTimesForToken extends ContractFunction<
       throw new SdkError(SdkErrorCode.INVALID_DATA, { owner }, new Error('Owner cannot be undefined'));
     }
     const wallet = await asAddress(owner);
-    if (isSameAddress(wallet, ZERO_ADDRESS)) {
+    if (isZeroAddress(wallet)) {
       throw new SdkError(SdkErrorCode.INVALID_DATA, { owner }, new Error('Owner cannot be an empty address'));
     }
 
@@ -94,7 +95,7 @@ export class GetTransferTimesForToken extends ContractFunction<
 
   protected async getTransferTimesForTokenERC721(
     { tokenId }: GetTransferTimesForTokenArgs,
-    overrides: WriteOverrides = {},
+    overrides: CallOverrides = {},
   ): Promise<TransferTimesForToken> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const nft = this.partition('nft');

@@ -1,5 +1,5 @@
 import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { Address, Addressish, asAddress, isSameAddress, ZERO_ADDRESS } from '../..';
+import { Address, Addressish, asAddress, isZeroAddress } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { RequiredTokenId, Signerish, WriteOverrides } from '../types';
@@ -56,9 +56,9 @@ export class ChargebackWithdrawal extends ContractFunction<
   ): Promise<ContractTransaction> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return this.chargebackWithdrawalERC1155(signer, args, overrides);
+        return await this.chargebackWithdrawalERC1155(signer, args, overrides);
       case 'ERC721':
-        return this.chargebackWithdrawalERC721(signer, args, overrides);
+        return await this.chargebackWithdrawalERC721(signer, args, overrides);
     }
   }
 
@@ -74,7 +74,7 @@ export class ChargebackWithdrawal extends ContractFunction<
       const tx = await sft.connectWith(signer).chargebackWithdrawal(owner, tokenId, quantity, overrides);
       return tx;
     } catch (err) {
-      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { owner, tokenId });
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { owner, tokenId, quantity });
     }
   }
 
@@ -101,9 +101,9 @@ export class ChargebackWithdrawal extends ContractFunction<
   ): Promise<BigNumber> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return this.estimateGasERC1155(signer, args, overrides);
+        return await this.estimateGasERC1155(signer, args, overrides);
       case 'ERC721':
-        return this.estimateGasERC721(signer, args, overrides);
+        return await this.estimateGasERC721(signer, args, overrides);
     }
   }
 
@@ -146,9 +146,9 @@ export class ChargebackWithdrawal extends ContractFunction<
   ): Promise<PopulatedTransaction> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return this.populateTransactionERC1155(signer, args, overrides);
+        return await this.populateTransactionERC1155(signer, args, overrides);
       case 'ERC721':
-        return this.populateTransactionERC721(signer, args, overrides);
+        return await this.populateTransactionERC721(signer, args, overrides);
     }
   }
 
@@ -166,7 +166,7 @@ export class ChargebackWithdrawal extends ContractFunction<
         .populateTransaction.chargebackWithdrawal(owner, tokenId, quantity, overrides);
       return tx;
     } catch (err) {
-      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { owner, quantity });
+      throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { owner, tokenId, quantity });
     }
   }
 
@@ -193,11 +193,11 @@ export class ChargebackWithdrawal extends ContractFunction<
   }> {
     if (!owner) throw new SdkError(SdkErrorCode.INVALID_DATA, { owner }, new Error('Owner cannot be undefined'));
     const wallet = await asAddress(owner);
-    if (isSameAddress(wallet, ZERO_ADDRESS)) {
+    if (isZeroAddress(wallet)) {
       throw new SdkError(SdkErrorCode.INVALID_DATA, { owner }, new Error('Owner cannot be an empty address'));
     }
     if (quantity == 0 || quantity == undefined || quantity == null) {
-      throw new SdkError(SdkErrorCode.INVALID_DATA, { owner }, new Error('Quantity cannot be 0, undefined or null'));
+      throw new SdkError(SdkErrorCode.INVALID_DATA, { quantity }, new Error('Quantity cannot be 0, undefined or null'));
     }
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
