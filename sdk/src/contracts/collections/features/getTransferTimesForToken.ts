@@ -1,15 +1,10 @@
 import { BigNumber } from 'ethers';
-import { ZERO_ADDRESS, isSameAddress } from '../..';
+import { Addressish, asAddress, isSameAddress, ZERO_ADDRESS } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { TokenId, WriteOverrides } from '../types';
+import type { RequiredTokenId, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
-
-export type GetTransferTimesForTokenArgs = {
-  tokenId: TokenId;
-  owner: string;
-};
 
 const GetTransferTimesForTokenFunctions = {
   nft: 'getTransferTimeForToken(uint256)[uint256]',
@@ -24,6 +19,11 @@ type GetTransferTimesForTokenPartitions = typeof GetTransferTimesForTokenPartiti
 
 const GetTransferTimesForTokenInterfaces = Object.values(GetTransferTimesForTokenPartitions).flat();
 type GetTransferTimesForTokenInterfaces = (typeof GetTransferTimesForTokenInterfaces)[number];
+
+export type GetTransferTimesForTokenArgs = {
+  tokenId: RequiredTokenId;
+  owner?: Addressish;
+};
 
 export type GetTransferTimesForTokenCallArgs = [args: GetTransferTimesForTokenArgs, overrides?: WriteOverrides];
 export type GetTransferTimesForTokenResponse = TransferTimesForToken;
@@ -61,9 +61,9 @@ export class GetTransferTimesForToken extends ContractFunction<
   ): Promise<TransferTimesForToken> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return this.getTransferTimesForTokenERC1155(args, overrides);
+        return await this.getTransferTimesForTokenERC1155(args, overrides);
       case 'ERC721':
-        return this.getTransferTimesForTokenERC721(args, overrides);
+        return await this.getTransferTimesForTokenERC721(args, overrides);
     }
   }
 
@@ -73,14 +73,18 @@ export class GetTransferTimesForToken extends ContractFunction<
   ): Promise<TransferTimesForToken> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
-    if (isSameAddress(owner, ZERO_ADDRESS)) {
+    if (!owner) {
+      throw new SdkError(SdkErrorCode.INVALID_DATA, { owner }, new Error('Owner cannot be undefined'));
+    }
+    const wallet = await asAddress(owner);
+    if (isSameAddress(wallet, ZERO_ADDRESS)) {
       throw new SdkError(SdkErrorCode.INVALID_DATA, { owner }, new Error('Owner cannot be an empty address'));
     }
 
     try {
       const { quantityOfTokens, transferableAt } = await sft
         .connectReadOnly()
-        .getTransferTimesForToken(owner, tokenId, overrides);
+        .getTransferTimesForToken(wallet, tokenId, overrides);
 
       return { quantityOfTokens, transferableAt };
     } catch (err) {

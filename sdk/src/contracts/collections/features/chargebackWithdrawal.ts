@@ -1,16 +1,10 @@
 import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { asAddress, isSameAddress, ZERO_ADDRESS } from '../..';
+import { Address, Addressish, asAddress, isSameAddress, ZERO_ADDRESS } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, TokenId, WriteOverrides } from '../types';
+import type { RequiredTokenId, Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
-
-export type ChargebackWithdrawalArgs = {
-  tokenId: TokenId;
-  owner: string;
-  quantity: number;
-};
 
 const ChargebackWithdrawalFunctions = {
   nft: 'chargebackWithdrawal(uint256)[]',
@@ -25,6 +19,12 @@ type ChargebackWithdrawalPartitions = typeof ChargebackWithdrawalPartitions;
 
 const ChargebackWithdrawalInterfaces = Object.values(ChargebackWithdrawalPartitions).flat();
 type ChargebackWithdrawalInterfaces = (typeof ChargebackWithdrawalInterfaces)[number];
+
+export type ChargebackWithdrawalArgs = {
+  tokenId: RequiredTokenId;
+  owner?: Addressish;
+  quantity?: number;
+};
 
 export type ChargebackWithdrawalCallArgs = [
   signer: Signerish,
@@ -54,7 +54,6 @@ export class ChargebackWithdrawal extends ContractFunction<
     args: ChargebackWithdrawalArgs,
     overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
-    this.validateArgs(args);
     switch (this.base.tokenStandard) {
       case 'ERC1155':
         return this.chargebackWithdrawalERC1155(signer, args, overrides);
@@ -65,15 +64,14 @@ export class ChargebackWithdrawal extends ContractFunction<
 
   protected async chargebackWithdrawalERC1155(
     signer: Signerish,
-    { owner, tokenId, quantity }: ChargebackWithdrawalArgs,
+    args: ChargebackWithdrawalArgs,
     overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
-    tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
-    const tokenOwner = await asAddress(owner);
+    const { quantity, tokenId, owner } = await this.requireArgs(args);
 
     try {
-      const tx = await sft.connectWith(signer).chargebackWithdrawal(tokenOwner, tokenId, quantity, overrides);
+      const tx = await sft.connectWith(signer).chargebackWithdrawal(owner, tokenId, quantity, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { owner, tokenId });
@@ -101,7 +99,6 @@ export class ChargebackWithdrawal extends ContractFunction<
     args: ChargebackWithdrawalArgs,
     overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
-    this.validateArgs(args);
     switch (this.base.tokenStandard) {
       case 'ERC1155':
         return this.estimateGasERC1155(signer, args, overrides);
@@ -112,17 +109,14 @@ export class ChargebackWithdrawal extends ContractFunction<
 
   protected async estimateGasERC1155(
     signer: Signerish,
-    { owner, tokenId, quantity }: ChargebackWithdrawalArgs,
+    args: ChargebackWithdrawalArgs,
     overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
-    tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
-    const tokenOwner = await asAddress(owner);
+    const { quantity, tokenId, owner } = await this.requireArgs(args);
 
     try {
-      const gas = await sft
-        .connectWith(signer)
-        .estimateGas.chargebackWithdrawal(tokenOwner, tokenId, quantity, overrides);
+      const gas = await sft.connectWith(signer).estimateGas.chargebackWithdrawal(owner, tokenId, quantity, overrides);
       return gas;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { owner, tokenId, quantity });
@@ -150,7 +144,6 @@ export class ChargebackWithdrawal extends ContractFunction<
     args: ChargebackWithdrawalArgs,
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
-    this.validateArgs(args);
     switch (this.base.tokenStandard) {
       case 'ERC1155':
         return this.populateTransactionERC1155(signer, args, overrides);
@@ -161,17 +154,16 @@ export class ChargebackWithdrawal extends ContractFunction<
 
   protected async populateTransactionERC1155(
     signer: Signerish,
-    { owner, tokenId, quantity }: ChargebackWithdrawalArgs,
+    args: ChargebackWithdrawalArgs,
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
-    tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
-    const tokenOwner = await asAddress(owner);
+    const { quantity, tokenId, owner } = await this.requireArgs(args);
 
     try {
       const tx = await sft
         .connectWith(signer)
-        .populateTransaction.chargebackWithdrawal(tokenOwner, tokenId, quantity, overrides);
+        .populateTransaction.chargebackWithdrawal(owner, tokenId, quantity, overrides);
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { owner, quantity });
@@ -194,7 +186,12 @@ export class ChargebackWithdrawal extends ContractFunction<
     }
   }
 
-  protected async validateArgs({ owner, quantity }: ChargebackWithdrawalArgs) {
+  protected async requireArgs({ owner, quantity, tokenId }: ChargebackWithdrawalArgs): Promise<{
+    tokenId: RequiredTokenId;
+    owner: Address;
+    quantity: number;
+  }> {
+    if (!owner) throw new SdkError(SdkErrorCode.INVALID_DATA, { owner }, new Error('Owner cannot be undefined'));
     const wallet = await asAddress(owner);
     if (isSameAddress(wallet, ZERO_ADDRESS)) {
       throw new SdkError(SdkErrorCode.INVALID_DATA, { owner }, new Error('Owner cannot be an empty address'));
@@ -202,6 +199,9 @@ export class ChargebackWithdrawal extends ContractFunction<
     if (quantity == 0 || quantity == undefined || quantity == null) {
       throw new SdkError(SdkErrorCode.INVALID_DATA, { owner }, new Error('Quantity cannot be 0, undefined or null'));
     }
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
+
+    return { owner: wallet, quantity, tokenId };
   }
 }
 

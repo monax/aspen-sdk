@@ -1,15 +1,10 @@
 import { BigNumber } from 'ethers';
-import { ZERO_ADDRESS, asAddress, isSameAddress } from '../..';
+import { asAddress, isSameAddress, ZERO_ADDRESS } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { TokenId, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
-
-export type GetIssueBufferSizeForAddressAndTokenArgs = {
-  owner: string;
-  tokenId: TokenId;
-};
 
 const GetIssueBufferSizeForAddressAndTokenFunctions = {
   sft: 'getIssueBufferSizeForAddressAndToken(address,uint256)[uint256]',
@@ -25,15 +20,18 @@ const GetIssueBufferSizeForAddressAndTokenInterfaces = Object.values(
 ).flat();
 type GetIssueBufferSizeForAddressAndTokenInterfaces = (typeof GetIssueBufferSizeForAddressAndTokenInterfaces)[number];
 
+export type GetIssueBufferSizeForAddressAndTokenArgs = {
+  owner: string;
+  tokenId: TokenId;
+};
+
 export type GetIssueBufferSizeForAddressAndTokenCallArgs = [
   args: GetIssueBufferSizeForAddressAndTokenArgs,
   overrides?: WriteOverrides,
 ];
 export type GetIssueBufferSizeForAddressAndTokenResponse = IssueBufferSize;
 
-export type IssueBufferSize = {
-  issueBufferSize: BigNumber;
-};
+export type IssueBufferSize = BigNumber;
 
 export class GetIssueBufferSizeForAddressAndToken extends ContractFunction<
   GetIssueBufferSizeForAddressAndTokenInterfaces,
@@ -64,7 +62,7 @@ export class GetIssueBufferSizeForAddressAndToken extends ContractFunction<
   ): Promise<IssueBufferSize> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return this.getIssueBufferSizeForAddressAndTokenERC1155(args, overrides);
+        return await this.getIssueBufferSizeForAddressAndTokenERC1155(args, overrides);
     }
     this.notSupported();
   }
@@ -85,7 +83,7 @@ export class GetIssueBufferSizeForAddressAndToken extends ContractFunction<
         .connectReadOnly()
         .getIssueBufferSizeForAddressAndToken(tokenOwner, tokenId, overrides);
 
-      return { issueBufferSize };
+      return issueBufferSize;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { owner, tokenId });
     }

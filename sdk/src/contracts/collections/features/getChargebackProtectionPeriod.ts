@@ -20,9 +20,7 @@ type GetChargebackProtectionPeriodInterfaces = (typeof GetChargebackProtectionPe
 export type GetChargebackProtectionPeriodCallArgs = [overrides?: WriteOverrides];
 export type GetChargebackProtectionPeriodResponse = ChargebackProtectionPeriod;
 
-export type ChargebackProtectionPeriod = {
-  chargebackProtectionPeriod: BigNumber;
-};
+export type ChargebackProtectionPeriod = BigNumber;
 
 export class GetChargebackProtectionPeriod extends ContractFunction<
   GetChargebackProtectionPeriodInterfaces,
@@ -50,7 +48,7 @@ export class GetChargebackProtectionPeriod extends ContractFunction<
 
     try {
       const chargebackProtectionPeriod = await v1.connectReadOnly().getChargebackProtectionPeriod(overrides);
-      return { chargebackProtectionPeriod };
+      return chargebackProtectionPeriod;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

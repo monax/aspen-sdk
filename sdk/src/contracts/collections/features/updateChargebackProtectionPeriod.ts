@@ -5,10 +5,6 @@ import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
-export type UpdateChargebackProtectionPeriodArgs = {
-  newPeriodInSeconds: number;
-};
-
 const UpdateChargebackProtectionPeriodFunctions = {
   v1: 'updateChargebackProtectionPeriod(uint256)[]',
 } as const;
@@ -23,7 +19,7 @@ type UpdateChargebackProtectionPeriodInterfaces = (typeof UpdateChargebackProtec
 
 export type UpdateChargebackProtectionPeriodCallArgs = [
   signer: Signerish,
-  args: UpdateChargebackProtectionPeriodArgs,
+  newPeriodInSeconds: number,
   overrides?: WriteOverrides,
 ];
 export type UpdateChargebackProtectionPeriodResponse = ContractTransaction;
@@ -51,7 +47,7 @@ export class UpdateChargebackProtectionPeriod extends ContractFunction<
 
   async updateChargebackProtectionPeriod(
     signer: Signerish,
-    { newPeriodInSeconds }: UpdateChargebackProtectionPeriodArgs,
+    newPeriodInSeconds: number,
     overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
     const v1 = this.partition('v1');
@@ -64,11 +60,7 @@ export class UpdateChargebackProtectionPeriod extends ContractFunction<
     }
   }
 
-  async estimateGas(
-    signer: Signerish,
-    { newPeriodInSeconds }: UpdateChargebackProtectionPeriodArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+  async estimateGas(signer: Signerish, newPeriodInSeconds: number, overrides: WriteOverrides = {}): Promise<BigNumber> {
     const v1 = this.partition('v1');
 
     try {
@@ -83,7 +75,7 @@ export class UpdateChargebackProtectionPeriod extends ContractFunction<
 
   async populateTransaction(
     signer: Signerish,
-    { newPeriodInSeconds }: UpdateChargebackProtectionPeriodArgs,
+    newPeriodInSeconds: number,
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
     const v1 = this.partition('v1');
