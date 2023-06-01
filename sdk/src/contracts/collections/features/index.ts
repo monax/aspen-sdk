@@ -64,6 +64,7 @@ export * from './setPrimarySaleRecipient';
 export * from './setRoyaltyInfoForToken';
 export * from './setSaleRecipientForToken';
 export * from './setTermsActivation';
+export * from './setTermsRequired';
 export * from './setTermsUri';
 export * from './setTokenNameAndSymbol';
 export * from './setTokenUri';

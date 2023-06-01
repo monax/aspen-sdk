@@ -78,6 +78,7 @@ import {
   setRoyaltyInfoForToken,
   setSaleRecipientForToken,
   setTermsActivation,
+  setTermsRequired,
   setTermsUri,
   setTokenNameAndSymbol,
   setTokenUri,
@@ -148,6 +149,7 @@ export class CollectionContract {
   readonly hasAcceptedTerms = hasAcceptedTerms(this);
   readonly hasAcceptedTermsVersion = hasAcceptedTermsVersion(this);
   readonly setTermsActivation = setTermsActivation(this);
+  readonly setTermsRequired = setTermsRequired(this);
   readonly setTermsUri = setTermsUri(this);
 
   // Token
