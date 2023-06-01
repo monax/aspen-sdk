@@ -11,6 +11,14 @@ import {
 } from './core-factories.gen';
 import { coreContracts } from './core.gen';
 
+export {
+  CurrentCedarDeployerVersion,
+  CurrentAspenDeployerVersion,
+  CurrentAspenCoreRegistryVersion,
+  CurrentAspenPaymentsNotaryVersion,
+  CurrentTermsRegistryVersion,
+};
+
 export type CoreContracts = typeof coreContracts;
 export type CoreContract = CoreContracts[number];
 
