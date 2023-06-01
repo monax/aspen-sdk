@@ -95,6 +95,7 @@ export const ContractFunctionIds = [
   'hasAcceptedTermsVersion',
   'setTermsActivation',
   'setTermsUri',
+  'setTermsRequired',
 
   // Token
   'exists',
