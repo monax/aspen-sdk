@@ -1,14 +1,14 @@
 import * as t from 'io-ts';
 
-export const CoreContractVersion = t.type({
+export const AspenContractVersion = t.type({
   major: t.number,
   minor: t.number,
   patch: t.number,
 });
 
-export type CoreContractVersion = t.TypeOf<typeof CoreContractVersion>;
+export type AspenContractVersion = t.TypeOf<typeof AspenContractVersion>;
 
-export const CoreContractManifest = t.type({
+export const AspenContractManifest = t.type({
   // The address where the deployer contract is deployed
   contractAddress: t.string,
   // The concrete interface that this deployer contract implements
@@ -20,11 +20,11 @@ export const CoreContractManifest = t.type({
   // The id of the chain where the deployer contract is deployed
   chainId: t.number,
   // The version of this contract
-  version: CoreContractVersion,
+  version: AspenContractVersion,
 });
 
-export type CoreContractManifest = t.TypeOf<typeof CoreContractManifest>;
+export type AspenContractManifest = t.TypeOf<typeof AspenContractManifest>;
 
-export const CoreContractsManifest = t.array(CoreContractManifest);
+export const AspenContractsManifest = t.array(AspenContractManifest);
 
-export type CoreContractsManifest = t.TypeOf<typeof CoreContractsManifest>;
+export type AspenContractsManifest = t.TypeOf<typeof AspenContractsManifest>;

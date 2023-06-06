@@ -5,7 +5,7 @@ import * as path from 'path';
 import prettier from 'prettier';
 import ts from 'typescript';
 import { AdditionalABIs } from './abis';
-import { CoreContractManifest, CoreContractsManifest } from './core-contracts';
+import { AspenContractManifest, AspenContractsManifest } from './aspen-contracts';
 import { ContractManifest, ContractsManifest } from './manifest';
 
 const nonFeatureDirs = new Set(['deploy', 'impl']);
@@ -111,13 +111,13 @@ function writeABI(abiDir: string, manifest: { name: string; abi: unknown; file: 
   fs.writeFileSync(path.join(dir, manifest.name + '.json'), JSON.stringify(manifest.abi, null, 2));
 }
 
-export function generateCoreContractsFactoriesMapTs(
-  manifest: CoreContractsManifest,
+export function generateAspenContractsFactoriesMapTs(
+  manifest: AspenContractsManifest,
   experimentalManifest: ContractsManifest,
 ): ts.Node[] {
   const experimentalInterfaceIds = Object.values(experimentalManifest).map((m) => m.id);
 
-  const coreContracts = Object.values(manifest).map((d) => {
+  const aspenContracts = Object.values(manifest).map((d) => {
     const [file, interfaceName] = d.interfaceId.split(':');
     return { file, interfaceName, ...d };
   });
@@ -126,7 +126,7 @@ export function generateCoreContractsFactoriesMapTs(
   // we don't care about the individual contracts here
   // which is why we allow 'overlapping'
   const uniqueIterfaces = Object.values(
-    coreContracts.reduce<Record<string, CoreContractManifest & { file: string; interfaceName: string }>>((acc, d) => {
+    aspenContracts.reduce<Record<string, AspenContractManifest & { file: string; interfaceName: string }>>((acc, d) => {
       acc[d.interfaceId] = d;
       return acc;
     }, {}),
@@ -148,8 +148,8 @@ export function generateCoreContractsFactoriesMapTs(
     ),
   );
 
-  const constNode = exportConst(
-    'CoreContractFactories',
+  const factoriesNode = exportConst(
+    'AspenContractFactories',
     ts.factory.createObjectLiteralExpression(
       uniqueIterfaces.map((d) =>
         ts.factory.createPropertyAssignment(
@@ -164,14 +164,30 @@ export function generateCoreContractsFactoriesMapTs(
     { asConst: true },
   );
 
+  const factoriesType = exportType(
+    'AspenContractFactories',
+    ts.factory.createTypeReferenceNode('typeof AspenContractFactories'),
+  );
+  const factoriesInterfaces = exportType(
+    'AspenContractInterfaceId',
+    ts.factory.createTypeReferenceNode('keyof AspenContractFactories'),
+  );
+  const factoryNodes = [factoriesNode, factoriesType, factoriesInterfaces];
+
+  // excludes experimental versions
   const currentVersionByFamily: Record<string, number> = {};
+  // includes experimental versions
+  const latestVersionByFamily: Record<string, number> = {};
   const networks: string[] = [];
-  const interfaceByFamilyVersion = coreContracts.reduce<Record<string, Record<number, string>>>((imap, d) => {
+  const interfaceByFamilyVersion = aspenContracts.reduce<Record<string, Record<number, string>>>((imap, d) => {
     if (
       !experimentalInterfaceIds.includes(d.interfaceId) &&
       (!currentVersionByFamily[d.interfaceFamily] || d.version.major > currentVersionByFamily[d.interfaceFamily])
     ) {
       currentVersionByFamily[d.interfaceFamily] = d.version.major;
+    }
+    if (!latestVersionByFamily[d.interfaceFamily] || d.version.major > latestVersionByFamily[d.interfaceFamily]) {
+      latestVersionByFamily[d.interfaceFamily] = d.version.major;
     }
 
     networks.push(d.network);
@@ -185,9 +201,14 @@ export function generateCoreContractsFactoriesMapTs(
       asConst: true,
     }),
   );
+  const latestVersions = Object.entries(latestVersionByFamily).map(([family, latestVersion]) =>
+    exportConst(`Latest${family}Version`, ts.factory.createNumericLiteral(latestVersion), {
+      asConst: true,
+    }),
+  );
 
   const versionsByFamilyConst = exportConst(
-    'CoreContractsFamilyVersions',
+    'AspenContractsFamilyVersions',
     ts.factory.createObjectLiteralExpression(
       Object.entries(interfaceByFamilyVersion).map(([family, versions]) =>
         ts.factory.createPropertyAssignment(
@@ -205,34 +226,39 @@ export function generateCoreContractsFactoriesMapTs(
     ),
     { asConst: true },
   );
+  const versionsType = exportType(
+    'AspenContractsFamilyVersions',
+    ts.factory.createTypeReferenceNode('typeof AspenContractsFamilyVersions'),
+  );
+  const versionsFamily = exportType(
+    'AspenContractFamilyId',
+    ts.factory.createTypeReferenceNode('keyof AspenContractsFamilyVersions'),
+  );
+  const versoinNodes = [versionsByFamilyConst, versionsType, versionsFamily, ...currentVersions, ...latestVersions];
 
   const networksType = exportType(
-    'CoreContractNetworks',
+    'AspenContractNetworks',
     ts.factory.createUnionTypeNode(
       Array.from(new Set(networks)).map((network) =>
         ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(network)),
       ),
     ),
-    {
-      comment:
-        "It's not that it can't be calculated but don't want the time spent on looking up how to codegen the type to be wasted ;)",
-    },
   );
 
-  return [...importNodes, constNode, ...currentVersions, versionsByFamilyConst, networksType];
+  return [...importNodes, ...factoryNodes, ...versoinNodes, networksType];
 }
 
-export async function writeCoreContracsFactoriesMap(
-  manifest: CoreContractsManifest,
+export async function writeAspenContractsFactoriesMap(
+  manifest: AspenContractsManifest,
   prettierConfigFile: string,
-  coreContractsFactoryMapFile: string,
+  aspenContractsFactoryMapFile: string,
   experimentalManifest: ContractsManifest,
 ): Promise<void> {
   const options = await prettier.resolveConfig(prettierConfigFile);
 
   fs.writeFileSync(
-    coreContractsFactoryMapFile,
-    prettier.format(printNodes(...generateCoreContractsFactoriesMapTs(manifest, experimentalManifest)), {
+    aspenContractsFactoryMapFile,
+    prettier.format(printNodes(...generateAspenContractsFactoriesMapTs(manifest, experimentalManifest)), {
       parser: 'typescript',
       ...options,
     }),

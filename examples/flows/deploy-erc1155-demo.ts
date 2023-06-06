@@ -1,5 +1,6 @@
 import { generateAccounts } from '@monaxlabs/aspen-sdk/dist/api-utils';
 import {
+  ChainIdEnum,
   extractEvents,
   getAspenContract,
   getGasStrategy,
@@ -29,7 +30,7 @@ export async function deployCedarERC1155DropDemo(provider: providers.Provider) {
 
   const gas = await getGasStrategy(provider);
 
-  const deployer = getAspenContract(provider, 'Mumbai', 'CedarDeployer', 9);
+  const deployer = getAspenContract(provider, ChainIdEnum.Mumbai, 'CedarDeployer', 9);
   const contractAddress = await deployDrop(deployer);
   // ONE made earlier on Mumbai. Setting an existing contract here is useful if you want to just do some claims and not
   // redeploy
