@@ -1,28 +1,11 @@
 import { BigNumber, ethers } from 'ethers';
+import { ChainIdEnum } from './network';
 
 export type GasStrategy = {
   maxPriorityFeePerGas?: BigNumber;
   maxFeePerGas?: BigNumber;
   gasLimit?: number;
 };
-
-export const ChainIdEnum = {
-  Mainnet: 1,
-  Ropsten: 3,
-  Rinkeby: 4,
-  Goerli: 5,
-  Kovan: 42,
-  BSC: 56,
-  xDai: 100,
-  Polygon: 137,
-  Moonriver: 1285,
-  Localhost: 1337,
-  Hardhat: 31337,
-  Mumbai: 80001,
-  Harmony: 1666600000,
-  Palm: 11297108109,
-  PalmTestnet: 11297108099,
-} as const;
 
 const simpleStrategy: number[] = [ChainIdEnum.Mumbai, ChainIdEnum.Polygon];
 

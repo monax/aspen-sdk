@@ -3,7 +3,7 @@ import { either as E, function as F } from 'fp-ts';
 import * as t from 'io-ts';
 import { importJWK, JWTPayload, jwtVerify } from 'jose';
 import { GatingAPI } from '..';
-import { ChainIdFromChainName } from '../../contracts';
+import { ChainIdEnum } from '../../contracts';
 import { parse } from '../../utils';
 import { SupportedNetwork } from './types';
 
@@ -42,7 +42,7 @@ export async function configureGate(
     requestBody: { type: GateType.WEB3, name: gateName, signInMode: GateSignInMode.MULTIPLE },
   });
 
-  const chainId = ChainIdFromChainName[network].toString();
+  const chainId = ChainIdEnum[network].toString();
   await RolesService.addGateRoles({
     id: gate.id,
     requestBody: roles.map((r) => ({ ...r, chainId })),

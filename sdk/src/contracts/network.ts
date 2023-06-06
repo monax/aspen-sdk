@@ -1,6 +1,8 @@
 import * as t from 'io-ts';
-export const ChainIdFromChainName = {
+
+export const ChainIdEnum = {
   Mainnet: 1,
+  Rinkeby: 4,
   Goerli: 5,
   Kovan: 42,
   BSC: 56,
@@ -17,11 +19,11 @@ export const ChainIdFromChainName = {
   Hardhat: 31337,
 } as const;
 
-export type ChainName = keyof typeof ChainIdFromChainName;
-export const ChainName = t.keyof(ChainIdFromChainName);
+export type ChainName = keyof typeof ChainIdEnum;
+export const ChainName = t.keyof(ChainIdEnum);
 
-const chainIds = new Set(Object.values(ChainIdFromChainName));
-export type ChainId = (typeof ChainIdFromChainName)[ChainName];
+const chainIds = new Set(Object.values(ChainIdEnum));
+export type ChainId = (typeof ChainIdEnum)[ChainName];
 export const ChainId = new t.Type<ChainId>(
   'ChainId',
   (u): u is ChainId => typeof u === 'number' && chainIds.has(u as ChainId),
@@ -29,6 +31,7 @@ export const ChainId = new t.Type<ChainId>(
   t.identity,
 );
 
-export const ChainNameFromChainId = Object.fromEntries(
-  Object.entries(ChainIdFromChainName).map(([n, i]) => [i, n]),
-) as Record<ChainId, ChainName>;
+export const ChainNameFromChainId = Object.fromEntries(Object.entries(ChainIdEnum).map(([n, i]) => [i, n])) as Record<
+  ChainId,
+  ChainName
+>;
