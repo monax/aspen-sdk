@@ -13,6 +13,7 @@ export type Scalars = {
   BigDecimal: string | number;
   BigInt: string | number;
   Bytes: any;
+  Int8: any;
 };
 
 export type BlockChangedFilter = {

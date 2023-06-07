@@ -166,11 +166,14 @@ export function generateAspenContractsFactoriesMapTs(
 
   const factoriesType = exportType(
     'AspenContractFactories',
-    ts.factory.createTypeReferenceNode('typeof AspenContractFactories'),
+    ts.factory.createTypeQueryNode(ts.factory.createIdentifier('AspenContractFactories')),
   );
   const factoriesInterfaces = exportType(
     'AspenContractInterfaceId',
-    ts.factory.createTypeReferenceNode('keyof AspenContractFactories'),
+    ts.factory.createTypeOperatorNode(
+      ts.SyntaxKind.KeyOfKeyword,
+      ts.factory.createTypeReferenceNode(ts.factory.createIdentifier('AspenContractFactories')),
+    ),
   );
   const factoryNodes = [factoriesNode, factoriesType, factoriesInterfaces];
 
@@ -228,11 +231,14 @@ export function generateAspenContractsFactoriesMapTs(
   );
   const versionsType = exportType(
     'AspenContractsFamilyVersions',
-    ts.factory.createTypeReferenceNode('typeof AspenContractsFamilyVersions'),
+    ts.factory.createTypeQueryNode(ts.factory.createIdentifier('AspenContractsFamilyVersions')),
   );
   const versionsFamily = exportType(
     'AspenContractFamilyId',
-    ts.factory.createTypeReferenceNode('keyof AspenContractsFamilyVersions'),
+    ts.factory.createTypeOperatorNode(
+      ts.SyntaxKind.KeyOfKeyword,
+      ts.factory.createTypeReferenceNode(ts.factory.createIdentifier('AspenContractsFamilyVersions')),
+    ),
   );
   const versoinNodes = [versionsByFamilyConst, versionsType, versionsFamily, ...currentVersions, ...latestVersions];
 
@@ -390,6 +396,46 @@ export async function writeFeaturesFunctionsMap(
   fs.writeFileSync(
     functionsMapFile,
     prettier.format(printNodes(generateFeatureFunctionsMapTs(manifest)), {
+      parser: 'typescript',
+      ...options,
+    }),
+  );
+}
+
+export function generateFeatureCodesMapTs(manifest: ContractsManifest): ts.Node {
+  const currentFeatures = Object.values(manifest).filter(isFeature);
+
+  const map: Record<string, string> = {};
+  for (const feature of currentFeatures) {
+    map[feature.code] = feature.id;
+  }
+
+  const constNode = exportConst(
+    'FeatureCodesMap',
+    ts.factory.createObjectLiteralExpression(
+      Object.entries(map).map(([featureCode, featureInterface]) => {
+        return ts.factory.createPropertyAssignment(
+          ts.factory.createStringLiteral(`0x${featureCode}`),
+          ts.factory.createStringLiteral(featureInterface),
+        );
+      }),
+    ),
+    { asConst: true },
+  );
+
+  return constNode;
+}
+
+export async function writeFeaturesCodeMap(
+  manifest: ContractsManifest,
+  prettierConfigFile: string,
+  functionsMapFile: string,
+): Promise<void> {
+  const options = await prettier.resolveConfig(prettierConfigFile);
+
+  fs.writeFileSync(
+    functionsMapFile,
+    prettier.format(printNodes(generateFeatureCodesMapTs(manifest)), {
       parser: 'typescript',
       ...options,
     }),

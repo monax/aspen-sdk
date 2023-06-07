@@ -50,6 +50,7 @@ import {
   implementationName,
   implementationVersion,
   isAspenFeatures,
+  isAspenFeaturesV1,
   issue,
   issueWithinPhase,
   issueWithinPhaseWithTokenUri,
@@ -83,6 +84,7 @@ import {
   setTokenNameAndSymbol,
   setTokenUri,
   setWalletClaimCount,
+  supportedFeatureCodes,
   supportedFeatures,
   supportsInterface,
   symbol,
@@ -92,7 +94,7 @@ import {
   updateChargebackProtectionPeriod,
   verifyClaim,
 } from './features';
-
+import { FeatureCodesMap } from './features/feature-codes.gen';
 import type { CollectionInfo, DebugHandler, TokenId, TokenStandard } from './types';
 
 export const DefaultDebugHandler = (collection: CollectionInfo, action: string, ...data: unknown[]) => {
@@ -118,8 +120,10 @@ export class CollectionContract {
 
   // Contract
   readonly isAspenFeatures = isAspenFeatures(this);
+  readonly isAspenFeaturesV1 = isAspenFeaturesV1(this);
   readonly supportsInterface = supportsInterface(this);
   readonly supportedFeatures = supportedFeatures(this);
+  readonly supportedFeatureCodes = supportedFeatureCodes(this);
   readonly implementationName = implementationName(this);
   readonly implementationVersion = implementationVersion(this);
   readonly owner = owner(this);
@@ -236,13 +240,21 @@ export class CollectionContract {
       const chain = parse(ChainId, chainId);
       const address = await asAddress(collectionAddress);
 
-      const iFeatures = FeatureInterface.fromFeature('IAspenFeatures.sol:IAspenFeaturesV0', address, provider);
-      const features = await iFeatures.connectReadOnly().supportedFeatures();
+      try {
+        const iFeaturesV1 = FeatureInterface.fromFeature('IAspenFeatures.sol:IAspenFeaturesV1', address, provider);
+        const codes = await iFeaturesV1.connectReadOnly().supportedFeatureCodes();
+        const features = codes.map((code) => FeatureCodesMap[code.toHexString() as keyof typeof FeatureCodesMap]);
+        return new CollectionContract(provider, chain, address, features, withExperimental);
+      } catch {}
 
-      return new CollectionContract(provider, chain, address, features, withExperimental);
-    } catch (err) {
-      throw new SdkError(SdkErrorCode.FAILED_TO_LOAD_FEATURES, undefined, err as Error);
-    }
+      try {
+        const iFeaturesV0 = FeatureInterface.fromFeature('IAspenFeatures.sol:IAspenFeaturesV0', address, provider);
+        const features = await iFeaturesV0.connectReadOnly().supportedFeatures();
+        return new CollectionContract(provider, chain, address, features, withExperimental);
+      } catch {}
+    } catch {}
+
+    throw new SdkError(SdkErrorCode.FAILED_TO_LOAD_FEATURES);
   }
 
   constructor(provider: Provider, chain: ChainId, address: Address, features: string[], withExperimental = false) {

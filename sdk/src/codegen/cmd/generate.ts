@@ -7,6 +7,7 @@ import {
   dumpLatestABIs,
   generateTsFile,
   writeAspenContractsFactoriesMap,
+  writeFeaturesCodeMap,
   writeFeaturesFactoriesMap,
   writeFeaturesFunctionsMap,
   writeFeaturesList,
@@ -33,9 +34,11 @@ async function generateForManifests(manifest: ContractsManifest, experimentalMan
   const featureFactoriesTs = path.join(featuresDir, 'feature-factories.gen.ts');
   const featureFunctionsTs = path.join(featuresDir, 'feature-functions.gen.ts');
   const experimentalFeaturesTs = path.join(featuresDir, 'experimental-features.gen.ts');
+  const featureCodesTs = path.join(featuresDir, 'feature-codes.gen.ts');
 
   await writeFeaturesFactoriesMap(combinedManifest, prettierConfigFile, featureFactoriesTs);
   await writeFeaturesFunctionsMap(combinedManifest, prettierConfigFile, featureFunctionsTs);
+  await writeFeaturesCodeMap(combinedManifest, prettierConfigFile, featureCodesTs);
   // Drop list of those interfaces that should be marked as experimental (subject to change at any time)
   await writeFeaturesList(experimentalManifest, prettierConfigFile, experimentalFeaturesTs);
 }
