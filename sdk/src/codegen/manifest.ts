@@ -6,9 +6,9 @@ export const ContractManifest = t.intersection([
     id: t.string,
     // The ERC165 identifier (note this is less strongly specified than our id)
     erc165Identifier: t.string,
-    // The relative API path of the solidity file from the apis dir
+    // The relative API path of the solidity file from the api dir
     file: t.string,
-    // The relative directory path containing the solidity file from the apis dir
+    // The relative directory path containing the solidity file from the api dir
     dir: t.string,
     // The literal Solidity contract name
     name: t.string,
@@ -20,11 +20,16 @@ export const ContractManifest = t.intersection([
     abi: t.readonlyArray(t.unknown),
     // The hash of the contract (currently just the hash of the ABI, TBD if anything else matters)
     hash: t.string,
+    // A short code that uniquely distinguishes this contract in the manifest (based on the hash)
+    code: t.string,
   }),
   t.partial({
     // Deprecated interfaces no longer have their Solidity source in-repo and may be removed at a later date
     deprecated: t.boolean,
+    // Interfaces that are delegated to a fallback-based delegate call proxy and so do not appear on contract ABI
     delegated: t.boolean,
+    // Interfaces that are delegated to a fallback-based delegate call proxy and so do not appear on contract ABI
+    restricted: t.boolean,
   }),
 ]);
 

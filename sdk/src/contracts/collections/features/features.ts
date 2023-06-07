@@ -63,8 +63,10 @@ export type ContractFunctionId = ContractFunctionIds[number];
 export const ContractFunctionIds = [
   // Contract
   'isAspenFeatures',
+  'isAspenFeaturesV1',
   'supportsInterface',
   'supportedFeatures',
+  'supportedFeatureCodes',
   'implementationName',
   'implementationVersion',
   'owner',
