@@ -1,3 +1,4 @@
+import { Chain } from '@monaxlabs/aspen-sdk';
 import { generateAccounts } from '@monaxlabs/aspen-sdk/dist/api-utils';
 import {
   extractEvents,
@@ -10,7 +11,6 @@ import {
   ZERO_BYTES32,
 } from '@monaxlabs/aspen-sdk/dist/contracts';
 import { IDropClaimConditionV0 } from '@monaxlabs/aspen-sdk/dist/contracts/generated/impl/ICedarERC1155Drop.sol/ICedarERC1155DropV4';
-import { Chain } from '@monaxlabs/aspen-sdk'
 import '@nomiclabs/hardhat-ethers';
 import { Overrides, providers } from 'ethers/lib/ethers';
 import 'hardhat-deploy';

@@ -198,7 +198,6 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
 
     try {
       if (nft) {
-        // TODO
         const nftEvents = this.base.assumeFeature('issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2');
         const contract = nftEvents.connectReadOnly();
 
@@ -241,7 +240,6 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
           ),
         );
       } else if (sft) {
-        // TODO
         const sftEvents = this.base.assumeFeature('issuance/ICedarSFTIssuance.sol:IRestrictedSFTIssuanceV3');
         const contract = sftEvents.connectReadOnly();
 

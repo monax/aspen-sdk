@@ -1,7 +1,7 @@
 import { describe, expect, test } from '@jest/globals';
+import { Chain } from '@monaxlabs/phloem/dist/types';
 import { providers } from 'ethers';
 import { ICedarDeployerV8__factory } from '../generated';
-import { Chain } from '@monaxlabs/phloem/dist/types'
 import { getAspenContract, getCurrentDeployer } from './core';
 
 describe('Core Aspen contracts', () => {
