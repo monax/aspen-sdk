@@ -11,7 +11,7 @@ export async function authenticate(
   { baseUrl, name, password }: Credential,
 ): Promise<string> {
   // FIXME: update to use API keys
-  throw new Error(`Authentication needs to be implemented using API keys`)
+  throw new Error(`Authentication needs to be implemented using API keys`);
   // config.BASE = baseUrl;
   // const accessToken = await PublishingAPI.AuthService.postAuth({
   //   requestBody: { name, password },

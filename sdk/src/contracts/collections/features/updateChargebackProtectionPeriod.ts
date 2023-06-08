@@ -73,10 +73,7 @@ export class UpdateChargebackProtectionPeriod extends ContractFunction<
     }
   }
 
-  async populateTransaction(
-    newPeriodInSeconds: number,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction(newPeriodInSeconds: number, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
     const v1 = this.partition('v1');
     try {
       const tx = await v1

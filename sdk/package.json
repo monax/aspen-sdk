@@ -24,7 +24,7 @@
     "clean:compiled": "find .. -name node_modules -prune -o \\\\( -wholename '**/src/**' -a \\\\( -name '*.js' -o -name '*.d.ts' -o -name '*.js.map' \\\\) \\\\) -print",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "fix": "pnpm run fix:prettier && pnpm run fix:eslint",
-    "fix:prettier": "prettier --write ..",
+    "fix:prettier": "prettier --write .",
     "fix:eslint": "eslint --fix '**/*.ts'",
     "lint": "pnpm lint:js && pnpm lint:types",
     "lint:js": "eslint '**/*.{js,ts}'",

@@ -1,4 +1,4 @@
-import { ethers, CallOverrides } from 'ethers';
+import { CallOverrides, ethers } from 'ethers';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';

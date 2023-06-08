@@ -9,8 +9,11 @@ import {
   acceptTermsFor,
   acceptTermsForMany,
   acceptTermsWithSignature,
+  approve,
   balanceOf,
+  balanceOfBatch,
   burn,
+  burnBatch,
   chargebackWithdrawal,
   claim,
   ContractFunctionId,
@@ -23,6 +26,7 @@ import {
   FeatureFunctionId,
   FeatureInterface,
   FeatureInterfaceId,
+  getApproved,
   getBaseURICount,
   getBaseURIIndices,
   getChargebackProtectionPeriod,
@@ -49,6 +53,7 @@ import {
   hasRole,
   implementationName,
   implementationVersion,
+  isApprovedForAll,
   isAspenFeatures,
   isAspenFeaturesV1,
   issue,
@@ -63,7 +68,9 @@ import {
   renounceRole,
   revokeRole,
   royaltyInfo,
+  safeBatchTransferFrom,
   safeTransferFrom,
+  setApprovalForAll,
   setClaimConditions,
   setClaimPauseStatus,
   setContractUri,
@@ -90,6 +97,7 @@ import {
   symbol,
   tokenUri,
   totalSupply,
+  transferFrom,
   updateBaseUri,
   updateChargebackProtectionPeriod,
   verifyClaim,
@@ -160,13 +168,22 @@ export class CollectionContract {
   readonly exists = exists(this);
   readonly ownerOf = ownerOf(this);
   readonly balanceOf = balanceOf(this);
+  readonly balanceOfBatch = balanceOfBatch(this);
   readonly tokenUri = tokenUri(this);
   readonly setTokenUri = setTokenUri(this);
   readonly setPermanentTokenUri = setPermanentTokenUri(this);
   readonly getBaseURIIndices = getBaseURIIndices(this);
   readonly getBaseURICount = getBaseURICount(this);
   readonly updateBaseUri = updateBaseUri(this);
+  readonly transferFrom = transferFrom(this);
   readonly safeTransferFrom = safeTransferFrom(this);
+  readonly safeBatchTransferFrom = safeBatchTransferFrom(this);
+
+  // Approve
+  readonly approve = approve(this);
+  readonly getApproved = getApproved(this);
+  readonly setApprovalForAll = setApprovalForAll(this);
+  readonly isApprovedForAll = isApprovedForAll(this);
 
   // Supply
   readonly totalSupply = totalSupply(this);
@@ -193,6 +210,7 @@ export class CollectionContract {
 
   // Burn
   readonly burn = burn(this);
+  readonly burnBatch = burnBatch(this);
 
   // Issue
   readonly issue = issue(this);

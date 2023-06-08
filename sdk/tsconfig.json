@@ -7,13 +7,9 @@
     "strictFunctionTypes": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
-    "useUnknownInCatchVariables": true,
+    "useUnknownInCatchVariables": true
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "src/codegen/**/*"
-  ],
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/codegen/**/*"],
   "declaration": true
 }
