@@ -53,6 +53,7 @@ export const ERC1155StandardInterfaces: FeatureInterfaceId[] = Array.from(
 );
 
 export const CatchAllInterfaces: FeatureInterfaceId[] = [
+  ...FeatureFunctionsMap['isIAspenFeaturesV1()[bool]'].drop,
   ...FeatureFunctionsMap['isIAspenFeaturesV0()[bool]'].drop,
   ...FeatureFunctionsMap['isICedarFeaturesV0()[bool]'].drop,
 ];
