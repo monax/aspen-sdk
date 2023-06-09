@@ -413,12 +413,14 @@ export function generateFeatureCodesMapTs(manifest: ContractsManifest): ts.Node 
   const constNode = exportConst(
     'FeatureCodesMap',
     ts.factory.createObjectLiteralExpression(
-      Object.entries(map).map(([featureCode, featureInterface]) => {
-        return ts.factory.createPropertyAssignment(
-          ts.factory.createStringLiteral(`0x${featureCode}`),
-          ts.factory.createStringLiteral(featureInterface),
-        );
-      }),
+      Object.entries(map)
+        .sort((a, b) => (a[1] < b[1] ? -1 : 1)) // sort by featureInterface
+        .map(([featureCode, featureInterface]) => {
+          return ts.factory.createPropertyAssignment(
+            ts.factory.createStringLiteral(`0x${featureCode}`),
+            ts.factory.createStringLiteral(featureInterface),
+          );
+        }),
     ),
     { asConst: true },
   );
