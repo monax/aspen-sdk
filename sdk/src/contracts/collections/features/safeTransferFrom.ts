@@ -7,11 +7,13 @@ import { asCallableClass, ContractFunction } from './features';
 
 const SafeTransferFromFunctions = {
   nft: 'safeTransferFrom(address,address,uint256,bytes)+[]',
+  nftV2: 'safeTransferFrom(address,address,uint256)+[]',
   sft: 'safeTransferFrom(address,address,uint256,uint256,bytes)[]',
 } as const;
 
 const SafeTransferFromPartitions = {
   nft: [...FeatureFunctionsMap[SafeTransferFromFunctions.nft].drop],
+  nftV2: [...FeatureFunctionsMap[SafeTransferFromFunctions.nftV2].drop],
   sft: [...FeatureFunctionsMap[SafeTransferFromFunctions.sft].drop],
 };
 type SafeTransferFromPartitions = typeof SafeTransferFromPartitions;
@@ -26,7 +28,7 @@ export type SafeTransferFromArgs = {
   fromAddress: Addressish;
   toAddress: Addressish;
   tokenId: BigNumberish;
-  bytes: BytesLike;
+  bytes?: BytesLike;
   amount?: BigNumberish;
 };
 
@@ -51,7 +53,7 @@ export class SafeTransferFrom extends ContractFunction<
     { fromAddress, toAddress, tokenId, bytes, amount }: SafeTransferFromArgs,
     overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
-    const { nft, sft } = this.partitions;
+    const { nft, nftV2, sft } = this.partitions;
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
@@ -60,7 +62,9 @@ export class SafeTransferFrom extends ContractFunction<
       switch (this.base.tokenStandard) {
         case 'ERC1155':
           if (sft) {
-            const tx = await sft.connectWith(signer).safeTransferFrom(from, to, tokenId, amount || 0, bytes, overrides);
+            const tx = await sft
+              .connectWith(signer)
+              .safeTransferFrom(from, to, tokenId, amount || 0, bytes ?? [], overrides);
             return tx;
           }
           break;
@@ -68,7 +72,12 @@ export class SafeTransferFrom extends ContractFunction<
           if (nft) {
             const tx = await nft
               .connectWith(signer)
-            ['safeTransferFrom(address,address,uint256,bytes)'](from, to, tokenId, bytes, overrides);
+              ['safeTransferFrom(address,address,uint256,bytes)'](from, to, tokenId, bytes ?? [], overrides);
+            return tx;
+          } else if (nftV2) {
+            const tx = await nftV2
+              .connectWith(signer)
+              ['safeTransferFrom(address,address,uint256)'](from, to, tokenId, overrides);
             return tx;
           }
           break;
@@ -85,7 +94,7 @@ export class SafeTransferFrom extends ContractFunction<
     { fromAddress, toAddress, tokenId, bytes, amount }: SafeTransferFromArgs,
     overrides: WriteOverrides = {},
   ) {
-    const { nft, sft } = this.partitions;
+    const { nft, nftV2, sft } = this.partitions;
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
@@ -96,7 +105,7 @@ export class SafeTransferFrom extends ContractFunction<
           if (sft) {
             const tx = await sft
               .connectWith(signer)
-              .estimateGas.safeTransferFrom(from, to, tokenId, amount || 0, bytes, overrides);
+              .estimateGas.safeTransferFrom(from, to, tokenId, amount || 0, bytes ?? [], overrides);
             return tx;
           }
           break;
@@ -104,7 +113,18 @@ export class SafeTransferFrom extends ContractFunction<
           if (nft) {
             const tx = await nft
               .connectWith(signer)
-              .estimateGas['safeTransferFrom(address,address,uint256,bytes)'](from, to, tokenId, bytes, overrides);
+              .estimateGas['safeTransferFrom(address,address,uint256,bytes)'](
+                from,
+                to,
+                tokenId,
+                bytes ?? [],
+                overrides,
+              );
+            return tx;
+          } else if (nftV2) {
+            const tx = await nftV2
+              .connectWith(signer)
+              .estimateGas['safeTransferFrom(address,address,uint256)'](from, to, tokenId, overrides);
             return tx;
           }
           break;
@@ -120,7 +140,7 @@ export class SafeTransferFrom extends ContractFunction<
     { fromAddress, toAddress, tokenId, bytes, amount }: SafeTransferFromArgs,
     overrides: WriteOverrides = {},
   ) {
-    const { nft, sft } = this.partitions;
+    const { nft, nftV2, sft } = this.partitions;
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
@@ -131,7 +151,7 @@ export class SafeTransferFrom extends ContractFunction<
           if (sft) {
             const tx = await sft
               .connectReadOnly()
-              .populateTransaction.safeTransferFrom(from, to, tokenId, amount || 0, bytes, overrides);
+              .populateTransaction.safeTransferFrom(from, to, tokenId, amount || 0, bytes ?? [], overrides);
             return tx;
           }
           break;
@@ -143,9 +163,14 @@ export class SafeTransferFrom extends ContractFunction<
                 from,
                 to,
                 tokenId,
-                bytes,
+                bytes ?? [],
                 overrides,
               );
+            return tx;
+          } else if (nftV2) {
+            const tx = await nftV2
+              .connectReadOnly()
+              .populateTransaction['safeTransferFrom(address,address,uint256)'](from, to, tokenId, overrides);
             return tx;
           }
           break;

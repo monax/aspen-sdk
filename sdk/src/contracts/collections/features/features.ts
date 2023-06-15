@@ -104,13 +104,22 @@ export const ContractFunctionIds = [
   'exists',
   'ownerOf',
   'balanceOf',
+  'balanceOfBatch',
   'tokenUri',
   'setTokenUri',
   'setPermanentTokenUri',
   'getBaseURIIndices',
   'getBaseURICount',
   'updateBaseUri',
+  'transferFrom',
   'safeTransferFrom',
+  'safeBatchTransferFrom',
+
+  // Approve
+  'approve',
+  'isApproved',
+  'setApprovalForAll',
+  'isApprovedForAll',
 
   // Supply
   'totalSupply',
@@ -137,6 +146,7 @@ export const ContractFunctionIds = [
 
   // Burn
   'burn',
+  'burnBatch',
 
   // Issue
   'issue',

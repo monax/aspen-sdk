@@ -67,15 +67,15 @@ const NON_DROP_CONTRACT_INTERFACES: FeatureInterfaceId[] = ['ownable/IOwnable.so
 
 const NOT_IMPLEMENTED_FUNCTIONS: FeatureFunctionId[] = [
   // ERC721 and ERC1155 standards functions that are not implemented yet
-  'balanceOfBatch(address[],uint256[])[uint256[]]',
-  'isApprovedForAll(address,address)[bool]',
-  'approve(address,uint256)[]',
-  'getApproved(uint256)[address]',
-  'setApprovalForAll(address,bool)[]',
-  'burnBatch(address,uint256[],uint256[])[]',
-  'transferFrom(address,address,uint256)[]',
-  'safeTransferFrom(address,address,uint256)+[]',
-  'safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)[]',
+  // 'balanceOfBatch(address[],uint256[])[uint256[]]',
+  // 'isApprovedForAll(address,address)[bool]',
+  // 'approve(address,uint256)[]',
+  // 'getApproved(uint256)[address]',
+  // 'setApprovalForAll(address,bool)[]',
+  // 'burnBatch(address,uint256[],uint256[])[]',
+  // 'transferFrom(address,address,uint256)[]',
+  // 'safeTransferFrom(address,address,uint256)+[]',
+  // 'safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)[]',
 ];
 
 const isDropInterface = (iface: FeatureInterfaceId, allowExperimental: boolean): boolean => {
