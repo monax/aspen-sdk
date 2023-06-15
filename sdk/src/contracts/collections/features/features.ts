@@ -117,7 +117,7 @@ export const ContractFunctionIds = [
 
   // Approve
   'approve',
-  'getApproved',
+  'isApproved',
   'setApprovalForAll',
   'isApprovedForAll',
 

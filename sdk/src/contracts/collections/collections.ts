@@ -26,7 +26,6 @@ import {
   FeatureFunctionId,
   FeatureInterface,
   FeatureInterfaceId,
-  getApproved,
   getBaseURICount,
   getBaseURIIndices,
   getChargebackProtectionPeriod,
@@ -53,6 +52,7 @@ import {
   hasRole,
   implementationName,
   implementationVersion,
+  isApproved,
   isApprovedForAll,
   isAspenFeatures,
   isAspenFeaturesV1,
@@ -181,7 +181,7 @@ export class CollectionContract {
 
   // Approve
   readonly approve = approve(this);
-  readonly getApproved = getApproved(this);
+  readonly isApproved = isApproved(this);
   readonly setApprovalForAll = setApprovalForAll(this);
   readonly isApprovedForAll = isApprovedForAll(this);
 

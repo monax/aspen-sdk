@@ -64,7 +64,7 @@ export class SafeTransferFrom extends ContractFunction<
           if (sft) {
             const tx = await sft
               .connectWith(signer)
-              .safeTransferFrom(from, to, tokenId, amount || 0, bytes || [], overrides);
+              .safeTransferFrom(from, to, tokenId, amount || 0, bytes ?? [], overrides);
             return tx;
           }
           break;
@@ -72,7 +72,7 @@ export class SafeTransferFrom extends ContractFunction<
           if (nft) {
             const tx = await nft
               .connectWith(signer)
-              ['safeTransferFrom(address,address,uint256,bytes)'](from, to, tokenId, bytes || [], overrides);
+              ['safeTransferFrom(address,address,uint256,bytes)'](from, to, tokenId, bytes ?? [], overrides);
             return tx;
           } else if (nftV2) {
             const tx = await nftV2
@@ -105,7 +105,7 @@ export class SafeTransferFrom extends ContractFunction<
           if (sft) {
             const tx = await sft
               .connectWith(signer)
-              .estimateGas.safeTransferFrom(from, to, tokenId, amount || 0, bytes || [], overrides);
+              .estimateGas.safeTransferFrom(from, to, tokenId, amount || 0, bytes ?? [], overrides);
             return tx;
           }
           break;
@@ -117,7 +117,7 @@ export class SafeTransferFrom extends ContractFunction<
                 from,
                 to,
                 tokenId,
-                bytes || [],
+                bytes ?? [],
                 overrides,
               );
             return tx;
@@ -151,7 +151,7 @@ export class SafeTransferFrom extends ContractFunction<
           if (sft) {
             const tx = await sft
               .connectReadOnly()
-              .populateTransaction.safeTransferFrom(from, to, tokenId, amount || 0, bytes || [], overrides);
+              .populateTransaction.safeTransferFrom(from, to, tokenId, amount || 0, bytes ?? [], overrides);
             return tx;
           }
           break;
@@ -163,7 +163,7 @@ export class SafeTransferFrom extends ContractFunction<
                 from,
                 to,
                 tokenId,
-                bytes || [],
+                bytes ?? [],
                 overrides,
               );
             return tx;
