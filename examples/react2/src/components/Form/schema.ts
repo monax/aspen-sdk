@@ -6,7 +6,8 @@ export const getNotificationsFormSchema = () => {
     email: yup.string().email().required(),
     confirmEmail: yup
       .string()
-      .oneOf([yup.ref("email"), null], "Emails must match").required(),
+      .oneOf([yup.ref("email"), null], "Emails must match")
+      .required(),
   });
   return schema;
 };
