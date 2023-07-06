@@ -11,6 +11,10 @@ import {
   approve,
   balanceOf,
   balanceOfBatch,
+  batchIssue,
+  batchIssueWithinPhase,
+  batchIssueWithinPhaseWithTokenUri,
+  batchIssueWithTokenUri,
   burn,
   burnBatch,
   chargebackWithdrawal,
@@ -216,6 +220,10 @@ export class CollectionContract {
   readonly issueWithTokenUri = issueWithTokenUri(this);
   readonly issueWithinPhase = issueWithinPhase(this);
   readonly issueWithinPhaseWithTokenUri = issueWithinPhaseWithTokenUri(this);
+  readonly batchIssue = batchIssue(this);
+  readonly batchIssueWithTokenUri = batchIssueWithTokenUri(this);
+  readonly batchIssueWithinPhase = batchIssueWithinPhase(this);
+  readonly batchIssueWithinPhaseWithTokenUri = batchIssueWithinPhaseWithTokenUri(this);
   readonly chargebackWithdrawal = chargebackWithdrawal(this);
   readonly updateChargebackProtectionPeriod = updateChargebackProtectionPeriod(this);
   readonly getTransferTimesForToken = getTransferTimesForToken(this);

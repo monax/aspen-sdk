@@ -117,13 +117,13 @@ export enum ClaimBalance_OrderBy {
   receiver = 'receiver',
   tokenId = 'tokenId',
   tokenType = 'tokenType',
-  totalClaimed = 'totalClaimed'
+  totalClaimed = 'totalClaimed',
 }
 
 /** Defines the order direction, either ascending or descending */
 export enum OrderDirection {
   asc = 'asc',
-  desc = 'desc'
+  desc = 'desc',
 }
 
 export type Query = {
@@ -134,18 +134,15 @@ export type Query = {
   claimBalances: Array<ClaimBalance>;
 };
 
-
 export type Query_MetaArgs = {
   block?: InputMaybe<Block_Height>;
 };
-
 
 export type QueryClaimBalanceArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type QueryClaimBalancesArgs = {
   block?: InputMaybe<Block_Height>;
@@ -165,18 +162,15 @@ export type Subscription = {
   claimBalances: Array<ClaimBalance>;
 };
 
-
 export type Subscription_MetaArgs = {
   block?: InputMaybe<Block_Height>;
 };
-
 
 export type SubscriptionClaimBalanceArgs = {
   block?: InputMaybe<Block_Height>;
   id: Scalars['ID'];
   subgraphError?: _SubgraphErrorPolicy_;
 };
-
 
 export type SubscriptionClaimBalancesArgs = {
   block?: InputMaybe<Block_Height>;
@@ -190,7 +184,7 @@ export type SubscriptionClaimBalancesArgs = {
 
 export enum TokenType {
   ERC721 = 'ERC721',
-  ERC1155 = 'ERC1155'
+  ERC1155 = 'ERC1155',
 }
 
 export type _Block_ = {
@@ -224,7 +218,7 @@ export enum _SubgraphErrorPolicy_ {
   /** Data will be returned even if the subgraph has indexing errors */
   allow = 'allow',
   /** If the subgraph has indexing errors, data will be omitted. The default. */
-  deny = 'deny'
+  deny = 'deny',
 }
 
 export type GetClaimBalancesQueryVariables = Exact<{
@@ -232,5 +226,15 @@ export type GetClaimBalancesQueryVariables = Exact<{
   claimBalanceFilter?: InputMaybe<ClaimBalance_Filter>;
 }>;
 
-
-export type GetClaimBalancesQuery = { __typename?: 'Query', claimBalances: Array<{ __typename?: 'ClaimBalance', id: string, contractAddress: string, tokenType: TokenType, receiver: string, tokenId: string | number, totalClaimed: string | number }> };
+export type GetClaimBalancesQuery = {
+  __typename?: 'Query';
+  claimBalances: Array<{
+    __typename?: 'ClaimBalance';
+    id: string;
+    contractAddress: string;
+    tokenType: TokenType;
+    receiver: string;
+    tokenId: string | number;
+    totalClaimed: string | number;
+  }>;
+};

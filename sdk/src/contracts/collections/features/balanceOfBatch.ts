@@ -43,7 +43,7 @@ export class BalanceOfBatch extends ContractFunction<
     overrides: CallOverrides = {},
   ): Promise<{ address: Addressish; tokenId: BigNumberish; balance: BigNumberish }[]> {
     const wallets = await Promise.all(addresses.map((a) => asAddress(a)));
-    tokenIds = await Promise.all(tokenIds.map((t) => this.base.requireTokenId(t, this.functionName)));
+    tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
     try {
       const sft = this.partition('sft');
       const balances = await sft.connectReadOnly().balanceOfBatch(wallets, tokenIds, overrides);
