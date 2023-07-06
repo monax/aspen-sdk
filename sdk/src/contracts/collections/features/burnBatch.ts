@@ -53,7 +53,7 @@ export class BurnBatch extends ContractFunction<
   ): Promise<ContractTransaction> {
     const sft = this.partition('sft');
     const account = await asAddress(wallet);
-    tokenIds = await Promise.all(tokenIds.map((t) => this.base.requireTokenId(t, this.functionName)));
+    tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
 
     try {
       const tx = await sft.connectWith(signer).burnBatch(account, tokenIds, amount, overrides);
@@ -72,7 +72,7 @@ export class BurnBatch extends ContractFunction<
   ): Promise<BigNumber> {
     const sft = this.partition('sft');
     const account = await asAddress(wallet);
-    tokenIds = await Promise.all(tokenIds.map((t) => this.base.requireTokenId(t, this.functionName)));
+    tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
 
     try {
       const estimate = await sft.connectWith(signer).estimateGas.burnBatch(account, tokenIds, amount, overrides);
@@ -90,7 +90,7 @@ export class BurnBatch extends ContractFunction<
   ): Promise<PopulatedTransaction> {
     const sft = this.partition('sft');
     const account = await asAddress(wallet);
-    tokenIds = await Promise.all(tokenIds.map((t) => this.base.requireTokenId(t, this.functionName)));
+    tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
 
     try {
       const tx = await sft.connectReadOnly().populateTransaction.burnBatch(account, tokenIds, amount, overrides);

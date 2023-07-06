@@ -1,11 +1,10 @@
-import { BigNumber, ContractReceipt, ContractTransaction, PopulatedTransaction } from 'ethers';
+import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
 import { asAddress, BatchIssueWithTokenUriArgs, ZERO_ADDRESS_BRANDED } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
-import { IssuedToken } from './issue';
 
 const BatchIssueWithinPhaseWithTokenUriFunctions = {
   nft: 'batchIssueWithinPhaseWithTokenURI(address[],string[])[]',
@@ -110,10 +109,6 @@ export class BatchIssueWithinPhaseWithTokenUri extends ContractFunction<
         new Error('Receivers cannot include an empty address'),
       );
     }
-  }
-
-  async parseReceiptLogs(receipt: ContractReceipt): Promise<IssuedToken[]> {
-    return this.base.batchIssueWithinPhase.parseReceiptLogs(receipt);
   }
 }
 

@@ -1,9 +1,7 @@
-import { BigNumber, ContractReceipt, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { Address, asAddress, BatchIssueArgs, extractEventsFromLogs, IssuedToken, ZERO_ADDRESS_BRANDED } from '../..';
-import { parse } from '../../../utils';
+import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
+import { asAddress, BatchIssueArgs, ZERO_ADDRESS_BRANDED } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import { bnRange, One } from '../number';
 import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -61,7 +59,7 @@ export class BatchIssueWithinPhase extends ContractFunction<
     { receivers, tokenIds, quantities }: Required<BatchIssueArgs>,
     overrides: WriteOverrides = {},
   ): Promise<ContractTransaction> {
-    const tokenIdsBN = await Promise.all(tokenIds.map((t) => this.base.requireTokenId(t, this.functionName)));
+    const tokenIdsBN = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
     const sft = this.partition('sft');
     const wallets = await Promise.all(receivers.map((receiver) => asAddress(receiver)));
 
@@ -105,7 +103,7 @@ export class BatchIssueWithinPhase extends ContractFunction<
     { receivers, tokenIds, quantities }: Required<BatchIssueArgs>,
     overrides: WriteOverrides = {},
   ): Promise<BigNumber> {
-    const tokenIdsBN = await Promise.all(tokenIds.map((t) => this.base.requireTokenId(t, this.functionName)));
+    const tokenIdsBN = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
     const sft = this.partition('sft');
     const wallets = await Promise.all(receivers.map((receiver) => asAddress(receiver)));
 
@@ -150,7 +148,7 @@ export class BatchIssueWithinPhase extends ContractFunction<
     { receivers, tokenIds, quantities }: Required<BatchIssueArgs>,
     overrides: WriteOverrides = {},
   ): Promise<PopulatedTransaction> {
-    const tokenIdsBN = await Promise.all(tokenIds.map((t) => this.base.requireTokenId(t, this.functionName)));
+    const tokenIdsBN = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
     const sft = this.partition('sft');
     const wallets = await Promise.all(receivers.map((receiver) => asAddress(receiver)));
 
@@ -188,81 +186,6 @@ export class BatchIssueWithinPhase extends ContractFunction<
         new Error('Receivers cannot include an empty address'),
       );
     }
-  }
-
-  async parseReceiptLogs(receipt: ContractReceipt): Promise<IssuedToken[]> {
-    const { nft, sft } = this.partitions;
-    const { chainId, address } = this.base;
-    const batchIssueWithinPhaseTokens: IssuedToken[] = [];
-
-    try {
-      if (nft) {
-        const contract = nft.connectReadOnly();
-
-        batchIssueWithinPhaseTokens.push(
-          ...extractEventsFromLogs(contract.filters.TokensIssued(), contract.interface, receipt.logs)
-            .map(({ startTokenId, issuer, receiver, quantity }) => {
-              const events: IssuedToken[] = [];
-              for (const tokenId of bnRange(startTokenId, quantity)) {
-                events.push({
-                  chainId,
-                  address,
-                  tokenId,
-                  standard: 'ERC721',
-                  issuer: parse(Address, issuer),
-                  receiver: parse(Address, receiver),
-                  tokenURI: null,
-                  quantity: One,
-                });
-              }
-              return events;
-            })
-            .flat(),
-        );
-
-        batchIssueWithinPhaseTokens.push(
-          ...extractEventsFromLogs(contract.filters.TokenIssued(), contract.interface, receipt.logs).map(
-            ({ tokenId, issuer, receiver, tokenURI }) => {
-              const event: IssuedToken = {
-                chainId,
-                address,
-                tokenId,
-                standard: 'ERC721',
-                issuer: parse(Address, issuer),
-                receiver: parse(Address, receiver),
-                tokenURI: tokenURI,
-                quantity: One,
-              };
-              return event;
-            },
-          ),
-        );
-      } else if (sft) {
-        const contract = sft.connectReadOnly();
-
-        batchIssueWithinPhaseTokens.push(
-          ...extractEventsFromLogs(contract.filters.TokensIssued(), contract.interface, receipt.logs).map(
-            ({ tokenId, issuer, receiver, quantityClaimed }) => {
-              const event: IssuedToken = {
-                chainId,
-                address,
-                tokenId,
-                standard: 'ERC1155',
-                issuer: parse(Address, issuer),
-                receiver: parse(Address, receiver),
-                tokenURI: null,
-                quantity: quantityClaimed,
-              };
-              return event;
-            },
-          ),
-        );
-      }
-    } catch (err) {
-      throw SdkError.from(err, SdkErrorCode.INVALID_DATA, { receipt });
-    }
-
-    return batchIssueWithinPhaseTokens;
   }
 }
 
