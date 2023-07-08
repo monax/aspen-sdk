@@ -1,6 +1,5 @@
 import { generateAccounts } from '@monaxlabs/aspen-sdk/dist/api-utils';
 import {
-  ChainIdEnum,
   extractEvents,
   getAspenContract,
   getGasStrategy,
@@ -11,6 +10,7 @@ import {
   ZERO_BYTES32,
 } from '@monaxlabs/aspen-sdk/dist/contracts';
 import { IDropClaimConditionV0 } from '@monaxlabs/aspen-sdk/dist/contracts/generated/impl/ICedarERC1155Drop.sol/ICedarERC1155DropV4';
+import { Chain } from '@monaxlabs/aspen-sdk'
 import '@nomiclabs/hardhat-ethers';
 import { Overrides, providers } from 'ethers/lib/ethers';
 import 'hardhat-deploy';
@@ -30,7 +30,7 @@ export async function deployCedarERC1155DropDemo(provider: providers.Provider) {
 
   const gas = await getGasStrategy(provider);
 
-  const deployer = getAspenContract(provider, ChainIdEnum.Mumbai, 'CedarDeployer', 9);
+  const deployer = getAspenContract(provider, Chain.Mumbai, 'CedarDeployer', 9);
   const contractAddress = await deployDrop(deployer);
   // ONE made earlier on Mumbai. Setting an existing contract here is useful if you want to just do some claims and not
   // redeploy

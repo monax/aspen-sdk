@@ -14,21 +14,12 @@ export function isFeature(manifest: ContractManifest): boolean {
   return manifest.abi.length > 0 && !nonFeatureDirs.has(manifest.dir);
 }
 
-export async function printJsonObjectAsTypescriptConst(
-  constName: string,
-  prettierConfigFile: string,
-  obj: unknown,
-): Promise<string> {
-  const gen = `// GENERATED FILE - edits will be lost\n\nexport const ${constName} = ${JSON.stringify(
+export function printJsonObjectAsTypescriptConst(constName: string, obj: unknown): string {
+  return `// GENERATED FILE - edits will be lost\n\nexport const ${constName} = ${JSON.stringify(
     obj,
     null,
     2,
   )} as const;`;
-  const options = await prettier.resolveConfig(prettierConfigFile);
-  return prettier.format(gen, {
-    parser: 'typescript',
-    ...options,
-  });
 }
 
 export function printNodes(...nodes: ts.Node[]): string {
@@ -80,14 +71,9 @@ export function exportType(name: string, type: ts.TypeNode, opts?: { comment?: s
   return typeStatement;
 }
 
-export async function generateTsFile(
-  constName: string,
-  obj: object,
-  prettierConfigFile: string,
-  outputFileTs: string,
-): Promise<unknown> {
-  const ts = await printJsonObjectAsTypescriptConst(constName, prettierConfigFile, obj);
-  fs.writeFileSync(outputFileTs, ts);
+export async function generateTsFile(constName: string, obj: object, outputFileTs: string): Promise<unknown> {
+  const ts = printJsonObjectAsTypescriptConst(constName, obj);
+  await writeTypescriptFile(outputFileTs, ts);
   return obj;
 }
 
@@ -256,18 +242,12 @@ export function generateAspenContractsFactoriesMapTs(
 
 export async function writeAspenContractsFactoriesMap(
   manifest: AspenContractsManifest,
-  prettierConfigFile: string,
   aspenContractsFactoryMapFile: string,
   experimentalManifest: ContractsManifest,
 ): Promise<void> {
-  const options = await prettier.resolveConfig(prettierConfigFile);
-
-  fs.writeFileSync(
+  return writeTypescriptFile(
     aspenContractsFactoryMapFile,
-    prettier.format(printNodes(...generateAspenContractsFactoriesMapTs(manifest, experimentalManifest)), {
-      parser: 'typescript',
-      ...options,
-    }),
+    printNodes(...generateAspenContractsFactoriesMapTs(manifest, experimentalManifest)),
   );
 }
 
@@ -317,18 +297,9 @@ export function generateFeatureFactoriesMapTs(manifest: ContractsManifest): ts.N
 
 export async function writeFeaturesFactoriesMap(
   manifest: ContractsManifest,
-  prettierConfigFile: string,
   featureFactoryMapFile: string,
 ): Promise<void> {
-  const options = await prettier.resolveConfig(prettierConfigFile);
-
-  fs.writeFileSync(
-    featureFactoryMapFile,
-    prettier.format(printNodes(...generateFeatureFactoriesMapTs(manifest)), {
-      parser: 'typescript',
-      ...options,
-    }),
-  );
+  await writeTypescriptFile(featureFactoryMapFile, printNodes(...generateFeatureFactoriesMapTs(manifest)));
 }
 
 function functionParamSignature(p: ParamType) {
@@ -386,20 +357,8 @@ export function generateFeatureFunctionsMapTs(manifest: ContractsManifest): ts.N
   return constNode;
 }
 
-export async function writeFeaturesFunctionsMap(
-  manifest: ContractsManifest,
-  prettierConfigFile: string,
-  functionsMapFile: string,
-): Promise<void> {
-  const options = await prettier.resolveConfig(prettierConfigFile);
-
-  fs.writeFileSync(
-    functionsMapFile,
-    prettier.format(printNodes(generateFeatureFunctionsMapTs(manifest)), {
-      parser: 'typescript',
-      ...options,
-    }),
-  );
+export async function writeFeaturesFunctionsMap(manifest: ContractsManifest, functionsMapFile: string): Promise<void> {
+  await fs.writeFileSync(functionsMapFile, printNodes(generateFeatureFunctionsMapTs(manifest)));
 }
 
 export function generateFeatureCodesMapTs(manifest: ContractsManifest): ts.Node {
@@ -428,20 +387,8 @@ export function generateFeatureCodesMapTs(manifest: ContractsManifest): ts.Node 
   return constNode;
 }
 
-export async function writeFeaturesCodeMap(
-  manifest: ContractsManifest,
-  prettierConfigFile: string,
-  functionsMapFile: string,
-): Promise<void> {
-  const options = await prettier.resolveConfig(prettierConfigFile);
-
-  fs.writeFileSync(
-    functionsMapFile,
-    prettier.format(printNodes(generateFeatureCodesMapTs(manifest)), {
-      parser: 'typescript',
-      ...options,
-    }),
-  );
+export async function writeFeaturesCodeMap(manifest: ContractsManifest, functionsMapFile: string): Promise<void> {
+  await writeTypescriptFile(functionsMapFile, printNodes(generateFeatureCodesMapTs(manifest)));
 }
 
 export function generateFeaturesListTs(manifest: ContractsManifest): ts.Node {
@@ -457,16 +404,16 @@ export function generateFeaturesListTs(manifest: ContractsManifest): ts.Node {
   return constNode;
 }
 
-export async function writeFeaturesList(
-  manifest: ContractsManifest,
-  prettierConfigFile: string,
-  functionsMapFile: string,
-): Promise<void> {
-  const options = await prettier.resolveConfig(prettierConfigFile);
+export async function writeFeaturesList(manifest: ContractsManifest, functionsMapFile: string): Promise<void> {
+  await writeTypescriptFile(functionsMapFile, printNodes(generateFeaturesListTs(manifest)));
+}
 
-  fs.writeFileSync(
-    functionsMapFile,
-    prettier.format(printNodes(generateFeaturesListTs(manifest)), {
+export async function writeTypescriptFile(filePath: string, contents: string): Promise<void> {
+  await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+  const options = await prettier.resolveConfig(filePath);
+  return fs.promises.writeFile(
+    filePath,
+    prettier.format(contents, {
       parser: 'typescript',
       ...options,
     }),

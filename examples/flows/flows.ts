@@ -1,3 +1,4 @@
+import { Chain, parse } from '@monaxlabs/aspen-sdk';
 import {
   authenticateAllFromFile,
   generateAccounts,
@@ -28,7 +29,6 @@ import {
   IssueSuccessState,
   PendingIssue,
 } from '@monaxlabs/aspen-sdk/dist/contracts';
-import { parse } from '@monaxlabs/aspen-sdk/dist/utils';
 import { BigNumber, BigNumberish, Signer } from 'ethers';
 import { providers } from 'ethers/lib/ethers';
 import { formatEther } from 'ethers/lib/utils';
@@ -188,7 +188,7 @@ async function cmdGateA(): Promise<void> {
   const accounts = generateAccounts(numAccounts, { mnemonic: demoMnemonic, provider });
 
   for (const account of accounts) {
-    const jwtToken = await authenticateForGate(id, account);
+    const jwtToken = await authenticateForGate(Chain[network], id, account);
 
     console.error(`Verifying JWT for ${account.address}...`);
     const { payload, roles } = await parseAndVerifyJWT(publicKey, jwtToken);

@@ -1,8 +1,8 @@
 import { Network } from '@ethersproject/providers';
 import { describe, expect, test } from '@jest/globals';
+import { parse } from '@monaxlabs/phloem/dist/schema';
+import { Address } from '@monaxlabs/phloem/dist/types';
 import { BigNumber, ethers } from 'ethers';
-import { parse } from '../../utils';
-import { Address } from '../address';
 import { CollectionContract } from './collections';
 import { SdkErrorCode } from './errors';
 import {
@@ -20,6 +20,7 @@ import { ExperimentalFeatures } from './features/experimental-features.gen';
 import { FeatureFactories } from './features/feature-factories.gen';
 import { FeatureFunctionsMap } from './features/feature-functions.gen';
 import { Token } from './objects';
+``;
 
 export const PROVIDER_URL = 'http://localhost:8545';
 export const TESTNET: Network = {

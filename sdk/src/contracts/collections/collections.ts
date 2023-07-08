@@ -1,8 +1,8 @@
 import { Provider } from '@ethersproject/providers';
 import { BigNumber } from 'ethers';
-import { parse } from '../../utils';
+import { parse } from '@monaxlabs/phloem/dist/schema';
 import { Address, Addressish, asAddress } from '../address';
-import { ChainId } from '../network';
+import { ChainId } from '@monaxlabs/phloem/dist/types';
 import { SdkError, SdkErrorCode } from './errors';
 import {
   acceptTerms,

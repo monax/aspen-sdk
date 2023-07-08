@@ -1,10 +1,10 @@
+import { parse } from '@monaxlabs/phloem/dist/schema';
+import { Chain, ChainId } from '@monaxlabs/phloem/dist/types';
 import { Signer } from 'ethers';
 import { either as E, function as F } from 'fp-ts';
 import * as t from 'io-ts';
 import { importJWK, JWTPayload, jwtVerify } from 'jose';
 import { GatingAPI } from '..';
-import { ChainIdEnum } from '../../contracts';
-import { parse } from '../../utils';
 import { SupportedNetwork } from './types';
 
 const { AuthService, GateService, GateSignInMode, GateType, RolesService } = GatingAPI;
@@ -42,7 +42,7 @@ export async function configureGate(
     requestBody: { type: GateType.WEB3, name: gateName, signInMode: GateSignInMode.MULTIPLE },
   });
 
-  const chainId = ChainIdEnum[network].toString();
+  const chainId = String(Chain[network]);
   await RolesService.addGateRoles({
     id: gate.id,
     requestBody: roles.map((r) => ({ ...r, chainId })),
@@ -51,11 +51,11 @@ export async function configureGate(
   return gate as GateCreated;
 }
 
-export async function authenticateForGate(gateId: string, signer: Signer): Promise<string> {
+export async function authenticateForGate(chainId: ChainId, gateId: string, signer: Signer): Promise<string> {
   const signerAddress = await signer.getAddress();
   const { signpad } = await AuthService.getSignpad({ gateId, requestBody: { signer: signerAddress } });
   const signature = await signer.signMessage(signpad);
-  return AuthService.authenticateForGate({ requestBody: { signpad, signature } });
+  return AuthService.authenticateForGate({ requestBody: { chainId: String(chainId), signpad, signature } });
 }
 
 const StringArray = t.array(t.string);

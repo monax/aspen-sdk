@@ -1,6 +1,6 @@
 import { BigNumber, BigNumberish, ContractReceipt, ContractTransaction, PopulatedTransaction } from 'ethers';
 import { Address, Addressish, asAddress, ChainId, extractEventsFromLogs, isZeroAddress } from '../..';
-import { parse } from '../../../utils';
+import { parse } from '@monaxlabs/phloem/dist/schema';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import { bnRange, One } from '../number';

@@ -6,4 +6,3 @@ export * from './errors';
 export * from './events';
 export * from './gas';
 export * from './generated/index';
-export * from './network';
