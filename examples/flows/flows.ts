@@ -73,8 +73,8 @@ async function main(): Promise<void> {
   // Store global auth token
   await authenticateAllFromFile(environment, credentialsFile);
   // Read in provider which is then cached as a singleton
-  providerConfig = await getProviderConfig(providersFile);
-  await runFlows();
+  // providerConfig = await getProviderConfig(providersFile);
+  // await runFlows();
 }
 
 async function runFlows(): Promise<void> {

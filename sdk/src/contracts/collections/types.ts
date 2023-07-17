@@ -1,7 +1,8 @@
 import { Provider } from '@ethersproject/abstract-provider';
+import { ChainId } from '@monaxlabs/phloem/dist/types';
 import type { BigNumber, BigNumberish, Overrides, Signer } from 'ethers';
 import { PromiseOrValue } from '../generated/common';
-import { Address, AllowlistStatus, ChainId } from '../index';
+import { Address, AllowlistStatus } from '../index';
 import type { CollectionMetaImageType, CollectionMetaLinkType } from './constants';
 import { SdkError } from './errors';
 import { UserClaimConditions } from './features';

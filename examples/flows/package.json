@@ -4,7 +4,6 @@
   "repository": "git@github.com:monax/aspen-sdk.git",
   "author": "Silas Davis <silas.davis@monaxlabs.io>",
   "license": "Apache-2.0",
-  "type": "module",
   "workspaces": {
     "packages": [
       "./react"
@@ -12,7 +11,7 @@
   },
   "scripts": {
     "build": "tsc --build",
-    "tsnode": "ts-node --esm --experimental-specifier-resolution=node",
+    "tsnode": "ts-node",
     "flows": "pnpm tsnode flows.ts",
     "react-test-contract": "pnpm tsnode react-test-contract.ts",
     "clear-state": "rm collection-info.json issuance-info.json"

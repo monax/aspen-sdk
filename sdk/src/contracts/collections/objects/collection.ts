@@ -1,7 +1,8 @@
+import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
 import axios from 'axios';
 import { BigNumber } from 'ethers';
 import { CollectionContract, CollectionMetadata, CollectionMetaImageType, OperationStatus, TermsState } from '..';
-import { Addressish, asAddress, IPFS_GATEWAY_PREFIX, ZERO_ADDRESS, ZERO_ADDRESS_BRANDED } from '../..';
+import { IPFS_GATEWAY_PREFIX, ZERO_ADDRESS, ZERO_ADDRESS_BRANDED } from '../../../contracts/constants';
 import { resolveIpfsUrl } from '../../../utils/ipfs';
 import { SdkError, SdkErrorCode } from '../errors';
 import { ContractObject } from './object';
