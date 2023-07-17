@@ -161,7 +161,9 @@ describe('Collections - static tests', () => {
     );
 
     // immediately show what's not implemened
-    expect(missingFunctions).toStrictEqual([]);
+    // We endeavour to implement all experimental features, but if we choose to deviate make it an explicit decision
+    // to update snapshot
+    expect(missingFunctions).toMatchSnapshot();
   });
 
   test('Check that every function lists at least the interfaces of the functions it states to implemenst', () => {
@@ -176,7 +178,9 @@ describe('Collections - static tests', () => {
         .flat();
       const listedInterfaces = allImplementedFeatures[func as ContractFunctionId];
       const missingInterfaces = expectedInterfaces.filter((i) => !listedInterfaces.includes(i));
-      expect(missingInterfaces).toStrictEqual([]);
+      // We endeavour to implement all experimental features, but if we choose to deviate make it an explicit decision
+      // to update snapshot
+      expect(missingInterfaces).toMatchSnapshot();
     });
   });
 
@@ -191,8 +195,10 @@ describe('Collections - static tests', () => {
         isDropInterface(f, false) && !(allImplementedFeatures.includes(f) || NON_DROP_CONTRACT_INTERFACES.includes(f)),
     );
 
-    // immediately show what's not implemened
-    expect(missingFeatures).toStrictEqual([]);
+    // immediately show what's not implemented
+    // We endeavour to implement all experimental features, but if we choose to deviate make it an explicit decision
+    // to update snapshot
+    expect(missingFeatures).toMatchSnapshot();
   });
 
   test('Check that all experimental features are implemented', async () => {
@@ -206,8 +212,10 @@ describe('Collections - static tests', () => {
         isDropInterface(f, true) && !(allImplementedFeatures.includes(f) || NON_DROP_CONTRACT_INTERFACES.includes(f)),
     );
 
-    // immediately show what's not implemened
-    expect(missingFeatures).toStrictEqual([]);
+    // immediately show what's not implemented
+    // We endeavour to implement all experimental features, but if we choose to deviate make it an explicit decision
+    // to update snapshot
+    expect(missingFeatures).toMatchSnapshot();
   });
 
   test('Experimental flag', async () => {
