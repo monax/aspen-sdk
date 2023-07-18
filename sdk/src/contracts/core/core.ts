@@ -1,5 +1,5 @@
+import { Chain, ChainNames } from '@monaxlabs/phloem/dist/types';
 import { Signerish } from '../collections';
-import {Chain, ChainNames} from '@monaxlabs/phloem/dist/types';
 import {
   AspenContractFactories,
   AspenContractFamilyId,

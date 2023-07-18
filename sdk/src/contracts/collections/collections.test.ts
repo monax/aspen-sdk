@@ -1,8 +1,7 @@
-import { Network } from '@ethersproject/providers';
 import { describe, expect, test } from '@jest/globals';
 import { parse } from '@monaxlabs/phloem/dist/schema';
 import { Address } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, ethers } from 'ethers';
+import { BigNumber } from 'ethers';
 import { CollectionContract } from './collections';
 import { SdkErrorCode } from './errors';
 import {
@@ -20,15 +19,9 @@ import { ExperimentalFeatures } from './features/experimental-features.gen';
 import { FeatureFactories } from './features/feature-factories.gen';
 import { FeatureFunctionsMap } from './features/feature-functions.gen';
 import { Token } from './objects';
-``;
+import { MockJsonRpcProvider } from './utils.testing';
 
-export const PROVIDER_URL = 'http://localhost:8545';
-export const TESTNET: Network = {
-  chainId: 63,
-  name: 'classicMordor',
-};
-
-export const CONTRACT_ADDRESS = parse(Address, '0xB2Af02eC55E2ba5afe246Ed51b8aBdBBa5F7937C');
+const CONTRACT_ADDRESS = parse(Address, '0xB2Af02eC55E2ba5afe246Ed51b8aBdBBa5F7937C');
 
 const NON_DROP_CONTRACT_INTERFACE_FILES = [
   // Standards
@@ -41,6 +34,7 @@ const NON_DROP_CONTRACT_INTERFACE_FILES = [
   'config/IGlobalConfig.sol',
   'config/ITieredPricing.sol',
   'config/IOperatorFilterersConfig.sol',
+  'registry/ICoreRegistry.sol',
   // Error interfaces
   'errors/ICoreErrors.sol',
   'errors/IDropErrors.sol',
@@ -90,31 +84,6 @@ const isDropFunction = (func: FeatureFunctionId, allowExperimental: boolean): bo
   return interfaces.filter((f) => isDropInterface(f, allowExperimental)).length !== 0;
 };
 
-export class MockJsonRpcProvider extends ethers.providers.StaticJsonRpcProvider {
-  // FIFO queue by method
-  protected _mocks: Record<string, Array<unknown>> = {};
-
-  constructor() {
-    super(PROVIDER_URL, TESTNET);
-  }
-
-  send(method: string, params: Array<unknown>): Promise<unknown> {
-    throw new Error(`Missing mock for method ${method} with params: ${JSON.stringify(params)}`);
-  }
-
-  async perform(method: string, params: unknown): Promise<unknown> {
-    if (this._mocks[method] && this._mocks[method].length > 0) {
-      return Promise.resolve(this._mocks[method].shift());
-    }
-
-    throw new Error(`Missing mock for perform method ${method} with params: ${JSON.stringify(params)}`);
-  }
-
-  addMock(method: string, ...returnValues: Array<unknown>) {
-    this._mocks[method] = (this._mocks[method] || []).concat(returnValues);
-  }
-}
-
 describe('Collections - static tests', () => {
   test('Check token standard interface matchers', () => {
     const combinedActual = [...ERC721StandardInterfaces, ...ERC1155StandardInterfaces];
@@ -160,7 +129,6 @@ describe('Collections - static tests', () => {
       (f) => isDropFunction(f, true) && !(allImplementedFunctions.includes(f) || NOT_IMPLEMENTED_FUNCTIONS.includes(f)),
     );
 
-    // immediately show what's not implemened
     // We endeavour to implement all experimental features, but if we choose to deviate make it an explicit decision
     // to update snapshot
     expect(missingFunctions).toMatchSnapshot();
@@ -195,7 +163,6 @@ describe('Collections - static tests', () => {
         isDropInterface(f, false) && !(allImplementedFeatures.includes(f) || NON_DROP_CONTRACT_INTERFACES.includes(f)),
     );
 
-    // immediately show what's not implemented
     // We endeavour to implement all experimental features, but if we choose to deviate make it an explicit decision
     // to update snapshot
     expect(missingFeatures).toMatchSnapshot();
@@ -212,7 +179,6 @@ describe('Collections - static tests', () => {
         isDropInterface(f, true) && !(allImplementedFeatures.includes(f) || NON_DROP_CONTRACT_INTERFACES.includes(f)),
     );
 
-    // immediately show what's not implemented
     // We endeavour to implement all experimental features, but if we choose to deviate make it an explicit decision
     // to update snapshot
     expect(missingFeatures).toMatchSnapshot();

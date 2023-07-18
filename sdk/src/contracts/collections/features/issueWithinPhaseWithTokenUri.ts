@@ -1,5 +1,6 @@
+import { asAddress, isZeroAddress } from '@monaxlabs/phloem/dist/types';
 import { BigNumber, ContractReceipt, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { asAddress, IssueWithTokenUriArgs, isZeroAddress } from '../..';
+import { IssueWithTokenUriArgs } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';

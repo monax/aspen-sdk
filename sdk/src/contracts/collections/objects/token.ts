@@ -1,10 +1,8 @@
-import { ChainId } from '@monaxlabs/phloem/dist/types';
+import { Addressish, asAddress, ChainId } from '@monaxlabs/phloem/dist/types';
 import axios from 'axios';
 import { add } from 'date-fns';
 import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
 import {
-  Addressish,
-  asAddress,
   ClaimConditionsState,
   CollectionUserClaimState,
   IPFS_GATEWAY_PREFIX,

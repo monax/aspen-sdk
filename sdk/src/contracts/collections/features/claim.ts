@@ -1,5 +1,5 @@
 import { parse } from '@monaxlabs/phloem/dist/schema';
-import { ChainId } from '@monaxlabs/phloem/dist/types';
+import { Address, Addressish, asAddress, ChainId, isSameAddress } from '@monaxlabs/phloem/dist/types';
 import {
   BigNumber,
   BigNumberish,
@@ -8,7 +8,7 @@ import {
   PayableOverrides,
   PopulatedTransaction,
 } from 'ethers';
-import { Address, Addressish, asAddress, extractEventsFromLogs, isSameAddress, NATIVE_TOKEN } from '../..';
+import { extractEventsFromLogs, NATIVE_TOKEN } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import { bnRange, One } from '../number';

@@ -1,11 +1,5 @@
-import { Chain, parse } from '@monaxlabs/aspen-sdk';
-import {
-  authenticateAllFromFile,
-  generateAccounts,
-  getProvider,
-  getProviderConfig,
-  getSigner,
-} from '@monaxlabs/aspen-sdk/dist/api-utils';
+import { Address, Chain, parse } from '@monaxlabs/aspen-sdk';
+import { authenticateAllFromFile, generateAccounts, getProvider, getSigner } from '@monaxlabs/aspen-sdk/dist/api-utils';
 import {
   AspenEnvironment,
   authenticateForGate,
@@ -17,7 +11,6 @@ import {
 } from '@monaxlabs/aspen-sdk/dist/apis';
 import { ClaimBalance, getClaimBalances } from '@monaxlabs/aspen-sdk/dist/claimgraph';
 import {
-  Address,
   CollectionContract,
   extractCustomError,
   GasStrategy,
@@ -35,7 +28,7 @@ import { formatEther } from 'ethers/lib/utils';
 import { GraphQLClient } from 'graphql-request';
 import { format } from 'util';
 import { demoMnemonic } from './keys';
-import { credentialsFile, providersFile } from './secrets';
+import { credentialsFile } from './secrets';
 import { collectionInfoFile, CollectionPair, readCollectionInfo, writeCollectionInfo } from './state';
 import { deployERC721 } from './utils/collection';
 

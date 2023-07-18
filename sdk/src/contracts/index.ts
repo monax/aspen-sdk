@@ -1,4 +1,3 @@
-export * from './address.js';
 export * from './collections/index';
 export * from './constants';
 export * from './core/index.js';

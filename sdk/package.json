@@ -77,7 +77,6 @@
     "@graphql-codegen/typescript-operations": "^2.5.4",
     "@jest/globals": "^29.3.1",
     "@monaxlabs/spec": "0.15.7-8-ga8d80d1d",
-
     "@monaxlabs/phloem": "^0.4.0",
     "@openzeppelin/contracts": "^4.8.1",
     "@typechain/ethers-v5": "^10.2.0",

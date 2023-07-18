@@ -1,10 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Collections - static tests Check that all experimental features are implemented 1`] = `
-[
-  "registry/ICoreRegistry.sol:ICoreRegistryV0",
-]
-`;
+exports[`Collections - static tests Check that all experimental features are implemented 1`] = `[]`;
 
 exports[`Collections - static tests Check that all experimental functions are implemented 1`] = `
 [
@@ -14,10 +10,6 @@ exports[`Collections - static tests Check that all experimental functions are im
   "batchIssueWithinPhaseWithTokenURI(address[],string[])[]",
   "batchIssue(address[],uint256[],uint256[])[]",
   "batchIssueWithinPhase(address[],uint256[],uint256[])[]",
-  "getConfig(string)[address]",
-  "getDeployer(string)[address]",
-  "setConfigContract(address,string)[]",
-  "setDeployerContract(address,string)[]",
 ]
 `;
 

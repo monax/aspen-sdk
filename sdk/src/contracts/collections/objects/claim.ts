@@ -1,6 +1,6 @@
+import { Address } from '@monaxlabs/phloem/dist/types';
 import { BigNumber, BigNumberish, ContractReceipt, ContractTransaction, PayableOverrides } from 'ethers';
 import { ClaimConditionsState, CollectionContract, OperationStatus, Signerish, TokenId } from '..';
-import { Address } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { ClaimArgs, ClaimedToken } from '../features';
 import { ContractObject } from './object';
