@@ -1,6 +1,7 @@
+import { parse } from '@monaxlabs/phloem/dist/schema';
+import { Address } from '@monaxlabs/phloem/dist/types';
 import { BigNumber, BigNumberish, CallOverrides } from 'ethers';
-import { Address, CollectionContract } from '../..';
-import { parse } from '../../../utils';
+import { CollectionContract } from '../..';
 import { IDropClaimConditionV1 } from '../../generated/impl/IAspenERC1155Drop.sol/IAspenERC1155DropV1';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';

@@ -1,7 +1,7 @@
 import { describe, expect, test } from '@jest/globals';
 import { providers } from 'ethers';
 import { ICedarDeployerV8__factory } from '../generated';
-import { ChainIdEnum } from '../network';
+import { Chain } from '@monaxlabs/phloem/dist/types'
 import { getAspenContract, getCurrentDeployer } from './core';
 
 describe('Core Aspen contracts', () => {
@@ -9,13 +9,13 @@ describe('Core Aspen contracts', () => {
     const expectedAddress = '0x335625857Ab64131B26bB7873454759dE7b38215';
     const provider = new providers.JsonRpcProvider();
 
-    const cedarV8 = getAspenContract(provider, ChainIdEnum.Mumbai, 'CedarDeployer', 8);
+    const cedarV8 = getAspenContract(provider, Chain.Mumbai, 'CedarDeployer', 8);
     expect(cedarV8.address).toBe(expectedAddress);
 
     const cedarV8expected = ICedarDeployerV8__factory.connect(expectedAddress, provider);
     expect(Object.keys(cedarV8.functions)).toStrictEqual(Object.keys(cedarV8expected.functions));
 
-    const current = getCurrentDeployer(provider, ChainIdEnum.Mumbai);
+    const current = getCurrentDeployer(provider, Chain.Mumbai);
     expect(current).not.toBeNull();
   });
 });

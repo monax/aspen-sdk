@@ -1,6 +1,7 @@
+import { parse } from '@monaxlabs/phloem/dist/schema';
+import { Address, Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
 import { BigNumber, BigNumberish, CallOverrides, constants } from 'ethers';
-import { Address, Addressish, asAddress, CollectionContract } from '../..';
-import { parse } from '../../../utils';
+import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { Zero } from '../number';
 import { FeatureFunctionsMap } from './feature-functions.gen';

@@ -1,5 +1,6 @@
+import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
 import { BytesLike, CallOverrides } from 'ethers';
-import { AccessControl__factory, Addressish, asAddress, CollectionContract } from '../..';
+import { AccessControl__factory, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
 

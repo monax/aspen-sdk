@@ -1,7 +1,8 @@
+import { Address, Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
 import axios from 'axios';
 import { BigNumber } from 'ethers';
 import { CollectionContract, CollectionMetadata, CollectionMetaImageType, OperationStatus, TermsState } from '..';
-import { Addressish, asAddress, IPFS_GATEWAY_PREFIX, ZERO_ADDRESS, ZERO_ADDRESS_BRANDED } from '../..';
+import { IPFS_GATEWAY_PREFIX, ZERO_ADDRESS } from '../../../contracts/constants';
 import { resolveIpfsUrl } from '../../../utils/ipfs';
 import { SdkError, SdkErrorCode } from '../errors';
 import { ContractObject } from './object';
@@ -10,7 +11,7 @@ export const EMPTY_TERMS_STATE: TermsState = {
   termsRequired: false,
   termsLink: null,
   termsAccepted: false,
-  userAddress: ZERO_ADDRESS_BRANDED,
+  userAddress: ZERO_ADDRESS as Address,
 };
 
 export class Collection extends ContractObject {

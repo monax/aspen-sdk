@@ -1,6 +1,7 @@
+import { parse } from '@monaxlabs/phloem/dist/schema';
+import { Address, asAddress, isSameAddress } from '@monaxlabs/phloem/dist/types';
 import { BigNumber, ContractReceipt, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { Address, asAddress, extractEventsFromLogs, isSameAddress, IssueArgs, IssuedToken, ZERO_ADDRESS } from '../..';
-import { parse } from '../../../utils';
+import { extractEventsFromLogs, IssueArgs, IssuedToken, ZERO_ADDRESS } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import { bnRange, One } from '../number';

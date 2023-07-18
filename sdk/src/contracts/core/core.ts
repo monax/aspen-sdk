@@ -1,5 +1,5 @@
+import { Chain, ChainNames } from '@monaxlabs/phloem/dist/types';
 import { Signerish } from '../collections';
-import { ChainIdEnum, ChainNameFromChainId } from '../network';
 import {
   AspenContractFactories,
   AspenContractFamilyId,
@@ -14,7 +14,7 @@ import {
 } from './core-factories.gen';
 import { AspenContracts } from './core.gen';
 
-export type AspenContractChainId = (typeof ChainIdEnum)[AspenContractNetworks];
+export type AspenContractChainId = (typeof Chain)[AspenContractNetworks];
 export type AspenContract = (typeof AspenContracts)[number];
 
 const versionToNumber = ({ major, minor, patch }: AspenContract['version']): number => {
@@ -26,7 +26,7 @@ export function getAspenContractInfo<F extends AspenContractFamilyId, V extends 
   family: F,
   version: V,
 ): AspenContract | null {
-  const network = ChainNameFromChainId[chainId];
+  const network = ChainNames[chainId];
   return AspenContracts.reduce<AspenContract | null>((aspenContract, d) => {
     if (d.network !== network || d.interfaceFamily !== family || d.version.major !== version) return aspenContract;
 

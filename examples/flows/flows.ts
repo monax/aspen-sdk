@@ -1,10 +1,5 @@
-import {
-  authenticateAllFromFile,
-  generateAccounts,
-  getProvider,
-  getProviderConfig,
-  getSigner,
-} from '@monaxlabs/aspen-sdk/dist/api-utils';
+import { Address, Chain, parse } from '@monaxlabs/aspen-sdk';
+import { authenticateAllFromFile, generateAccounts, getProvider, getSigner } from '@monaxlabs/aspen-sdk/dist/api-utils';
 import {
   AspenEnvironment,
   authenticateForGate,
@@ -16,7 +11,6 @@ import {
 } from '@monaxlabs/aspen-sdk/dist/apis';
 import { ClaimBalance, getClaimBalances } from '@monaxlabs/aspen-sdk/dist/claimgraph';
 import {
-  Address,
   CollectionContract,
   extractCustomError,
   GasStrategy,
@@ -28,14 +22,13 @@ import {
   IssueSuccessState,
   PendingIssue,
 } from '@monaxlabs/aspen-sdk/dist/contracts';
-import { parse } from '@monaxlabs/aspen-sdk/dist/utils';
 import { BigNumber, BigNumberish, Signer } from 'ethers';
 import { providers } from 'ethers/lib/ethers';
 import { formatEther } from 'ethers/lib/utils';
 import { GraphQLClient } from 'graphql-request';
 import { format } from 'util';
 import { demoMnemonic } from './keys';
-import { credentialsFile, providersFile } from './secrets';
+import { credentialsFile } from './secrets';
 import { collectionInfoFile, CollectionPair, readCollectionInfo, writeCollectionInfo } from './state';
 import { deployERC721 } from './utils/collection';
 
@@ -73,8 +66,8 @@ async function main(): Promise<void> {
   // Store global auth token
   await authenticateAllFromFile(environment, credentialsFile);
   // Read in provider which is then cached as a singleton
-  providerConfig = await getProviderConfig(providersFile);
-  await runFlows();
+  // providerConfig = await getProviderConfig(providersFile);
+  // await runFlows();
 }
 
 async function runFlows(): Promise<void> {
@@ -188,7 +181,7 @@ async function cmdGateA(): Promise<void> {
   const accounts = generateAccounts(numAccounts, { mnemonic: demoMnemonic, provider });
 
   for (const account of accounts) {
-    const jwtToken = await authenticateForGate(id, account);
+    const jwtToken = await authenticateForGate(Chain[network], id, account);
 
     console.error(`Verifying JWT for ${account.address}...`);
     const { payload, roles } = await parseAndVerifyJWT(publicKey, jwtToken);

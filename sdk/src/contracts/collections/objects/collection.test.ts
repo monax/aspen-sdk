@@ -1,10 +1,13 @@
 import { describe, expect, test } from '@jest/globals';
+import { parse } from '@monaxlabs/phloem/dist/schema';
+import { Address } from '@monaxlabs/phloem/dist/types';
 import { ZERO_ADDRESS } from '../../constants';
 import { CollectionContract } from '../collections';
-import { CONTRACT_ADDRESS, MockJsonRpcProvider } from '../collections.test';
 import { SdkError, SdkErrorCode } from '../errors';
+import { MockJsonRpcProvider } from '../utils.testing';
 import { Collection } from './collection';
 
+const CONTRACT_ADDRESS = parse(Address, '0xB2Af02eC55E2ba5afe246Ed51b8aBdBBa5F7937C');
 const AGREEMENT_INTERFACE = 'agreement/IAgreement.sol:IPublicAgreementV1';
 
 describe('Collection - Terms details', () => {

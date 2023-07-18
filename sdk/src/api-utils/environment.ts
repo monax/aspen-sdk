@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import * as t from 'io-ts';
-import { parse } from '../utils';
+import { parse } from '@monaxlabs/phloem/dist/schema';
 
 export function getEnv(key: string, defaultValue?: string): string {
   const value = process.env[key];

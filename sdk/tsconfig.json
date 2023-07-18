@@ -10,6 +10,6 @@
     "useUnknownInCatchVariables": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["src/codegen/**/*"],
+  "exclude": ["src/codegen/**/*","src/**/*.testing.ts","src/**/*.test.ts"],
   "declaration": true
 }

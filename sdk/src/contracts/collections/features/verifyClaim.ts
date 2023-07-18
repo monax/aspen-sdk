@@ -1,5 +1,5 @@
+import { asAddress } from '@monaxlabs/phloem/dist/types';
 import { CallOverrides } from 'ethers';
-import { asAddress } from '../../address';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import { ClaimArgs } from './claim';

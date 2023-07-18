@@ -1,5 +1,5 @@
+import { Chain } from '@monaxlabs/phloem/dist/types';
 import { BigNumber, ethers } from 'ethers';
-import { ChainIdEnum } from './network';
 
 export type GasStrategy = {
   maxPriorityFeePerGas?: BigNumber;
@@ -7,7 +7,7 @@ export type GasStrategy = {
   gasLimit?: number;
 };
 
-const simpleStrategy: number[] = [ChainIdEnum.Mumbai, ChainIdEnum.Polygon];
+const simpleStrategy: number[] = [Chain.Mumbai, Chain.Polygon];
 
 const priorityFee = ethers.utils.parseUnits('10', 'gwei');
 

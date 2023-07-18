@@ -1,9 +1,9 @@
 import { Provider } from '@ethersproject/providers';
+import { parseThenOrElse } from '@monaxlabs/phloem/dist/schema';
+import { Address } from '@monaxlabs/phloem/dist/types';
 import { Signer } from 'ethers';
 import { NonEmptyArray } from 'fp-ts/NonEmptyArray';
 import * as t from 'io-ts';
-import { parseThenOrElse } from '../../../utils';
-import { Address } from '../../address';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import { Signerish } from '../types';
