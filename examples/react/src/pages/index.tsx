@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import type { NextPage } from "next";
 import { useCallback, useEffect, useState } from "react";
 import styles from "../styles/Home.module.css";
@@ -23,6 +22,7 @@ import LoadClaimConditions from "components/LoadClaimConditions";
 import Mint from "components/Mint";
 import { useToasts } from "react-toast-notifications";
 import { useAsyncEffect } from "hooks/useAsyncEffect";
+import React from 'react';
 
 type Metadata = {
   uri: string | null;

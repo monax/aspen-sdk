@@ -1,5 +1,6 @@
 import { VStack, Card } from "@chakra-ui/react";
 import { CheckIcon } from "@chakra-ui/icons";
+import React from 'react'
 
 const Success = () => {
   return (

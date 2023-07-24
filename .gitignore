@@ -13,10 +13,9 @@ dist
 build
 
 # Publishing/gating password files
-credentials.json
-providers.json
-collection-info.json
-issuance-info.json
+
+**/secrets/*.json
+!**/secrets/*.template.json
 
 # Logs
 logs

@@ -1,12 +1,8 @@
-import {
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  Input,
-} from "@chakra-ui/react";
-import { FieldValues, Path, useFormContext } from "react-hook-form";
-import { ErrorMessage } from "@hookform/error-message";
-import { EmailFormData } from "./Form/types";
+import { FormControl, FormErrorMessage, FormLabel, Input } from '@chakra-ui/react';
+import { ErrorMessage } from '@hookform/error-message';
+import { FieldValues, Path, useFormContext } from 'react-hook-form';
+import { EmailFormData } from './Form/types';
+import React from 'react'
 
 type Props<EmailFormData extends FieldValues> = {
   name: Path<EmailFormData>;

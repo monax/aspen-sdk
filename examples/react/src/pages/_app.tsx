@@ -1,12 +1,10 @@
-import "../styles/globals.css";
-import type { AppProps } from "next/app";
-import { Web3ReactProvider } from "@web3-react/core";
-import { Web3Provider } from "@ethersproject/providers";
-import {
-  CollectionContract,
-  DefaultDebugHandler,
-} from "@monaxlabs/aspen-sdk";
-import { ToastProvider } from "react-toast-notifications";
+import { Web3Provider } from '@ethersproject/providers';
+import { CollectionContract, DefaultDebugHandler } from '@monaxlabs/aspen-sdk';
+import { Web3ReactProvider } from '@web3-react/core';
+import type { AppProps } from 'next/app';
+import { ToastProvider } from 'react-toast-notifications';
+import '../styles/globals.css';
+import React from 'react'
 
 CollectionContract.setDebugHandler(DefaultDebugHandler);
 

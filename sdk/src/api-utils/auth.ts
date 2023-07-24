@@ -1,6 +1,7 @@
 import { JsonFromString } from 'io-ts-types';
 import * as path from 'path';
-import { AspenEnvironment, authenticateAll, EnvCredentials } from '../apis';
+import { AspenEnvironment, ApiConfigs } from '../apis';
+import { authenticateAll } from '../apis/identity/auth';
 import { parseFromEnvOrFile } from './environment';
 
 // A JSON object of type EnvCredentials is expected to be saved here (ignored from repo)
@@ -14,7 +15,7 @@ export async function authenticateAllFromFile(
   credentialsEnvVarName = defaultCedentialsEnvVarName,
 ): Promise<void> {
   const envCreds = await parseFromEnvOrFile(
-    JsonFromString.pipe(EnvCredentials),
+    JsonFromString.pipe(ApiConfigs),
     credentialsFile,
     credentialsEnvVarName,
   );
@@ -25,5 +26,5 @@ export async function authenticateAllFromFile(
       `No environment credentials for environment '${environment}' defined at ${path.resolve(defaultCredentialsFile)}`,
     );
   }
-  await authenticateAll(creds);
+  await authenticateAll({ apiKey: 'TODO: apiKey' });
 }

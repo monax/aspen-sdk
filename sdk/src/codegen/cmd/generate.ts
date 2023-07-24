@@ -26,7 +26,15 @@ const specDir = path.join(sdkDir, 'node_modules', '@monaxlabs', 'spec');
 const pathToDeploymentsJson = path.join(specDir, 'contracts/deployments.json');
 const pathToManifestJson = path.join(specDir, 'contracts/manifest.json');
 const pathToAspenOASJson = path.join(specDir, 'apis/aspen.json');
+const pathToIdentityOASJson = path.join(specDir, 'apis/identity.json');
 const pathToExperimentalManifestJson = path.join(specDir, 'contracts/manifest.experimental.json');
+
+const visitor = new IoTsTypeVisitor(
+  getIoTsConfig({
+    typesImportPath: '@monaxlabs/phloem/dist/types',
+    parseImportPath: '@monaxlabs/phloem/dist/schema',
+  }),
+);
 
 async function generateForManifests(
   manifest: ContractsManifest,
@@ -52,15 +60,16 @@ function parseFile<A, O, I>(schema: t.Type<A, O, I>, pathToManifest: string): A 
 }
 
 async function generateAspenApi(): Promise<void> {
-  const visitor = new IoTsTypeVisitor(
-    getIoTsConfig({
-      typesImportPath: '@monaxlabs/phloem/dist/types',
-      parseImportPath: '@monaxlabs/phloem/dist/schema',
-    }),
-  );
   await writeTypescriptFile(
-    path.join(srcDir, 'apis', 'aspen', 'index.ts'),
+    path.join(srcDir, 'apis', 'aspen', 'aspen.ts'),
     await generateOAS(parseFile(Spec, pathToAspenOASJson), visitor),
+  );
+}
+
+async function generateIdentityApi(): Promise<void> {
+  await writeTypescriptFile(
+    path.join(srcDir, 'apis', 'identity', 'oas.ts'),
+    await generateOAS(parseFile(Spec, pathToIdentityOASJson), visitor),
   );
 }
 
@@ -73,6 +82,8 @@ async function generate(): Promise<void> {
   // Generate various contingent typescript artefacts based on manifests
   await generateForManifests(manifest, experimentalManifest);
   await generateAspenApi();
+  // FIXME[Silas]: OAS generator code needs some updates to support the spec produced by identity
+  // await generateIdentityApi();
   // Drop deployments consts
   const aspenContractsFileTs = path.join(srcDir, 'contracts', 'core', 'core.gen.ts');
   const deployments = parseFile(AspenContractsManifest, pathToDeploymentsJson);

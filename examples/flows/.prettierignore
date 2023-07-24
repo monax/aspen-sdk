@@ -1,7 +1,0 @@
-yarn.lock
-pnpm-lock.yaml
-src/types
-artifacts
-cache
-deployments
-dist
