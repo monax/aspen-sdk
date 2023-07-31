@@ -10,6 +10,7 @@ const TotalSupplyFunctions = {
 } as const;
 
 const TotalSupplyPartitions = {
+  nftCatch: ['issuance/ICedarNFTIssuance.sol:ICedarNFTIssuanceV3' as const],
   nft: [...FeatureFunctionsMap[TotalSupplyFunctions.nft].drop],
   sft: [...FeatureFunctionsMap[TotalSupplyFunctions.sft].drop],
 };
@@ -39,7 +40,8 @@ export class TotalSupply extends ContractFunction<
   }
 
   async totalSupply(tokenId?: BigNumberish | null, overrides: CallOverrides = {}): Promise<BigNumber> {
-    const { nft, sft } = this.partitions;
+    const { nft: nftV1, nftCatch, sft } = this.partitions;
+    const nft = nftCatch ? this.base.assumeFeature('issuance/INFTSupply.sol:IPublicNFTSupplyV0') : nftV1;
 
     try {
       if (sft) {
@@ -52,7 +54,6 @@ export class TotalSupply extends ContractFunction<
         return balance;
       }
     } catch (err) {
-      console.log(err);
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { tokenId });
     }
 
