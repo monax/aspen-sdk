@@ -1,5 +1,6 @@
+import { Address, Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
 import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { Addressish, asAddress, ZERO_ADDRESS_BRANDED } from '../..';
+import { ZERO_ADDRESS } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signerish, WriteOverrides } from '../types';
@@ -102,7 +103,7 @@ export class BatchIssueWithTokenUri extends ContractFunction<
 
   protected async validateArgs({ receivers }: BatchIssueWithTokenUriArgs) {
     const wallets = await Promise.all(receivers.map((receiver) => asAddress(receiver)));
-    if (wallets.includes(ZERO_ADDRESS_BRANDED)) {
+    if (wallets.includes(ZERO_ADDRESS as Address)) {
       throw new SdkError(
         SdkErrorCode.INVALID_DATA,
         { receivers },

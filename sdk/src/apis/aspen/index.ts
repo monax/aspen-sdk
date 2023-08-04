@@ -269,6 +269,7 @@ export const OwnedNftCollection = t.exact(
 export interface OwnedNftCollectionStorefront {
   nftCollection: t.TypeOf<typeof OwnedNftCollection>;
   storefrontId?: t.TypeOf<typeof UUIDFromString> | null;
+  storefrontSlug?: string | null;
 }
 
 export const OwnedNftCollectionStorefront = t.exact(
@@ -278,6 +279,7 @@ export const OwnedNftCollectionStorefront = t.exact(
     }),
     t.partial({
       storefrontId: t.union([UUIDFromString, t.null]),
+      storefrontSlug: t.union([t.string, t.null]),
     }),
   ]),
 );
@@ -390,8 +392,6 @@ export interface Nft {
   metadata: t.TypeOf<typeof NftMetadata>;
   /** If this token has multiple supply, eg ERC1155 */
   multiple: boolean;
-  /** If this token has been marked as hidden by the requesting user */
-  hidden: boolean;
 }
 
 export const Nft = t.exact(
@@ -405,8 +405,6 @@ export const Nft = t.exact(
       metadata: NftMetadata,
       /** If this token has multiple supply, eg ERC1155 */
       multiple: t.boolean,
-      /** If this token has been marked as hidden by the requesting user */
-      hidden: t.boolean,
     }),
     t.partial({
       owner: Address,
@@ -624,15 +622,15 @@ export interface Phase {
   startTimestamp: t.TypeOf<typeof DateFromISODateString>;
   /** The maximum that can be claimed by any wallet during the phase */
   maxClaimableSupply: t.TypeOf<typeof UInt256ToString>;
-  /** The maximum number of NFTs that can be claimed by any wallet in one transaction */
-  quantityLimitPerTransaction: t.TypeOf<typeof UInt256ToString>;
-  /** The amount of time that must be waiting by any one wallet in between claim transactions */
-  waitTimeInSecondsBetweenClaims: t.TypeOf<typeof UInt256ToString>;
   /** The price per token in "bignumber" format (meaning the really big number; if in doubt use ethers.parse) */
   pricePerToken: t.TypeOf<typeof UInt256ToString>;
   /** The currency that will be used to derive the price (must be a contract address or "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" if the native token) */
   currency: t.TypeOf<typeof Address>;
   allowlistId: t.TypeOf<typeof UUIDFromString> | null;
+  /** The maximum number of NFTs that can be claimed by any wallet in one transaction */
+  quantityLimitPerTransaction: t.TypeOf<typeof UInt256ToString>;
+  /** The amount of time that must be waiting by any one wallet in between claim transactions */
+  waitTimeInSecondsBetweenClaims: t.TypeOf<typeof UInt256ToString>;
   /** date when the phase was last updated */
   updatedAt: t.TypeOf<typeof DateFromISODateString> | null;
 }
@@ -647,15 +645,15 @@ export const Phase = t.exact(
     startTimestamp: DateFromISODateString,
     /** The maximum that can be claimed by any wallet during the phase */
     maxClaimableSupply: UInt256ToString,
-    /** The maximum number of NFTs that can be claimed by any wallet in one transaction */
-    quantityLimitPerTransaction: UInt256ToString,
-    /** The amount of time that must be waiting by any one wallet in between claim transactions */
-    waitTimeInSecondsBetweenClaims: UInt256ToString,
     /** The price per token in "bignumber" format (meaning the really big number; if in doubt use ethers.parse) */
     pricePerToken: UInt256ToString,
     /** The currency that will be used to derive the price (must be a contract address or "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" if the native token) */
     currency: Address,
     allowlistId: t.union([UUIDFromString, t.null]),
+    /** The maximum number of NFTs that can be claimed by any wallet in one transaction */
+    quantityLimitPerTransaction: UInt256ToString,
+    /** The amount of time that must be waiting by any one wallet in between claim transactions */
+    waitTimeInSecondsBetweenClaims: UInt256ToString,
     /** date when the phase was last updated */
     updatedAt: t.union([DateFromISODateString, t.null]),
   }),
@@ -668,6 +666,13 @@ export interface PublicPhase {
   bannerButtonText: string | null;
   /** The timestamp for when the phase will begin */
   startTimestamp: t.TypeOf<typeof DateFromISODateString>;
+  /** The maximum that can be claimed by any wallet during the phase */
+  maxClaimableSupply: t.TypeOf<typeof UInt256ToString>;
+  /** The price per token in "bignumber" format (meaning the really big number; if in doubt use ethers.parse) */
+  pricePerToken: t.TypeOf<typeof UInt256ToString>;
+  /** The currency that will be used to derive the price (must be a contract address or "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" if the native token) */
+  currency: t.TypeOf<typeof Address>;
+  allowlistId: t.TypeOf<typeof UUIDFromString> | null;
 }
 
 export const PublicPhase = t.exact(
@@ -678,6 +683,13 @@ export const PublicPhase = t.exact(
     bannerButtonText: t.union([t.string, t.null]),
     /** The timestamp for when the phase will begin */
     startTimestamp: DateFromISODateString,
+    /** The maximum that can be claimed by any wallet during the phase */
+    maxClaimableSupply: UInt256ToString,
+    /** The price per token in "bignumber" format (meaning the really big number; if in doubt use ethers.parse) */
+    pricePerToken: UInt256ToString,
+    /** The currency that will be used to derive the price (must be a contract address or "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" if the native token) */
+    currency: Address,
+    allowlistId: t.union([UUIDFromString, t.null]),
   }),
 );
 
@@ -690,15 +702,15 @@ export interface EditPhase {
   startTimestamp: t.TypeOf<typeof DateFromISODateString>;
   /** The maximum that can be claimed by any wallet during the phase */
   maxClaimableSupply: t.TypeOf<typeof UInt256ToString>;
-  /** The maximum number of NFTs that can be claimed by any wallet in one transaction */
-  quantityLimitPerTransaction: t.TypeOf<typeof UInt256ToString>;
-  /** The amount of time that must be waiting by any one wallet in between claim transactions */
-  waitTimeInSecondsBetweenClaims: t.TypeOf<typeof UInt256ToString>;
   /** The price per token in "bignumber" format (meaning the really big number; if in doubt use ethers.parse) */
   pricePerToken: t.TypeOf<typeof UInt256ToString>;
   /** The currency that will be used to derive the price (must be a contract address or "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" if the native token) */
   currency: t.TypeOf<typeof Address>;
   allowlistId: t.TypeOf<typeof UUIDFromString> | null;
+  /** The maximum number of NFTs that can be claimed by any wallet in one transaction */
+  quantityLimitPerTransaction: t.TypeOf<typeof UInt256ToString>;
+  /** The amount of time that must be waiting by any one wallet in between claim transactions */
+  waitTimeInSecondsBetweenClaims: t.TypeOf<typeof UInt256ToString>;
 }
 
 export const EditPhase = t.exact(
@@ -711,15 +723,15 @@ export const EditPhase = t.exact(
     startTimestamp: DateFromISODateString,
     /** The maximum that can be claimed by any wallet during the phase */
     maxClaimableSupply: UInt256ToString,
-    /** The maximum number of NFTs that can be claimed by any wallet in one transaction */
-    quantityLimitPerTransaction: UInt256ToString,
-    /** The amount of time that must be waiting by any one wallet in between claim transactions */
-    waitTimeInSecondsBetweenClaims: UInt256ToString,
     /** The price per token in "bignumber" format (meaning the really big number; if in doubt use ethers.parse) */
     pricePerToken: UInt256ToString,
     /** The currency that will be used to derive the price (must be a contract address or "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" if the native token) */
     currency: Address,
     allowlistId: t.union([UUIDFromString, t.null]),
+    /** The maximum number of NFTs that can be claimed by any wallet in one transaction */
+    quantityLimitPerTransaction: UInt256ToString,
+    /** The amount of time that must be waiting by any one wallet in between claim transactions */
+    waitTimeInSecondsBetweenClaims: UInt256ToString,
   }),
 );
 
@@ -1166,12 +1178,16 @@ export const ClaimProofForCollection = t.exact(
 export interface ClaimProofForCollectionResponse {
   /** The identifier of the storefront */
   storefrontId: t.TypeOf<typeof UUIDFromString>;
+  secondarySaleBasisPoints: number;
+  secondarySalePayee: t.TypeOf<typeof Address> | null;
 }
 
 export const ClaimProofForCollectionResponse = t.exact(
   t.type({
     /** The identifier of the storefront */
     storefrontId: UUIDFromString,
+    secondarySaleBasisPoints: t.number,
+    secondarySalePayee: t.union([Address, t.null]),
   }),
 );
 
@@ -1542,6 +1558,122 @@ export const StorefrontEmailCapture = t.exact(
 export type CreatorsInformation = Array<t.TypeOf<typeof CreatorInformation>>;
 
 export const CreatorsInformation = t.array(CreatorInformation);
+
+export interface PatchStorefront {
+  chainId?: t.TypeOf<typeof ChainIdToString> | null;
+  /** The contract address of the collection; will be null until it is deployed */
+  address?: t.TypeOf<typeof Address> | null;
+  /** The storefront name */
+  name?: string;
+  /** The storefront slug */
+  slug?: string | null;
+  /** The collection's symbol; note very few systems actually utilize this */
+  symbol?: string | null;
+  /** The description of the storefront */
+  description?: string | null;
+  /** Whether or not this is a test storefront */
+  isTestStorefront?: boolean;
+  /** The URI of the terms (if any) that control the storefront */
+  userTerms?: string | null;
+  /** Whether or not the user must agree to the terms before interacting with the contract */
+  userTermsRequired?: boolean;
+  /** Version of TermsRegistry used by non-Aspen collections */
+  userTermsRegistryVersion?: number | null;
+  /** If the storefront will use royalties then the basis points for those royalties (not the percentage with a decimal) should be placed here */
+  secondarySaleBasisPoints?: number | null;
+  /** The payee that will receive any royalties associated with secondary sales of the storefront; if a payment splitter is used then the address of the splitter should be put here; else put a single payee */
+  secondarySalePayee?: t.TypeOf<typeof Address> | null;
+  secondarySaleRecipients?: t.TypeOf<typeof AmountRecipients> | null;
+  categories?: t.TypeOf<typeof StorefrontCategories> | null;
+  /** Flag to set whether the storefront includes explicit content */
+  explicitContent?: boolean;
+  /** Whether or not trading is enabled for this storefront */
+  marketplaceEnabled?: boolean;
+  contractType?: t.TypeOf<typeof StorefrontContractType> | null;
+  freeDistributionMode?: t.TypeOf<typeof StorefrontFreeDistributionMode> | null;
+  media?: t.TypeOf<typeof StorefrontMedia> | null;
+  links?: t.TypeOf<typeof Linkset> | null;
+  mediaType?: t.TypeOf<typeof StorefrontMediaType> | null;
+  /** The maximum number of tokenIds used; if a 1155 is used then this will not relate to the number of individual tokens under each token idea */
+  maxTokens?: t.TypeOf<typeof UInt256ToString> | null;
+  /** The id of the draft tokenset for the collection; only usable after the collection is deployed */
+  draftTokensetId?: t.TypeOf<typeof UUIDFromString> | null;
+  /** The maximum amount of tokens that a single wallet can claim, set to 0 for no limit */
+  maxClaimPerWallet?: t.TypeOf<typeof UInt256ToString> | null;
+  /** The id of the draft phaseset for the collection; only usable after the collection is deployed */
+  draftPhasesetId?: t.TypeOf<typeof UUIDFromString> | null;
+  /** The payee that will receive the fees from the primary sale; if a payment splitter is used then the address of the payment splitter should be put here; else put a single payee */
+  primarySalePayee?: t.TypeOf<typeof Address> | null;
+  primarySaleRecipients?: t.TypeOf<typeof AmountRecipients> | null;
+  published?: boolean;
+  /** The storefront allows royalties status to be appealed */
+  royaltiesCanAppeal?: boolean;
+  /** The storefront allows royalties to be paidback */
+  royaltiesCanPayback?: boolean;
+  deployerOrOwnerWallet?: t.TypeOf<typeof Address> | null;
+  ownerInfo?: t.TypeOf<typeof CreatorsInformation> | null;
+  emailCapture?: t.TypeOf<typeof StorefrontEmailCapture> | null;
+  adSpaces?: t.TypeOf<typeof AdSpaces>;
+}
+
+export const PatchStorefront = t.exact(
+  t.partial({
+    chainId: t.union([ChainIdToString, t.null]),
+    /** The contract address of the collection; will be null until it is deployed */
+    address: t.union([Address, t.null]),
+    /** The storefront name */
+    name: t.string,
+    /** The storefront slug */
+    slug: t.union([t.string, t.null]),
+    /** The collection's symbol; note very few systems actually utilize this */
+    symbol: t.union([t.string, t.null]),
+    /** The description of the storefront */
+    description: t.union([t.string, t.null]),
+    /** Whether or not this is a test storefront */
+    isTestStorefront: t.boolean,
+    /** The URI of the terms (if any) that control the storefront */
+    userTerms: t.union([t.string, t.null]),
+    /** Whether or not the user must agree to the terms before interacting with the contract */
+    userTermsRequired: t.boolean,
+    /** Version of TermsRegistry used by non-Aspen collections */
+    userTermsRegistryVersion: t.union([t.number, t.null]),
+    /** If the storefront will use royalties then the basis points for those royalties (not the percentage with a decimal) should be placed here */
+    secondarySaleBasisPoints: t.union([t.number, t.null]),
+    /** The payee that will receive any royalties associated with secondary sales of the storefront; if a payment splitter is used then the address of the splitter should be put here; else put a single payee */
+    secondarySalePayee: t.union([Address, t.null]),
+    secondarySaleRecipients: t.union([AmountRecipients, t.null]),
+    categories: t.union([StorefrontCategories, t.null]),
+    /** Flag to set whether the storefront includes explicit content */
+    explicitContent: t.boolean,
+    /** Whether or not trading is enabled for this storefront */
+    marketplaceEnabled: t.boolean,
+    contractType: t.union([StorefrontContractType, t.null]),
+    freeDistributionMode: t.union([StorefrontFreeDistributionMode, t.null]),
+    media: t.union([StorefrontMedia, t.null]),
+    links: t.union([Linkset, t.null]),
+    mediaType: t.union([StorefrontMediaType, t.null]),
+    /** The maximum number of tokenIds used; if a 1155 is used then this will not relate to the number of individual tokens under each token idea */
+    maxTokens: t.union([UInt256ToString, t.null]),
+    /** The id of the draft tokenset for the collection; only usable after the collection is deployed */
+    draftTokensetId: t.union([UUIDFromString, t.null]),
+    /** The maximum amount of tokens that a single wallet can claim, set to 0 for no limit */
+    maxClaimPerWallet: t.union([UInt256ToString, t.null]),
+    /** The id of the draft phaseset for the collection; only usable after the collection is deployed */
+    draftPhasesetId: t.union([UUIDFromString, t.null]),
+    /** The payee that will receive the fees from the primary sale; if a payment splitter is used then the address of the payment splitter should be put here; else put a single payee */
+    primarySalePayee: t.union([Address, t.null]),
+    primarySaleRecipients: t.union([AmountRecipients, t.null]),
+    published: t.boolean,
+    /** The storefront allows royalties status to be appealed */
+    royaltiesCanAppeal: t.boolean,
+    /** The storefront allows royalties to be paidback */
+    royaltiesCanPayback: t.boolean,
+    deployerOrOwnerWallet: t.union([Address, t.null]),
+    ownerInfo: t.union([CreatorsInformation, t.null]),
+    emailCapture: t.union([StorefrontEmailCapture, t.null]),
+    adSpaces: AdSpaces,
+  }),
+);
 
 export interface EditStorefront {
   chainId: t.TypeOf<typeof ChainIdToString> | null;
@@ -2011,6 +2143,7 @@ export interface PublicStorefront {
   enableIntercom: boolean;
   /** Version of TermsRegistry used by non-Aspen collections */
   userTermsRegistryVersion: number | null;
+  placeholderToken: t.TypeOf<typeof TokenDefinition> | null;
 }
 
 export const PublicStorefront = t.exact(
@@ -2066,6 +2199,7 @@ export const PublicStorefront = t.exact(
     enableIntercom: t.boolean,
     /** Version of TermsRegistry used by non-Aspen collections */
     userTermsRegistryVersion: t.union([t.number, t.null]),
+    placeholderToken: t.union([TokenDefinition, t.null]),
   }),
 );
 
@@ -2219,22 +2353,29 @@ export type Listed = boolean;
 /** Is the address allowlisted? */
 export const Listed = t.boolean;
 
-export type StorefrontMediaFileType = 'logoImage' | 'bannerImage' | 'adSpaceImage' | 'adSpaceVideoPoster';
+export type StorefrontMediaFileType =
+  | 'logoImage'
+  | 'bannerImage'
+  | 'adSpaceImage'
+  | 'adSpaceVideoPoster'
+  | 'redeemImage';
 
 export const StorefrontMediaFileType = t.union([
   t.literal('logoImage'),
   t.literal('bannerImage'),
   t.literal('adSpaceImage'),
   t.literal('adSpaceVideoPoster'),
+  t.literal('redeemImage'),
 ]);
 
-export type StorefrontFileType = 'logoImage' | 'bannerImage' | 'adSpaceImage' | 'adSpaceVideoPoster';
+export type StorefrontFileType = 'logoImage' | 'bannerImage' | 'adSpaceImage' | 'adSpaceVideoPoster' | 'redeemImage';
 
 export const StorefrontFileType = t.union([
   t.literal('logoImage'),
   t.literal('bannerImage'),
   t.literal('adSpaceImage'),
   t.literal('adSpaceVideoPoster'),
+  t.literal('redeemImage'),
 ]);
 
 export interface UploadedStorefrontFile {
@@ -2623,6 +2764,16 @@ export const Organization = t.exact(
       id: UUIDFromString,
     }),
   ]),
+);
+
+export interface ReservoirWallet {
+  reservoirWallet: string | null;
+}
+
+export const ReservoirWallet = t.exact(
+  t.type({
+    reservoirWallet: t.union([t.string, t.null]),
+  }),
 );
 
 export interface UpdateOrganizationNameRequest {
@@ -3465,22 +3616,26 @@ export type BeehiveRoutingTag =
   | 'calcLeak721'
   | 'collectionimport'
   | 'discordnotification'
+  | 'email'
   | 'memberships'
   | 'summation'
   | 'publishing'
   | 'testdiscordsetup'
-  | 'webhooks';
+  | 'webhooks'
+  | 'stripeproductsync';
 
 export const BeehiveRoutingTag = t.union([
   t.literal('appealssetup'),
   t.literal('calcLeak721'),
   t.literal('collectionimport'),
   t.literal('discordnotification'),
+  t.literal('email'),
   t.literal('memberships'),
   t.literal('summation'),
   t.literal('publishing'),
   t.literal('testdiscordsetup'),
   t.literal('webhooks'),
+  t.literal('stripeproductsync'),
 ]);
 
 export interface BeehiveJob {
@@ -3496,196 +3651,6 @@ export const BeehiveJob = t.exact(
     requestId: t.string,
     routingTag: BeehiveRoutingTag,
     status: BeehiveJobStatus,
-  }),
-);
-
-export interface UserAssetFolderAsset {
-  id: string;
-  chainId: t.TypeOf<typeof ChainIdToString>;
-  userAssetFolderId: string;
-  contractAddress: t.TypeOf<typeof Address>;
-  tokenId: string;
-  displayOrder: number;
-  thumbnailUrl: string;
-}
-
-export const UserAssetFolderAsset = t.exact(
-  t.type({
-    id: t.string,
-    chainId: ChainIdToString,
-    userAssetFolderId: t.string,
-    contractAddress: Address,
-    tokenId: t.string,
-    displayOrder: t.number,
-    thumbnailUrl: t.string,
-  }),
-);
-
-export interface UserAssetFolder {
-  id: string;
-  chainId: t.TypeOf<typeof ChainIdToString>;
-  userId: string;
-  name: string;
-  isDefault: boolean;
-  displayOrder: number;
-  assets: Array<t.TypeOf<typeof UserAssetFolderAsset>>;
-}
-
-export const UserAssetFolder = t.exact(
-  t.type({
-    id: t.string,
-    chainId: ChainIdToString,
-    userId: t.string,
-    name: t.string,
-    isDefault: t.boolean,
-    displayOrder: t.number,
-    assets: t.array(UserAssetFolderAsset),
-  }),
-);
-
-export interface UserNftAssetFolderAsset {
-  id: string;
-  chainId: t.TypeOf<typeof ChainIdToString>;
-  userAssetFolderId: string;
-  contractAddress: t.TypeOf<typeof Address>;
-  tokenId: string;
-  displayOrder: number;
-  thumbnailUrl: string;
-  nft: t.TypeOf<typeof Nft>;
-}
-
-export const UserNftAssetFolderAsset = t.exact(
-  t.type({
-    id: t.string,
-    chainId: ChainIdToString,
-    userAssetFolderId: t.string,
-    contractAddress: Address,
-    tokenId: t.string,
-    displayOrder: t.number,
-    thumbnailUrl: t.string,
-    nft: Nft,
-  }),
-);
-
-export interface UserNftAssetFolder {
-  id: string;
-  chainId: t.TypeOf<typeof ChainIdToString>;
-  userId: string;
-  name: string;
-  isDefault: boolean;
-  displayOrder: number;
-  assets: Array<t.TypeOf<typeof UserNftAssetFolderAsset>>;
-}
-
-export const UserNftAssetFolder = t.exact(
-  t.type({
-    id: t.string,
-    chainId: ChainIdToString,
-    userId: t.string,
-    name: t.string,
-    isDefault: t.boolean,
-    displayOrder: t.number,
-    assets: t.array(UserNftAssetFolderAsset),
-  }),
-);
-
-export interface CreateUserAssetFolderAsset {
-  contractAddress: t.TypeOf<typeof Address>;
-  tokenId: string;
-}
-
-export const CreateUserAssetFolderAsset = t.exact(
-  t.type({
-    contractAddress: Address,
-    tokenId: t.string,
-  }),
-);
-
-export interface CreateUserAssetFolderRequest {
-  name: string;
-  assets: Array<t.TypeOf<typeof CreateUserAssetFolderAsset>>;
-}
-
-export const CreateUserAssetFolderRequest = t.exact(
-  t.type({
-    name: t.string,
-    assets: t.array(CreateUserAssetFolderAsset),
-  }),
-);
-
-export interface GetUserAssetFoldersResponse {
-  folders: Array<t.TypeOf<typeof UserAssetFolder>>;
-}
-
-export const GetUserAssetFoldersResponse = t.exact(
-  t.type({
-    folders: t.array(UserAssetFolder),
-  }),
-);
-
-export interface UpdateUserAssetFolderAsset {
-  contractAddress: t.TypeOf<typeof Address>;
-  tokenId: string;
-  displayOrder: number;
-}
-
-export const UpdateUserAssetFolderAsset = t.exact(
-  t.type({
-    contractAddress: Address,
-    tokenId: t.string,
-    displayOrder: t.number,
-  }),
-);
-
-export interface UpdateUserAssetFolder {
-  name: string;
-  isDefault: boolean;
-  displayOrder: number;
-  assets: Array<t.TypeOf<typeof UpdateUserAssetFolderAsset>>;
-}
-
-export const UpdateUserAssetFolder = t.exact(
-  t.type({
-    name: t.string,
-    isDefault: t.boolean,
-    displayOrder: t.number,
-    assets: t.array(UpdateUserAssetFolderAsset),
-  }),
-);
-
-export interface UpdateDisplayOrderUserAssetFolder {
-  id: string;
-  displayOrder: number;
-}
-
-export const UpdateDisplayOrderUserAssetFolder = t.exact(
-  t.type({
-    id: t.string,
-    displayOrder: t.number,
-  }),
-);
-
-export interface UpdateDisplayOrderUserAssetFolderAsset {
-  id: string;
-  displayOrder: number;
-}
-
-export const UpdateDisplayOrderUserAssetFolderAsset = t.exact(
-  t.type({
-    id: t.string,
-    displayOrder: t.number,
-  }),
-);
-
-export interface UserHiddenAsset {
-  contractAddress: t.TypeOf<typeof Address>;
-  tokenId: string;
-}
-
-export const UserHiddenAsset = t.exact(
-  t.type({
-    contractAddress: Address,
-    tokenId: t.string,
   }),
 );
 
@@ -3948,7 +3913,7 @@ export const Redemption = t.exact(
 );
 
 export interface RedemptionConfigPublic {
-  id: string;
+  id: t.TypeOf<typeof UUIDFromString>;
   redeemed: boolean;
   storefrontId: t.TypeOf<typeof UUIDFromString>;
   webhookId: t.TypeOf<typeof UUIDFromString> | null;
@@ -3962,7 +3927,7 @@ export interface RedemptionConfigPublic {
 
 export const RedemptionConfigPublic = t.exact(
   t.type({
-    id: t.string,
+    id: UUIDFromString,
     redeemed: t.boolean,
     storefrontId: UUIDFromString,
     webhookId: t.union([UUIDFromString, t.null]),
@@ -4012,7 +3977,7 @@ export interface RedemptionConfig {
   image: string | null;
   needsEmail: boolean;
   needsShippingAddress: boolean;
-  id: string;
+  id: t.TypeOf<typeof UUIDFromString>;
   published: boolean;
 }
 
@@ -4026,7 +3991,7 @@ export const RedemptionConfig = t.exact(
     image: t.union([t.string, t.null]),
     needsEmail: t.boolean,
     needsShippingAddress: t.boolean,
-    id: t.string,
+    id: UUIDFromString,
     published: t.boolean,
   }),
 );
@@ -4038,6 +4003,7 @@ export const RedemptionConfigs = t.array(RedemptionConfig);
 export interface SubscriptionCreatedEvent {
   eventName: 'SUBSCRIPTION_CREATED';
   walletAddress: t.TypeOf<typeof Address>;
+  storefrontId: t.TypeOf<typeof UUIDFromString>;
   duration: t.TypeOf<typeof Duration>;
 }
 
@@ -4045,6 +4011,7 @@ export const SubscriptionCreatedEvent = t.exact(
   t.type({
     eventName: t.literal('SUBSCRIPTION_CREATED'),
     walletAddress: Address,
+    storefrontId: UUIDFromString,
     duration: Duration,
   }),
 );
@@ -4052,6 +4019,7 @@ export const SubscriptionCreatedEvent = t.exact(
 export interface SubscriptionExtendedEvent {
   eventName: 'SUBSCRIPTION_EXTENDED';
   walletAddress: t.TypeOf<typeof Address>;
+  storefrontId: t.TypeOf<typeof UUIDFromString>;
   duration: t.TypeOf<typeof Duration>;
 }
 
@@ -4059,25 +4027,47 @@ export const SubscriptionExtendedEvent = t.exact(
   t.type({
     eventName: t.literal('SUBSCRIPTION_EXTENDED'),
     walletAddress: Address,
+    storefrontId: UUIDFromString,
     duration: Duration,
+  }),
+);
+
+export interface SubscriptionExpiringEvent {
+  eventName: 'SUBSCRIPTION_EXPIRING';
+  walletAddress: t.TypeOf<typeof Address>;
+  storefrontId: t.TypeOf<typeof UUIDFromString>;
+  subscriptionName: string;
+  expirationDate: t.TypeOf<typeof DateFromISODateString>;
+}
+
+export const SubscriptionExpiringEvent = t.exact(
+  t.type({
+    eventName: t.literal('SUBSCRIPTION_EXPIRING'),
+    walletAddress: Address,
+    storefrontId: UUIDFromString,
+    subscriptionName: t.string,
+    expirationDate: DateFromISODateString,
   }),
 );
 
 export interface SubscriptionExpiredEvent {
   eventName: 'SUBSCRIPTION_EXPIRED';
   walletAddress: t.TypeOf<typeof Address>;
+  storefrontId: t.TypeOf<typeof UUIDFromString>;
 }
 
 export const SubscriptionExpiredEvent = t.exact(
   t.type({
     eventName: t.literal('SUBSCRIPTION_EXPIRED'),
     walletAddress: Address,
+    storefrontId: UUIDFromString,
   }),
 );
 
 export interface RedemptionNoShippingNoEmailEvent {
   eventName: 'REDEMPTION_NO_SHIPPING_NO_EMAIL';
   walletAddress: t.TypeOf<typeof Address>;
+  storefrontId: t.TypeOf<typeof UUIDFromString>;
   token: t.TypeOf<typeof TokenStringIdentifier>;
 }
 
@@ -4085,6 +4075,7 @@ export const RedemptionNoShippingNoEmailEvent = t.exact(
   t.type({
     eventName: t.literal('REDEMPTION_NO_SHIPPING_NO_EMAIL'),
     walletAddress: Address,
+    storefrontId: UUIDFromString,
     token: TokenStringIdentifier,
   }),
 );
@@ -4092,6 +4083,7 @@ export const RedemptionNoShippingNoEmailEvent = t.exact(
 export interface RedemptionNoShippingYesEmailEvent {
   eventName: 'REDEMPTION_NO_SHIPPING_YES_EMAIL';
   walletAddress: t.TypeOf<typeof Address>;
+  storefrontId: t.TypeOf<typeof UUIDFromString>;
   token: t.TypeOf<typeof TokenStringIdentifier>;
   email: string;
 }
@@ -4100,6 +4092,7 @@ export const RedemptionNoShippingYesEmailEvent = t.exact(
   t.type({
     eventName: t.literal('REDEMPTION_NO_SHIPPING_YES_EMAIL'),
     walletAddress: Address,
+    storefrontId: UUIDFromString,
     token: TokenStringIdentifier,
     email: t.string,
   }),
@@ -4108,6 +4101,7 @@ export const RedemptionNoShippingYesEmailEvent = t.exact(
 export interface RedemptionYesShippingYesEmailEvent {
   eventName: 'REDEMPTION_YES_SHIPPING_YES_EMAIL';
   walletAddress: t.TypeOf<typeof Address>;
+  storefrontId: t.TypeOf<typeof UUIDFromString>;
   token: t.TypeOf<typeof TokenStringIdentifier>;
   email: string;
   shippingAddress: string;
@@ -4117,44 +4111,69 @@ export const RedemptionYesShippingYesEmailEvent = t.exact(
   t.type({
     eventName: t.literal('REDEMPTION_YES_SHIPPING_YES_EMAIL'),
     walletAddress: Address,
+    storefrontId: UUIDFromString,
     token: TokenStringIdentifier,
     email: t.string,
     shippingAddress: t.string,
   }),
 );
 
-export type WebhookEvents =
+export interface PasswordResetEvent {
+  eventName: 'PASSWORD_RESET';
+  walletAddress: t.TypeOf<typeof Address>;
+  storefrontId: null;
+  resetToken: string;
+}
+
+export const PasswordResetEvent = t.exact(
+  t.type({
+    eventName: t.literal('PASSWORD_RESET'),
+    walletAddress: Address,
+    storefrontId: t.null,
+    resetToken: t.string,
+  }),
+);
+
+export type NotificationEvents =
   | 'SUBSCRIPTION_CREATED'
   | 'SUBSCRIPTION_EXTENDED'
+  | 'SUBSCRIPTION_EXPIRING'
   | 'SUBSCRIPTION_EXPIRED'
   | 'REDEMPTION_NO_SHIPPING_NO_EMAIL'
   | 'REDEMPTION_NO_SHIPPING_YES_EMAIL'
-  | 'REDEMPTION_YES_SHIPPING_YES_EMAIL';
+  | 'REDEMPTION_YES_SHIPPING_YES_EMAIL'
+  | 'PASSWORD_RESET';
 
-export const WebhookEvents = t.union([
+export const NotificationEvents = t.union([
   t.literal('SUBSCRIPTION_CREATED'),
   t.literal('SUBSCRIPTION_EXTENDED'),
+  t.literal('SUBSCRIPTION_EXPIRING'),
   t.literal('SUBSCRIPTION_EXPIRED'),
   t.literal('REDEMPTION_NO_SHIPPING_NO_EMAIL'),
   t.literal('REDEMPTION_NO_SHIPPING_YES_EMAIL'),
   t.literal('REDEMPTION_YES_SHIPPING_YES_EMAIL'),
+  t.literal('PASSWORD_RESET'),
 ]);
 
-export type WebhookEventsPayload =
+export type NotificationEventsPayload =
   | t.TypeOf<typeof SubscriptionCreatedEvent>
   | t.TypeOf<typeof SubscriptionExtendedEvent>
+  | t.TypeOf<typeof SubscriptionExpiringEvent>
   | t.TypeOf<typeof SubscriptionExpiredEvent>
   | t.TypeOf<typeof RedemptionNoShippingNoEmailEvent>
   | t.TypeOf<typeof RedemptionNoShippingYesEmailEvent>
-  | t.TypeOf<typeof RedemptionYesShippingYesEmailEvent>;
+  | t.TypeOf<typeof RedemptionYesShippingYesEmailEvent>
+  | t.TypeOf<typeof PasswordResetEvent>;
 
-export const WebhookEventsPayload = t.union([
+export const NotificationEventsPayload = t.union([
   SubscriptionCreatedEvent,
   SubscriptionExtendedEvent,
+  SubscriptionExpiringEvent,
   SubscriptionExpiredEvent,
   RedemptionNoShippingNoEmailEvent,
   RedemptionNoShippingYesEmailEvent,
   RedemptionYesShippingYesEmailEvent,
+  PasswordResetEvent,
 ]);
 
 export type WebhookAuthConfigBasicAuth = {
@@ -4293,7 +4312,7 @@ export interface WebhookUpsert {
   secret?: string | null;
   isActive: boolean;
   authConfig: t.TypeOf<typeof WebhookAuthConfig> | null;
-  events: Array<t.TypeOf<typeof WebhookEvents>>;
+  events: Array<t.TypeOf<typeof NotificationEvents>>;
 }
 
 export const WebhookUpsert = t.exact(
@@ -4303,7 +4322,7 @@ export const WebhookUpsert = t.exact(
       url: t.string,
       isActive: t.boolean,
       authConfig: t.union([WebhookAuthConfig, t.null]),
-      events: t.array(WebhookEvents),
+      events: t.array(NotificationEvents),
     }),
     t.partial({
       id: UUIDFromString,
@@ -4419,12 +4438,14 @@ export const StorefrontMediaFileTypeEnum = {
   bannerImage: 'bannerImage',
   adSpaceImage: 'adSpaceImage',
   adSpaceVideoPoster: 'adSpaceVideoPoster',
+  redeemImage: 'redeemImage',
 } as const;
 export const StorefrontFileTypeEnum = {
   logoImage: 'logoImage',
   bannerImage: 'bannerImage',
   adSpaceImage: 'adSpaceImage',
   adSpaceVideoPoster: 'adSpaceVideoPoster',
+  redeemImage: 'redeemImage',
 } as const;
 export const CollectionModificationEnum = {
   //Collection contract was published to the chain
@@ -4477,11 +4498,13 @@ export const BeehiveRoutingTagEnum = {
   LEAKREPORT: 'calcLeak721',
   IMPORT: 'collectionimport',
   DISCORD_NOTIFICATION: 'discordnotification',
+  EMAIL: 'email',
   MEMBERSHIPS: 'memberships',
   SUMMATION: 'summation',
   PUBLISH: 'publishing',
   DISCORD_SETUP: 'testdiscordsetup',
   WEBHOOKS: 'webhooks',
+  STRIPEPRODUCTSYNC: 'stripeproductsync',
 } as const;
 export const SegmentUserTypeEnum = { creator: 'creator', collector: 'collector' } as const;
 export const CorrespondenceTypeEnum = { NEWSLETTER: 'newsletter' } as const;
@@ -4492,13 +4515,15 @@ export const ReportsKindEnum = {
 } as const;
 export const IntegrationKindEnum = { DISCORD: 'DISCORD', WEBHOOK: 'WEBHOOK' } as const;
 export const MembershipListStatusEnum = { ACTIVE: 'ACTIVE', INACTIVE: 'INACTIVE' } as const;
-export const WebhookEventsEnum = {
+export const NotificationEventsEnum = {
   SUBSCRIPTION_CREATED: 'SUBSCRIPTION_CREATED',
   SUBSCRIPTION_EXTENDED: 'SUBSCRIPTION_EXTENDED',
+  SUBSCRIPTION_EXPIRING: 'SUBSCRIPTION_EXPIRING',
   SUBSCRIPTION_EXPIRED: 'SUBSCRIPTION_EXPIRED',
   REDEMPTION_NO_SHIPPING_NO_EMAIL: 'REDEMPTION_NO_SHIPPING_NO_EMAIL',
   REDEMPTION_NO_SHIPPING_YES_EMAIL: 'REDEMPTION_NO_SHIPPING_YES_EMAIL',
   REDEMPTION_YES_SHIPPING_YES_EMAIL: 'REDEMPTION_YES_SHIPPING_YES_EMAIL',
+  PASSWORD_RESET: 'PASSWORD_RESET',
 } as const;
 /*API Path Metadata*/
 export const pathMeta = {
@@ -5626,7 +5651,28 @@ export const pathMeta = {
   },
   proxyGet: {
     operationId: 'proxyGet',
-    url: '/proxy',
+    url: '/proxy-get',
+    method: 'get',
+    category: 'Proxy',
+    security: [],
+    hasQuery: true,
+    hasParams: false,
+    hasBody: false,
+    isBodyFormData: false,
+    hasResponse: true,
+    hasBinaryResponse: true,
+    paramsSchema: t.null,
+    querySchema: t.exact(
+      t.partial({
+        url: t.string,
+      }),
+    ),
+    bodySchema: t.null,
+    responseSchema: t.string,
+  },
+  proxyHead: {
+    operationId: 'proxyHead',
+    url: '/proxy-head',
     method: 'get',
     category: 'Proxy',
     security: [],
@@ -6080,6 +6126,27 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditStorefront,
+    responseSchema: Storefront,
+  },
+  patchStorefront: {
+    operationId: 'patchStorefront',
+    url: '/storefronts/storefront/:storefrontId',
+    method: 'patch',
+    category: 'Storefronts',
+    security: ['BearerAuth'],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: true,
+    isBodyFormData: false,
+    hasResponse: true,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        storefrontId: UUIDFromString,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: PatchStorefront,
     responseSchema: Storefront,
   },
   removeStorefront: {
@@ -6536,6 +6603,28 @@ export const pathMeta = {
     querySchema: t.null,
     bodySchema: CreateSubscriptionCouponBody,
     responseSchema: t.null,
+  },
+  getSubscriptionCouponByName: {
+    operationId: 'getSubscriptionCouponByName',
+    url: '/subscriptions/:subscriptionId/coupon/:couponName',
+    method: 'get',
+    category: 'Subscription',
+    security: ['BearerAuth'],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: false,
+    isBodyFormData: false,
+    hasResponse: true,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        subscriptionId: UUIDFromString,
+        couponName: t.string,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: t.null,
+    responseSchema: SubscriptionCouponDefinition,
   },
   deleteSubscriptionCoupon: {
     operationId: 'deleteSubscriptionCoupon',
@@ -7024,228 +7113,6 @@ export const pathMeta = {
     bodySchema: t.null,
     responseSchema: BeehiveJob,
   },
-  getUserAssetFolders: {
-    operationId: 'getUserAssetFolders',
-    url: '/:chainId/user-asset-folders',
-    method: 'get',
-    category: 'UserAssetFolder',
-    security: ['BearerAuth'],
-    hasQuery: false,
-    hasParams: true,
-    hasBody: false,
-    isBodyFormData: false,
-    hasResponse: true,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
-      t.type({
-        chainId: ChainIdToString,
-      }),
-    ),
-    querySchema: t.null,
-    bodySchema: t.null,
-    responseSchema: GetUserAssetFoldersResponse,
-  },
-  createUserAssetFolder: {
-    operationId: 'createUserAssetFolder',
-    url: '/:chainId/user-asset-folders',
-    method: 'post',
-    category: 'UserAssetFolder',
-    security: ['BearerAuth'],
-    hasQuery: false,
-    hasParams: true,
-    hasBody: true,
-    isBodyFormData: false,
-    hasResponse: false,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
-      t.type({
-        chainId: ChainIdToString,
-      }),
-    ),
-    querySchema: t.null,
-    bodySchema: CreateUserAssetFolderRequest,
-    responseSchema: t.null,
-  },
-  updateUserAssetFolderDisplayOrder: {
-    operationId: 'updateUserAssetFolderDisplayOrder',
-    url: '/:chainId/user-asset-folders-display-orders',
-    method: 'put',
-    category: 'UserAssetFolder',
-    security: ['BearerAuth'],
-    hasQuery: false,
-    hasParams: true,
-    hasBody: true,
-    isBodyFormData: false,
-    hasResponse: false,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
-      t.type({
-        chainId: ChainIdToString,
-      }),
-    ),
-    querySchema: t.null,
-    bodySchema: t.array(UpdateDisplayOrderUserAssetFolder),
-    responseSchema: t.null,
-  },
-  getUserAssetFolderDefault: {
-    operationId: 'getUserAssetFolderDefault',
-    url: '/:chainId/user-asset-folder-default',
-    method: 'get',
-    category: 'UserAssetFolder',
-    security: ['BearerAuth'],
-    hasQuery: true,
-    hasParams: true,
-    hasBody: false,
-    isBodyFormData: false,
-    hasResponse: true,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
-      t.type({
-        chainId: ChainIdToString,
-      }),
-    ),
-    querySchema: t.exact(
-      t.partial({
-        includeHiddenAssets: BooleanToString,
-      }),
-    ),
-    bodySchema: t.null,
-    responseSchema: t.union([UserNftAssetFolder, t.null]),
-  },
-  getUserAssetFolder: {
-    operationId: 'getUserAssetFolder',
-    url: '/:chainId/user-asset-folders/:userAssetFolderId',
-    method: 'get',
-    category: 'UserAssetFolder',
-    security: [],
-    hasQuery: true,
-    hasParams: true,
-    hasBody: false,
-    isBodyFormData: false,
-    hasResponse: true,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
-      t.type({
-        chainId: ChainIdToString,
-        userAssetFolderId: t.string,
-      }),
-    ),
-    querySchema: t.exact(
-      t.partial({
-        includeHiddenAssets: BooleanToString,
-      }),
-    ),
-    bodySchema: t.null,
-    responseSchema: UserNftAssetFolder,
-  },
-  updateUserAssetFolder: {
-    operationId: 'updateUserAssetFolder',
-    url: '/:chainId/user-asset-folders/:userAssetFolderId',
-    method: 'put',
-    category: 'UserAssetFolder',
-    security: ['BearerAuth'],
-    hasQuery: false,
-    hasParams: true,
-    hasBody: true,
-    isBodyFormData: false,
-    hasResponse: false,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
-      t.type({
-        chainId: ChainIdToString,
-        userAssetFolderId: t.string,
-      }),
-    ),
-    querySchema: t.null,
-    bodySchema: UpdateUserAssetFolder,
-    responseSchema: t.null,
-  },
-  removeUserAssetFolder: {
-    operationId: 'removeUserAssetFolder',
-    url: '/:chainId/user-asset-folders/:userAssetFolderId',
-    method: 'delete',
-    category: 'UserAssetFolder',
-    security: ['BearerAuth'],
-    hasQuery: false,
-    hasParams: true,
-    hasBody: false,
-    isBodyFormData: false,
-    hasResponse: false,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
-      t.type({
-        chainId: ChainIdToString,
-        userAssetFolderId: t.string,
-      }),
-    ),
-    querySchema: t.null,
-    bodySchema: t.null,
-    responseSchema: t.null,
-  },
-  updateUserAssetFolderAssetDisplayOrder: {
-    operationId: 'updateUserAssetFolderAssetDisplayOrder',
-    url: '/:chainId/user-asset-folders/:userAssetFolderId/asset-display-orders',
-    method: 'put',
-    category: 'UserAssetFolder',
-    security: ['BearerAuth'],
-    hasQuery: false,
-    hasParams: true,
-    hasBody: true,
-    isBodyFormData: false,
-    hasResponse: false,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
-      t.type({
-        chainId: ChainIdToString,
-        userAssetFolderId: t.string,
-      }),
-    ),
-    querySchema: t.null,
-    bodySchema: t.array(UpdateDisplayOrderUserAssetFolderAsset),
-    responseSchema: t.null,
-  },
-  createUserHiddenAssets: {
-    operationId: 'createUserHiddenAssets',
-    url: '/:chainId/user-hidden-assets/hide',
-    method: 'post',
-    category: 'UserAssetFolder',
-    security: ['BearerAuth'],
-    hasQuery: false,
-    hasParams: true,
-    hasBody: true,
-    isBodyFormData: false,
-    hasResponse: false,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
-      t.type({
-        chainId: ChainIdToString,
-      }),
-    ),
-    querySchema: t.null,
-    bodySchema: t.array(UserHiddenAsset),
-    responseSchema: t.null,
-  },
-  removeUserHiddenAssets: {
-    operationId: 'removeUserHiddenAssets',
-    url: '/:chainId/user-hidden-assets/unhide',
-    method: 'post',
-    category: 'UserAssetFolder',
-    security: ['BearerAuth'],
-    hasQuery: false,
-    hasParams: true,
-    hasBody: true,
-    isBodyFormData: false,
-    hasResponse: false,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
-      t.type({
-        chainId: ChainIdToString,
-      }),
-    ),
-    querySchema: t.null,
-    bodySchema: t.array(UserHiddenAsset),
-    responseSchema: t.null,
-  },
   getUserNfts: {
     operationId: 'getUserNfts',
     url: '/user-nfts',
@@ -7266,7 +7133,6 @@ export const pathMeta = {
         collectionIds: t.string,
         limit: IntegerToString,
         cursor: t.string,
-        includeHiddenAssets: BooleanToString,
         verifiedOnly: BooleanToString,
       }),
     ),
@@ -7635,6 +7501,27 @@ export const pathMeta = {
     bodySchema: t.null,
     responseSchema: StorefrontsMembershipListOverview,
   },
+  getMembershipListsByStorefrontId: {
+    operationId: 'getMembershipListsByStorefrontId',
+    url: '/memberships/storefronts/:storefrontId/lists',
+    method: 'get',
+    category: 'Memberships',
+    security: ['BearerAuth'],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: false,
+    isBodyFormData: false,
+    hasResponse: true,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        storefrontId: UUIDFromString,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: t.null,
+    responseSchema: MembershipLists,
+  },
   createMembershipList: {
     operationId: 'createMembershipList',
     url: '/memberships/storefronts/:storefrontId/lists',
@@ -7756,6 +7643,27 @@ export const pathMeta = {
     querySchema: t.null,
     bodySchema: t.null,
     responseSchema: JobStatus,
+  },
+  createGasWallet: {
+    operationId: 'createGasWallet',
+    url: '/organization/:organizationId/create-gas-wallet/',
+    method: 'post',
+    category: 'Organizations',
+    security: ['BearerAuth'],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: false,
+    isBodyFormData: false,
+    hasResponse: true,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        organizationId: UUIDFromString,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: t.null,
+    responseSchema: ReservoirWallet,
   },
   getRedemptionsForToken: {
     operationId: 'getRedemptionsForToken',
