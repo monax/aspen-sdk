@@ -1,6 +1,7 @@
 import { ClaimConditionsState } from "@monaxlabs/aspen-sdk";
 import { ethers } from "ethers";
 import styles from "../styles/Home.module.css";
+import React from 'react';
 
 const LoadClaimConditions: React.FC<{
   conditions: ClaimConditionsState | null;

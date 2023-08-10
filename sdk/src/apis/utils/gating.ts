@@ -5,7 +5,7 @@ import { either as E, function as F } from 'fp-ts';
 import * as t from 'io-ts';
 import { importJWK, JWTPayload, jwtVerify } from 'jose';
 import { GatingAPI } from '..';
-import { SupportedNetwork } from './types';
+import { SupportedNetwork } from './secrets';
 
 const { AuthService, GateService, GateSignInMode, GateType, RolesService } = GatingAPI;
 

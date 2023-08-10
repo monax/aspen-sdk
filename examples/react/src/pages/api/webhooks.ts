@@ -1,11 +1,11 @@
-import { buffer } from "micro";
-import Cors from "micro-cors";
-import { NextApiRequest, NextApiResponse } from "next";
-import Stripe from "stripe";
+import { buffer } from 'micro';
+import Cors from 'micro-cors';
+import { NextApiRequest, NextApiResponse } from 'next';
+import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
-  apiVersion: "2022-11-15",
+  apiVersion: '2022-11-15',
 });
 
 const webhookSecret: string = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -21,29 +21,25 @@ export const config = {
 };
 
 const cors = Cors({
-  allowMethods: ["POST", "HEAD"],
+  allowMethods: ['POST', 'HEAD'],
 });
 
 const validatePayment = (checkout: Stripe.Checkout.Session): boolean => {
   // Add payment validation here (e.g. checking payment amount is correct)
-  return checkout.payment_status === "paid" && checkout.status === "complete";
+  return checkout.payment_status === 'paid' && checkout.status === 'complete';
 };
 
 const webhookHandler = async (req: NextApiRequest, res: NextApiResponse) => {
-  if (req.method === "POST") {
+  if (req.method === 'POST') {
     const buf = await buffer(req);
-    const sig = req.headers["stripe-signature"]!;
+    const sig = req.headers['stripe-signature']!;
 
     let event: Stripe.Event;
 
     try {
-      event = stripe.webhooks.constructEvent(
-        buf.toString(),
-        sig,
-        webhookSecret
-      );
+      event = stripe.webhooks.constructEvent(buf.toString(), sig, webhookSecret);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       // On error, log and return the error message.
       if (err! instanceof Error) console.log(err);
       console.log(`❌ Error message: ${errorMessage}`);
@@ -51,21 +47,19 @@ const webhookHandler = async (req: NextApiRequest, res: NextApiResponse) => {
       return;
     }
 
-    if (event.type === "checkout.session.completed") {
+    if (event.type === 'checkout.session.completed') {
       const checkoutSession = event.data.object as Stripe.Checkout.Session;
 
       if (validatePayment(checkoutSession)) {
         const { tokenId, collectionGuid } = checkoutSession.metadata!;
         const wallet = checkoutSession.client_reference_id!;
         console.log(
-          `✅ Checkout complete for token ${
-            tokenId || "allocated"
-          } on collecton ${collectionGuid} to wallet ${wallet}`
+          `✅ Checkout complete for token ${tokenId || 'allocated'} on collecton ${collectionGuid} to wallet ${wallet}`,
         );
-        console.log("Event id:", event.id);
+        console.log('Event id:', event.id);
 
         try {
-          throw new Error("Implement against Aspen");
+          throw new Error('Implement against Aspen');
           // await authenticate(PublishingAPI.OpenAPI, {
           //   baseUrl: PUBLISHING_API_BASEURI,
           //   name: PUBLISHING_API_USERNAME,
@@ -82,16 +76,16 @@ const webhookHandler = async (req: NextApiRequest, res: NextApiResponse) => {
         }
       } else {
         console.log(`Payment validation failed`);
-        console.log("Event id:", event.id);
-        return res.status(400).send("Payment validation failed.");
+        console.log('Event id:', event.id);
+        return res.status(400).send('Payment validation failed.');
       }
     }
 
     // Return a response to acknowledge receipt of the event.
     res.json({ received: true });
   } else {
-    res.setHeader("Allow", "POST");
-    res.status(405).end("Method Not Allowed");
+    res.setHeader('Allow', 'POST');
+    res.status(405).end('Method Not Allowed');
   }
 };
 

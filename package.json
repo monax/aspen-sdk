@@ -7,7 +7,11 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "prettier '**/*.ts'",
-    "lint:fix": "prettier -w '**/*.ts'",
+    "fix": "yarn fix:all",
+    "fix:all": "cd $INIT_CWD && yarn fix:eslint && yarn fix:prettier",
+    "fix:prettier": "prettier --write $INIT_CWD",
+    "fix:eslint": "eslint --fix $INIT_CWD'/**/*.{ts,tsx}'",
+    "fix:prettier:args": "cd $INIT_CWD && prettier --write",
     "examples:flows": "pnpm -C examples/flows run flows",
     "examples:react:test-contract": "pnpm --silent -C examples/flows run react-test-contract >> examples/react/.env.local",
     "examples:react": "pnpm -C examples/react dev",
@@ -18,6 +22,15 @@
     "ci:publish": "pnpm install && pnpm build && pnpm run -C sdk publish:public:bump",
     "ci:publish:prerelease": "pnpm install && pnpm build && pnpm run -C sdk publish:public:bump:prerelease",
     "ci:version": "scripts/version.sh"
+  },
+  "devDependencies": {
+    "eslint": "^8.45.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-react": "^7.33.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^3.0.0",
+    "prettier-plugin-organize-imports": "^3.2.3",
+    "prettier-plugin-solidity": "^1.1.3"
   },
   "packageManager": "pnpm@3.3.1",
   "version": "0.0.0"

@@ -1,5 +1,5 @@
 import { Address, Chain, parse } from '@monaxlabs/aspen-sdk';
-import { authenticateAllFromFile, generateAccounts, getProvider, getSigner } from '@monaxlabs/aspen-sdk/dist/api-utils';
+import { generateAccounts, getProvider, getSigner } from '@monaxlabs/aspen-sdk/dist/api-utils';
 import {
   AspenEnvironment,
   authenticateForGate,
@@ -9,7 +9,6 @@ import {
   ProviderConfig,
   SupportedNetwork,
 } from '@monaxlabs/aspen-sdk/dist/apis';
-import { ClaimBalance, getClaimBalances } from '@monaxlabs/aspen-sdk/dist/claimgraph';
 import {
   CollectionContract,
   extractCustomError,
@@ -25,17 +24,15 @@ import {
 import { BigNumber, BigNumberish, Signer } from 'ethers';
 import { providers } from 'ethers/lib/ethers';
 import { formatEther } from 'ethers/lib/utils';
-import { GraphQLClient } from 'graphql-request';
 import { format } from 'util';
 import { demoMnemonic } from './keys';
-import { credentialsFile } from './secrets';
+import { authenticate } from './secrets';
 import { collectionInfoFile, CollectionPair, readCollectionInfo, writeCollectionInfo } from './state';
 import { deployERC721 } from './utils/collection';
 
 // Global config for flows
 const network: SupportedNetwork = 'Goerli';
 const environment: AspenEnvironment = 'production';
-const claimGraphUrl = `https://api.thegraph.com/subgraphs/name/silasdavis/claimgraph-${network.toLowerCase()}`;
 const numberOfCollectionPairs = 1;
 const numberOfTokensPerCollection = 100;
 
@@ -64,10 +61,14 @@ let providerConfig: ProviderConfig;
 
 async function main(): Promise<void> {
   // Store global auth token
-  await authenticateAllFromFile(environment, credentialsFile);
-  // Read in provider which is then cached as a singleton
-  // providerConfig = await getProviderConfig(providersFile);
-  // await runFlows();
+  const { aspenClient } = await authenticate(network, environment);
+  const resp = await aspenClient.request(
+    'getStorefrontPublicChainIdAndAddress',
+    { chainId: Chain.Mainnet, address: parse(Address, '0x3006d58cB3f1b94074D3898dF6367BD8cCf5f908') },
+    null,
+    null,
+  );
+  console.log(resp);
 }
 
 async function runFlows(): Promise<void> {
@@ -269,16 +270,6 @@ async function gasClaimerWallet(
     });
     await tx.wait();
   }
-}
-
-async function claimGraphQuery(contractAddresses: string[], userAddress?: string): Promise<ClaimBalance[]> {
-  const client = new GraphQLClient(claimGraphUrl);
-  // NOTE: important to normalise addresses to lowercase before looking them up since they are just stored as string
-  // keys in the graph
-  return getClaimBalances(client, {
-    contractAddress_in: contractAddresses.map((a) => a.toLowerCase()),
-    receiver: userAddress ? userAddress.toLowerCase() : undefined,
-  });
 }
 
 async function acceptTerms(

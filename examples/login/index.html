@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + TS</title>
+  </head>
+  <body>
+    <button id="login">Redirect Login</button>
+    <button id="wallet-login">Wallet Login</button>
+    <button id="wallet-login-ropf">Wallet Login - Resource Owner PWD Flow</button>
+    <button id="google-login">Google Login</button>
+    <button id="api">Call API</button>
+    <button id="logout">Logout</button>
+    <br />
+    <br />
+
+    <div>
+      <input type="text" id="email-input" name="email" placeholder="email" />
+      <input type="password" id="password-input" name="password" placeholder="password" />
+      <button id="password-login">Password Login</button>
+    </div>
+    <br /><br />
+
+    <p>
+      Make sure that the user is logged in before calling this. <br />
+      Redirect to login screen will occur otherwise
+    </p>
+    <button id="add-discord">Link Discord Account</button>
+
+    <pre id="results"></pre>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

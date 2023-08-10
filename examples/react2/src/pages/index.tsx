@@ -1,6 +1,7 @@
 import { Button, VStack } from "@chakra-ui/react";
 import { useState } from "react";
 import Form from "../components/Form/Form";
+import React from 'react'
 
 const Home = () => {
   const [showForm, setShowForm] = useState(false);

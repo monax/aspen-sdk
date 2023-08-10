@@ -5,6 +5,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { getNotificationsFormSchema } from "./schema";
 import { EmailFormData } from "./types";
 import FormInput from "../FormInput";
+import React from 'react'
 
 const Form = () => {
   const methods = useForm<EmailFormData>({

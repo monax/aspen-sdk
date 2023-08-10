@@ -18,7 +18,7 @@ const IsApprovedForAllInterfaces = Object.values(IsApprovedForAllPartitions).fla
 type IsApprovedForAllInterfaces = (typeof IsApprovedForAllInterfaces)[number];
 
 export type IsApprovedForAllCallArgs = [args: IsApprovedForAllArgs, overrides?: CallOverrides];
-export type IsApprovedForAllResponse = Boolean;
+export type IsApprovedForAllResponse = boolean;
 
 export type IsApprovedForAllArgs = {
   owner: Addressish;
@@ -41,7 +41,7 @@ export class IsApprovedForAll extends ContractFunction<
     return this.isApprovedForAll(...args);
   }
 
-  async isApprovedForAll({ owner, operator }: IsApprovedForAllArgs, overrides: CallOverrides = {}): Promise<Boolean> {
+  async isApprovedForAll({ owner, operator }: IsApprovedForAllArgs, overrides: CallOverrides = {}): Promise<boolean> {
     const v1 = this.partition('v1');
     const _owner = await asAddress(owner);
     const _operator = await asAddress(operator);

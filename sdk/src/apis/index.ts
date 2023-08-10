@@ -1,3 +1,4 @@
 export * as GatingAPI from './gating';
 export * as IdentityAPI from './identity';
 export * from './utils';
+export * from './aspen';
