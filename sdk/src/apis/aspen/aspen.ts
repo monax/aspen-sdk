@@ -1613,6 +1613,8 @@ export interface PatchStorefront {
   ownerInfo?: t.TypeOf<typeof CreatorsInformation> | null;
   emailCapture?: t.TypeOf<typeof StorefrontEmailCapture> | null;
   adSpaces?: t.TypeOf<typeof AdSpaces>;
+  /** Whether or not the storefront has a placeholder token */
+  hasPlaceholder?: boolean;
 }
 
 export const PatchStorefront = t.exact(
@@ -1671,6 +1673,8 @@ export const PatchStorefront = t.exact(
     ownerInfo: t.union([CreatorsInformation, t.null]),
     emailCapture: t.union([StorefrontEmailCapture, t.null]),
     adSpaces: AdSpaces,
+    /** Whether or not the storefront has a placeholder token */
+    hasPlaceholder: t.boolean,
   }),
 );
 
@@ -1729,6 +1733,8 @@ export interface EditStorefront {
   ownerInfo: t.TypeOf<typeof CreatorsInformation> | null;
   emailCapture: t.TypeOf<typeof StorefrontEmailCapture> | null;
   adSpaces: t.TypeOf<typeof AdSpaces>;
+  /** Whether or not the storefront has a placeholder token */
+  hasPlaceholder: boolean;
 }
 
 export const EditStorefront = t.exact(
@@ -1787,6 +1793,8 @@ export const EditStorefront = t.exact(
     ownerInfo: t.union([CreatorsInformation, t.null]),
     emailCapture: t.union([StorefrontEmailCapture, t.null]),
     adSpaces: AdSpaces,
+    /** Whether or not the storefront has a placeholder token */
+    hasPlaceholder: t.boolean,
   }),
 );
 
@@ -1861,6 +1869,8 @@ export interface Storefront {
   ownerInfo: t.TypeOf<typeof CreatorsInformation> | null;
   emailCapture: t.TypeOf<typeof StorefrontEmailCapture> | null;
   adSpaces: t.TypeOf<typeof AdSpaces>;
+  /** Whether or not the storefront has a placeholder token */
+  hasPlaceholder: boolean;
 }
 
 export const Storefront = t.exact(
@@ -1935,6 +1945,8 @@ export const Storefront = t.exact(
     ownerInfo: t.union([CreatorsInformation, t.null]),
     emailCapture: t.union([StorefrontEmailCapture, t.null]),
     adSpaces: AdSpaces,
+    /** Whether or not the storefront has a placeholder token */
+    hasPlaceholder: t.boolean,
   }),
 );
 
@@ -2009,6 +2021,8 @@ export interface DeployedStorefront {
   ownerInfo: t.TypeOf<typeof CreatorsInformation> | null;
   emailCapture: t.TypeOf<typeof StorefrontEmailCapture> | null;
   adSpaces: t.TypeOf<typeof AdSpaces>;
+  /** Whether or not the storefront has a placeholder token */
+  hasPlaceholder: boolean;
 }
 
 export const DeployedStorefront = t.exact(
@@ -2083,6 +2097,8 @@ export const DeployedStorefront = t.exact(
     ownerInfo: t.union([CreatorsInformation, t.null]),
     emailCapture: t.union([StorefrontEmailCapture, t.null]),
     adSpaces: AdSpaces,
+    /** Whether or not the storefront has a placeholder token */
+    hasPlaceholder: t.boolean,
   }),
 );
 
@@ -2532,19 +2548,29 @@ export const OneTimePad = t.exact(
 );
 
 export interface RedeemNftDropOneTimePadRequest {
-  to: t.TypeOf<typeof Address>;
+  receiverAddress: t.TypeOf<typeof Address>;
+  /** The quantity of NFTs to issue */
+  quantityToIssue: number;
+  /** The optional tokenId to issue for ERC1155 */
   tokenId?: number;
+  /** The optional token URI */
+  tokenUri?: string;
   pad: string;
 }
 
 export const RedeemNftDropOneTimePadRequest = t.exact(
   t.intersection([
     t.type({
-      to: Address,
+      receiverAddress: Address,
+      /** The quantity of NFTs to issue */
+      quantityToIssue: t.number,
       pad: t.string,
     }),
     t.partial({
+      /** The optional tokenId to issue for ERC1155 */
       tokenId: t.number,
+      /** The optional token URI */
+      tokenUri: t.string,
     }),
   ]),
 );
@@ -3915,13 +3941,12 @@ export interface RedemptionConfigPublic {
   id: t.TypeOf<typeof UUIDFromString>;
   redeemed: boolean;
   storefrontId: t.TypeOf<typeof UUIDFromString>;
-  webhookId: t.TypeOf<typeof UUIDFromString> | null;
   tokenRange: t.TypeOf<typeof TokenRange> | null;
   name: string | null;
   description: string | null;
   image: string | null;
-  needsEmail: boolean;
-  needsShippingAddress: boolean;
+  requireEmail: boolean;
+  requireShippingAddress: boolean;
 }
 
 export const RedemptionConfigPublic = t.exact(
@@ -3929,13 +3954,12 @@ export const RedemptionConfigPublic = t.exact(
     id: UUIDFromString,
     redeemed: t.boolean,
     storefrontId: UUIDFromString,
-    webhookId: t.union([UUIDFromString, t.null]),
     tokenRange: t.union([TokenRange, t.null]),
     name: t.union([t.string, t.null]),
     description: t.union([t.string, t.null]),
     image: t.union([t.string, t.null]),
-    needsEmail: t.boolean,
-    needsShippingAddress: t.boolean,
+    requireEmail: t.boolean,
+    requireShippingAddress: t.boolean,
   }),
 );
 
@@ -3945,37 +3969,34 @@ export const RedemptionsConfigPublic = t.array(RedemptionConfigPublic);
 
 export interface EditRedemptionConfig {
   storefrontId: t.TypeOf<typeof UUIDFromString>;
-  webhookId: t.TypeOf<typeof UUIDFromString> | null;
   tokenRange: t.TypeOf<typeof TokenRange> | null;
   name: string | null;
   description: string | null;
   image: string | null;
-  needsEmail: boolean;
-  needsShippingAddress: boolean;
+  requireEmail: boolean;
+  requireShippingAddress: boolean;
 }
 
 export const EditRedemptionConfig = t.exact(
   t.type({
     storefrontId: UUIDFromString,
-    webhookId: t.union([UUIDFromString, t.null]),
     tokenRange: t.union([TokenRange, t.null]),
     name: t.union([t.string, t.null]),
     description: t.union([t.string, t.null]),
     image: t.union([t.string, t.null]),
-    needsEmail: t.boolean,
-    needsShippingAddress: t.boolean,
+    requireEmail: t.boolean,
+    requireShippingAddress: t.boolean,
   }),
 );
 
 export interface RedemptionConfig {
   storefrontId: t.TypeOf<typeof UUIDFromString>;
-  webhookId: t.TypeOf<typeof UUIDFromString> | null;
   tokenRange: t.TypeOf<typeof TokenRange> | null;
   name: string | null;
   description: string | null;
   image: string | null;
-  needsEmail: boolean;
-  needsShippingAddress: boolean;
+  requireEmail: boolean;
+  requireShippingAddress: boolean;
   id: t.TypeOf<typeof UUIDFromString>;
   published: boolean;
 }
@@ -3983,13 +4004,12 @@ export interface RedemptionConfig {
 export const RedemptionConfig = t.exact(
   t.type({
     storefrontId: UUIDFromString,
-    webhookId: t.union([UUIDFromString, t.null]),
     tokenRange: t.union([TokenRange, t.null]),
     name: t.union([t.string, t.null]),
     description: t.union([t.string, t.null]),
     image: t.union([t.string, t.null]),
-    needsEmail: t.boolean,
-    needsShippingAddress: t.boolean,
+    requireEmail: t.boolean,
+    requireShippingAddress: t.boolean,
     id: UUIDFromString,
     published: t.boolean,
   }),
@@ -4063,58 +4083,32 @@ export const SubscriptionExpiredEvent = t.exact(
   }),
 );
 
-export interface RedemptionNoShippingNoEmailEvent {
-  eventName: 'REDEMPTION_NO_SHIPPING_NO_EMAIL';
+export interface NftRedemptionEvent {
+  eventName: 'NFT_REDEMPTION';
   walletAddress: t.TypeOf<typeof Address>;
   storefrontId: t.TypeOf<typeof UUIDFromString>;
   token: t.TypeOf<typeof TokenStringIdentifier>;
+  shippingAddress?: string;
+  email?: string;
+  requireEmail?: boolean;
+  requireShippingAddress?: boolean;
 }
 
-export const RedemptionNoShippingNoEmailEvent = t.exact(
-  t.type({
-    eventName: t.literal('REDEMPTION_NO_SHIPPING_NO_EMAIL'),
-    walletAddress: Address,
-    storefrontId: UUIDFromString,
-    token: TokenStringIdentifier,
-  }),
-);
-
-export interface RedemptionNoShippingYesEmailEvent {
-  eventName: 'REDEMPTION_NO_SHIPPING_YES_EMAIL';
-  walletAddress: t.TypeOf<typeof Address>;
-  storefrontId: t.TypeOf<typeof UUIDFromString>;
-  token: t.TypeOf<typeof TokenStringIdentifier>;
-  email: string;
-}
-
-export const RedemptionNoShippingYesEmailEvent = t.exact(
-  t.type({
-    eventName: t.literal('REDEMPTION_NO_SHIPPING_YES_EMAIL'),
-    walletAddress: Address,
-    storefrontId: UUIDFromString,
-    token: TokenStringIdentifier,
-    email: t.string,
-  }),
-);
-
-export interface RedemptionYesShippingYesEmailEvent {
-  eventName: 'REDEMPTION_YES_SHIPPING_YES_EMAIL';
-  walletAddress: t.TypeOf<typeof Address>;
-  storefrontId: t.TypeOf<typeof UUIDFromString>;
-  token: t.TypeOf<typeof TokenStringIdentifier>;
-  email: string;
-  shippingAddress: string;
-}
-
-export const RedemptionYesShippingYesEmailEvent = t.exact(
-  t.type({
-    eventName: t.literal('REDEMPTION_YES_SHIPPING_YES_EMAIL'),
-    walletAddress: Address,
-    storefrontId: UUIDFromString,
-    token: TokenStringIdentifier,
-    email: t.string,
-    shippingAddress: t.string,
-  }),
+export const NftRedemptionEvent = t.exact(
+  t.intersection([
+    t.type({
+      eventName: t.literal('NFT_REDEMPTION'),
+      walletAddress: Address,
+      storefrontId: UUIDFromString,
+      token: TokenStringIdentifier,
+    }),
+    t.partial({
+      shippingAddress: t.string,
+      email: t.string,
+      requireEmail: t.boolean,
+      requireShippingAddress: t.boolean,
+    }),
+  ]),
 );
 
 export interface PasswordResetEvent {
@@ -4138,9 +4132,7 @@ export type NotificationEvents =
   | 'SUBSCRIPTION_EXTENDED'
   | 'SUBSCRIPTION_EXPIRING'
   | 'SUBSCRIPTION_EXPIRED'
-  | 'REDEMPTION_NO_SHIPPING_NO_EMAIL'
-  | 'REDEMPTION_NO_SHIPPING_YES_EMAIL'
-  | 'REDEMPTION_YES_SHIPPING_YES_EMAIL'
+  | 'NFT_REDEMPTION'
   | 'PASSWORD_RESET';
 
 export const NotificationEvents = t.union([
@@ -4148,9 +4140,7 @@ export const NotificationEvents = t.union([
   t.literal('SUBSCRIPTION_EXTENDED'),
   t.literal('SUBSCRIPTION_EXPIRING'),
   t.literal('SUBSCRIPTION_EXPIRED'),
-  t.literal('REDEMPTION_NO_SHIPPING_NO_EMAIL'),
-  t.literal('REDEMPTION_NO_SHIPPING_YES_EMAIL'),
-  t.literal('REDEMPTION_YES_SHIPPING_YES_EMAIL'),
+  t.literal('NFT_REDEMPTION'),
   t.literal('PASSWORD_RESET'),
 ]);
 
@@ -4159,9 +4149,7 @@ export type NotificationEventsPayload =
   | t.TypeOf<typeof SubscriptionExtendedEvent>
   | t.TypeOf<typeof SubscriptionExpiringEvent>
   | t.TypeOf<typeof SubscriptionExpiredEvent>
-  | t.TypeOf<typeof RedemptionNoShippingNoEmailEvent>
-  | t.TypeOf<typeof RedemptionNoShippingYesEmailEvent>
-  | t.TypeOf<typeof RedemptionYesShippingYesEmailEvent>
+  | t.TypeOf<typeof NftRedemptionEvent>
   | t.TypeOf<typeof PasswordResetEvent>;
 
 export const NotificationEventsPayload = t.union([
@@ -4169,24 +4157,37 @@ export const NotificationEventsPayload = t.union([
   SubscriptionExtendedEvent,
   SubscriptionExpiringEvent,
   SubscriptionExpiredEvent,
-  RedemptionNoShippingNoEmailEvent,
-  RedemptionNoShippingYesEmailEvent,
-  RedemptionYesShippingYesEmailEvent,
+  NftRedemptionEvent,
   PasswordResetEvent,
+]);
+
+export type WebhookAuthConfigType = 'BasicAuth' | 'ApiToken' | 'OAuth2' | 'Headers';
+
+export const WebhookAuthConfigType = t.union([
+  t.literal('BasicAuth'),
+  t.literal('ApiToken'),
+  t.literal('OAuth2'),
+  t.literal('Headers'),
 ]);
 
 export type WebhookAuthConfigBasicAuth = {
   type: 'BasicAuth';
-  username: string;
-  password: string;
+  config: {
+    username: string;
+    password: string;
+  };
 } | null;
 
 export const WebhookAuthConfigBasicAuth = t.union([
   t.exact(
     t.type({
       type: t.literal('BasicAuth'),
-      username: t.string,
-      password: t.string,
+      config: t.exact(
+        t.type({
+          username: t.string,
+          password: t.string,
+        }),
+      ),
     }),
   ),
   t.null,
@@ -4194,16 +4195,22 @@ export const WebhookAuthConfigBasicAuth = t.union([
 
 export type WebhookAuthConfigToken = {
   type: 'ApiToken';
-  /** If the URL will allow for a token header, enter the token. */
-  apiToken: string;
+  config: {
+    /** If the URL will allow for a token header, enter the token. */
+    apiToken: string;
+  };
 } | null;
 
 export const WebhookAuthConfigToken = t.union([
   t.exact(
     t.type({
       type: t.literal('ApiToken'),
-      /** If the URL will allow for a token header, enter the token. */
-      apiToken: t.string,
+      config: t.exact(
+        t.type({
+          /** If the URL will allow for a token header, enter the token. */
+          apiToken: t.string,
+        }),
+      ),
     }),
   ),
   t.null,
@@ -4211,9 +4218,10 @@ export const WebhookAuthConfigToken = t.union([
 
 export type WebhookAuthConfigOAuth2 = {
   type: 'OAuth2';
-  /** The URL where we will get the oauth2 token from to use as a bearer token in the header */
-  tokenUrl: string;
-  /** If the URL will require oauth2 authentication, enter the necessary form entries and values for Aspen to be able to connect with your system. This should be passed as a JSON object with all the information required to be issued an authorization token via a standard oauth2 authentication token. As an example: ```
+  config: {
+    /** The URL where we will get the oauth2 token from to use as a bearer token in the header */
+    tokenUrl: string;
+    /** If the URL will require oauth2 authentication, enter the necessary form entries and values for Aspen to be able to connect with your system. This should be passed as a JSON object with all the information required to be issued an authorization token via a standard oauth2 authentication token. As an example: ```
 {
   "grant_type": "client_credentials",
   "client_id": "YOUR_CLIENT_ID",
@@ -4222,23 +4230,26 @@ export type WebhookAuthConfigOAuth2 = {
 }
 ```
  */
-  clientCredentials: string;
-  /** If the client credentials POSTed to the token URL returns an access_token, it will be stored for use by future calls. */
-  accessToken?: string | null;
-  /** If the client credentials POSTed to the token URL returns a refresh_token, it will be stored for use by future calls. */
-  refreshToken?: string | null;
-  expiresAt?: number | null;
-  tokenType?: string | null;
+    clientCredentials: string;
+    /** If the client credentials POSTed to the token URL returns an access_token, it will be stored for use by future calls. */
+    accessToken?: string | null;
+    /** If the client credentials POSTed to the token URL returns a refresh_token, it will be stored for use by future calls. */
+    refreshToken?: string | null;
+    expiresAt?: number | null;
+    tokenType?: string | null;
+  };
 } | null;
 
 export const WebhookAuthConfigOAuth2 = t.union([
   t.exact(
-    t.intersection([
-      t.type({
-        type: t.literal('OAuth2'),
-        /** The URL where we will get the oauth2 token from to use as a bearer token in the header */
-        tokenUrl: t.string,
-        /** If the URL will require oauth2 authentication, enter the necessary form entries and values for Aspen to be able to connect with your system. This should be passed as a JSON object with all the information required to be issued an authorization token via a standard oauth2 authentication token. As an example: ```
+    t.type({
+      type: t.literal('OAuth2'),
+      config: t.exact(
+        t.intersection([
+          t.type({
+            /** The URL where we will get the oauth2 token from to use as a bearer token in the header */
+            tokenUrl: t.string,
+            /** If the URL will require oauth2 authentication, enter the necessary form entries and values for Aspen to be able to connect with your system. This should be passed as a JSON object with all the information required to be issued an authorization token via a standard oauth2 authentication token. As an example: ```
 {
   "grant_type": "client_credentials",
   "client_id": "YOUR_CLIENT_ID",
@@ -4247,45 +4258,49 @@ export const WebhookAuthConfigOAuth2 = t.union([
 }
 ```
  */
-        clientCredentials: t.string,
-      }),
-      t.partial({
-        /** If the client credentials POSTed to the token URL returns an access_token, it will be stored for use by future calls. */
-        accessToken: t.union([t.string, t.null]),
-        /** If the client credentials POSTed to the token URL returns a refresh_token, it will be stored for use by future calls. */
-        refreshToken: t.union([t.string, t.null]),
-        expiresAt: t.union([t.number, t.null]),
-        tokenType: t.union([t.string, t.null]),
-      }),
-    ]),
+            clientCredentials: t.string,
+          }),
+          t.partial({
+            /** If the client credentials POSTed to the token URL returns an access_token, it will be stored for use by future calls. */
+            accessToken: t.union([t.string, t.null]),
+            /** If the client credentials POSTed to the token URL returns a refresh_token, it will be stored for use by future calls. */
+            refreshToken: t.union([t.string, t.null]),
+            expiresAt: t.union([t.number, t.null]),
+            tokenType: t.union([t.string, t.null]),
+          }),
+        ]),
+      ),
+    }),
   ),
   t.null,
 ]);
 
+export interface CustomHeader {
+  /** The name of the header */
+  header: string;
+  /** The value of the header */
+  value: string;
+}
+
+export const CustomHeader = t.exact(
+  t.type({
+    /** The name of the header */
+    header: t.string,
+    /** The value of the header */
+    value: t.string,
+  }),
+);
+
 export type WebhookAuthConfigCustomHeaders = {
   type: 'Headers';
-  headers: Array<{
-    /** The name of the header */
-    header: string;
-    /** The value of the header */
-    value: string;
-  }>;
+  config: Array<t.TypeOf<typeof CustomHeader>>;
 } | null;
 
 export const WebhookAuthConfigCustomHeaders = t.union([
   t.exact(
     t.type({
       type: t.literal('Headers'),
-      headers: t.array(
-        t.exact(
-          t.type({
-            /** The name of the header */
-            header: t.string,
-            /** The value of the header */
-            value: t.string,
-          }),
-        ),
-      ),
+      config: t.array(CustomHeader),
     }),
   ),
   t.null,
@@ -4304,41 +4319,63 @@ export const WebhookAuthConfig = t.union([
   WebhookAuthConfigCustomHeaders,
 ]);
 
-export interface WebhookUpsert {
-  id?: t.TypeOf<typeof UUIDFromString>;
-  name: string;
-  url: string;
+export interface EditWebhook {
+  id: t.TypeOf<typeof UUIDFromString>;
+  name: string | null;
+  url: string | null;
   secret?: string | null;
   isActive: boolean;
   authConfig: t.TypeOf<typeof WebhookAuthConfig> | null;
   events: Array<t.TypeOf<typeof NotificationEvents>>;
 }
 
-export const WebhookUpsert = t.exact(
+export const EditWebhook = t.exact(
   t.intersection([
     t.type({
-      name: t.string,
-      url: t.string,
+      id: UUIDFromString,
+      name: t.union([t.string, t.null]),
+      url: t.union([t.string, t.null]),
       isActive: t.boolean,
       authConfig: t.union([WebhookAuthConfig, t.null]),
       events: t.array(NotificationEvents),
     }),
     t.partial({
-      id: UUIDFromString,
       secret: t.union([t.string, t.null]),
     }),
   ]),
 );
 
-export interface WebhooksUpsert {
-  webhooks: Array<t.TypeOf<typeof WebhookUpsert>>;
+export type EditWebhooks = Array<t.TypeOf<typeof EditWebhook>>;
+
+export const EditWebhooks = t.array(EditWebhook);
+
+export type Webhook = t.TypeOf<typeof EditWebhook>;
+
+export const Webhook = EditWebhook;
+
+export type Webhooks = Array<t.TypeOf<typeof Webhook>>;
+
+export const Webhooks = t.array(Webhook);
+
+export interface CreateWebhook {
+  name: string;
+  events: Array<t.TypeOf<typeof NotificationEvents>>;
 }
 
-export const WebhooksUpsert = t.exact(
+export const CreateWebhook = t.exact(
   t.type({
-    webhooks: t.array(WebhookUpsert),
+    name: t.string,
+    events: t.array(NotificationEvents),
   }),
 );
+
+export type CreateWebhooks = Array<t.TypeOf<typeof CreateWebhook>>;
+
+export const CreateWebhooks = t.array(CreateWebhook);
+
+export type CreateWebhooksResponse = Array<t.TypeOf<typeof UUIDFromString>>;
+
+export const CreateWebhooksResponse = t.array(UUIDFromString);
 
 export const ChainTypeEnum = { mainnet: 'mainnet', testnet: 'testnet', local: 'local' } as const;
 export const MarketplaceEnum = { OPENSEA: 'opensea', BLUR: 'blur' } as const;
@@ -4519,10 +4556,14 @@ export const NotificationEventsEnum = {
   SUBSCRIPTION_EXTENDED: 'SUBSCRIPTION_EXTENDED',
   SUBSCRIPTION_EXPIRING: 'SUBSCRIPTION_EXPIRING',
   SUBSCRIPTION_EXPIRED: 'SUBSCRIPTION_EXPIRED',
-  REDEMPTION_NO_SHIPPING_NO_EMAIL: 'REDEMPTION_NO_SHIPPING_NO_EMAIL',
-  REDEMPTION_NO_SHIPPING_YES_EMAIL: 'REDEMPTION_NO_SHIPPING_YES_EMAIL',
-  REDEMPTION_YES_SHIPPING_YES_EMAIL: 'REDEMPTION_YES_SHIPPING_YES_EMAIL',
+  NFT_REDEMPTION: 'NFT_REDEMPTION',
   PASSWORD_RESET: 'PASSWORD_RESET',
+} as const;
+export const WebhookAuthConfigTypeEnum = {
+  BASIC: 'BasicAuth',
+  API_TOKEN: 'ApiToken',
+  OAUTH2: 'OAuth2',
+  HEADERS: 'Headers',
 } as const;
 /*API Path Metadata*/
 export const pathMeta = {
@@ -4531,7 +4572,7 @@ export const pathMeta = {
     url: '/ipfs',
     method: 'post',
     category: 'Ipfs',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: false,
     hasParams: false,
     hasBody: true,
@@ -4541,6 +4582,13 @@ export const pathMeta = {
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: t.record(t.string, t.unknown),
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        body: t.record(t.string, t.unknown),
+      }),
+    ),
     responseSchema: UploadIpfsFileResponse,
   },
   getOAS: {
@@ -4548,7 +4596,7 @@ export const pathMeta = {
     url: '/oas',
     method: 'get',
     category: 'Meta',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: false,
     hasParams: false,
     hasBody: false,
@@ -4558,6 +4606,9 @@ export const pathMeta = {
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(t.type({})),
     responseSchema: t.string,
   },
   getOwnedNftCollections: {
@@ -4565,7 +4616,7 @@ export const pathMeta = {
     url: '/nfts-collections-owned',
     method: 'get',
     category: 'NftCollections',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: true,
     hasParams: false,
     hasBody: false,
@@ -4574,12 +4625,24 @@ export const pathMeta = {
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.exact(
-      t.partial({
+      t.type({
         accountAddresses: t.string,
         chainIds: t.string,
       }),
     ),
     bodySchema: t.null,
+    queryParameters: new Set(['accountAddresses', 'chainIds']),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            accountAddresses: t.string,
+            chainIds: t.string,
+          }),
+        ),
+      }),
+    ),
     responseSchema: OwnedNftCollectionStorefronts,
   },
   getNftCollectionsByContract: {
@@ -4587,7 +4650,7 @@ export const pathMeta = {
     url: '/nfts-collections-by-contract',
     method: 'get',
     category: 'NftCollections',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: true,
     hasParams: false,
     hasBody: false,
@@ -4596,12 +4659,24 @@ export const pathMeta = {
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.exact(
-      t.partial({
+      t.type({
         chainId: ChainIdToString,
         contractAddress: Address,
       }),
     ),
     bodySchema: t.null,
+    queryParameters: new Set(['chainId', 'contractAddress']),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            chainId: ChainIdToString,
+            contractAddress: Address,
+          }),
+        ),
+      }),
+    ),
     responseSchema: NftCollectionStorefronts,
   },
   getNftDropOneTimePadStatus: {
@@ -4609,7 +4684,7 @@ export const pathMeta = {
     url: '/nft-drop/:storefrontId/:pad/status',
     method: 'get',
     category: 'NftDrop',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: false,
     hasParams: true,
     hasBody: false,
@@ -4624,6 +4699,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'pad']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            pad: t.string,
+          }),
+        ),
+      }),
+    ),
     responseSchema: OneTimePad,
   },
   redeemNftDropOneTimePad: {
@@ -4645,6 +4732,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: RedeemNftDropOneTimePadRequest,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+        body: RedeemNftDropOneTimePadRequest,
+      }),
+    ),
     responseSchema: OneTimePad,
   },
   getNftDropStorefronts: {
@@ -4662,6 +4761,9 @@ export const pathMeta = {
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(t.type({})),
     responseSchema: NftDropStorefrontListResponse,
   },
   getNftDropStorefrontPads: {
@@ -4688,6 +4790,23 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    queryParameters: new Set(['limit', 'offset']),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.intersection([
+            t.type({
+              storefrontId: UUIDFromString,
+            }),
+            t.partial({
+              limit: IntegerToString,
+              offset: IntegerToString,
+            }),
+          ]),
+        ),
+      }),
+    ),
     responseSchema: NftDropStorefrontPadsResponse,
   },
   downloadNftDropStorefrontCsv: {
@@ -4709,6 +4828,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.string,
   },
   downloadNftDropStorefrontQrCodes: {
@@ -4730,6 +4860,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.string,
   },
   generateOneTimePads: {
@@ -4751,6 +4892,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: GenerateOneTimePadsResponse,
   },
   sendRequestNftDropEmail: {
@@ -4773,6 +4925,19 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: SendRequestNftDropEmailRequest,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['chainId', 'contractAddress']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            chainId: ChainIdToString,
+            contractAddress: Address,
+          }),
+        ),
+        body: SendRequestNftDropEmailRequest,
+      }),
+    ),
     responseSchema: t.null,
   },
   getAccountNfts: {
@@ -4780,7 +4945,7 @@ export const pathMeta = {
     url: '/nfts-by-account',
     method: 'get',
     category: 'Nfts',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: true,
     hasParams: false,
     hasBody: false,
@@ -4789,17 +4954,50 @@ export const pathMeta = {
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.exact(
-      t.partial({
-        accountAddresses: t.string,
-        nftChainIds: t.string,
-        chainAddresses: t.string,
-        collectionIds: t.string,
-        verifiedOnly: BooleanToString,
-        limit: IntegerToString,
-        cursor: t.string,
-      }),
+      t.intersection([
+        t.type({
+          accountAddresses: t.string,
+        }),
+        t.partial({
+          nftChainIds: t.string,
+          chainAddresses: t.string,
+          collectionIds: t.string,
+          verifiedOnly: BooleanToString,
+          limit: IntegerToString,
+          cursor: t.string,
+        }),
+      ]),
     ),
     bodySchema: t.null,
+    queryParameters: new Set([
+      'accountAddresses',
+      'nftChainIds',
+      'chainAddresses',
+      'collectionIds',
+      'verifiedOnly',
+      'limit',
+      'cursor',
+    ]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.intersection([
+            t.type({
+              accountAddresses: t.string,
+            }),
+            t.partial({
+              nftChainIds: t.string,
+              chainAddresses: t.string,
+              collectionIds: t.string,
+              verifiedOnly: BooleanToString,
+              limit: IntegerToString,
+              cursor: t.string,
+            }),
+          ]),
+        ),
+      }),
+    ),
     responseSchema: GetUserNftsResponse,
   },
   getNftsByContract: {
@@ -4807,7 +5005,7 @@ export const pathMeta = {
     url: '/:chainId/nfts/:contractAddress',
     method: 'get',
     category: 'Nfts',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: true,
     hasParams: true,
     hasBody: false,
@@ -4827,6 +5025,24 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    queryParameters: new Set(['limit', 'cursor']),
+    pathParameters: new Set(['chainId', 'contractAddress']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.intersection([
+            t.type({
+              chainId: ChainIdToString,
+              contractAddress: Address,
+            }),
+            t.partial({
+              limit: IntegerToString,
+              cursor: t.string,
+            }),
+          ]),
+        ),
+      }),
+    ),
     responseSchema: GetNftsResponse,
   },
   getNft: {
@@ -4834,7 +5050,7 @@ export const pathMeta = {
     url: '/:chainId/nfts/:contractAddress/:tokenId',
     method: 'get',
     category: 'Nfts',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: false,
     hasParams: true,
     hasBody: false,
@@ -4850,6 +5066,19 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['chainId', 'contractAddress', 'tokenId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            chainId: ChainIdToString,
+            contractAddress: Address,
+            tokenId: t.string,
+          }),
+        ),
+      }),
+    ),
     responseSchema: GetNftResponse,
   },
   getAdjacentNfts: {
@@ -4857,7 +5086,7 @@ export const pathMeta = {
     url: '/:chainId/nfts/:contractAddress/:tokenId/adjacent',
     method: 'get',
     category: 'Nfts',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: false,
     hasParams: true,
     hasBody: false,
@@ -4873,6 +5102,19 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['chainId', 'contractAddress', 'tokenId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            chainId: ChainIdToString,
+            contractAddress: Address,
+            tokenId: t.string,
+          }),
+        ),
+      }),
+    ),
     responseSchema: GetAdjacentNftsResponse,
   },
   refreshContractNftsMetadata: {
@@ -4880,7 +5122,7 @@ export const pathMeta = {
     url: '/:chainId/metadata/:contractAddress/refresh-collection',
     method: 'get',
     category: 'Nfts',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: false,
     hasParams: true,
     hasBody: false,
@@ -4895,6 +5137,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['chainId', 'contractAddress']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            chainId: ChainIdToString,
+            contractAddress: Address,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   refreshNftMetadata: {
@@ -4902,7 +5156,7 @@ export const pathMeta = {
     url: '/:chainId/metadata/:contractAddress/refresh-token/:tokenId',
     method: 'get',
     category: 'Nfts',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: false,
     hasParams: true,
     hasBody: false,
@@ -4918,6 +5172,19 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['chainId', 'contractAddress', 'tokenId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            chainId: ChainIdToString,
+            contractAddress: Address,
+            tokenId: t.string,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   getNftEvents: {
@@ -4925,7 +5192,7 @@ export const pathMeta = {
     url: '/:chainId/nfts/:contractAddress/:tokenId/events',
     method: 'get',
     category: 'Nfts',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: false,
     hasParams: true,
     hasBody: false,
@@ -4941,6 +5208,19 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['chainId', 'contractAddress', 'tokenId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            chainId: ChainIdToString,
+            contractAddress: Address,
+            tokenId: t.string,
+          }),
+        ),
+      }),
+    ),
     responseSchema: GetNftEventsResponse,
   },
   getNftsByTokenList: {
@@ -4948,7 +5228,7 @@ export const pathMeta = {
     url: '/nfts-by-token-list',
     method: 'post',
     category: 'Nfts',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: false,
     hasParams: false,
     hasBody: true,
@@ -4958,6 +5238,13 @@ export const pathMeta = {
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: GetNftsByTokenListRequest,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        body: GetNftsByTokenListRequest,
+      }),
+    ),
     responseSchema: GetNftsByTokenListResponse,
   },
   getOrganizationsForUser: {
@@ -4975,6 +5262,9 @@ export const pathMeta = {
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(t.type({})),
     responseSchema: Organizations,
   },
   createOrganization: {
@@ -4992,6 +5282,13 @@ export const pathMeta = {
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: Organization,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        body: Organization,
+      }),
+    ),
     responseSchema: Organization,
   },
   getOrganization: {
@@ -5013,6 +5310,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: GetOrganizationRequest,
   },
   updateOrganizationInformation: {
@@ -5034,6 +5342,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: CreatorInformation,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+        body: CreatorInformation,
+      }),
+    ),
     responseSchema: t.null,
   },
   removeOrganization: {
@@ -5055,6 +5375,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   updateOrganizationName: {
@@ -5076,6 +5407,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: UpdateOrganizationNameRequest,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+        body: UpdateOrganizationNameRequest,
+      }),
+    ),
     responseSchema: t.null,
   },
   inviteUserToOrganization: {
@@ -5097,6 +5440,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: Invitation,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+        body: Invitation,
+      }),
+    ),
     responseSchema: Invitation,
   },
   acceptInvitationToOrganization: {
@@ -5119,6 +5474,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId', 'inviteId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+            inviteId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   removeInvitationFromOrganization: {
@@ -5141,6 +5508,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId', 'inviteId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+            inviteId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   getUserInvitesForOrganizations: {
@@ -5158,6 +5537,9 @@ export const pathMeta = {
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(t.type({})),
     responseSchema: UserInvitations,
   },
   updateUserRoleForOrganization: {
@@ -5180,6 +5562,19 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: MemberInformation,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId', 'userId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+            userId: UUIDFromString,
+          }),
+        ),
+        body: MemberInformation,
+      }),
+    ),
     responseSchema: t.null,
   },
   removeUserFromOrganization: {
@@ -5202,6 +5597,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId', 'userId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+            userId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   getWebhooksForOrganization: {
@@ -5223,28 +5630,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
-    responseSchema: WebhooksUpsert,
-  },
-  updateWebhooks: {
-    operationId: 'updateWebhooks',
-    url: '/storefronts/organizations/:organizationId/webhooks',
-    method: 'put',
-    category: 'Webhooks',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
-    hasQuery: false,
-    hasParams: true,
-    hasBody: true,
-    isBodyFormData: false,
-    hasResponse: true,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
       t.type({
-        organizationId: UUIDFromString,
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
       }),
     ),
-    querySchema: t.null,
-    bodySchema: WebhooksUpsert,
-    responseSchema: WebhooksUpsert,
+    responseSchema: Webhooks,
   },
   createWebhooksForOrganization: {
     operationId: 'createWebhooksForOrganization',
@@ -5264,8 +5661,44 @@ export const pathMeta = {
       }),
     ),
     querySchema: t.null,
-    bodySchema: WebhooksUpsert,
-    responseSchema: WebhooksUpsert,
+    bodySchema: CreateWebhooks,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+        body: CreateWebhooks,
+      }),
+    ),
+    responseSchema: CreateWebhooksResponse,
+  },
+  updateWebhooks: {
+    operationId: 'updateWebhooks',
+    url: '/storefronts/organizations/:organizationId/webhooks',
+    method: 'put',
+    category: 'Webhooks',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: false,
+    hasBody: true,
+    isBodyFormData: false,
+    hasResponse: true,
+    hasBinaryResponse: false,
+    paramsSchema: t.null,
+    querySchema: t.null,
+    bodySchema: EditWebhooks,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        body: EditWebhooks,
+      }),
+    ),
+    responseSchema: EditWebhooks,
   },
   deleteWebhooksForOrganization: {
     operationId: 'deleteWebhooksForOrganization',
@@ -5286,11 +5719,22 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   getWebhook: {
     operationId: 'getWebhook',
-    url: '/storefronts/organizations/:organizationId/webhooks/:webhookId',
+    url: '/storefronts/organizations/webhooks/:webhookId',
     method: 'get',
     category: 'Webhooks',
     security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
@@ -5303,16 +5747,26 @@ export const pathMeta = {
     paramsSchema: t.exact(
       t.type({
         webhookId: UUIDFromString,
-        organizationId: UUIDFromString,
       }),
     ),
     querySchema: t.null,
     bodySchema: t.null,
-    responseSchema: WebhookUpsert,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['webhookId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            webhookId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
+    responseSchema: Webhook,
   },
   updateWebhook: {
     operationId: 'updateWebhook',
-    url: '/storefronts/organizations/:organizationId/webhooks/:webhookId',
+    url: '/storefronts/organizations/webhooks/:webhookId',
     method: 'put',
     category: 'Webhooks',
     security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
@@ -5325,16 +5779,27 @@ export const pathMeta = {
     paramsSchema: t.exact(
       t.type({
         webhookId: UUIDFromString,
-        organizationId: UUIDFromString,
       }),
     ),
     querySchema: t.null,
-    bodySchema: WebhookUpsert,
-    responseSchema: WebhookUpsert,
+    bodySchema: EditWebhook,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['webhookId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            webhookId: UUIDFromString,
+          }),
+        ),
+        body: EditWebhook,
+      }),
+    ),
+    responseSchema: EditWebhook,
   },
   deleteWebhook: {
     operationId: 'deleteWebhook',
-    url: '/storefronts/organizations/:organizationId/webhooks/:webhookId',
+    url: '/storefronts/organizations/webhooks/:webhookId',
     method: 'delete',
     category: 'Webhooks',
     security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
@@ -5347,16 +5812,26 @@ export const pathMeta = {
     paramsSchema: t.exact(
       t.type({
         webhookId: UUIDFromString,
-        organizationId: UUIDFromString,
       }),
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['webhookId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            webhookId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   activateWebhook: {
     operationId: 'activateWebhook',
-    url: '/storefronts/organizations/:organizationId/webhooks/:webhookId/activate',
+    url: '/storefronts/organizations/webhooks/:webhookId/activate',
     method: 'put',
     category: 'Webhooks',
     security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
@@ -5369,16 +5844,26 @@ export const pathMeta = {
     paramsSchema: t.exact(
       t.type({
         webhookId: UUIDFromString,
-        organizationId: UUIDFromString,
       }),
     ),
     querySchema: t.null,
     bodySchema: t.null,
-    responseSchema: WebhookUpsert,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['webhookId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            webhookId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
+    responseSchema: Webhook,
   },
   deactivateWebhook: {
     operationId: 'deactivateWebhook',
-    url: '/storefronts/organizations/:organizationId/webhooks/:webhookId/deactivate',
+    url: '/storefronts/organizations/webhooks/:webhookId/deactivate',
     method: 'put',
     category: 'Webhooks',
     security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
@@ -5391,12 +5876,22 @@ export const pathMeta = {
     paramsSchema: t.exact(
       t.type({
         webhookId: UUIDFromString,
-        organizationId: UUIDFromString,
       }),
     ),
     querySchema: t.null,
     bodySchema: t.null,
-    responseSchema: WebhookUpsert,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['webhookId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            webhookId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
+    responseSchema: Webhook,
   },
   createPhaseset: {
     operationId: 'createPhaseset',
@@ -5417,6 +5912,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditPhaseset,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+        body: EditPhaseset,
+      }),
+    ),
     responseSchema: Phaseset,
   },
   getPhaseset: {
@@ -5439,6 +5946,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'phasesetId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            phasesetId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: Phaseset,
   },
   updatePhaseset: {
@@ -5461,6 +5980,19 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditPhaseset,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'phasesetId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            phasesetId: UUIDFromString,
+          }),
+        ),
+        body: EditPhaseset,
+      }),
+    ),
     responseSchema: Phaseset,
   },
   removePhaseset: {
@@ -5483,6 +6015,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'phasesetId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            phasesetId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   createAllowlist: {
@@ -5504,6 +6048,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditAllowlist,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+        body: EditAllowlist,
+      }),
+    ),
     responseSchema: Allowlist,
   },
   getAllowlist: {
@@ -5526,6 +6082,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'allowlistId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            allowlistId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: Allowlist,
   },
   updateAllowlist: {
@@ -5548,6 +6116,19 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditAllowlist,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'allowlistId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            allowlistId: UUIDFromString,
+          }),
+        ),
+        body: EditAllowlist,
+      }),
+    ),
     responseSchema: Allowlist,
   },
   removeAllowlist: {
@@ -5570,6 +6151,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'allowlistId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            allowlistId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   publishPhaseset: {
@@ -5591,6 +6184,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   getClaimProofs: {
@@ -5618,6 +6222,24 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    queryParameters: new Set(['phaseStartTimestamp', 'tokenIndex']),
+    pathParameters: new Set(['storefrontId', 'address']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.intersection([
+            t.type({
+              storefrontId: UUIDFromString,
+              address: Address,
+            }),
+            t.partial({
+              phaseStartTimestamp: DateFromISODateString,
+              tokenIndex: UInt256ToString,
+            }),
+          ]),
+        ),
+      }),
+    ),
     responseSchema: ClaimProofForAddress,
   },
   isAllowlisted: {
@@ -5625,7 +6247,7 @@ export const pathMeta = {
     url: '/storefronts/:storefrontId/allowlisted/:address',
     method: 'get',
     category: 'Storefronts',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: true,
     hasParams: true,
     hasBody: false,
@@ -5646,6 +6268,25 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    queryParameters: new Set(['tokenIndex', 'phaseStartTimestamp', 'amount']),
+    pathParameters: new Set(['storefrontId', 'address']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.intersection([
+            t.type({
+              storefrontId: UUIDFromString,
+              address: Address,
+            }),
+            t.partial({
+              tokenIndex: UInt256ToString,
+              phaseStartTimestamp: DateFromISODateString,
+              amount: UInt256ToString,
+            }),
+          ]),
+        ),
+      }),
+    ),
     responseSchema: Listed,
   },
   proxyGet: {
@@ -5653,7 +6294,7 @@ export const pathMeta = {
     url: '/proxy-get',
     method: 'get',
     category: 'Proxy',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: true,
     hasParams: false,
     hasBody: false,
@@ -5662,11 +6303,22 @@ export const pathMeta = {
     hasBinaryResponse: true,
     paramsSchema: t.null,
     querySchema: t.exact(
-      t.partial({
+      t.type({
         url: t.string,
       }),
     ),
     bodySchema: t.null,
+    queryParameters: new Set(['url']),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            url: t.string,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.string,
   },
   proxyHead: {
@@ -5674,7 +6326,7 @@ export const pathMeta = {
     url: '/proxy-head',
     method: 'get',
     category: 'Proxy',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: true,
     hasParams: false,
     hasBody: false,
@@ -5683,11 +6335,22 @@ export const pathMeta = {
     hasBinaryResponse: true,
     paramsSchema: t.null,
     querySchema: t.exact(
-      t.partial({
+      t.type({
         url: t.string,
       }),
     ),
     bodySchema: t.null,
+    queryParameters: new Set(['url']),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            url: t.string,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.string,
   },
   getRelayPoolInfo: {
@@ -5709,6 +6372,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: RelayPool,
   },
   getAllTransactions: {
@@ -5730,6 +6404,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: RelayedTransactions,
   },
   createTransaction: {
@@ -5751,6 +6436,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: TransactionRelay,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+        body: TransactionRelay,
+      }),
+    ),
     responseSchema: RelayedTransaction,
   },
   getTransaction: {
@@ -5773,6 +6470,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId', 'transactionId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+            transactionId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: RelayedTransaction,
   },
   getAllIssuances: {
@@ -5794,6 +6503,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: IssuedTokens,
   },
   createIssuance: {
@@ -5815,6 +6535,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: TokenIssuance,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+        body: TokenIssuance,
+      }),
+    ),
     responseSchema: IssuedToken,
   },
   getIssuance: {
@@ -5837,6 +6569,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId', 'issuanceId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+            issuanceId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: IssuedToken,
   },
   claimCollection: {
@@ -5854,6 +6598,13 @@ export const pathMeta = {
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: ClaimProofForCollection,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        body: ClaimProofForCollection,
+      }),
+    ),
     responseSchema: ClaimProofForCollectionResponse,
   },
   raiseClaimInvoice: {
@@ -5875,6 +6626,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: RaiseClaimInvoiceBody,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+        body: RaiseClaimInvoiceBody,
+      }),
+    ),
     responseSchema: RaiseClaimInvoiceResponse,
   },
   triggerImport: {
@@ -5896,6 +6659,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: BeehiveJob,
   },
   claimCollectionStatus: {
@@ -5917,6 +6691,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: ClaimCollectionStatusResponse,
   },
   getClaimCollectionTerms: {
@@ -5938,6 +6723,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: ClaimCollectionTermsStatus,
   },
   acceptClaimCollectionTerms: {
@@ -5959,7 +6755,43 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: AcceptClaimCollectionTermsResponse,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+        body: AcceptClaimCollectionTermsResponse,
+      }),
+    ),
     responseSchema: t.null,
+  },
+  createStorefront: {
+    operationId: 'createStorefront',
+    url: '/storefronts/storefront',
+    method: 'post',
+    category: 'Storefronts',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: false,
+    hasBody: true,
+    isBodyFormData: false,
+    hasResponse: true,
+    hasBinaryResponse: false,
+    paramsSchema: t.null,
+    querySchema: t.null,
+    bodySchema: CreateStorefront,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        body: CreateStorefront,
+      }),
+    ),
+    responseSchema: Storefront,
   },
   getStorefronts: {
     operationId: 'getStorefronts',
@@ -5983,31 +6815,28 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    queryParameters: new Set(['organizationId', 'isDeployed', 'limit', 'offset']),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.partial({
+            organizationId: UUIDFromString,
+            isDeployed: BooleanToString,
+            limit: IntegerToString,
+            offset: IntegerToString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: Storefronts,
-  },
-  createStorefront: {
-    operationId: 'createStorefront',
-    url: '/storefronts/storefront',
-    method: 'post',
-    category: 'Storefronts',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
-    hasQuery: false,
-    hasParams: false,
-    hasBody: true,
-    isBodyFormData: false,
-    hasResponse: true,
-    hasBinaryResponse: false,
-    paramsSchema: t.null,
-    querySchema: t.null,
-    bodySchema: CreateStorefront,
-    responseSchema: Storefront,
   },
   getFeaturedStorefronts: {
     operationId: 'getFeaturedStorefronts',
     url: '/storefronts/storefront/featured',
     method: 'get',
     category: 'Storefronts',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: false,
     hasParams: false,
     hasBody: false,
@@ -6017,6 +6846,9 @@ export const pathMeta = {
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(t.type({})),
     responseSchema: FeaturedStorefronts,
   },
   getStorefrontMemberships: {
@@ -6033,12 +6865,24 @@ export const pathMeta = {
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.exact(
-      t.partial({
+      t.type({
         accountAddresses: t.string,
         chainIds: t.string,
       }),
     ),
     bodySchema: t.null,
+    queryParameters: new Set(['accountAddresses', 'chainIds']),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            accountAddresses: t.string,
+            chainIds: t.string,
+          }),
+        ),
+      }),
+    ),
     responseSchema: Storefronts,
   },
   updateStorefrontOrganizationId: {
@@ -6061,6 +6905,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            organizationId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   updateStorefrontSlug: {
@@ -6083,6 +6939,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'slug']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            slug: t.string,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   getStorefront: {
@@ -6104,27 +6972,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
-    responseSchema: Storefront,
-  },
-  updateStorefront: {
-    operationId: 'updateStorefront',
-    url: '/storefronts/storefront/:storefrontId',
-    method: 'put',
-    category: 'Storefronts',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
-    hasQuery: false,
-    hasParams: true,
-    hasBody: true,
-    isBodyFormData: false,
-    hasResponse: true,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
       t.type({
-        storefrontId: UUIDFromString,
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
       }),
     ),
-    querySchema: t.null,
-    bodySchema: EditStorefront,
     responseSchema: Storefront,
   },
   patchStorefront: {
@@ -6146,6 +7004,51 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: PatchStorefront,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+        body: PatchStorefront,
+      }),
+    ),
+    responseSchema: Storefront,
+  },
+  updateStorefront: {
+    operationId: 'updateStorefront',
+    url: '/storefronts/storefront/:storefrontId',
+    method: 'put',
+    category: 'Storefronts',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: true,
+    isBodyFormData: false,
+    hasResponse: true,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        storefrontId: UUIDFromString,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: EditStorefront,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+        body: EditStorefront,
+      }),
+    ),
     responseSchema: Storefront,
   },
   removeStorefront: {
@@ -6167,6 +7070,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   getStorefrontPublic: {
@@ -6188,6 +7102,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: t.string,
+          }),
+        ),
+      }),
+    ),
     responseSchema: PublicStorefront,
   },
   getStorefrontPublicChainIdAndAddress: {
@@ -6210,6 +7135,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['chainId', 'address']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            chainId: ChainIdToString,
+            address: Address,
+          }),
+        ),
+      }),
+    ),
     responseSchema: PublicStorefront,
   },
   getStorefrontChainIdAndAddress: {
@@ -6232,6 +7169,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['chainId', 'address']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            chainId: ChainIdToString,
+            address: Address,
+          }),
+        ),
+      }),
+    ),
     responseSchema: Storefront,
   },
   uploadStorefrontFile: {
@@ -6253,6 +7202,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.record(t.string, t.unknown),
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+        body: t.record(t.string, t.unknown),
+      }),
+    ),
     responseSchema: UploadedStorefrontFileResponse,
   },
   logStorefrontChainModification: {
@@ -6274,6 +7235,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: CollectionHistoryEntry,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+        body: CollectionHistoryEntry,
+      }),
+    ),
     responseSchema: t.null,
   },
   getBaseCollectionInfo: {
@@ -6281,7 +7254,7 @@ export const pathMeta = {
     url: '/storefronts/base/:chainId/:contractAddress/info',
     method: 'get',
     category: 'Storefronts',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: false,
     hasParams: true,
     hasBody: false,
@@ -6296,6 +7269,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['chainId', 'contractAddress']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            chainId: ChainIdToString,
+            contractAddress: Address,
+          }),
+        ),
+      }),
+    ),
     responseSchema: BaseCollectionInfo,
   },
   getAllRoyaltiesStats: {
@@ -6317,6 +7302,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: RoyaltiesStats,
   },
   getContractRoyaltiesStats: {
@@ -6344,6 +7340,24 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    queryParameters: new Set(['bps', 'recipient']),
+    pathParameters: new Set(['chainId', 'contractAddress']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.intersection([
+            t.type({
+              chainId: ChainIdToString,
+              contractAddress: Address,
+            }),
+            t.partial({
+              bps: IntegerToString,
+              recipient: Address,
+            }),
+          ]),
+        ),
+      }),
+    ),
     responseSchema: ContractRoyaltiesStats,
   },
   downloadRoyaltiesReport: {
@@ -6365,6 +7379,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.string,
   },
   getSubscriptionsByOrganization: {
@@ -6386,28 +7411,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
-    responseSchema: SubscriptionsWithStorefrontData,
-  },
-  getSubscriptionsByStorefront: {
-    operationId: 'getSubscriptionsByStorefront',
-    url: '/subscriptions/storefront/:storefrontId',
-    method: 'get',
-    category: 'Subscription',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
-    hasQuery: false,
-    hasParams: true,
-    hasBody: false,
-    isBodyFormData: false,
-    hasResponse: true,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
       t.type({
-        storefrontId: UUIDFromString,
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
       }),
     ),
-    querySchema: t.null,
-    bodySchema: t.null,
-    responseSchema: Subscriptions,
+    responseSchema: SubscriptionsWithStorefrontData,
   },
   createSubscription: {
     operationId: 'createSubscription',
@@ -6428,7 +7443,51 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: CreateSubscriptionBody,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+        body: CreateSubscriptionBody,
+      }),
+    ),
     responseSchema: Subscription,
+  },
+  getSubscriptionsByStorefront: {
+    operationId: 'getSubscriptionsByStorefront',
+    url: '/subscriptions/storefront/:storefrontId',
+    method: 'get',
+    category: 'Subscription',
+    security: [],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: false,
+    isBodyFormData: false,
+    hasResponse: true,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        storefrontId: UUIDFromString,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
+    responseSchema: Subscriptions,
   },
   userSatisfiesSubscriptionRequirements: {
     operationId: 'userSatisfiesSubscriptionRequirements',
@@ -6449,6 +7508,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['subscriptionId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            subscriptionId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: UserSatisfiesSubscriptionRequirementsResponse,
   },
   getSubscription: {
@@ -6470,6 +7540,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['subscriptionId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            subscriptionId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: Subscription,
   },
   updateSubscription: {
@@ -6492,6 +7573,19 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditSubscription,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['subscriptionId', 'storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            subscriptionId: UUIDFromString,
+            storefrontId: UUIDFromString,
+          }),
+        ),
+        body: EditSubscription,
+      }),
+    ),
     responseSchema: Subscription,
   },
   deleteSubscription: {
@@ -6513,6 +7607,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['subscriptionId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            subscriptionId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   getSubscriptionSubscriber: {
@@ -6538,6 +7643,22 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    queryParameters: new Set(['service']),
+    pathParameters: new Set(['subscriptionId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.intersection([
+            t.type({
+              subscriptionId: UUIDFromString,
+            }),
+            t.partial({
+              service: t.string,
+            }),
+          ]),
+        ),
+      }),
+    ),
     responseSchema: GetSubscriptionSubscriberResponse,
   },
   getPaymentsForSubscription: {
@@ -6559,6 +7680,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['subscriptionId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            subscriptionId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: GetSubscriptionPaymentsResponse,
   },
   getSubscriptionCoupons: {
@@ -6580,6 +7712,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['subscriptionId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            subscriptionId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: GetSubscriptionCouponsResponse,
   },
   createSubscriptionCoupon: {
@@ -6601,6 +7744,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: CreateSubscriptionCouponBody,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['subscriptionId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            subscriptionId: UUIDFromString,
+          }),
+        ),
+        body: CreateSubscriptionCouponBody,
+      }),
+    ),
     responseSchema: t.null,
   },
   getSubscriptionCouponByName: {
@@ -6623,6 +7778,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['subscriptionId', 'couponName']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            subscriptionId: UUIDFromString,
+            couponName: t.string,
+          }),
+        ),
+      }),
+    ),
     responseSchema: SubscriptionCouponDefinition,
   },
   deleteSubscriptionCoupon: {
@@ -6645,28 +7812,19 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
-    responseSchema: t.null,
-  },
-  getVoucherCampaigns: {
-    operationId: 'getVoucherCampaigns',
-    url: '/subscriptions/:subscriptionId/voucher-campaigns',
-    method: 'get',
-    category: 'Subscription',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
-    hasQuery: false,
-    hasParams: true,
-    hasBody: false,
-    isBodyFormData: false,
-    hasResponse: true,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
+    queryParameters: new Set([]),
+    pathParameters: new Set(['subscriptionId', 'couponId']),
+    requestSchema: t.exact(
       t.type({
-        subscriptionId: UUIDFromString,
+        parameters: t.exact(
+          t.type({
+            subscriptionId: UUIDFromString,
+            couponId: UUIDFromString,
+          }),
+        ),
       }),
     ),
-    querySchema: t.null,
-    bodySchema: t.null,
-    responseSchema: VoucherCampaigns,
+    responseSchema: t.null,
   },
   createVoucherCampaign: {
     operationId: 'createVoucherCampaign',
@@ -6687,7 +7845,51 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: CreateVoucherCampaignBody,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['subscriptionId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            subscriptionId: UUIDFromString,
+          }),
+        ),
+        body: CreateVoucherCampaignBody,
+      }),
+    ),
     responseSchema: VoucherCampaign,
+  },
+  getVoucherCampaigns: {
+    operationId: 'getVoucherCampaigns',
+    url: '/subscriptions/:subscriptionId/voucher-campaigns',
+    method: 'get',
+    category: 'Subscription',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: false,
+    isBodyFormData: false,
+    hasResponse: true,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        subscriptionId: UUIDFromString,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['subscriptionId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            subscriptionId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
+    responseSchema: VoucherCampaigns,
   },
   redeemSubscriptionVoucher: {
     operationId: 'redeemSubscriptionVoucher',
@@ -6709,6 +7911,19 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: RedeemSubscriptionVoucherBody,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['subscriptionId', 'voucherId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            subscriptionId: UUIDFromString,
+            voucherId: UUIDFromString,
+          }),
+        ),
+        body: RedeemSubscriptionVoucherBody,
+      }),
+    ),
     responseSchema: RedeemSubscriptionVoucherResponse,
   },
   raiseSubscriptionInvoice: {
@@ -6730,6 +7945,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: RaiseSubscriptionInvoiceBody,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['subscriptionId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            subscriptionId: UUIDFromString,
+          }),
+        ),
+        body: RaiseSubscriptionInvoiceBody,
+      }),
+    ),
     responseSchema: RaiseSubscriptionInvoiceResponse,
   },
   setSubscriptionReleaseStatus: {
@@ -6751,6 +7978,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: SetSubscriptionReleaseStatusBody,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['subscriptionId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            subscriptionId: UUIDFromString,
+          }),
+        ),
+        body: SetSubscriptionReleaseStatusBody,
+      }),
+    ),
     responseSchema: t.null,
   },
   updateVoucherCampaign: {
@@ -6772,6 +8011,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditVoucherCampaign,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['voucherCampaignId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            voucherCampaignId: UUIDFromString,
+          }),
+        ),
+        body: EditVoucherCampaign,
+      }),
+    ),
     responseSchema: VoucherCampaign,
   },
   getVouchers: {
@@ -6798,6 +8049,23 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    queryParameters: new Set(['limit', 'offset']),
+    pathParameters: new Set(['voucherCampaignId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.intersection([
+            t.type({
+              voucherCampaignId: UUIDFromString,
+            }),
+            t.partial({
+              limit: IntegerToString,
+              offset: IntegerToString,
+            }),
+          ]),
+        ),
+      }),
+    ),
     responseSchema: Vouchers,
   },
   createTokenset: {
@@ -6819,6 +8087,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: Tokenset,
   },
   archiveStorefrontDraftTokenset: {
@@ -6840,6 +8119,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: Tokenset,
   },
   getTokenset: {
@@ -6862,6 +8152,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'tokensetId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            tokensetId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: Tokenset,
   },
   removeTokenset: {
@@ -6884,29 +8186,19 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
-    responseSchema: t.null,
-  },
-  getTokensetPlaceholder: {
-    operationId: 'getTokensetPlaceholder',
-    url: '/storefronts/:storefrontId/tokenset/:tokensetId/placeholder',
-    method: 'get',
-    category: 'Storefronts',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
-    hasQuery: false,
-    hasParams: true,
-    hasBody: false,
-    isBodyFormData: false,
-    hasResponse: true,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'tokensetId']),
+    requestSchema: t.exact(
       t.type({
-        storefrontId: UUIDFromString,
-        tokensetId: UUIDFromString,
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            tokensetId: UUIDFromString,
+          }),
+        ),
       }),
     ),
-    querySchema: t.null,
-    bodySchema: t.null,
-    responseSchema: GetTokensetPlaceholderResponse,
+    responseSchema: t.null,
   },
   createOrUpdateTokensetPlaceholder: {
     operationId: 'createOrUpdateTokensetPlaceholder',
@@ -6928,7 +8220,54 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: CreateOrUpdateTokenDefinitionRequest,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'tokensetId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            tokensetId: UUIDFromString,
+          }),
+        ),
+        body: CreateOrUpdateTokenDefinitionRequest,
+      }),
+    ),
     responseSchema: TokenDefinition,
+  },
+  getTokensetPlaceholder: {
+    operationId: 'getTokensetPlaceholder',
+    url: '/storefronts/:storefrontId/tokenset/:tokensetId/placeholder',
+    method: 'get',
+    category: 'Storefronts',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: false,
+    isBodyFormData: false,
+    hasResponse: true,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        storefrontId: UUIDFromString,
+        tokensetId: UUIDFromString,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'tokensetId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            tokensetId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
+    responseSchema: GetTokensetPlaceholderResponse,
   },
   removeTokensetPlaceholder: {
     operationId: 'removeTokensetPlaceholder',
@@ -6950,6 +8289,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'tokensetId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            tokensetId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   createOrUpdateToken: {
@@ -6972,6 +8323,19 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditTokenDefinition,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'tokensetId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            tokensetId: UUIDFromString,
+          }),
+        ),
+        body: EditTokenDefinition,
+      }),
+    ),
     responseSchema: TokenDefinition,
   },
   getToken: {
@@ -6995,6 +8359,19 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'tokensetId', 'tokenId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            tokensetId: UUIDFromString,
+            tokenId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: TokenDefinition,
   },
   removeToken: {
@@ -7018,6 +8395,19 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'tokensetId', 'tokenId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            tokensetId: UUIDFromString,
+            tokenId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   getTokens: {
@@ -7045,6 +8435,24 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    queryParameters: new Set(['limit', 'offset']),
+    pathParameters: new Set(['storefrontId', 'tokensetId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.intersection([
+            t.type({
+              storefrontId: UUIDFromString,
+              tokensetId: UUIDFromString,
+            }),
+            t.partial({
+              limit: IntegerToString,
+              offset: IntegerToString,
+            }),
+          ]),
+        ),
+      }),
+    ),
     responseSchema: GetTokensResponse,
   },
   finalizeTokenset: {
@@ -7067,6 +8475,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'tokensetId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            tokensetId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: BeehiveJob,
   },
   publishTokenset: {
@@ -7088,6 +8508,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   checkJobStatus: {
@@ -7110,6 +8541,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['routingTag', 'requestId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            routingTag: BeehiveRoutingTag,
+            requestId: t.string,
+          }),
+        ),
+      }),
+    ),
     responseSchema: BeehiveJob,
   },
   getUserNfts: {
@@ -7126,16 +8569,40 @@ export const pathMeta = {
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.exact(
-      t.partial({
-        chainId: ChainIdToString,
-        chainAddresses: t.string,
-        collectionIds: t.string,
-        limit: IntegerToString,
-        cursor: t.string,
-        verifiedOnly: BooleanToString,
-      }),
+      t.intersection([
+        t.type({
+          chainId: ChainIdToString,
+        }),
+        t.partial({
+          chainAddresses: t.string,
+          collectionIds: t.string,
+          limit: IntegerToString,
+          cursor: t.string,
+          verifiedOnly: BooleanToString,
+        }),
+      ]),
     ),
     bodySchema: t.null,
+    queryParameters: new Set(['chainId', 'chainAddresses', 'collectionIds', 'limit', 'cursor', 'verifiedOnly']),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.intersection([
+            t.type({
+              chainId: ChainIdToString,
+            }),
+            t.partial({
+              chainAddresses: t.string,
+              collectionIds: t.string,
+              limit: IntegerToString,
+              cursor: t.string,
+              verifiedOnly: BooleanToString,
+            }),
+          ]),
+        ),
+      }),
+    ),
     responseSchema: GetUserNftsResponse,
   },
   getUserPortfolioNfts: {
@@ -7163,6 +8630,24 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    queryParameters: new Set(['limit', 'cursor']),
+    pathParameters: new Set(['chainId', 'contractAddress']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.intersection([
+            t.type({
+              chainId: ChainIdToString,
+              contractAddress: Address,
+            }),
+            t.partial({
+              limit: IntegerToString,
+              cursor: t.string,
+            }),
+          ]),
+        ),
+      }),
+    ),
     responseSchema: GetUserPortfolioNftsResponse,
   },
   refreshUserNftMetadata: {
@@ -7184,6 +8669,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['chainId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            chainId: ChainIdToString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   removeUserProfile: {
@@ -7201,6 +8697,9 @@ export const pathMeta = {
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(t.type({})),
     responseSchema: t.null,
   },
   getContractRoyaltiesInfo: {
@@ -7223,6 +8722,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['chainId', 'contractAddress']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            chainId: ChainIdToString,
+            contractAddress: Address,
+          }),
+        ),
+      }),
+    ),
     responseSchema: RoyaltyRules,
   },
   createRoyaltiesAppeal: {
@@ -7247,6 +8758,21 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: CreateRoyaltiesAppealBody,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['chainId', 'blockHash', 'transactionHash', 'logIndex']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            chainId: ChainIdToString,
+            blockHash: Hex,
+            transactionHash: TransactionHash,
+            logIndex: NumberToString,
+          }),
+        ),
+        body: CreateRoyaltiesAppealBody,
+      }),
+    ),
     responseSchema: RoyaltyInfo,
   },
   cancelPendingRoyaltiesAppeal: {
@@ -7271,6 +8797,20 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['chainId', 'blockHash', 'transactionHash', 'logIndex']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            chainId: ChainIdToString,
+            blockHash: Hex,
+            transactionHash: TransactionHash,
+            logIndex: NumberToString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   getRoyaltiesSettlementOptions: {
@@ -7288,6 +8828,13 @@ export const pathMeta = {
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: NftAcquisitionKeys,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        body: NftAcquisitionKeys,
+      }),
+    ),
     responseSchema: GetRoyaltiesSettlementOptionsResponse,
   },
   getRoyaltiesSettlementInstructions: {
@@ -7309,6 +8856,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: NftAcquisitionKeys,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['currency']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            currency: Address,
+          }),
+        ),
+        body: NftAcquisitionKeys,
+      }),
+    ),
     responseSchema: t.union([GetRoyaltiesSettlementInstructionsResponse, GetRoyaltiesSettlementInstructionsResponse]),
   },
   getRoyaltiesConfiguration: {
@@ -7330,6 +8889,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: RoyaltiesConfiguration,
   },
   updateRoyaltiesConfiguration: {
@@ -7351,6 +8921,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: RoyaltiesConfiguration,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+        body: RoyaltiesConfiguration,
+      }),
+    ),
     responseSchema: RoyaltiesConfiguration,
   },
   trackIdentify: {
@@ -7368,6 +8950,13 @@ export const pathMeta = {
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: TrackIdentifyBody,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        body: TrackIdentifyBody,
+      }),
+    ),
     responseSchema: t.null,
   },
   trackEvent: {
@@ -7385,6 +8974,13 @@ export const pathMeta = {
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: TrackEventBody,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        body: TrackEventBody,
+      }),
+    ),
     responseSchema: t.null,
   },
   subscribeToCorrespondence: {
@@ -7402,6 +8998,13 @@ export const pathMeta = {
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: UserCorrespondence,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        body: UserCorrespondence,
+      }),
+    ),
     responseSchema: t.null,
   },
   unsubscribeFromCorrespondence: {
@@ -7419,6 +9022,13 @@ export const pathMeta = {
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: UserCorrespondence,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        body: UserCorrespondence,
+      }),
+    ),
     responseSchema: t.null,
   },
   getUserCorrespondence: {
@@ -7436,6 +9046,9 @@ export const pathMeta = {
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(t.type({})),
     responseSchema: UserCorrespondenceList,
   },
   getStorefrontCorrespondenceInfo: {
@@ -7460,6 +9073,20 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    queryParameters: new Set(['organizationId', 'hasEmailCapture', 'limit', 'offset']),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.partial({
+            organizationId: UUIDFromString,
+            hasEmailCapture: BooleanToString,
+            limit: IntegerToString,
+            offset: IntegerToString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: CorrespondencesInfo,
   },
   getStorefrontCorrespondenceEmailSummary: {
@@ -7477,6 +9104,13 @@ export const pathMeta = {
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: StorefrontIds,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        body: StorefrontIds,
+      }),
+    ),
     responseSchema: CorrespondenceList,
   },
   getStorefrontsMembershipListOverview: {
@@ -7498,28 +9132,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
-    responseSchema: StorefrontsMembershipListOverview,
-  },
-  getMembershipListsByStorefrontId: {
-    operationId: 'getMembershipListsByStorefrontId',
-    url: '/memberships/storefronts/:storefrontId/lists',
-    method: 'get',
-    category: 'Memberships',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
-    hasQuery: false,
-    hasParams: true,
-    hasBody: false,
-    isBodyFormData: false,
-    hasResponse: true,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
       t.type({
-        storefrontId: UUIDFromString,
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
       }),
     ),
-    querySchema: t.null,
-    bodySchema: t.null,
-    responseSchema: MembershipLists,
+    responseSchema: StorefrontsMembershipListOverview,
   },
   createMembershipList: {
     operationId: 'createMembershipList',
@@ -7540,6 +9164,83 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: MembershipList,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+        body: MembershipList,
+      }),
+    ),
+    responseSchema: MembershipListResponse,
+  },
+  getMembershipListsByStorefrontId: {
+    operationId: 'getMembershipListsByStorefrontId',
+    url: '/memberships/storefronts/:storefrontId/lists',
+    method: 'get',
+    category: 'Memberships',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: false,
+    isBodyFormData: false,
+    hasResponse: true,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        storefrontId: UUIDFromString,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
+    responseSchema: MembershipLists,
+  },
+  updateMembershipList: {
+    operationId: 'updateMembershipList',
+    url: '/memberships/lists/:listId',
+    method: 'put',
+    category: 'Memberships',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: true,
+    isBodyFormData: false,
+    hasResponse: true,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        listId: IntegerToString,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: MembershipList,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['listId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            listId: IntegerToString,
+          }),
+        ),
+        body: MembershipList,
+      }),
+    ),
     responseSchema: MembershipListResponse,
   },
   getMembershipList: {
@@ -7561,28 +9262,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
-    responseSchema: MembershipList,
-  },
-  updateMembershipList: {
-    operationId: 'updateMembershipList',
-    url: '/memberships/lists/:listId',
-    method: 'put',
-    category: 'Memberships',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
-    hasQuery: false,
-    hasParams: true,
-    hasBody: true,
-    isBodyFormData: false,
-    hasResponse: true,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
+    queryParameters: new Set([]),
+    pathParameters: new Set(['listId']),
+    requestSchema: t.exact(
       t.type({
-        listId: IntegerToString,
+        parameters: t.exact(
+          t.type({
+            listId: IntegerToString,
+          }),
+        ),
       }),
     ),
-    querySchema: t.null,
-    bodySchema: MembershipList,
-    responseSchema: MembershipListResponse,
+    responseSchema: MembershipList,
   },
   downloadMembershipListReport: {
     operationId: 'downloadMembershipListReport',
@@ -7603,6 +9294,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: AvailableReports,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['listId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            listId: IntegerToString,
+          }),
+        ),
+        body: AvailableReports,
+      }),
+    ),
     responseSchema: t.string,
   },
   getAvailableReportKinds: {
@@ -7620,6 +9323,13 @@ export const pathMeta = {
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: Conditions,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        body: Conditions,
+      }),
+    ),
     responseSchema: AvailableReports,
   },
   testDiscordConnection: {
@@ -7641,6 +9351,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: JobStatus,
   },
   createGasWallet: {
@@ -7662,6 +9383,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: ReservoirWallet,
   },
   getRedemptionsForToken: {
@@ -7669,7 +9401,7 @@ export const pathMeta = {
     url: '/redemptions/:token',
     method: 'get',
     category: 'Redemptions',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    security: [],
     hasQuery: false,
     hasParams: true,
     hasBody: false,
@@ -7683,6 +9415,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['token']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            token: TokenStringIdentifier,
+          }),
+        ),
+      }),
+    ),
     responseSchema: RedemptionsConfigPublic,
   },
   redeemToken: {
@@ -7704,6 +9447,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: Redemption,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['token']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            token: TokenStringIdentifier,
+          }),
+        ),
+        body: Redemption,
+      }),
+    ),
     responseSchema: t.null,
   },
   getRedemptionConfigurations: {
@@ -7725,6 +9480,17 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: RedemptionConfigs,
   },
   createRedemptionConfiguration: {
@@ -7746,6 +9512,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditRedemptionConfig,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+        body: EditRedemptionConfig,
+      }),
+    ),
     responseSchema: RedemptionConfig,
   },
   updateRedemptionConfiguration: {
@@ -7768,6 +9546,19 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditRedemptionConfig,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'configurationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            configurationId: UUIDFromString,
+          }),
+        ),
+        body: EditRedemptionConfig,
+      }),
+    ),
     responseSchema: RedemptionConfig,
   },
   deleteRedemptionConfiguration: {
@@ -7790,6 +9581,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'configurationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            configurationId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   publishRedemptionConfiguration: {
@@ -7812,6 +9615,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'configurationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            configurationId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
   unpublishRedemptionConfiguration: {
@@ -7834,6 +9649,18 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'configurationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            configurationId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
     responseSchema: t.null,
   },
 } as const;
