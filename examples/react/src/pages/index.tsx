@@ -1,27 +1,27 @@
-import type { NextPage } from "next";
-import { useCallback, useEffect, useState } from "react";
-import styles from "../styles/Home.module.css";
-import { Web3Provider } from "@ethersproject/providers";
+import { Web3Provider } from '@ethersproject/providers';
 import {
   Address,
   ClaimConditionsState,
   Collection,
   CollectionContract,
+  parse,
+  SdkError,
+  TermsDetails,
   Token,
   TokenMetadata,
   ZERO_ADDRESS,
-  parse,
-  TermsDetails,
-  SdkError,
-} from "@monaxlabs/aspen-sdk";
-import { useWeb3React } from "@web3-react/core";
-import AcceptTerms from "components/AcceptTerms";
-import Select from "components/common/Select";
-import ConnectWallet from "components/ConnectWallet";
-import LoadClaimConditions from "components/LoadClaimConditions";
-import Mint from "components/Mint";
-import { useToasts } from "react-toast-notifications";
-import { useAsyncEffect } from "hooks/useAsyncEffect";
+} from '@monaxlabs/aspen-sdk';
+import { useWeb3React } from '@web3-react/core';
+import AcceptTerms from 'components/AcceptTerms';
+import Select from 'components/common/Select';
+import ConnectWallet from 'components/ConnectWallet';
+import LoadClaimConditions from 'components/LoadClaimConditions';
+import Mint from 'components/Mint';
+import { useAsyncEffect } from 'hooks/useAsyncEffect';
+import type { NextPage } from 'next';
+import { useCallback, useEffect, useState } from 'react';
+import { useToasts } from 'react-toast-notifications';
+import styles from '../styles/Home.module.css';
 import React from 'react';
 
 type Metadata = {
@@ -34,9 +34,7 @@ export type TermsUserAcceptanceState = TermsDetails & {
 };
 
 const DELAY = 10000;
-const DEFAULT_CONTRACT =
-  process.env.NEXT_PUBLIC_TEST_CONTRACT ||
-  "0x8AC3e9b7D377526Da1f81f60d03e006ADd5A606b";
+const DEFAULT_CONTRACT = process.env.NEXT_PUBLIC_TEST_CONTRACT || '0x8AC3e9b7D377526Da1f81f60d03e006ADd5A606b';
 
 const Home: NextPage = () => {
   const { addToast } = useToasts();
@@ -45,15 +43,11 @@ const Home: NextPage = () => {
   const [contractAddress, setContractAddress] = useState(DEFAULT_CONTRACT);
   const [contract, setContract] = useState<CollectionContract | null>(null);
   const [tokens, setTokens] = useState<number[]>([]);
-  const [selectedToken, setSelectedToken] = useState<string>("0");
+  const [selectedToken, setSelectedToken] = useState<string>('0');
   const [tokenMetadata, setTokenMetadata] = useState<Metadata | null>(null);
-  const [tokenBalance, setTokenBalance] = useState<string>("0");
-  const [termsInfo, setTermsInfo] = useState<TermsUserAcceptanceState | null>(
-    null
-  );
-  const [conditions, setConditions] = useState<ClaimConditionsState | null>(
-    null
-  );
+  const [tokenBalance, setTokenBalance] = useState<string>('0');
+  const [termsInfo, setTermsInfo] = useState<TermsUserAcceptanceState | null>(null);
+  const [conditions, setConditions] = useState<ClaimConditionsState | null>(null);
 
   const loadClaimConditions = useCallback(async () => {
     if (!contract) return;
@@ -61,18 +55,15 @@ const Home: NextPage = () => {
     try {
       const address = parse(Address, account ?? ZERO_ADDRESS);
       const token = new Token(contract, selectedToken);
-      const conditions = await token.getFullUserClaimConditions(
-        address,
-        async () => ({
-          enabled: false,
-          status: "no-allowlist",
-          proofs: [],
-          proofMaxQuantityPerTransaction: 0,
-        })
-      );
+      const conditions = await token.getFullUserClaimConditions(address, async () => ({
+        enabled: false,
+        status: 'no-allowlist',
+        proofs: [],
+        proofMaxQuantityPerTransaction: 0,
+      }));
       setConditions(conditions.result);
 
-      if (contract.tokenStandard === "ERC1155" && selectedToken) {
+      if (contract.tokenStandard === 'ERC1155' && selectedToken) {
         const balance = await contract.balanceOf(address, selectedToken);
         setTokenBalance(balance.toString());
       }
@@ -84,7 +75,7 @@ const Home: NextPage = () => {
       }
 
       addToast((err as Error).message, {
-        appearance: "error",
+        appearance: 'error',
         autoDismiss: true,
       });
     }
@@ -136,10 +127,7 @@ const Home: NextPage = () => {
     <div>
       <main className={styles.main}>
         <h2>Aspen SDK Example </h2>
-        <p>
-          The examples are with contracts that are deployed on Mumbai, make sure
-          to connect to the correct Network
-        </p>
+        <p>The examples are with contracts that are deployed on Mumbai, make sure to connect to the correct Network</p>
         <ConnectWallet />
         {active && contract && (
           <div className={styles.container}>
@@ -155,7 +143,7 @@ const Home: NextPage = () => {
             <div className={styles.flex}>
               <p>Select Token : </p>
               <Select
-                value={selectedToken || "none"}
+                value={selectedToken || 'none'}
                 onChange={(e) => setSelectedToken(e.target.value)}
                 options={tokens.map((t) => String(t))}
               />
@@ -164,19 +152,14 @@ const Home: NextPage = () => {
               <p>Token Balance: {tokenBalance}</p>
             </div>
             {tokenMetadata?.metadata?.image && (
-              <img
-                src={tokenMetadata.metadata.image}
-                alt={tokenMetadata.metadata.name}
-                width="400"
-                height="400"
-              />
+              <img src={tokenMetadata.metadata.image} alt={tokenMetadata.metadata.name} width="400" height="400" />
             )}
             <LoadClaimConditions conditions={conditions} />
             <AcceptTerms contract={contract} termsInfo={termsInfo} />
             <Mint
               conditions={conditions}
               contract={contract}
-              tokenId={selectedToken || "none"}
+              tokenId={selectedToken || 'none'}
               termsInfo={termsInfo}
               onUpdate={loadClaimConditions}
             />
