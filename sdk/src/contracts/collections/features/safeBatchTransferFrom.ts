@@ -57,7 +57,7 @@ export class SafeBatchTransferFrom extends ContractFunction<
     const sft = this.partition('sft');
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
-    tokenIds = await Promise.all(tokenIds.map((t) => this.base.requireTokenId(t, this.functionName)));
+    tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
 
     try {
       const tx = await sft.connectWith(signer).safeBatchTransferFrom(from, to, tokenIds, amounts, bytes, overrides);
@@ -75,7 +75,7 @@ export class SafeBatchTransferFrom extends ContractFunction<
     const sft = this.partition('sft');
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
-    tokenIds = await Promise.all(tokenIds.map((t) => this.base.requireTokenId(t, this.functionName)));
+    tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
 
     try {
       const tx = await sft
@@ -94,7 +94,7 @@ export class SafeBatchTransferFrom extends ContractFunction<
     const sft = this.partition('sft');
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
-    tokenIds = await Promise.all(tokenIds.map((t) => this.base.requireTokenId(t, this.functionName)));
+    tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
 
     try {
       const tx = await sft

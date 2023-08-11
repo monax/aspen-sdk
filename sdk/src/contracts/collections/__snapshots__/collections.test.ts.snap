@@ -2,16 +2,7 @@
 
 exports[`Collections - static tests Check that all experimental features are implemented 1`] = `[]`;
 
-exports[`Collections - static tests Check that all experimental functions are implemented 1`] = `
-[
-  "batchIssue(address[],uint256[])[]",
-  "batchIssueWithTokenURI(address[],string[])[]",
-  "batchIssueWithinPhase(address[],uint256[])[]",
-  "batchIssueWithinPhaseWithTokenURI(address[],string[])[]",
-  "batchIssue(address[],uint256[],uint256[])[]",
-  "batchIssueWithinPhase(address[],uint256[],uint256[])[]",
-]
-`;
+exports[`Collections - static tests Check that all experimental functions are implemented 1`] = `[]`;
 
 exports[`Collections - static tests Check that all released features are implemented 1`] = `[]`;
 
@@ -190,3 +181,11 @@ exports[`Collections - static tests Check that every function lists at least the
 exports[`Collections - static tests Check that every function lists at least the interfaces of the functions it states to implemenst 87`] = `[]`;
 
 exports[`Collections - static tests Check that every function lists at least the interfaces of the functions it states to implemenst 88`] = `[]`;
+
+exports[`Collections - static tests Check that every function lists at least the interfaces of the functions it states to implemenst 89`] = `[]`;
+
+exports[`Collections - static tests Check that every function lists at least the interfaces of the functions it states to implemenst 90`] = `[]`;
+
+exports[`Collections - static tests Check that every function lists at least the interfaces of the functions it states to implemenst 91`] = `[]`;
+
+exports[`Collections - static tests Check that every function lists at least the interfaces of the functions it states to implemenst 92`] = `[]`;
