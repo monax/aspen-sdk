@@ -1,18 +1,11 @@
-import { parse } from '@monaxlabs/phloem/dist/schema';
-import { Address, Addressish, asAddress, ChainId, isSameAddress } from '@monaxlabs/phloem/dist/types';
-import {
-  BigNumber,
-  BigNumberish,
-  ContractReceipt,
-  ContractTransaction,
-  PayableOverrides,
-  PopulatedTransaction,
-} from 'ethers';
-import { extractEventsFromLogs, NATIVE_TOKEN } from '../..';
+import { parse } from '@monaxlabs/phloem/dist/schema/parse';
+import { Address, Addressish, asAddress, ChainId, isSameAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { decodeEventLog, encodeFunctionData, TransactionReceipt } from 'viem';
+import { NATIVE_TOKEN } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import { bnRange, One } from '../number';
-import type { Signerish, TokenId, TokenStandard } from '../types';
+import { bigIntRange, normalise, One, Zero } from '../number';
+import type { BigIntish, PayableParameters, Signer, TokenId, TokenStandard } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -30,27 +23,27 @@ type ClaimPartitions = typeof ClaimPartitions;
 const ClaimInterfaces = Object.values(ClaimPartitions).flat();
 type ClaimInterfaces = (typeof ClaimInterfaces)[number];
 
-export type ClaimCallArgs = [signer: Signerish, args: ClaimArgs, overrides?: PayableOverrides];
-export type ClaimResponse = ContractTransaction;
+export type ClaimCallArgs = [walletClient: Signer, args: ClaimArgs, params?: PayableParameters];
+export type ClaimResponse = TransactionHash;
 
 export type ClaimArgs = {
   conditionId: number;
   receiver: Addressish;
   tokenId?: TokenId;
-  quantity: BigNumberish;
+  quantity: BigIntish;
   currency: Addressish;
-  pricePerToken: BigNumberish;
+  pricePerToken: BigIntish;
   proofs: string[];
-  proofMaxQuantityPerTransaction: BigNumberish;
+  proofMaxQuantityPerTransaction: BigIntish;
 };
 
 export type ClaimedToken = {
   chainId: ChainId;
   address: string;
-  tokenId: BigNumber;
+  tokenId: bigint;
   standard: TokenStandard;
   receiver: Address;
-  quantity: BigNumber;
+  quantity: bigint;
 };
 
 export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, ClaimCallArgs, ClaimResponse> {
@@ -64,42 +57,47 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     return this.claim(...args);
   }
 
-  protected async claim(...[signer, args, overrides = {}]: ClaimCallArgs): Promise<ContractTransaction> {
+  protected async claim(...[walletClient, args, params]: ClaimCallArgs): Promise<TransactionHash> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.claimERC1155(signer, args, overrides);
+        return await this.claimERC1155(walletClient, args, params);
       case 'ERC721':
-        return await this.claimERC721(signer, args, overrides);
+        return await this.claimERC721(walletClient, args, params);
     }
   }
 
   protected async claimERC1155(
-    signer: Signerish,
+    walletClient: Signer,
     { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction }: ClaimArgs,
-    overrides: PayableOverrides = {},
-  ): Promise<ContractTransaction> {
+    params: PayableParameters = {
+      value: Zero,
+    },
+  ): Promise<TransactionHash> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
     const wallet = await asAddress(receiver);
     const tokenAddress = await asAddress(currency);
 
     try {
-      if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !overrides.value) {
-        overrides.value = BigNumber.from(pricePerToken).mul(quantity);
+      if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !params.value) {
+        params.value = normalise(pricePerToken) * normalise(quantity);
       }
 
-      const iSft = await sft.connectWith(signer);
-      const tx = await iSft.claim(
-        wallet,
-        tokenId,
-        quantity,
-        tokenAddress,
-        pricePerToken,
-        proofs,
-        proofMaxQuantityPerTransaction,
-        overrides,
+      const { request } = await this.reader(this.abi(sft)).simulate.claim(
+        [
+          wallet as `0x${string}`,
+          tokenId,
+          normalise(quantity),
+          tokenAddress as `0x${string}`,
+          normalise(pricePerToken),
+          proofs as `0x${string}`[],
+          normalise(proofMaxQuantityPerTransaction),
+        ],
+        params,
       );
-      return tx;
+
+      const tx = await walletClient.writeContract(request);
+      return tx as TransactionHash;
     } catch (err) {
       const args = { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction };
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
@@ -107,71 +105,83 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
   }
 
   protected async claimERC721(
-    signer: Signerish,
+    walletClient: Signer,
     { receiver, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction }: ClaimArgs,
-    overrides: PayableOverrides = {},
-  ): Promise<ContractTransaction> {
+    params: PayableParameters = {
+      value: Zero,
+    },
+  ): Promise<TransactionHash> {
     const nft = this.partition('nft');
     const wallet = await asAddress(receiver);
     const tokenAddress = await asAddress(currency);
 
     try {
-      if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !overrides.value) {
-        overrides.value = BigNumber.from(pricePerToken).mul(quantity);
+      if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !params.value) {
+        params.value = normalise(pricePerToken) * normalise(quantity);
       }
 
-      const iNft = nft.connectWith(signer);
-      const tx = await iNft.claim(
-        wallet,
-        quantity,
-        tokenAddress,
-        pricePerToken,
-        proofs,
-        proofMaxQuantityPerTransaction,
-        overrides,
+      const { request } = await this.reader(this.abi(nft)).simulate.claim(
+        [
+          wallet as `0x${string}`,
+          normalise(quantity),
+          tokenAddress as `0x${string}`,
+          normalise(pricePerToken),
+          proofs as `0x${string}`[],
+          normalise(proofMaxQuantityPerTransaction),
+        ],
+        params,
       );
-      return tx;
+
+      const tx = await walletClient.writeContract(request);
+      return tx as TransactionHash;
     } catch (err) {
       const args = { receiver, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction };
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
   }
 
-  async estimateGas(signer: Signerish, args: ClaimArgs, overrides: PayableOverrides = {}): Promise<BigNumber> {
+  async estimateGas(walletClient: Signer, args: ClaimArgs, params?: PayableParameters): Promise<bigint> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.estimateGasERC1155(signer, args, overrides);
+        return await this.estimateGasERC1155(walletClient, args, params);
       case 'ERC721':
-        return await this.estimateGasERC721(signer, args, overrides);
+        return await this.estimateGasERC721(walletClient, args, params);
     }
   }
 
   protected async estimateGasERC1155(
-    signer: Signerish,
+    walletClient: Signer,
     { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction }: ClaimArgs,
-    overrides: PayableOverrides = {},
-  ): Promise<BigNumber> {
+    params: PayableParameters = {
+      value: Zero,
+    },
+  ): Promise<bigint> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
     const wallet = await asAddress(receiver);
     const tokenAddress = await asAddress(currency);
 
     try {
-      if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !overrides.value) {
-        overrides.value = BigNumber.from(pricePerToken).mul(quantity);
+      if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !params.value) {
+        params.value = normalise(pricePerToken) * normalise(quantity);
       }
 
-      const iSft = sft.connectWith(signer);
-      return await iSft.estimateGas.claim(
-        wallet,
-        tokenId,
-        quantity,
-        tokenAddress,
-        pricePerToken,
-        proofs,
-        proofMaxQuantityPerTransaction,
-        overrides,
+      const estimate = await this.reader(this.abi(sft)).estimateGas.claim(
+        [
+          wallet as `0x${string}`,
+          tokenId,
+          normalise(quantity),
+          tokenAddress as `0x${string}`,
+          normalise(pricePerToken),
+          proofs as `0x${string}`[],
+          normalise(proofMaxQuantityPerTransaction),
+        ],
+        {
+          account: walletClient.account,
+          ...params,
+        },
       );
+      return estimate;
     } catch (err) {
       const args = { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction };
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
@@ -179,71 +189,80 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
   }
 
   protected async estimateGasERC721(
-    signer: Signerish,
+    walletClient: Signer,
     { receiver, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction }: ClaimArgs,
-    overrides: PayableOverrides = {},
-  ): Promise<BigNumber> {
+    params: PayableParameters = {
+      value: Zero,
+    },
+  ): Promise<bigint> {
     const nft = this.partition('nft');
     const wallet = await asAddress(receiver);
     const tokenAddress = await asAddress(currency);
 
     try {
-      if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !overrides.value) {
-        overrides.value = BigNumber.from(pricePerToken).mul(quantity);
+      if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !params.value) {
+        params.value = normalise(pricePerToken) * normalise(quantity);
       }
 
-      const iNft = nft.connectWith(signer);
-      return await iNft.estimateGas.claim(
-        wallet,
-        quantity,
-        tokenAddress,
-        pricePerToken,
-        proofs,
-        proofMaxQuantityPerTransaction,
-        overrides,
+      const estimate = await this.reader(this.abi(nft)).estimateGas.claim(
+        [
+          wallet as `0x${string}`,
+          normalise(quantity),
+          tokenAddress as `0x${string}`,
+          normalise(pricePerToken),
+          proofs as `0x${string}`[],
+          normalise(proofMaxQuantityPerTransaction),
+        ],
+        {
+          account: walletClient.account,
+          ...params,
+        },
       );
+      return estimate;
     } catch (err) {
       const args = { receiver, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction };
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
   }
 
-  async populateTransaction(args: ClaimArgs, overrides: PayableOverrides = {}): Promise<PopulatedTransaction> {
+  async populateTransaction(args: ClaimArgs, params?: PayableParameters): Promise<string> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.populateTransactionERC1155(args, overrides);
+        return await this.populateTransactionERC1155(args, params);
       case 'ERC721':
-        return await this.populateTransactionERC721(args, overrides);
+        return await this.populateTransactionERC721(args, params);
     }
   }
 
   protected async populateTransactionERC1155(
     { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction }: ClaimArgs,
-    overrides: PayableOverrides = {},
-  ): Promise<PopulatedTransaction> {
+    params: PayableParameters = {
+      value: Zero,
+    },
+  ): Promise<string> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
     const wallet = await asAddress(receiver);
     const tokenAddress = await asAddress(currency);
 
     try {
-      if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !overrides.value) {
-        overrides.value = BigNumber.from(pricePerToken).mul(quantity);
+      if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !params.value) {
+        params.value = normalise(pricePerToken) * normalise(quantity);
       }
 
-      const tx = await sft
-        .connectReadOnly()
-        .populateTransaction.claim(
-          wallet,
+      const { request } = await this.reader(this.abi(sft)).simulate.claim(
+        [
+          wallet as `0x${string}`,
           tokenId,
-          quantity,
-          tokenAddress,
-          pricePerToken,
-          proofs,
-          proofMaxQuantityPerTransaction,
-          overrides,
-        );
-      return tx;
+          normalise(quantity),
+          tokenAddress as `0x${string}`,
+          normalise(pricePerToken),
+          proofs as `0x${string}`[],
+          normalise(proofMaxQuantityPerTransaction),
+        ],
+        params,
+      );
+      return encodeFunctionData(request);
     } catch (err) {
       const args = { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction };
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
@@ -252,82 +271,86 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
 
   protected async populateTransactionERC721(
     { receiver, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction }: ClaimArgs,
-    overrides: PayableOverrides = {},
-  ): Promise<PopulatedTransaction> {
+    params: PayableParameters = {
+      value: Zero,
+    },
+  ): Promise<string> {
     const nft = this.partition('nft');
     const wallet = await asAddress(receiver);
     const tokenAddress = await asAddress(currency);
 
     try {
-      if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !overrides.value) {
-        overrides.value = BigNumber.from(pricePerToken).mul(quantity);
+      if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !params.value) {
+        params.value = normalise(pricePerToken) * normalise(quantity);
       }
 
-      const tx = await nft
-        .connectReadOnly()
-        .populateTransaction.claim(
-          wallet,
-          quantity,
-          tokenAddress,
-          pricePerToken,
-          proofs,
-          proofMaxQuantityPerTransaction,
-          overrides,
-        );
-      return tx;
+      const { request } = await this.reader(this.abi(nft)).simulate.claim(
+        [
+          wallet as `0x${string}`,
+          normalise(quantity),
+          tokenAddress as `0x${string}`,
+          normalise(pricePerToken),
+          proofs as `0x${string}`[],
+          normalise(proofMaxQuantityPerTransaction),
+        ],
+        params,
+      );
+
+      return encodeFunctionData(request);
     } catch (err) {
       const args = { receiver, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction };
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
   }
 
-  async parseReceiptLogs(receipt: ContractReceipt): Promise<ClaimedToken[]> {
+  async parseReceiptLogs(receipt: TransactionReceipt): Promise<ClaimedToken[]> {
     const { nft, sft } = this.partitions;
     const { chainId, address } = this.base;
     const issueTokens: ClaimedToken[] = [];
 
     try {
       if (nft) {
-        const nftEvents = this.base.assumeFeature('issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2');
-        const contract = nftEvents.connectReadOnly();
+        for (const log of receipt.logs) {
+          const event = decodeEventLog({
+            abi: this.base.assumeFeature('issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2').abi,
+            data: log.data,
+            topics: log.topics,
+          });
 
-        issueTokens.push(
-          ...extractEventsFromLogs(contract.filters.TokensClaimed(), contract.interface, receipt.logs)
-            .map(({ startTokenId, receiver, quantityClaimed }) => {
-              const events: ClaimedToken[] = [];
-              for (const tokenId of bnRange(startTokenId, quantityClaimed)) {
-                events.push({
-                  chainId,
-                  address,
-                  tokenId,
-                  standard: 'ERC721',
-                  receiver: parse(Address, receiver),
-                  quantity: One,
-                });
-              }
-              return events;
-            })
-            .flat(),
-        );
-      } else if (sft) {
-        const sftEvents = this.base.assumeFeature('issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2');
-        const contract = sftEvents.connectReadOnly();
-
-        issueTokens.push(
-          ...extractEventsFromLogs(contract.filters.TokensClaimed(), contract.interface, receipt.logs).map(
-            ({ tokenId, receiver, quantityClaimed }) => {
-              const event: ClaimedToken = {
+          if (event.eventName === 'TokensClaimed') {
+            const { startTokenId, receiver, quantityClaimed } = event.args;
+            for (const tokenId of bigIntRange(startTokenId, quantityClaimed)) {
+              issueTokens.push({
                 chainId,
                 address,
                 tokenId,
-                standard: 'ERC1155',
+                standard: 'ERC721',
                 receiver: parse(Address, receiver),
-                quantity: quantityClaimed,
-              };
-              return event;
-            },
-          ),
-        );
+                quantity: One,
+              });
+            }
+          }
+        }
+      } else if (sft) {
+        for (const log of receipt.logs) {
+          const event = decodeEventLog({
+            abi: this.base.assumeFeature('issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2').abi,
+            data: log.data,
+            topics: log.topics,
+          });
+
+          if (event.eventName === 'TokensClaimed') {
+            const { tokenId, receiver, quantityClaimed } = event.args;
+            issueTokens.push({
+              chainId,
+              address,
+              tokenId,
+              standard: 'ERC1155',
+              receiver: parse(Address, receiver),
+              quantity: quantityClaimed,
+            });
+          }
+        }
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.INVALID_DATA, { receipt });

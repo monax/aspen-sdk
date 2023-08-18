@@ -1,7 +1,7 @@
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData } from 'viem';
+import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -19,8 +19,8 @@ type SetOperatorRestrictionPartitions = typeof SetOperatorRestrictionPartitions;
 const SetOperatorRestrictionInterfaces = Object.values(SetOperatorRestrictionPartitions).flat();
 type SetOperatorRestrictionInterfaces = (typeof SetOperatorRestrictionInterfaces)[number];
 
-export type SetOperatorRestrictionCallArgs = [signer: Signerish, enabled: boolean, overrides?: WriteOverrides];
-export type SetOperatorRestrictionResponse = ContractTransaction;
+export type SetOperatorRestrictionCallArgs = [walletClient: Signer, enabled: boolean, params?: WriteParameters];
+export type SetOperatorRestrictionResponse = TransactionHash;
 
 export class SetOperatorRestriction extends ContractFunction<
   SetOperatorRestrictionInterfaces,
@@ -39,19 +39,21 @@ export class SetOperatorRestriction extends ContractFunction<
   }
 
   async setOperatorRestriction(
-    signer: Signerish,
+    walletClient: Signer,
     enabled: boolean,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<TransactionHash> {
     const { v1, v2 } = this.partitions;
 
     try {
       if (v2) {
-        const tx = await v2.connectWith(signer).setOperatorRestriction(enabled, overrides);
-        return tx;
+        const { request } = await this.reader(this.abi(v2)).simulate.setOperatorRestriction([enabled], params);
+        const tx = await walletClient.writeContract(request);
+        return tx as TransactionHash;
       } else if (v1) {
-        const tx = await v1.connectWith(signer).setOperatorFiltererStatus(enabled, overrides);
-        return tx;
+        const { request } = await this.reader(this.abi(v1)).simulate.setOperatorFiltererStatus([enabled], params);
+        const tx = await walletClient.writeContract(request);
+        return tx as TransactionHash;
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -60,15 +62,16 @@ export class SetOperatorRestriction extends ContractFunction<
     this.notSupported();
   }
 
-  async estimateGas(signer: Signerish, enabled: boolean, overrides: WriteOverrides = {}): Promise<BigNumber> {
+  async estimateGas(walletClient: Signer, enabled: boolean, params?: WriteParameters): Promise<bigint> {
     const { v1, v2 } = this.partitions;
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       if (v2) {
-        const estimate = await v2.connectWith(signer).estimateGas.setOperatorRestriction(enabled, overrides);
+        const estimate = await this.reader(this.abi(v2)).estimateGas.setOperatorRestriction([enabled], fullParams);
         return estimate;
       } else if (v1) {
-        const estimate = await v1.connectWith(signer).estimateGas.setOperatorFiltererStatus(enabled, overrides);
+        const estimate = await this.reader(this.abi(v1)).estimateGas.setOperatorFiltererStatus([enabled], fullParams);
         return estimate;
       }
     } catch (err) {
@@ -78,16 +81,16 @@ export class SetOperatorRestriction extends ContractFunction<
     this.notSupported();
   }
 
-  async populateTransaction(enabled: boolean, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
+  async populateTransaction(enabled: boolean, params?: WriteParameters): Promise<string> {
     const { v1, v2 } = this.partitions;
 
     try {
       if (v2) {
-        const tx = await v2.connectReadOnly().populateTransaction.setOperatorRestriction(enabled, overrides);
-        return tx;
+        const { request } = await this.reader(this.abi(v2)).simulate.setOperatorRestriction([enabled], params);
+        return encodeFunctionData(request);
       } else if (v1) {
-        const tx = await v1.connectReadOnly().populateTransaction.setOperatorFiltererStatus(enabled, overrides);
-        return tx;
+        const { request } = await this.reader(this.abi(v1)).simulate.setOperatorFiltererStatus([enabled], params);
+        return encodeFunctionData(request);
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

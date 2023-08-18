@@ -1,7 +1,6 @@
-import { Provider } from '@ethersproject/providers';
 import { parse } from '@monaxlabs/phloem/dist/schema';
 import { Address, Addressish, asAddress, ChainId } from '@monaxlabs/phloem/dist/types';
-import { BigNumber } from 'ethers';
+import { Abi, getContract, GetContractReturnType, Hex, numberToHex, PublicClient } from 'viem';
 import { SdkError, SdkErrorCode } from './errors';
 import {
   acceptTerms,
@@ -106,7 +105,7 @@ import {
   verifyClaim,
 } from './features';
 import { FeatureCodesMap } from './features/feature-codes.gen';
-import type { CollectionInfo, DebugHandler, TokenId, TokenStandard } from './types';
+import type { CollectionInfo, DebugHandler, Provider, TokenId, TokenStandard } from './types';
 
 export const DefaultDebugHandler = (collection: CollectionInfo, action: string, ...data: unknown[]) => {
   console.debug(`Collection Contract ${collection.chainId} # ${collection.address} -> ${action}`, ...data);
@@ -120,7 +119,7 @@ export class CollectionContract {
   private _supportedFeaturesList: FeatureInterfaceId[] = [];
   private _interfaces: Partial<FeatureInterfaces>;
   private _tokenStandard: TokenStandard;
-  private readonly _provider: Provider;
+  private readonly _publicClient: PublicClient;
 
   readonly chainId: ChainId;
   readonly address: Address;
@@ -256,36 +255,45 @@ export class CollectionContract {
   }
 
   static async from(
-    provider: Provider,
+    publicClient: Provider,
     collectionAddress: Addressish,
     withExperimental = false,
   ): Promise<CollectionContract> {
     try {
-      const { chainId } = await provider.getNetwork();
-      const chain = parse(ChainId, chainId);
+      const chainId = parse(ChainId, publicClient.chain.id);
       const address = await asAddress(collectionAddress);
 
       try {
-        const iFeaturesV1 = FeatureInterface.fromFeature('IAspenFeatures.sol:IAspenFeaturesV1', address, provider);
-        const codes = await iFeaturesV1.connectReadOnly().supportedFeatureCodes();
-        const features = codes.map((code) => FeatureCodesMap[code.toHexString() as keyof typeof FeatureCodesMap]);
-        return new CollectionContract(provider, chain, address, features, withExperimental);
+        const featuresV1Contract = getContract({
+          publicClient,
+          address: address as Hex,
+          abi: FeatureInterface.fromFeature('IAspenFeatures.sol:IAspenFeaturesV1').abi,
+        });
+
+        const codes = await featuresV1Contract.read.supportedFeatureCodes();
+        const features = codes.map((code) => FeatureCodesMap[numberToHex(code) as keyof typeof FeatureCodesMap]);
+        return new CollectionContract(publicClient, chainId, address, features, withExperimental);
       } catch {}
 
       try {
-        const iFeaturesV0 = FeatureInterface.fromFeature('IAspenFeatures.sol:IAspenFeaturesV0', address, provider);
-        const features = await iFeaturesV0.connectReadOnly().supportedFeatures();
-        return new CollectionContract(provider, chain, address, features, withExperimental);
+        const featuresV0Contract = getContract({
+          publicClient,
+          address: address as Hex,
+          abi: FeatureInterface.fromFeature('IAspenFeatures.sol:IAspenFeaturesV0').abi,
+        });
+
+        const features = await featuresV0Contract.read.supportedFeatures();
+        return new CollectionContract(publicClient, chainId, address, [...features], withExperimental);
       } catch {}
     } catch {}
 
     throw new SdkError(SdkErrorCode.FAILED_TO_LOAD_FEATURES);
   }
 
-  constructor(provider: Provider, chain: ChainId, address: Address, features: string[], withExperimental = false) {
+  constructor(publicClient: Provider, chain: ChainId, address: Address, features: string[], withExperimental = false) {
     this.chainId = chain;
     this.address = address;
-    this._provider = provider;
+    this._publicClient = publicClient;
 
     this._supportedFeaturesList = extractKnownSupportedFeatures(features, withExperimental);
     this._interfaces = this.getInterfaces();
@@ -310,21 +318,16 @@ export class CollectionContract {
     return this._tokenStandard;
   }
 
-  get provider(): Provider {
-    return this._provider;
+  get publicClient(): PublicClient {
+    return this._publicClient;
   }
 
   assumeFeature<T extends FeatureInterfaceId>(feature: T): FeatureInterface<T> {
-    return FeatureInterface.fromFeature(feature, this.address, this._provider);
+    return FeatureInterface.fromFeature(feature);
   }
 
   protected getInterfaces(): Partial<FeatureInterfaces> {
-    const interfaces = {} as Record<FeatureInterfaceId, FeatureInterface<FeatureInterfaceId>>;
-    for (const feature of this._supportedFeaturesList) {
-      interfaces[feature] = this.assumeFeature(feature);
-    }
-
-    return interfaces;
+    return Object.fromEntries(this._supportedFeaturesList.map((f) => [f, this.assumeFeature(f)]));
   }
 
   static detectStandard(features: FeatureInterfaceId[]): TokenStandard {
@@ -365,13 +368,13 @@ export class CollectionContract {
   /// Helper functions
   //////
 
-  requireTokenId(tokenId: TokenId, functionName?: string): BigNumber {
+  requireTokenId(tokenId: TokenId, functionName?: string): bigint {
     if (tokenId === null || tokenId === undefined) {
       throw new SdkError(SdkErrorCode.TOKEN_ID_REQUIRED, { tokenId, functionName });
     }
 
     try {
-      return BigNumber.from(tokenId);
+      return BigInt(tokenId.toString());
     } catch (err) {
       const error = new Error('Invalid value for BigNumber');
       throw new SdkError(SdkErrorCode.INVALID_DATA, { tokenId, functionName }, error);
@@ -382,5 +385,13 @@ export class CollectionContract {
     if (tokenId !== null && tokenId !== undefined) {
       throw new SdkError(SdkErrorCode.TOKEN_ID_REJECTED, { tokenId, functionName });
     }
+  }
+
+  reader<A extends Abi>(abi: A): GetContractReturnType<A, PublicClient> {
+    return getContract({
+      address: this.address as Hex,
+      abi,
+      publicClient: this._publicClient,
+    });
   }
 }

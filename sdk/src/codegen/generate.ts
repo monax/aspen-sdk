@@ -99,8 +99,15 @@ function writeABI(abiDir: string, manifest: { name: string; abi: unknown; file: 
 
 export function generateAspenContractsFactoriesMapTs(
   manifest: AspenContractsManifest,
+  contractsManifest: ContractsManifest,
   experimentalManifest: ContractsManifest,
 ): ts.Node[] {
+  const abis = Object.fromEntries(
+    Object.values(contractsManifest)
+      .concat(Object.values(experimentalManifest))
+      .map((m) => [m.id, m.abi]),
+  );
+
   const experimentalInterfaceIds = Object.values(experimentalManifest).map((m) => m.id);
 
   const aspenContracts = Object.values(manifest).map((d) => {
@@ -118,32 +125,13 @@ export function generateAspenContractsFactoriesMapTs(
     }, {}),
   );
 
-  const interfaceFiles = Array.from(new Set(uniqueIterfaces.map((d) => d.file)));
-
-  // For numbered namespace imports
-  const importIdentifiers = Object.fromEntries(
-    interfaceFiles.map((f, i) => [f, ts.factory.createIdentifier(`factory_${i}`)]),
-  );
-
-  const importNodes = Object.entries(importIdentifiers).flatMap(([file, ident]) =>
-    ts.factory.createImportDeclaration(
-      undefined,
-      ts.factory.createImportClause(false, undefined, ts.factory.createNamespaceImport(ident)),
-      ts.factory.createStringLiteral(path.join('..', '..', 'contracts', 'generated', 'factories', file)),
-      undefined,
-    ),
-  );
-
   const factoriesNode = exportConst(
     'AspenContractFactories',
     ts.factory.createObjectLiteralExpression(
       uniqueIterfaces.map((d) =>
         ts.factory.createPropertyAssignment(
           ts.factory.createStringLiteral(d.interfaceId),
-          ts.factory.createPropertyAccessExpression(
-            importIdentifiers[d.file],
-            ts.factory.createIdentifier(d.interfaceName + '__factory'),
-          ),
+          ts.factory.createIdentifier(JSON.stringify(abis[d.interfaceId], null, 0)),
         ),
       ),
     ),
@@ -237,69 +225,43 @@ export function generateAspenContractsFactoriesMapTs(
     ),
   );
 
-  return [...importNodes, ...factoryNodes, ...versoinNodes, networksType];
+  return [...factoryNodes, ...versoinNodes, networksType];
 }
 
 export async function writeAspenContractsFactoriesMap(
   manifest: AspenContractsManifest,
   aspenContractsFactoryMapFile: string,
+  contractsManifest: ContractsManifest,
   experimentalManifest: ContractsManifest,
 ): Promise<void> {
   return writeTypescriptFile(
     aspenContractsFactoryMapFile,
-    printNodes(...generateAspenContractsFactoriesMapTs(manifest, experimentalManifest)),
+    printNodes(...generateAspenContractsFactoriesMapTs(manifest, contractsManifest, experimentalManifest)),
   );
 }
 
-export function generateFeatureFactoriesMapTs(manifest: ContractsManifest): ts.Node[] {
+export function generateFeatureAbisMapTs(manifest: ContractsManifest): ts.Node[] {
   // Only include features with current Solidity code that Typechain will process and exclude
   // the cedar interfaces that are not features (those under impl, deploy, and standard)
   const currentFeatures = Object.values(manifest).filter(isFeature);
 
-  // const featuresByFile = currentFeatures.reduce(
-  //   (g, m) => ({ ...g, [m.file]: [...(g[m.file] || []), m] }),
-  //   {} as Record<string, ContractManifest[]>,
-  // );
-
-  // For numbered namespace imports
-  const importIdentifiers = Object.fromEntries(
-    Array.from(new Set(currentFeatures.map((m) => m.file)).values()).map((f, i) => [
-      f,
-      ts.factory.createIdentifier(`factory_${i}`),
-    ]),
-  );
-  const importNodes = Object.entries(importIdentifiers).flatMap(([file, ident]) =>
-    ts.factory.createImportDeclaration(
-      undefined,
-      ts.factory.createImportClause(false, undefined, ts.factory.createNamespaceImport(ident)),
-      ts.factory.createStringLiteral(path.join('..', '..', '..', 'contracts', 'generated', 'factories', file)),
-      undefined,
-    ),
-  );
-
   const constNode = exportConst(
-    'FeatureFactories',
+    'FeatureAbis',
     ts.factory.createObjectLiteralExpression(
       currentFeatures.map((m) =>
         ts.factory.createPropertyAssignment(
           ts.factory.createStringLiteral(m.id),
-          ts.factory.createPropertyAccessExpression(
-            importIdentifiers[m.file],
-            ts.factory.createIdentifier(m.name + '__factory'),
-          ),
+          ts.factory.createIdentifier(JSON.stringify(m.abi, null, 0)),
         ),
       ),
     ),
     { asConst: true },
   );
-  return [...importNodes, constNode];
+  return [constNode];
 }
 
-export async function writeFeaturesFactoriesMap(
-  manifest: ContractsManifest,
-  featureFactoryMapFile: string,
-): Promise<void> {
-  await writeTypescriptFile(featureFactoryMapFile, printNodes(...generateFeatureFactoriesMapTs(manifest)));
+export async function writeFeaturesAbisMap(manifest: ContractsManifest, featureFactoryMapFile: string): Promise<void> {
+  await writeTypescriptFile(featureFactoryMapFile, printNodes(...generateFeatureAbisMapTs(manifest)));
 }
 
 function functionParamSignature(p: ParamType) {
@@ -308,7 +270,8 @@ function functionParamSignature(p: ParamType) {
 function functionSignature(f: FunctionFragment, hasOverloads: boolean): string {
   const i = f.inputs.map(functionParamSignature).join(',');
   const o = (f.outputs || []).map(functionParamSignature).join(',');
-  return `${f.name}(${i})${hasOverloads ? '+' : ''}[${o}]`;
+  // with `viem` we don't need to emit different signatures for overloads
+  return `${f.name}(${i})${hasOverloads ? '' : ''}[${o}]`;
 }
 
 export function generateFeatureFunctionsMapTs(manifest: ContractsManifest): ts.Node {

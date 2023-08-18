@@ -1,7 +1,7 @@
-import { BigNumber, BytesLike, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, Hex } from 'viem';
+import { BytesLike, CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -17,8 +17,8 @@ type SetOperatorFiltererPartitions = typeof SetOperatorFiltererPartitions;
 const SetOperatorFiltererInterfaces = Object.values(SetOperatorFiltererPartitions).flat();
 type SetOperatorFiltererInterfaces = (typeof SetOperatorFiltererInterfaces)[number];
 
-export type SetOperatorFiltererCallArgs = [signer: Signerish, operatorId: BytesLike, overrides?: WriteOverrides];
-export type SetOperatorFiltererResponse = ContractTransaction;
+export type SetOperatorFiltererCallArgs = [walletClient: Signer, operatorId: BytesLike, params?: WriteParameters];
+export type SetOperatorFiltererResponse = TransactionHash;
 
 export class SetOperatorFilterer extends ContractFunction<
   SetOperatorFiltererInterfaces,
@@ -37,37 +37,39 @@ export class SetOperatorFilterer extends ContractFunction<
   }
 
   async setOperatorFilterer(
-    signer: Signerish,
+    walletClient: Signer,
     operatorId: BytesLike,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<TransactionHash> {
     const v1 = this.partition('v1');
 
     try {
-      const tx = await v1.connectWith(signer).setOperatorFilterer(operatorId, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setOperatorFilterer([operatorId as Hex], params);
+      const tx = await walletClient.sendTransaction(request);
+      return tx as TransactionHash;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async estimateGas(signer: Signerish, operatorId: BytesLike, overrides: WriteOverrides = {}): Promise<BigNumber> {
+  async estimateGas(walletClient: Signer, operatorId: BytesLike, params?: WriteParameters): Promise<bigint> {
     const v1 = this.partition('v1');
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const estimate = await v1.connectWith(signer).estimateGas.setOperatorFilterer(operatorId, overrides);
+      const estimate = await this.reader(this.abi(v1)).estimateGas.setOperatorFilterer([operatorId as Hex], fullParams);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async populateTransaction(operatorId: BytesLike, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
+  async populateTransaction(operatorId: BytesLike, params?: WriteParameters): Promise<string> {
     const v1 = this.partition('v1');
 
     try {
-      const tx = await v1.connectReadOnly().populateTransaction.setOperatorFilterer(operatorId, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setOperatorFilterer([operatorId as Hex], params);
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

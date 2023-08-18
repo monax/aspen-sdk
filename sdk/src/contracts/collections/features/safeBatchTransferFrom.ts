@@ -1,8 +1,8 @@
-import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumberish, BytesLike, ContractTransaction } from 'ethers';
+import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, Hex } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
+import type { BytesLike, RequiredTokenId, Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -19,18 +19,18 @@ const SafeBatchTransferFromInterfaces = Object.values(SafeBatchTransferFromParti
 type SafeBatchTransferFromInterfaces = (typeof SafeBatchTransferFromInterfaces)[number];
 
 export type SafeBatchTransferFromCallArgs = [
-  signer: Signerish,
+  walletClient: Signer,
   args: SafeBatchTransferFromArgs,
-  overrides?: WriteOverrides,
+  params?: WriteParameters,
 ];
-export type SafeBatchTransferFromResponse = ContractTransaction;
+export type SafeBatchTransferFromResponse = TransactionHash;
 
 export type SafeBatchTransferFromArgs = {
   fromAddress: Addressish;
   toAddress: Addressish;
-  tokenIds: BigNumberish[];
+  tokenIds: RequiredTokenId[];
   bytes: BytesLike;
-  amounts: BigNumberish[];
+  amounts: (bigint | number)[];
 };
 
 export class SafeBatchTransferFrom extends ContractFunction<
@@ -50,37 +50,45 @@ export class SafeBatchTransferFrom extends ContractFunction<
   }
 
   async safeBatchTransferFrom(
-    signer: Signerish,
+    walletClient: Signer,
     { fromAddress, toAddress, tokenIds, bytes, amounts }: SafeBatchTransferFromArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<TransactionHash> {
     const sft = this.partition('sft');
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
-    tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
+    const _tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
+    const _amounts = amounts.map((a) => BigInt(a));
 
     try {
-      const tx = await sft.connectWith(signer).safeBatchTransferFrom(from, to, tokenIds, amounts, bytes, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(sft)).simulate.safeBatchTransferFrom(
+        [from as Hex, to as Hex, _tokenIds, _amounts, bytes as Hex],
+        params,
+      );
+      const tx = await walletClient.writeContract(request);
+      return tx as TransactionHash;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
   async estimateGas(
-    signer: Signerish,
+    walletClient: Signer,
     { fromAddress, toAddress, tokenIds, bytes, amounts }: SafeBatchTransferFromArgs,
-    overrides: WriteOverrides = {},
+    params?: WriteParameters,
   ) {
     const sft = this.partition('sft');
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
-    tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
+    const fullParams = { account: walletClient.account, ...params };
+    const _tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
+    const _amounts = amounts.map((a) => BigInt(a));
 
     try {
-      const tx = await sft
-        .connectWith(signer)
-        .estimateGas.safeBatchTransferFrom(from, to, tokenIds, amounts, bytes, overrides);
+      const tx = await this.reader(this.abi(sft)).estimateGas.safeBatchTransferFrom(
+        [from as Hex, to as Hex, _tokenIds, _amounts, bytes as Hex],
+        fullParams,
+      );
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -89,18 +97,20 @@ export class SafeBatchTransferFrom extends ContractFunction<
 
   async populateTransaction(
     { fromAddress, toAddress, tokenIds, bytes, amounts }: SafeBatchTransferFromArgs,
-    overrides: WriteOverrides = {},
+    params?: WriteParameters,
   ) {
     const sft = this.partition('sft');
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
-    tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
+    const _tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
+    const _amounts = amounts.map((a) => BigInt(a));
 
     try {
-      const tx = await sft
-        .connectReadOnly()
-        .populateTransaction.safeBatchTransferFrom(from, to, tokenIds, amounts, bytes, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(sft)).simulate.safeBatchTransferFrom(
+        [from as Hex, to as Hex, _tokenIds, _amounts, bytes as Hex],
+        params,
+      );
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

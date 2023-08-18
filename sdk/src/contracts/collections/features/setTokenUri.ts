@@ -1,7 +1,7 @@
-import { BigNumber, BigNumberish, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData } from 'viem';
+import { CollectionContract, RequiredTokenId, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -18,12 +18,12 @@ const SetTokenUriInterfaces = Object.values(SetTokenUriPartitions).flat();
 type SetTokenUriInterfaces = (typeof SetTokenUriInterfaces)[number];
 
 export type SetTokenUriCallArgs = [
-  signer: Signerish,
-  tokenId: BigNumberish,
+  walletClient: Signer,
+  tokenId: RequiredTokenId,
   tokenUri: string,
-  overrides?: WriteOverrides,
+  params?: WriteParameters,
 ];
-export type SetTokenUriResponse = ContractTransaction;
+export type SetTokenUriResponse = TransactionHash;
 
 export class SetTokenUri extends ContractFunction<
   SetTokenUriInterfaces,
@@ -42,47 +42,48 @@ export class SetTokenUri extends ContractFunction<
   }
 
   async setTokenUri(
-    signer: Signerish,
-    tokenId: BigNumberish,
+    walletClient: Signer,
+    tokenId: RequiredTokenId,
     tokenUri: string,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<TransactionHash> {
     const v1 = this.partition('v1');
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
-      const tx = await v1.connectWith(signer).setTokenURI(tokenId, tokenUri, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setTokenURI([tokenId, tokenUri], params);
+      const tx = await walletClient.sendTransaction(request);
+      return tx as TransactionHash;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
   async estimateGas(
-    signer: Signerish,
-    tokenId: BigNumberish,
+    walletClient: Signer,
+    tokenId: RequiredTokenId,
     tokenUri: string,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const v1 = this.partition('v1');
+    const fullParams = { account: walletClient.account, ...params };
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
-      const estimate = await v1.connectWith(signer).estimateGas.setTokenURI(tokenId, tokenUri, overrides);
+      const estimate = await this.reader(this.abi(v1)).estimateGas.setTokenURI([tokenId, tokenUri], fullParams);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async populateTransaction(
-    tokenId: BigNumberish,
-    tokenUri: string,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction(tokenId: RequiredTokenId, tokenUri: string, params?: WriteParameters): Promise<string> {
     const v1 = this.partition('v1');
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
-      const tx = await v1.connectReadOnly().populateTransaction.setTokenURI(tokenId, tokenUri, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setTokenURI([tokenId, tokenUri], params);
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

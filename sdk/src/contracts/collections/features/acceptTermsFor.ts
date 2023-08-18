@@ -1,27 +1,25 @@
-import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
+import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, Hex } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
+import type { Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
 const AcceptTermsForFunctions = {
-  v1: 'acceptTerms(address)+[]',
-  v2: 'acceptTerms(address)[]',
+  v1: 'acceptTerms(address)[]',
 } as const;
 
 const AcceptTermsForPartitions = {
   v1: [...FeatureFunctionsMap[AcceptTermsForFunctions.v1].drop],
-  v2: [...FeatureFunctionsMap[AcceptTermsForFunctions.v2].drop],
 };
 type AcceptTermsForPartitions = typeof AcceptTermsForPartitions;
 
 const AcceptTermsForInterfaces = Object.values(AcceptTermsForPartitions).flat();
 type AcceptTermsForInterfaces = (typeof AcceptTermsForInterfaces)[number];
 
-export type AcceptTermsForCallArgs = [signer: Signerish, acceptor: Addressish, overrides?: WriteOverrides];
-export type AcceptTermsForResponse = ContractTransaction;
+export type AcceptTermsForCallArgs = [walletClient: Signer, acceptor: Addressish, params?: WriteParameters];
+export type AcceptTermsForResponse = TransactionHash;
 
 export class AcceptTermsFor extends ContractFunction<
   AcceptTermsForInterfaces,
@@ -40,64 +38,47 @@ export class AcceptTermsFor extends ContractFunction<
   }
 
   async acceptTermsFor(
-    signer: Signerish,
+    walletClient: Signer,
     acceptor: Addressish,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
-    const { v1, v2 } = this.partitions;
+    params?: WriteParameters,
+  ): Promise<AcceptTermsForResponse> {
+    const v1 = this.partition('v1');
     const wallet = await asAddress(acceptor);
 
     try {
-      if (v1) {
-        const tx = await v1.connectWith(signer)['acceptTerms(address)'](wallet, overrides);
-        return tx;
-      } else if (v2) {
-        const tx = await v2.connectWith(signer).acceptTerms(wallet, overrides);
-        return tx;
-      }
+      const { request } = await this.reader(this.abi(v1)).simulate.acceptTerms([wallet as Hex], params);
+      const tx = await walletClient.writeContract(request);
+      return tx as TransactionHash;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
-
-    this.notSupported();
   }
 
-  async estimateGas(signer: Signerish, acceptor: Addressish, overrides: WriteOverrides = {}): Promise<BigNumber> {
-    const { v1, v2 } = this.partitions;
+  async estimateGas(walletClient: Signer, acceptor: Addressish, params?: WriteParameters): Promise<bigint> {
+    const v1 = this.partition('v1');
     const wallet = await asAddress(acceptor);
 
     try {
-      if (v1) {
-        const estimate = await v1.connectWith(signer).estimateGas['acceptTerms(address)'](wallet, overrides);
-        return estimate;
-      } else if (v2) {
-        const estimate = await v2.connectWith(signer).estimateGas.acceptTerms(wallet, overrides);
-        return estimate;
-      }
+      const estimate = await this.reader(this.abi(v1)).estimateGas.acceptTerms([wallet as Hex], {
+        account: walletClient.account,
+        ...params,
+      });
+      return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
-
-    this.notSupported();
   }
 
-  async populateTransaction(acceptor: Addressish, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
-    const { v1, v2 } = this.partitions;
+  async populateTransaction(acceptor: Addressish, params?: WriteParameters): Promise<string> {
+    const v1 = this.partition('v1');
     const wallet = await asAddress(acceptor);
 
     try {
-      if (v1) {
-        const tx = await v1.connectReadOnly().populateTransaction['acceptTerms(address)'](wallet, overrides);
-        return tx;
-      } else if (v2) {
-        const tx = await v2.connectReadOnly().populateTransaction.acceptTerms(wallet, overrides);
-        return tx;
-      }
+      const { request } = await this.reader(this.abi(v1)).simulate.acceptTerms([wallet as Hex], params);
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
-
-    this.notSupported();
   }
 }
 

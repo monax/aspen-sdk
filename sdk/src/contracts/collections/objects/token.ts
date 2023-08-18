@@ -1,23 +1,24 @@
-import { Addressish, asAddress, ChainId } from '@monaxlabs/phloem/dist/types';
+import { Addressish, asAddress, ChainId, TransactionHash } from '@monaxlabs/phloem/dist/types';
 import axios from 'axios';
 import { add } from 'date-fns';
-import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
 import {
+  BigIntish,
   ClaimConditionsState,
   CollectionUserClaimState,
   IPFS_GATEWAY_PREFIX,
   OperationStatus,
-  Signerish,
+  Signer,
+  TokenId,
   TokenMetadata,
   UserClaimRestrictions,
-  WriteOverrides,
+  WriteParameters,
   ZERO_BYTES32,
 } from '../..';
 import { resolveIpfsUrl } from '../../../utils/ipfs';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import { CollectionContractClaimCondition, UserClaimConditions } from '../features';
-import { max, min } from '../number';
+import { LooseCollectionContractClaimCondition, UserClaimConditions } from '../features';
+import { max, MaxUint256, min, Zero } from '../number';
 import { ContractObject } from './object';
 
 export type AllowlistStatusGetter = {
@@ -25,12 +26,12 @@ export type AllowlistStatusGetter = {
     chain: ChainId,
     contractAddress: Addressish,
     walletAddress: Addressish,
-    tokenId: BigNumberish | null,
+    tokenId: TokenId | null,
   ): Promise<AllowlistStatus>;
 };
 
 export class Token extends ContractObject {
-  public constructor(protected readonly base: CollectionContract, readonly tokenId: BigNumberish | null) {
+  public constructor(protected readonly base: CollectionContract, readonly tokenId: TokenId | null) {
     super(base);
   }
 
@@ -39,7 +40,7 @@ export class Token extends ContractObject {
     return await this.base.tokenUri(tokenId);
   }
 
-  async totalSupply(): Promise<BigNumber> {
+  async totalSupply(): Promise<bigint> {
     return await this.base.totalSupply(this.tokenId);
   }
 
@@ -110,46 +111,46 @@ export class Token extends ContractObject {
   }
 
   async setTokenURI(
-    signer: Signerish,
+    walletClient: Signer,
     tokenUri: string,
-    overrides: WriteOverrides = {},
-  ): Promise<OperationStatus<ContractTransaction>> {
+    params?: WriteParameters,
+  ): Promise<OperationStatus<TransactionHash>> {
     return await this.run(async () => {
       const tokenId = this.base.requireTokenId(this.tokenId);
-      return await this.base.setTokenUri(signer, tokenId, tokenUri, overrides);
+      return await this.base.setTokenUri(walletClient, tokenId, tokenUri, params);
     });
   }
 
   async setPermantentTokenURI(
-    signer: Signerish,
+    walletClient: Signer,
     tokenUri: string,
-    overrides: WriteOverrides = {},
-  ): Promise<OperationStatus<ContractTransaction>> {
+    params?: WriteParameters,
+  ): Promise<OperationStatus<TransactionHash>> {
     return await this.run(async () => {
       const tokenId = this.base.requireTokenId(this.tokenId);
-      return await this.base.setPermanentTokenUri(signer, tokenId, tokenUri, overrides);
+      return await this.base.setPermanentTokenUri(walletClient, tokenId, tokenUri, params);
     });
   }
 
   async setMaxTotalSupply(
-    signer: Signerish,
-    totalSupply: BigNumberish,
-    overrides: WriteOverrides = {},
-  ): Promise<OperationStatus<ContractTransaction>> {
+    walletClient: Signer,
+    totalSupply: BigIntish,
+    params?: WriteParameters,
+  ): Promise<OperationStatus<TransactionHash>> {
     return await this.run(async () => {
-      return await this.base.setMaxTotalSupply(signer, totalSupply, this.tokenId, overrides);
+      return await this.base.setMaxTotalSupply(walletClient, totalSupply, this.tokenId, params);
     });
   }
 
   async setClaimConditions(
-    signer: Signerish,
-    conditions: CollectionContractClaimCondition[],
+    walletClient: Signer,
+    conditions: LooseCollectionContractClaimCondition[],
     resetClaimEligibility: boolean,
-    overrides: WriteOverrides = {},
-  ): Promise<OperationStatus<ContractTransaction>> {
+    params?: WriteParameters,
+  ): Promise<OperationStatus<TransactionHash>> {
     return await this.run(async () => {
       const args = { conditions, resetClaimEligibility, tokenId: this.tokenId };
-      return await this.base.setClaimConditions(signer, args, overrides);
+      return await this.base.setClaimConditions(walletClient, args, params);
     });
   }
 }
@@ -180,26 +181,28 @@ const getUserRestrictions = async (
     userConditions.walletClaimedCountInPhase === null;
 
   const remainingSupply =
-    respectRemainingSupply && userConditions.maxTotalSupply.eq(0)
-      ? Infinity
-      : userConditions.maxTotalSupply.sub(userConditions.tokenSupply);
+    respectRemainingSupply && userConditions.maxTotalSupply === Zero
+      ? MaxUint256
+      : userConditions.maxTotalSupply - userConditions.tokenSupply;
 
-  const phaseClaimableSupply = userConditions.maxClaimableSupply.gt(0)
-    ? userConditions.maxClaimableSupply.sub(userConditions.supplyClaimed)
-    : Infinity;
+  const phaseClaimableSupply =
+    userConditions.maxClaimableSupply > Zero
+      ? userConditions.maxClaimableSupply - userConditions.supplyClaimed
+      : MaxUint256;
 
-  const remainingWalletAllocation = userConditions.maxWalletClaimCount.gt(0)
-    ? userConditions.maxWalletClaimCount.sub(userConditions.walletClaimCount || 0)
-    : Infinity;
+  const remainingWalletAllocation =
+    userConditions.maxWalletClaimCount > Zero
+      ? userConditions.maxWalletClaimCount - userConditions.walletClaimCount
+      : MaxUint256;
 
   const allowlistRemainingAllocation = oneTimeAllowlistClaimUsed
-    ? 0
+    ? Zero
     : allowlistEnabled && isAllowlisted && userConditions.walletClaimedCountInPhase !== null
-    ? proofMaxQuantityPerTransaction - userConditions.walletClaimedCountInPhase.toNumber()
-    : Infinity;
+    ? BigInt(proofMaxQuantityPerTransaction) - userConditions.walletClaimedCountInPhase
+    : MaxUint256;
 
   const availableQuantity = max(
-    0, // making sure it's not negative
+    Zero, // making sure it's not negative
     min(
       remainingSupply,
       phaseClaimableSupply,
@@ -219,7 +222,7 @@ const getUserRestrictions = async (
 
   let claimState: CollectionUserClaimState = 'ok';
   switch (true) {
-    case remainingSupply === 0:
+    case remainingSupply === Zero:
       claimState = 'no-token-supply';
       break;
     case userConditions.isClaimingPaused:
@@ -231,13 +234,13 @@ const getUserRestrictions = async (
     case canMintAfterSeconds > 0:
       claimState = 'minting-throttled';
       break;
-    case allowlistRemainingAllocation === 0:
+    case allowlistRemainingAllocation === Zero:
       claimState = 'claimed-allowlist-allowance';
       break;
-    case phaseClaimableSupply === 0:
+    case phaseClaimableSupply === Zero:
       claimState = 'claimed-phase-allowance';
       break;
-    case remainingWalletAllocation === 0:
+    case remainingWalletAllocation === Zero:
       claimState = 'claimed-wallet-allowance';
       break;
   }

@@ -1,7 +1,6 @@
 import { parse } from '@monaxlabs/phloem/dist/schema';
 import { Address } from '@monaxlabs/phloem/dist/types';
-import { CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -18,7 +17,7 @@ type OwnerPartitions = typeof OwnerPartitions;
 const OwnerInterfaces = Object.values(OwnerPartitions).flat();
 type OwnerInterfaces = (typeof OwnerInterfaces)[number];
 
-export type OwnerCallArgs = [overrides?: CallOverrides];
+export type OwnerCallArgs = [params?: ReadParameters];
 export type OwnerResponse = Address;
 
 export class Owner extends ContractFunction<OwnerInterfaces, OwnerPartitions, OwnerCallArgs, OwnerResponse> {
@@ -33,11 +32,11 @@ export class Owner extends ContractFunction<OwnerInterfaces, OwnerPartitions, Ow
     return this.owner(...args);
   }
 
-  async owner(overrides: CallOverrides = {}): Promise<Address> {
+  async owner(params?: ReadParameters): Promise<Address> {
     const v1 = this.partition('v1');
 
     try {
-      const owner = await v1.connectReadOnly().owner(overrides);
+      const owner = await this.reader(this.abi(v1)).read.owner(params);
       return parse(Address, owner);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

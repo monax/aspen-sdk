@@ -1,8 +1,7 @@
-import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumberish, ContractTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, Hex } from 'viem';
+import { CollectionContract, RequiredTokenId, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -18,13 +17,13 @@ type TransferFromPartitions = typeof TransferFromPartitions;
 const TransferFromInterfaces = Object.values(TransferFromPartitions).flat();
 type TransferFromInterfaces = (typeof TransferFromInterfaces)[number];
 
-export type TransferFromCallArgs = [signer: Signerish, args: TransferFromArgs, overrides?: WriteOverrides];
-export type TransferFromResponse = ContractTransaction;
+export type TransferFromCallArgs = [walletClient: Signer, args: TransferFromArgs, params?: WriteParameters];
+export type TransferFromResponse = TransactionHash;
 
 export type TransferFromArgs = {
   fromAddress: Addressish;
   toAddress: Addressish;
-  tokenId: BigNumberish;
+  tokenId: RequiredTokenId;
 };
 
 export class TransferFrom extends ContractFunction<
@@ -44,50 +43,61 @@ export class TransferFrom extends ContractFunction<
   }
 
   async transferFrom(
-    signer: Signerish,
+    walletClient: Signer,
     { fromAddress, toAddress, tokenId }: TransferFromArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<TransactionHash> {
     const nft = this.partition('nft');
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
-      const tx = await nft.connectWith(signer).transferFrom(from, to, tokenId, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(nft)).simulate.transferFrom(
+        [from as Hex, to as Hex, tokenId],
+        params,
+      );
+      const tx = await walletClient.sendTransaction(request);
+      return tx as TransactionHash;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
   async estimateGas(
-    signer: Signerish,
+    walletClient: Signer,
     { fromAddress, toAddress, tokenId }: TransferFromArgs,
-    overrides: WriteOverrides = {},
+    params?: WriteParameters,
   ) {
     const nft = this.partition('nft');
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
+    const fullParams = { account: walletClient.account, ...params };
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
-      const tx = await nft.connectWith(signer).estimateGas.transferFrom(from, to, tokenId, overrides);
+      const tx = await this.reader(this.abi(nft)).estimateGas.transferFrom(
+        [from as Hex, to as Hex, tokenId],
+        fullParams,
+      );
       return tx;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async populateTransaction({ fromAddress, toAddress, tokenId }: TransferFromArgs, overrides: WriteOverrides = {}) {
+  async populateTransaction({ fromAddress, toAddress, tokenId }: TransferFromArgs, params?: WriteParameters) {
     const nft = this.partition('nft');
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
-      const tx = await nft.connectReadOnly().populateTransaction.transferFrom(from, to, tokenId, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(nft)).simulate.transferFrom(
+        [from as Hex, to as Hex, tokenId],
+        params,
+      );
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

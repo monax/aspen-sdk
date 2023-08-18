@@ -1,6 +1,6 @@
-import { BigNumber, CallOverrides } from 'ethers';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
+import { ReadParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -16,10 +16,10 @@ type GetChargebackProtectionPeriodPartitions = typeof GetChargebackProtectionPer
 const GetChargebackProtectionPeriodInterfaces = Object.values(GetChargebackProtectionPeriodPartitions).flat();
 type GetChargebackProtectionPeriodInterfaces = (typeof GetChargebackProtectionPeriodInterfaces)[number];
 
-export type GetChargebackProtectionPeriodCallArgs = [overrides?: CallOverrides];
+export type GetChargebackProtectionPeriodCallArgs = [params?: ReadParameters];
 export type GetChargebackProtectionPeriodResponse = ChargebackProtectionPeriod;
 
-export type ChargebackProtectionPeriod = BigNumber;
+export type ChargebackProtectionPeriod = bigint;
 
 export class GetChargebackProtectionPeriod extends ContractFunction<
   GetChargebackProtectionPeriodInterfaces,
@@ -42,11 +42,10 @@ export class GetChargebackProtectionPeriod extends ContractFunction<
     return this.getChargebackProtectionPeriod(...args);
   }
 
-  async getChargebackProtectionPeriod(overrides: CallOverrides = {}): Promise<ChargebackProtectionPeriod> {
+  async getChargebackProtectionPeriod(params?: ReadParameters): Promise<ChargebackProtectionPeriod> {
     const v1 = this.partition('v1');
-
     try {
-      const chargebackProtectionPeriod = await v1.connectReadOnly().getChargebackProtectionPeriod(overrides);
+      const chargebackProtectionPeriod = await this.reader(this.abi(v1)).read.getChargebackProtectionPeriod(params);
       return chargebackProtectionPeriod;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

@@ -1,8 +1,7 @@
-import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, Hex } from 'viem';
+import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -21,12 +20,12 @@ const SetPlatformFeesInterfaces = Object.values(SetPlatformFeesPartitions).flat(
 type SetPlatformFeesInterfaces = (typeof SetPlatformFeesInterfaces)[number];
 
 export type SetPlatformFeesCallArgs = [
-  signer: Signerish,
+  walletClient: Signer,
   recipient: Addressish,
-  basisPoints: BigNumber,
-  overrides?: WriteOverrides,
+  basisPoints: bigint | number,
+  params?: WriteParameters,
 ];
-export type SetPlatformFeesResponse = ContractTransaction;
+export type SetPlatformFeesResponse = TransactionHash;
 
 export class SetPlatformFees extends ContractFunction<
   SetPlatformFeesInterfaces,
@@ -45,33 +44,41 @@ export class SetPlatformFees extends ContractFunction<
   }
 
   async setPlatformFees(
-    signer: Signerish,
+    walletClient: Signer,
     recipient: Addressish,
-    basisPoints: BigNumber,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    basisPoints: bigint | number,
+    params?: WriteParameters,
+  ): Promise<TransactionHash> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(recipient);
 
     try {
-      const tx = await v1.connectWith(signer).setPlatformFeeInfo(wallet, basisPoints, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setPlatformFeeInfo(
+        [wallet as Hex, BigInt(basisPoints)],
+        params,
+      );
+      const tx = await walletClient.sendTransaction(request);
+      return tx as TransactionHash;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
   async estimateGas(
-    signer: Signerish,
+    walletClient: Signer,
     recipient: Addressish,
-    basisPoints: BigNumber,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+    basisPoints: bigint | number,
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(recipient);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const estimate = await v1.connectWith(signer).estimateGas.setPlatformFeeInfo(wallet, basisPoints, overrides);
+      const estimate = await this.reader(this.abi(v1)).estimateGas.setPlatformFeeInfo(
+        [wallet as Hex, BigInt(basisPoints)],
+        fullParams,
+      );
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -80,15 +87,19 @@ export class SetPlatformFees extends ContractFunction<
 
   async populateTransaction(
     recipient: Addressish,
-    basisPoints: BigNumber,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+    basisPoints: bigint | number,
+    params?: WriteParameters,
+  ): Promise<string> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(recipient);
 
     try {
-      const tx = await v1.connectReadOnly().populateTransaction.setPlatformFeeInfo(wallet, basisPoints, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setPlatformFeeInfo(
+        [wallet as Hex, BigInt(basisPoints)],
+        params,
+      );
+
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

@@ -1,5 +1,4 @@
-import { CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -16,8 +15,8 @@ type SupportedFeaturesPartitions = typeof SupportedFeaturesPartitions;
 const SupportedFeaturesInterfaces = Object.values(SupportedFeaturesPartitions).flat();
 type SupportedFeaturesInterfaces = (typeof SupportedFeaturesInterfaces)[number];
 
-export type SupportedFeaturesCallArgs = [overrides?: CallOverrides];
-export type SupportedFeaturesResponse = string[];
+export type SupportedFeaturesCallArgs = [params?: ReadParameters];
+export type SupportedFeaturesResponse = readonly string[];
 
 export class SupportedFeatures extends ContractFunction<
   SupportedFeaturesInterfaces,
@@ -35,11 +34,11 @@ export class SupportedFeatures extends ContractFunction<
     return this.supportedFeatures(...args);
   }
 
-  async supportedFeatures(overrides: CallOverrides = {}): Promise<string[]> {
+  async supportedFeatures(params?: ReadParameters): Promise<readonly string[]> {
     const v1 = this.partition('v1');
 
     try {
-      const supported = await v1.connectReadOnly().supportedFeatures(overrides);
+      const supported = await this.reader(this.abi(v1)).read.supportedFeatures(params);
       return supported;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

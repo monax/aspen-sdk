@@ -1,6 +1,8 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { Wallet } from 'ethers';
 import hardhat from 'hardhat';
+import { describe } from "vitest"
+
 const { ethers } = hardhat;
 
 export const DEFAULT_ADMIN_ROLE = '0x' + Buffer.alloc(32).toString('hex');

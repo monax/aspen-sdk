@@ -1,7 +1,7 @@
-import { BigNumber, BytesLike, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, Hex } from 'viem';
+import { BytesLike, CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -19,11 +19,11 @@ type LazyMintPartitions = typeof LazyMintPartitions;
 const LazyMintInterfaces = Object.values(LazyMintPartitions).flat();
 type LazyMintInterfaces = (typeof LazyMintInterfaces)[number];
 
-export type LazyMintCallArgs = [signer: Signerish, mint: MintAgs, overrides?: WriteOverrides];
-export type LazyMintResponse = ContractTransaction;
+export type LazyMintCallArgs = [walletClient: Signer, mint: MintAgs, params?: WriteParameters];
+export type LazyMintResponse = TransactionHash;
 
 export type MintAgs = {
-  amount: BigNumber;
+  amount: bigint;
   baseURI: string;
   encryptedBaseURI?: BytesLike;
 };
@@ -45,22 +45,27 @@ export class LazyMint extends ContractFunction<
   }
 
   async lazyMint(
-    signer: Signerish,
+    walletClient: Signer,
     { amount, baseURI, encryptedBaseURI }: MintAgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<TransactionHash> {
     const { v1, v2 } = this.partitions;
 
     try {
       if (v2) {
-        const tx = await v2.connectWith(signer).lazyMint(amount, baseURI, overrides);
-        return tx;
+        const { request } = await this.reader(this.abi(v2)).simulate.lazyMint([amount, baseURI], params);
+        const tx = await walletClient.sendTransaction(request);
+        return tx as TransactionHash;
       } else if (v1) {
         if (encryptedBaseURI === undefined) {
           throw new SdkError(SdkErrorCode.INVALID_DATA, undefined, new Error('encryptedBaseURI is required'));
         }
-        const tx = await v1.connectWith(signer).lazyMint(amount, baseURI, encryptedBaseURI, overrides);
-        return tx;
+        const { request } = await this.reader(this.abi(v1)).simulate.lazyMint(
+          [amount, baseURI, encryptedBaseURI as Hex],
+          params,
+        );
+        const tx = await walletClient.sendTransaction(request);
+        return tx as TransactionHash;
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { amount, baseURI, encryptedBaseURI });
@@ -70,23 +75,25 @@ export class LazyMint extends ContractFunction<
   }
 
   async estimateGas(
-    signer: Signerish,
+    walletClient: Signer,
     { amount, baseURI, encryptedBaseURI }: MintAgs,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const { v1, v2 } = this.partitions;
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       if (v2) {
-        const estimate = await v2.connectWith(signer).estimateGas.lazyMint(amount, baseURI, overrides);
+        const estimate = await this.reader(this.abi(v2)).estimateGas.lazyMint([amount, baseURI], fullParams);
         return estimate;
       } else if (v1) {
         if (encryptedBaseURI === undefined) {
           throw new SdkError(SdkErrorCode.INVALID_DATA, undefined, new Error('encryptedBaseURI is required'));
         }
-        const estimate = await v1
-          .connectWith(signer)
-          .estimateGas.lazyMint(amount, baseURI, encryptedBaseURI, overrides);
+        const estimate = await this.reader(this.abi(v1)).estimateGas.lazyMint(
+          [amount, baseURI, encryptedBaseURI as Hex],
+          fullParams,
+        );
         return estimate;
       }
     } catch (err) {
@@ -96,24 +103,22 @@ export class LazyMint extends ContractFunction<
     this.notSupported();
   }
 
-  async populateTransaction(
-    { amount, baseURI, encryptedBaseURI }: MintAgs,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction({ amount, baseURI, encryptedBaseURI }: MintAgs, params?: WriteParameters): Promise<string> {
     const { v1, v2 } = this.partitions;
 
     try {
       if (v2) {
-        const tx = await v2.connectReadOnly().populateTransaction.lazyMint(amount, baseURI, overrides);
-        return tx;
+        const { request } = await this.reader(this.abi(v2)).simulate.lazyMint([amount, baseURI], params);
+        return encodeFunctionData(request);
       } else if (v1) {
         if (encryptedBaseURI === undefined) {
           throw new SdkError(SdkErrorCode.INVALID_DATA, undefined, new Error('encryptedBaseURI is required'));
         }
-        const tx = await v1
-          .connectReadOnly()
-          .populateTransaction.lazyMint(amount, baseURI, encryptedBaseURI, overrides);
-        return tx;
+        const { request } = await this.reader(this.abi(v1)).simulate.lazyMint(
+          [amount, baseURI, encryptedBaseURI as Hex],
+          params,
+        );
+        return encodeFunctionData(request);
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { amount, baseURI, encryptedBaseURI });

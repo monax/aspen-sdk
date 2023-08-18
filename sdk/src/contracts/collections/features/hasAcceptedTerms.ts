@@ -1,6 +1,6 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { Hex } from 'viem';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -8,20 +8,18 @@ import { asCallableClass, ContractFunction } from './features';
 const HasAcceptedTermsFunctions = {
   v1: 'getAgreementStatus(address)[bool]',
   v2: 'hasAcceptedTerms(address)[bool]',
-  v3: 'hasAcceptedTerms(address)+[bool]',
 } as const;
 
 const HasAcceptedTermsPartitions = {
   v1: [...FeatureFunctionsMap[HasAcceptedTermsFunctions.v1].drop],
   v2: [...FeatureFunctionsMap[HasAcceptedTermsFunctions.v2].drop],
-  v3: [...FeatureFunctionsMap[HasAcceptedTermsFunctions.v3].drop],
 };
 type HasAcceptedTermsPartitions = typeof HasAcceptedTermsPartitions;
 
 const HasAcceptedTermsInterfaces = Object.values(HasAcceptedTermsPartitions).flat();
 type HasAcceptedTermsInterfaces = (typeof HasAcceptedTermsInterfaces)[number];
 
-export type HasAcceptedTermsCallArgs = [userAddress: Addressish, overrides?: CallOverrides];
+export type HasAcceptedTermsCallArgs = [userAddress: Addressish, params?: ReadParameters];
 export type HasAcceptedTermsResponse = boolean;
 
 export class HasAcceptedTerms extends ContractFunction<
@@ -40,19 +38,16 @@ export class HasAcceptedTerms extends ContractFunction<
     return this.hasAcceptedTerms(...args);
   }
 
-  async hasAcceptedTerms(userAddress: Addressish, overrides: CallOverrides = {}): Promise<boolean> {
-    const { v1, v2, v3 } = this.partitions;
+  async hasAcceptedTerms(userAddress: Addressish, params?: ReadParameters): Promise<boolean> {
+    const { v1, v2 } = this.partitions;
     const wallet = await asAddress(userAddress);
 
     try {
-      if (v3) {
-        const status = await v3.connectReadOnly()['hasAcceptedTerms(address)'](wallet, overrides);
-        return status;
-      } else if (v2) {
-        const status = await v2.connectReadOnly().hasAcceptedTerms(wallet, overrides);
+      if (v2) {
+        const status = await this.reader(this.abi(v2)).read.hasAcceptedTerms([wallet as Hex], params);
         return status;
       } else if (v1) {
-        const status = await v1.connectReadOnly().getAgreementStatus(wallet, overrides);
+        const status = await this.reader(this.abi(v1)).read.getAgreementStatus([wallet as Hex], params);
         return status;
       }
     } catch (err) {

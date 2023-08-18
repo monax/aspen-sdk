@@ -9,9 +9,9 @@ import {
   getIdentityClient,
   IdentityAPI,
   parse,
+  privateKeyAccountFor,
   ProviderConfig,
   SupportedNetwork,
-  walletFor,
 } from '@monaxlabs/aspen-sdk';
 import { walletLogin } from '@monaxlabs/aspen-sdk/dist/apis/identity/auth';
 import { promises as fs } from 'fs';
@@ -44,10 +44,10 @@ export async function authenticate(
   // Store global auth token
   const providerConfig = await getProviderConfig();
   const apiConfigs = await getApiConfigs();
-  const wallet = await walletFor(providerConfig, network);
+  const account = await privateKeyAccountFor(providerConfig, network);
   const identityClient = await getIdentityClient(apiConfigs, environment);
-  const response = await walletLogin(wallet, identityClient);
-  const walletAddress = parse(Address, await wallet.getAddress());
+  const response = await walletLogin(account, network, identityClient);
+  const walletAddress = parse(Address, account.address);
   const keys = await getAPIKeys();
   let apiKey = keys[walletAddress];
 

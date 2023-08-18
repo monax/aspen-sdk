@@ -1,8 +1,8 @@
 import { Addressish, asAddress, isZeroAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, CallOverrides } from 'ethers';
+import { Hex } from 'viem';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { RequiredTokenId } from '../types';
+import type { ReadParameters, RequiredTokenId } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -25,13 +25,13 @@ export type GetTransferTimesForTokenArgs = {
   owner?: Addressish;
 };
 
-export type GetTransferTimesForTokenCallArgs = [args: GetTransferTimesForTokenArgs, overrides?: CallOverrides];
+export type GetTransferTimesForTokenCallArgs = [args: GetTransferTimesForTokenArgs, params?: ReadParameters];
 export type GetTransferTimesForTokenResponse = TransferTimesForToken;
 
-export type TransferTimesForERC721Token = { transferTimestamp: BigNumber };
+export type TransferTimesForERC721Token = { transferTimestamp: bigint };
 export type TransferTimesForERC1155Token = {
-  quantityOfTokens: BigNumber[];
-  transferableAt: BigNumber[];
+  quantityOfTokens: readonly bigint[];
+  transferableAt: readonly bigint[];
 };
 export type TransferTimesForToken = TransferTimesForERC721Token | TransferTimesForERC1155Token;
 
@@ -58,19 +58,19 @@ export class GetTransferTimesForToken extends ContractFunction<
 
   async getTransferTimesForToken(
     args: GetTransferTimesForTokenArgs,
-    overrides: CallOverrides = {},
+    params?: ReadParameters,
   ): Promise<TransferTimesForToken> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.getTransferTimesForTokenERC1155(args, overrides);
+        return await this.getTransferTimesForTokenERC1155(args, params);
       case 'ERC721':
-        return await this.getTransferTimesForTokenERC721(args, overrides);
+        return await this.getTransferTimesForTokenERC721(args, params);
     }
   }
 
   protected async getTransferTimesForTokenERC1155(
     { owner, tokenId }: GetTransferTimesForTokenArgs,
-    overrides: CallOverrides = {},
+    params?: ReadParameters,
   ): Promise<TransferTimesForToken> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
@@ -83,9 +83,10 @@ export class GetTransferTimesForToken extends ContractFunction<
     }
 
     try {
-      const { quantityOfTokens, transferableAt } = await sft
-        .connectReadOnly()
-        .getTransferTimesForToken(wallet, tokenId, overrides);
+      const [quantityOfTokens, transferableAt] = await this.reader(this.abi(sft)).read.getTransferTimesForToken(
+        [wallet as Hex, tokenId],
+        params,
+      );
 
       return { quantityOfTokens, transferableAt };
     } catch (err) {
@@ -95,13 +96,13 @@ export class GetTransferTimesForToken extends ContractFunction<
 
   protected async getTransferTimesForTokenERC721(
     { tokenId }: GetTransferTimesForTokenArgs,
-    overrides: CallOverrides = {},
+    params?: ReadParameters,
   ): Promise<TransferTimesForToken> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const nft = this.partition('nft');
 
     try {
-      const transferTimestamp = await nft.connectReadOnly().getTransferTimeForToken(tokenId, overrides);
+      const transferTimestamp = await this.reader(this.abi(nft)).read.getTransferTimeForToken([tokenId], params);
       return { transferTimestamp };
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { tokenId });

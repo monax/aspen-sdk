@@ -1,8 +1,8 @@
 import { Address } from '@monaxlabs/phloem/dist/types';
-import { Wallet } from 'ethers';
-import { providers } from 'ethers/lib/ethers';
 import * as t from 'io-ts';
 import { OidcClient } from 'oidc-client-ts';
+import { Hex, PrivateKeyAccount } from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
 import { AspenClient } from '../aspen';
 
 export const NetworkSecrets = t.partial({
@@ -49,24 +49,15 @@ export type ApiConfigs = t.TypeOf<typeof ApiConfigs>;
 export type AspenEnvironment = keyof ApiConfigs;
 export const AspenEnvironment = t.keyof(ApiConfigs.props);
 
-export async function walletFor(config: ProviderConfig, network: SupportedNetwork): Promise<Wallet> {
+export async function privateKeyAccountFor(
+  config: ProviderConfig,
+  network: SupportedNetwork,
+): Promise<PrivateKeyAccount> {
   const privateKey = config.privateKeys[network];
   if (!privateKey) {
     throw new Error(`No private key found for network ${network}`);
   }
-  const wallet = new Wallet(privateKey);
-  return wallet.connect(await providerFor(config, network));
-}
-
-export async function providerFor(
-  { providerUrls }: ProviderConfig,
-  network: SupportedNetwork,
-): Promise<providers.JsonRpcProvider> {
-  const providerUrl = providerUrls[network];
-  if (!providerUrl) {
-    throw new Error(`No provider URL found for network ${network}`);
-  }
-  return new providers.JsonRpcProvider(providerUrl);
+  return privateKeyToAccount(privateKey as Hex);
 }
 
 export function getAspenClient(configs: ApiConfigs, env: AspenEnvironment, apiKey: string): AspenClient {

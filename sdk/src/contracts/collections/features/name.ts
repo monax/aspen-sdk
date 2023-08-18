@@ -1,5 +1,5 @@
-import { CallOverrides, ethers } from 'ethers';
-import { CollectionContract } from '../..';
+import { parseAbi } from 'viem';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
@@ -18,7 +18,7 @@ type NamePartitions = typeof NamePartitions;
 const NameInterfaces = Object.values(NamePartitions).flat();
 type NameInterfaces = (typeof NameInterfaces)[number];
 
-export type NameCallArgs = [overrides?: CallOverrides];
+export type NameCallArgs = [params?: ReadParameters];
 export type NameResponse = string;
 
 export class Name extends ContractFunction<NameInterfaces, NamePartitions, NameCallArgs, NameResponse> {
@@ -32,11 +32,10 @@ export class Name extends ContractFunction<NameInterfaces, NamePartitions, NameC
     return this.name(...args);
   }
 
-  async name(overrides: CallOverrides = {}): Promise<string> {
+  async name(params?: ReadParameters): Promise<string> {
     try {
-      const abi = ['function name() external view returns (string)'];
-      const contract = new ethers.Contract(this.base.address, abi, this.base.provider);
-      const name = String(await contract.name(overrides));
+      const abi = parseAbi(['function name() external view returns (string)']);
+      const name = await this.reader(abi).read.name(params);
       return name;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

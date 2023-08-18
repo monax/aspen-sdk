@@ -1,5 +1,5 @@
-import { CallOverrides, ethers } from 'ethers';
-import { CollectionContract } from '../..';
+import { parseAbi } from 'viem';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -21,7 +21,7 @@ type GetClaimPauseStatusPartitions = typeof GetClaimPauseStatusPartitions;
 const GetClaimPauseStatusInterfaces = Object.values(GetClaimPauseStatusPartitions).flat();
 type GetClaimPauseStatusInterfaces = (typeof GetClaimPauseStatusInterfaces)[number];
 
-export type GetClaimPauseStatusCallArgs = [overrides?: CallOverrides];
+export type GetClaimPauseStatusCallArgs = [params?: ReadParameters];
 export type GetClaimPauseStatusResponse = boolean;
 
 export class GetClaimPauseStatus extends ContractFunction<
@@ -40,17 +40,16 @@ export class GetClaimPauseStatus extends ContractFunction<
     return this.getClaimPauseStatus(...args);
   }
 
-  async getClaimPauseStatus(overrides: CallOverrides = {}): Promise<boolean> {
+  async getClaimPauseStatus(params?: ReadParameters): Promise<GetClaimPauseStatusResponse> {
     const { v1 } = this.partitions;
 
     try {
       if (v1) {
-        const paused = await v1.connectReadOnly().getClaimPauseStatus();
+        const paused = await this.reader(this.abi(v1)).read.getClaimPauseStatus(params);
         return paused;
       } else {
-        const abi = ['function claimIsPaused() public view returns (bool)'];
-        const contract = new ethers.Contract(this.base.address, abi, this.base.provider);
-        const paused = await contract.claimIsPaused(overrides);
+        const abi = parseAbi(['function claimIsPaused() public view returns (bool)']);
+        const paused = await this.reader(abi).read.claimIsPaused(params);
         return paused;
       }
     } catch (err) {

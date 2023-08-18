@@ -1,8 +1,7 @@
-import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, BigNumberish, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, Hex } from 'viem';
+import { CollectionContract, Signer, TokenId, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
 
@@ -22,13 +21,13 @@ const SetWalletClaimCountInterfaces = Object.values(SetWalletClaimCountPartition
 type SetWalletClaimCountInterfaces = (typeof SetWalletClaimCountInterfaces)[number];
 
 export type SetWalletClaimCountCallArgs = [
-  signer: Signerish,
+  walletClient: Signer,
   userAddress: Addressish,
-  maxWalletClaimCount: BigNumberish,
-  tokenId: BigNumberish | null,
-  overrides?: WriteOverrides,
+  maxWalletClaimCount: bigint | number,
+  tokenId: TokenId,
+  params?: WriteParameters,
 ];
-export type SetWalletClaimCountResponse = ContractTransaction;
+export type SetWalletClaimCountResponse = TransactionHash;
 
 export class SetWalletClaimCount extends ContractFunction<
   SetWalletClaimCountInterfaces,
@@ -47,12 +46,12 @@ export class SetWalletClaimCount extends ContractFunction<
   }
 
   async setWalletClaimCount(
-    signer: Signerish,
+    walletClient: Signer,
     userAddress: Addressish,
-    maxWalletClaimCount: BigNumberish,
-    tokenId: BigNumberish | null = null,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    maxWalletClaimCount: bigint | number,
+    tokenId: TokenId = null,
+    params?: WriteParameters,
+  ): Promise<TransactionHash> {
     const { nft, sft } = this.partitions;
     const address = await asAddress(userAddress);
 
@@ -61,18 +60,24 @@ export class SetWalletClaimCount extends ContractFunction<
         case 'ERC1155':
           if (sft) {
             tokenId = this.base.requireTokenId(tokenId, this.functionName);
-            const tx = await sft
-              .connectWith(signer)
-              .setWalletClaimCount(tokenId, address, maxWalletClaimCount, overrides);
-            return tx;
+            const { request } = await this.reader(this.abi(sft)).simulate.setWalletClaimCount(
+              [tokenId, address as Hex, BigInt(maxWalletClaimCount)],
+              params,
+            );
+            const tx = await walletClient.sendTransaction(request);
+            return tx as TransactionHash;
           }
           break;
 
         case 'ERC721':
           if (nft) {
             this.base.rejectTokenId(tokenId, this.functionName);
-            const tx = await nft.connectWith(signer).setWalletClaimCount(address, maxWalletClaimCount, overrides);
-            return tx;
+            const { request } = await this.reader(this.abi(nft)).simulate.setWalletClaimCount(
+              [address as Hex, BigInt(maxWalletClaimCount)],
+              params,
+            );
+            const tx = await walletClient.sendTransaction(request);
+            return tx as TransactionHash;
           }
           break;
       }
@@ -84,23 +89,25 @@ export class SetWalletClaimCount extends ContractFunction<
   }
 
   async estimateGas(
-    signer: Signerish,
+    walletClient: Signer,
     userAddress: Addressish,
-    maxWalletClaimCount: BigNumberish,
-    tokenId: BigNumberish | null = null,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+    maxWalletClaimCount: bigint | number,
+    tokenId: TokenId = null,
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const { nft, sft } = this.partitions;
     const address = await asAddress(userAddress);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       switch (this.base.tokenStandard) {
         case 'ERC1155':
           if (sft) {
             tokenId = this.base.requireTokenId(tokenId, this.functionName);
-            const estimate = await sft
-              .connectWith(signer)
-              .estimateGas.setWalletClaimCount(tokenId, address, maxWalletClaimCount, overrides);
+            const estimate = await this.reader(this.abi(sft)).estimateGas.setWalletClaimCount(
+              [tokenId, address as Hex, BigInt(maxWalletClaimCount)],
+              fullParams,
+            );
             return estimate;
           }
           break;
@@ -108,9 +115,10 @@ export class SetWalletClaimCount extends ContractFunction<
         case 'ERC721':
           if (nft) {
             this.base.rejectTokenId(tokenId, this.functionName);
-            const estimate = await nft
-              .connectWith(signer)
-              .estimateGas.setWalletClaimCount(address, maxWalletClaimCount, overrides);
+            const estimate = await this.reader(this.abi(nft)).estimateGas.setWalletClaimCount(
+              [address as Hex, BigInt(maxWalletClaimCount)],
+              fullParams,
+            );
             return estimate;
           }
           break;
@@ -124,10 +132,10 @@ export class SetWalletClaimCount extends ContractFunction<
 
   async populateTransaction(
     userAddress: Addressish,
-    maxWalletClaimCount: BigNumberish,
-    tokenId: BigNumberish | null = null,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+    maxWalletClaimCount: bigint | number,
+    tokenId: TokenId = null,
+    params?: WriteParameters,
+  ): Promise<string> {
     const { nft, sft } = this.partitions;
     const address = await asAddress(userAddress);
 
@@ -136,20 +144,23 @@ export class SetWalletClaimCount extends ContractFunction<
         case 'ERC1155':
           if (sft) {
             tokenId = this.base.requireTokenId(tokenId, this.functionName);
-            const tx = await sft
-              .connectReadOnly()
-              .populateTransaction.setWalletClaimCount(tokenId, address, maxWalletClaimCount, overrides);
-            return tx;
+            const { request } = await this.reader(this.abi(sft)).simulate.setWalletClaimCount(
+              [tokenId, address as Hex, BigInt(maxWalletClaimCount)],
+              params,
+            );
+            return encodeFunctionData(request);
           }
           break;
 
         case 'ERC721':
           if (nft) {
             this.base.rejectTokenId(tokenId, this.functionName);
-            const tx = await nft
-              .connectReadOnly()
-              .populateTransaction.setWalletClaimCount(address, maxWalletClaimCount, overrides);
-            return tx;
+            const { request } = await this.reader(this.abi(nft)).simulate.setWalletClaimCount(
+              [address as Hex, BigInt(maxWalletClaimCount)],
+              params,
+            );
+
+            return encodeFunctionData(request);
           }
           break;
       }

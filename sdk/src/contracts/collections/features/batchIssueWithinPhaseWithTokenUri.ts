@@ -1,9 +1,8 @@
-import { Address, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { BatchIssueWithTokenUriArgs, ZERO_ADDRESS } from '../..';
+import { Address, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData } from 'viem';
+import { BatchIssueWithTokenUriArgs, Signer, WriteParameters, ZERO_ADDRESS } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -20,11 +19,11 @@ const BatchIssueWithinPhaseWithTokenUriInterfaces = Object.values(BatchIssueWith
 type BatchIssueWithinPhaseWithTokenUriInterfaces = (typeof BatchIssueWithinPhaseWithTokenUriInterfaces)[number];
 
 export type BatchIssueWithinPhaseWithTokenUriCallArgs = [
-  signer: Signerish,
+  walletClient: Signer,
   args: BatchIssueWithTokenUriArgs,
-  overrides?: WriteOverrides,
+  params?: WriteParameters,
 ];
-export type BatchIssueWithinPhaseWithTokenUriResponse = ContractTransaction;
+export type BatchIssueWithinPhaseWithTokenUriResponse = TransactionHash;
 
 export class BatchIssueWithinPhaseWithTokenUri extends ContractFunction<
   BatchIssueWithinPhaseWithTokenUriInterfaces,
@@ -48,54 +47,56 @@ export class BatchIssueWithinPhaseWithTokenUri extends ContractFunction<
   }
 
   async batchIssueWithinPhaseWithTokenUri(
-    signer: Signerish,
+    walletClient: Signer,
     args: BatchIssueWithTokenUriArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<BatchIssueWithinPhaseWithTokenUriResponse> {
     this.validateArgs(args);
     const nft = this.partition('nft');
     const wallets = await Promise.all(args.receivers.map((receiver) => asAddress(receiver)));
 
     try {
-      const tx = await nft.connectWith(signer).batchIssueWithinPhaseWithTokenURI(wallets, args.tokenURIs, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(nft)).simulate.batchIssueWithinPhaseWithTokenURI(
+        [wallets as `0x${string}`[], args.tokenURIs],
+        params,
+      );
+      const tx = await walletClient.writeContract(request);
+      return tx as TransactionHash;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
   }
 
-  async estimateGas(
-    signer: Signerish,
-    args: BatchIssueWithTokenUriArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+  async estimateGas(walletClient: Signer, args: BatchIssueWithTokenUriArgs, params?: WriteParameters): Promise<bigint> {
     this.validateArgs(args);
     const nft = this.partition('nft');
     const wallets = await Promise.all(args.receivers.map((receiver) => asAddress(receiver)));
 
     try {
-      const estimate = await nft
-        .connectWith(signer)
-        .estimateGas.batchIssueWithinPhaseWithTokenURI(wallets, args.tokenURIs, overrides);
+      const estimate = await this.reader(this.abi(nft)).estimateGas.batchIssueWithinPhaseWithTokenURI(
+        [wallets as `0x${string}`[], args.tokenURIs],
+        {
+          account: walletClient.account,
+          ...params,
+        },
+      );
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
   }
 
-  async populateTransaction(
-    args: BatchIssueWithTokenUriArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction(args: BatchIssueWithTokenUriArgs, params?: WriteParameters): Promise<string> {
     this.validateArgs(args);
     const nft = this.partition('nft');
     const wallets = await Promise.all(args.receivers.map((receiver) => asAddress(receiver)));
 
     try {
-      const tx = await nft
-        .connectReadOnly()
-        .populateTransaction.batchIssueWithinPhaseWithTokenURI(wallets, args.tokenURIs, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(nft)).simulate.batchIssueWithinPhaseWithTokenURI(
+        [wallets as `0x${string}`[], args.tokenURIs],
+        params,
+      );
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }

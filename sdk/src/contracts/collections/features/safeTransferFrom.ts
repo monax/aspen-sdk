@@ -1,14 +1,14 @@
-import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumberish, BytesLike, ContractTransaction } from 'ethers';
+import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, Hex } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
+import type { RequiredTokenId, Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
 const SafeTransferFromFunctions = {
-  nft: 'safeTransferFrom(address,address,uint256,bytes)+[]',
-  nftV2: 'safeTransferFrom(address,address,uint256)+[]',
+  nft: 'safeTransferFrom(address,address,uint256,bytes)[]',
+  nftV2: 'safeTransferFrom(address,address,uint256)[]',
   sft: 'safeTransferFrom(address,address,uint256,uint256,bytes)[]',
 } as const;
 
@@ -22,15 +22,15 @@ type SafeTransferFromPartitions = typeof SafeTransferFromPartitions;
 const SafeTransferFromInterfaces = Object.values(SafeTransferFromPartitions).flat();
 type SafeTransferFromInterfaces = (typeof SafeTransferFromInterfaces)[number];
 
-export type SafeTransferFromCallArgs = [signer: Signerish, args: SafeTransferFromArgs, overrides?: WriteOverrides];
-export type SafeTransferFromResponse = ContractTransaction;
+export type SafeTransferFromCallArgs = [walletClient: Signer, args: SafeTransferFromArgs, params?: WriteParameters];
+export type SafeTransferFromResponse = TransactionHash;
 
 export type SafeTransferFromArgs = {
   fromAddress: Addressish;
   toAddress: Addressish;
-  tokenId: BigNumberish;
-  bytes?: BytesLike;
-  amount?: BigNumberish;
+  tokenId: RequiredTokenId;
+  bytes?: Hex;
+  amount?: bigint;
 };
 
 export class SafeTransferFrom extends ContractFunction<
@@ -50,10 +50,10 @@ export class SafeTransferFrom extends ContractFunction<
   }
 
   async safeTransferFrom(
-    signer: Signerish,
+    walletClient: Signer,
     { fromAddress, toAddress, tokenId, bytes, amount }: SafeTransferFromArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<TransactionHash> {
     const { nft, nftV2, sft } = this.partitions;
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
@@ -63,23 +63,29 @@ export class SafeTransferFrom extends ContractFunction<
       switch (this.base.tokenStandard) {
         case 'ERC1155':
           if (sft) {
-            const tx = await sft
-              .connectWith(signer)
-              .safeTransferFrom(from, to, tokenId, amount || 0, bytes ?? [], overrides);
-            return tx;
+            const { request } = await this.reader(this.abi(sft)).simulate.safeTransferFrom(
+              [from as Hex, to as Hex, tokenId, BigInt(amount || 0), bytes ?? '0x'],
+              params,
+            );
+            const tx = await walletClient.writeContract(request);
+            return tx as TransactionHash;
           }
           break;
         case 'ERC721':
-          if (nft) {
-            const tx = await nft
-              .connectWith(signer)
-              ['safeTransferFrom(address,address,uint256,bytes)'](from, to, tokenId, bytes ?? [], overrides);
-            return tx;
-          } else if (nftV2) {
-            const tx = await nftV2
-              .connectWith(signer)
-              ['safeTransferFrom(address,address,uint256)'](from, to, tokenId, overrides);
-            return tx;
+          if (nft && bytes) {
+            const { request } = await this.reader(this.abi(nft)).simulate.safeTransferFrom(
+              [from as Hex, to as Hex, tokenId, bytes],
+              params,
+            );
+            const tx = await walletClient.writeContract(request);
+            return tx as TransactionHash;
+          } else if (nftV2 && !bytes) {
+            const { request } = await this.reader(this.abi(nftV2)).simulate.safeTransferFrom(
+              [from as Hex, to as Hex, tokenId],
+              params,
+            );
+            const tx = await walletClient.writeContract(request);
+            return tx as TransactionHash;
           }
           break;
       }
@@ -91,9 +97,9 @@ export class SafeTransferFrom extends ContractFunction<
   }
 
   async estimateGas(
-    signer: Signerish,
+    walletClient: Signer,
     { fromAddress, toAddress, tokenId, bytes, amount }: SafeTransferFromArgs,
-    overrides: WriteOverrides = {},
+    params?: WriteParameters,
   ) {
     const { nft, nftV2, sft } = this.partitions;
     const from = await asAddress(fromAddress);
@@ -104,29 +110,35 @@ export class SafeTransferFrom extends ContractFunction<
       switch (this.base.tokenStandard) {
         case 'ERC1155':
           if (sft) {
-            const tx = await sft
-              .connectWith(signer)
-              .estimateGas.safeTransferFrom(from, to, tokenId, amount || 0, bytes ?? [], overrides);
-            return tx;
+            const estimate = await this.reader(this.abi(sft)).estimateGas.safeTransferFrom(
+              [from as Hex, to as Hex, tokenId, BigInt(amount || 0), bytes ?? '0x'],
+              {
+                account: walletClient.account,
+                ...params,
+              },
+            );
+            return estimate;
           }
           break;
         case 'ERC721':
-          if (nft) {
-            const tx = await nft
-              .connectWith(signer)
-              .estimateGas['safeTransferFrom(address,address,uint256,bytes)'](
-                from,
-                to,
-                tokenId,
-                bytes ?? [],
-                overrides,
-              );
-            return tx;
-          } else if (nftV2) {
-            const tx = await nftV2
-              .connectWith(signer)
-              .estimateGas['safeTransferFrom(address,address,uint256)'](from, to, tokenId, overrides);
-            return tx;
+          if (nft && bytes) {
+            const estimate = await this.reader(this.abi(nft)).estimateGas.safeTransferFrom(
+              [from as Hex, to as Hex, tokenId, bytes],
+              {
+                account: walletClient.account,
+                ...params,
+              },
+            );
+            return estimate;
+          } else if (nftV2 && !bytes) {
+            const estimate = await this.reader(this.abi(nftV2)).estimateGas.safeTransferFrom(
+              [from as Hex, to as Hex, tokenId],
+              {
+                account: walletClient.account,
+                ...params,
+              },
+            );
+            return estimate;
           }
           break;
       }
@@ -139,7 +151,7 @@ export class SafeTransferFrom extends ContractFunction<
 
   async populateTransaction(
     { fromAddress, toAddress, tokenId, bytes, amount }: SafeTransferFromArgs,
-    overrides: WriteOverrides = {},
+    params?: WriteParameters,
   ) {
     const { nft, nftV2, sft } = this.partitions;
     const from = await asAddress(fromAddress);
@@ -150,29 +162,26 @@ export class SafeTransferFrom extends ContractFunction<
       switch (this.base.tokenStandard) {
         case 'ERC1155':
           if (sft) {
-            const tx = await sft
-              .connectReadOnly()
-              .populateTransaction.safeTransferFrom(from, to, tokenId, amount || 0, bytes ?? [], overrides);
-            return tx;
+            const { request } = await this.reader(this.abi(sft)).simulate.safeTransferFrom(
+              [from as Hex, to as Hex, tokenId, BigInt(amount || 0), bytes ?? '0x'],
+              params,
+            );
+            return encodeFunctionData(request);
           }
           break;
         case 'ERC721':
-          if (nft) {
-            const tx = await nft
-              .connectReadOnly()
-              .populateTransaction['safeTransferFrom(address,address,uint256,bytes)'](
-                from,
-                to,
-                tokenId,
-                bytes ?? [],
-                overrides,
-              );
-            return tx;
-          } else if (nftV2) {
-            const tx = await nftV2
-              .connectReadOnly()
-              .populateTransaction['safeTransferFrom(address,address,uint256)'](from, to, tokenId, overrides);
-            return tx;
+          if (nft && bytes) {
+            const { request } = await this.reader(this.abi(nft)).simulate.safeTransferFrom(
+              [from as Hex, to as Hex, tokenId, bytes],
+              params,
+            );
+            return encodeFunctionData(request);
+          } else if (nftV2 && !bytes) {
+            const { request } = await this.reader(this.abi(nftV2)).simulate.safeTransferFrom(
+              [from as Hex, to as Hex, tokenId],
+              params,
+            );
+            return encodeFunctionData(request);
           }
           break;
       }

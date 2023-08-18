@@ -6,11 +6,10 @@ import * as t from 'io-ts';
 import * as path from 'path';
 import { AspenContractsManifest } from '../aspen-contracts';
 import {
-  dumpLatestABIs,
   generateTsFile,
   writeAspenContractsFactoriesMap,
+  writeFeaturesAbisMap,
   writeFeaturesCodeMap,
-  writeFeaturesFactoriesMap,
   writeFeaturesFunctionsMap,
   writeFeaturesList,
   writeTypescriptFile,
@@ -21,12 +20,12 @@ import { ContractsManifest } from '../manifest';
 
 const sdkDir = path.join(__dirname, '..', '..', '..');
 const srcDir = path.join(sdkDir, 'src');
-const contractsAbiDir = path.join(srcDir, 'contracts', 'abis');
+// const contractsAbiDir = path.join(srcDir, 'contracts', 'abis');
 const specDir = path.join(sdkDir, 'node_modules', '@monaxlabs', 'spec');
 const pathToDeploymentsJson = path.join(specDir, 'contracts/deployments.json');
 const pathToManifestJson = path.join(specDir, 'contracts/manifest.json');
 const pathToAspenOASJson = path.join(specDir, 'apis/aspen.json');
-const pathToIdentityOASJson = path.join(specDir, 'apis/identity.json');
+// const pathToIdentityOASJson = path.join(specDir, 'apis/identity.json');
 const pathToExperimentalManifestJson = path.join(specDir, 'contracts/manifest.experimental.json');
 
 const visitor = new IoTsTypeVisitor(
@@ -43,12 +42,12 @@ async function generateForManifests(
   const combinedManifest = { ...manifest, ...experimentalManifest };
 
   const featuresDir = path.join(srcDir, 'contracts', 'collections', 'features');
-  const featureFactoriesTs = path.join(featuresDir, 'feature-factories.gen.ts');
+  const featureAbisTs = path.join(featuresDir, 'feature-abis.gen.ts');
   const featureFunctionsTs = path.join(featuresDir, 'feature-functions.gen.ts');
   const experimentalFeaturesTs = path.join(featuresDir, 'experimental-features.gen.ts');
   const featureCodesTs = path.join(featuresDir, 'feature-codes.gen.ts');
 
-  await writeFeaturesFactoriesMap(combinedManifest, featureFactoriesTs);
+  await writeFeaturesAbisMap(combinedManifest, featureAbisTs);
   await writeFeaturesFunctionsMap(combinedManifest, featureFunctionsTs);
   await writeFeaturesCodeMap(combinedManifest, featureCodesTs);
   // Drop list of those interfaces that should be marked as experimental (subject to change at any time)
@@ -66,19 +65,19 @@ async function generateAspenApi(): Promise<void> {
   );
 }
 
-async function generateIdentityApi(): Promise<void> {
-  await writeTypescriptFile(
-    path.join(srcDir, 'apis', 'identity', 'oas.ts'),
-    await generateOAS(parseFile(Spec, pathToIdentityOASJson), visitor),
-  );
-}
+// async function generateIdentityApi(): Promise<void> {
+//   await writeTypescriptFile(
+//     path.join(srcDir, 'apis', 'identity', 'oas.ts'),
+//     await generateOAS(parseFile(Spec, pathToIdentityOASJson), visitor),
+//   );
+// }
 
 async function generate(): Promise<void> {
   // Pull in manifests from @monaxlabs/spec
   const manifest = parseFile(ContractsManifest, pathToManifestJson);
   const experimentalManifest = parseFile(ContractsManifest, pathToExperimentalManifestJson);
   // Dump joint ABIs for Typechain
-  await Promise.all([dumpLatestABIs(contractsAbiDir, manifest, experimentalManifest)]);
+  // await Promise.all([dumpLatestABIs(contractsAbiDir, manifest, experimentalManifest)]);
   // Generate various contingent typescript artefacts based on manifests
   await generateForManifests(manifest, experimentalManifest);
   await generateAspenApi();
@@ -90,7 +89,7 @@ async function generate(): Promise<void> {
   await generateTsFile('AspenContracts', deployments, aspenContractsFileTs);
   const deployerFactoriesTs = path.join(srcDir, 'contracts', 'core', 'core-factories.gen.ts');
   // Write map to typechain factory contracts from interfaces
-  await writeAspenContractsFactoriesMap(deployments, deployerFactoriesTs, experimentalManifest);
+  await writeAspenContractsFactoriesMap(deployments, deployerFactoriesTs, manifest, experimentalManifest);
 }
 
 generate().catch((err) => {

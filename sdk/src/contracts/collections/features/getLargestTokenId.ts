@@ -1,5 +1,4 @@
-import { BigNumber, CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -16,8 +15,8 @@ type GetLargestTokenIdPartitions = typeof GetLargestTokenIdPartitions;
 const GetLargestTokenIdInterfaces = Object.values(GetLargestTokenIdPartitions).flat();
 type GetLargestTokenIdInterfaces = (typeof GetLargestTokenIdInterfaces)[number];
 
-export type GetLargestTokenIdCallArgs = [overrides?: CallOverrides];
-export type GetLargestTokenIdResponse = BigNumber;
+export type GetLargestTokenIdCallArgs = [params?: ReadParameters];
+export type GetLargestTokenIdResponse = bigint;
 
 export class GetLargestTokenId extends ContractFunction<
   GetLargestTokenIdInterfaces,
@@ -36,11 +35,11 @@ export class GetLargestTokenId extends ContractFunction<
     return this.getLargestTokenId(...args);
   }
 
-  async getLargestTokenId(overrides: CallOverrides = {}): Promise<BigNumber> {
+  async getLargestTokenId(params?: ReadParameters): Promise<bigint> {
     const v1 = this.partition('v1');
 
     try {
-      const largestId = await v1.connectReadOnly().getLargestTokenId(overrides);
+      const largestId = await this.reader(this.abi(v1)).read.getLargestTokenId(params);
       return largestId;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

@@ -1,7 +1,9 @@
 import { asAddress } from '@monaxlabs/phloem/dist/types';
-import { CallOverrides } from 'ethers';
+import { Hex } from 'viem';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
+import { normalise } from '../number';
+import { ReadParameters } from '../types';
 import { ClaimArgs } from './claim';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -24,7 +26,7 @@ type VerifyClaimPartitions = typeof VerifyClaimPartitions;
 const VerifyClaimInterfaces = Object.values(VerifyClaimPartitions).flat();
 type VerifyClaimInterfaces = (typeof VerifyClaimInterfaces)[number];
 
-export type VerifyClaimCallArgs = [args: ClaimArgs, verifyMaxQuantity?: boolean, overrides?: CallOverrides];
+export type VerifyClaimCallArgs = [args: ClaimArgs, verifyMaxQuantity?: boolean, params?: ReadParameters];
 export type VerifyClaimResponse = boolean;
 
 export class VerifyClaim extends ContractFunction<
@@ -46,23 +48,19 @@ export class VerifyClaim extends ContractFunction<
   /**
    * Use this function to verify that the claimant actually meets the claim conditions
    */
-  protected async verifyClaim(
-    args: ClaimArgs,
-    verifyMaxQuantity = true,
-    overrides: CallOverrides = {},
-  ): Promise<boolean> {
+  protected async verifyClaim(args: ClaimArgs, verifyMaxQuantity = true, params?: ReadParameters): Promise<boolean> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.verifyERC1155(args, verifyMaxQuantity, overrides);
+        return await this.verifyERC1155(args, verifyMaxQuantity, params);
       case 'ERC721':
-        return await this.verifyERC721(args, verifyMaxQuantity, overrides);
+        return await this.verifyERC721(args, verifyMaxQuantity, params);
     }
   }
 
   protected async verifyERC1155(
     args: ClaimArgs,
     verifyMaxQuantity: boolean,
-    overrides: CallOverrides = {},
+    params?: ReadParameters,
   ): Promise<boolean> {
     args.tokenId = this.base.requireTokenId(args.tokenId, this.functionName);
     const { sftV1, sftV2 } = this.partitions;
@@ -71,33 +69,33 @@ export class VerifyClaim extends ContractFunction<
 
     try {
       if (sftV2) {
-        await sftV2
-          .connectReadOnly()
-          .verifyClaim(
-            wallet,
+        await this.reader(this.abi(sftV2)).read.verifyClaim(
+          [
+            wallet as Hex,
             args.tokenId,
-            args.quantity,
-            tokenAddress,
-            args.pricePerToken,
-            args.proofs,
-            args.proofMaxQuantityPerTransaction,
-            overrides,
-          );
+            normalise(args.quantity),
+            tokenAddress as Hex,
+            normalise(args.pricePerToken),
+            args.proofs as Hex[],
+            normalise(args.proofMaxQuantityPerTransaction),
+          ],
+          params,
+        );
 
         return true;
       } else if (sftV1) {
-        await sftV1
-          .connectReadOnly()
-          .verifyClaim(
-            args.conditionId,
-            wallet,
+        await this.reader(this.abi(sftV1)).read.verifyClaim(
+          [
+            BigInt(args.conditionId),
+            wallet as Hex,
             args.tokenId,
-            args.quantity,
-            tokenAddress,
-            args.pricePerToken,
+            normalise(args.quantity),
+            tokenAddress as Hex,
+            normalise(args.pricePerToken),
             verifyMaxQuantity,
-            overrides,
-          );
+          ],
+          params,
+        );
 
         return true;
       }
@@ -108,42 +106,38 @@ export class VerifyClaim extends ContractFunction<
     this.notSupported();
   }
 
-  protected async verifyERC721(
-    args: ClaimArgs,
-    verifyMaxQuantity: boolean,
-    overrides: CallOverrides = {},
-  ): Promise<boolean> {
+  protected async verifyERC721(args: ClaimArgs, verifyMaxQuantity: boolean, params?: ReadParameters): Promise<boolean> {
     const { nftV1, nftV2 } = this.partitions;
     const wallet = await asAddress(args.receiver);
     const tokenAddress = await asAddress(args.currency);
 
     try {
       if (nftV2) {
-        await nftV2
-          .connectReadOnly()
-          .verifyClaim(
-            wallet,
-            args.quantity,
-            tokenAddress,
-            args.pricePerToken,
-            args.proofs,
-            args.proofMaxQuantityPerTransaction,
-            overrides,
-          );
+        await this.reader(this.abi(nftV2)).read.verifyClaim(
+          [
+            wallet as Hex,
+            normalise(args.quantity),
+            tokenAddress as Hex,
+            normalise(args.pricePerToken),
+            args.proofs as Hex[],
+            normalise(args.proofMaxQuantityPerTransaction),
+          ],
+          params,
+        );
 
         return true;
       } else if (nftV1) {
-        await nftV1
-          .connectReadOnly()
-          .verifyClaim(
-            args.conditionId,
-            wallet,
-            args.quantity,
-            tokenAddress,
-            args.pricePerToken,
+        await this.reader(this.abi(nftV1)).read.verifyClaim(
+          [
+            BigInt(args.conditionId),
+            wallet as Hex,
+            normalise(args.quantity),
+            tokenAddress as Hex,
+            normalise(args.pricePerToken),
             verifyMaxQuantity,
-            overrides,
-          );
+          ],
+          params,
+        );
         return true;
       }
     } catch (err) {

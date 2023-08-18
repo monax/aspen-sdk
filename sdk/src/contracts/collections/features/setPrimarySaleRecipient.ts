@@ -1,8 +1,7 @@
-import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, Hex } from 'viem';
+import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -18,8 +17,8 @@ type SetPrimarySaleRecipientPartitions = typeof SetPrimarySaleRecipientPartition
 const SetPrimarySaleRecipientInterfaces = Object.values(SetPrimarySaleRecipientPartitions).flat();
 type SetPrimarySaleRecipientInterfaces = (typeof SetPrimarySaleRecipientInterfaces)[number];
 
-export type SetPrimarySaleRecipientCallArgs = [signer: Signerish, recipient: Addressish, overrides?: WriteOverrides];
-export type SetPrimarySaleRecipientResponse = ContractTransaction;
+export type SetPrimarySaleRecipientCallArgs = [walletClient: Signer, recipient: Addressish, params?: WriteParameters];
+export type SetPrimarySaleRecipientResponse = TransactionHash;
 
 export class SetPrimarySaleRecipient extends ContractFunction<
   SetPrimarySaleRecipientInterfaces,
@@ -38,40 +37,42 @@ export class SetPrimarySaleRecipient extends ContractFunction<
   }
 
   async setPrimarySaleRecipient(
-    signer: Signerish,
+    walletClient: Signer,
     recipient: Addressish,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<TransactionHash> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(recipient);
 
     try {
-      const tx = await v1.connectWith(signer).setPrimarySaleRecipient(wallet, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setPrimarySaleRecipient([wallet as Hex], params);
+      const tx = await walletClient.sendTransaction(request);
+      return tx as TransactionHash;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async estimateGas(signer: Signerish, recipient: Addressish, overrides: WriteOverrides = {}): Promise<BigNumber> {
+  async estimateGas(walletClient: Signer, recipient: Addressish, params?: WriteParameters): Promise<bigint> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(recipient);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const estimate = await v1.connectWith(signer).estimateGas.setPrimarySaleRecipient(wallet, overrides);
+      const estimate = await this.reader(this.abi(v1)).estimateGas.setPrimarySaleRecipient([wallet as Hex], fullParams);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async populateTransaction(recipient: Addressish, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
+  async populateTransaction(recipient: Addressish, params?: WriteParameters): Promise<string> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(recipient);
 
     try {
-      const tx = await v1.connectReadOnly().populateTransaction.setPrimarySaleRecipient(wallet, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setPrimarySaleRecipient([wallet as Hex], params);
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

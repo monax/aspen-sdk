@@ -1,8 +1,8 @@
-import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumberish, ContractTransaction } from 'ethers';
+import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, Hex } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
+import type { Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -18,12 +18,12 @@ type ApprovePartitions = typeof ApprovePartitions;
 const ApproveInterfaces = Object.values(ApprovePartitions).flat();
 type ApproveInterfaces = (typeof ApproveInterfaces)[number];
 
-export type ApproveCallArgs = [signer: Signerish, args: ApproveArgs, overrides?: WriteOverrides];
-export type ApproveResponse = ContractTransaction;
+export type ApproveCallArgs = [walletClient: Signer, args: ApproveArgs, params?: WriteParameters];
+export type ApproveResponse = TransactionHash;
 
 export type ApproveArgs = {
   toAddress: Addressish;
-  tokenId: BigNumberish;
+  tokenId: bigint;
 };
 
 export class Approve extends ContractFunction<ApproveInterfaces, ApprovePartitions, ApproveCallArgs, ApproveResponse> {
@@ -38,43 +38,44 @@ export class Approve extends ContractFunction<ApproveInterfaces, ApprovePartitio
   }
 
   async approve(
-    signer: Signerish,
+    walletClient: Signer,
     { toAddress, tokenId }: ApproveArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<ApproveResponse> {
     const nft = this.partition('nft');
     const to = await asAddress(toAddress);
-    tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
-      const tx = await nft.connectWith(signer).approve(to, tokenId, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(nft)).simulate.approve([to as Hex, tokenId], params);
+      const tx = await walletClient.writeContract(request);
+      return tx as TransactionHash;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async estimateGas(signer: Signerish, { toAddress, tokenId }: ApproveArgs, overrides: WriteOverrides = {}) {
+  async estimateGas(walletClient: Signer, { toAddress, tokenId }: ApproveArgs, params?: WriteParameters) {
     const nft = this.partition('nft');
     const to = await asAddress(toAddress);
-    tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
-      const tx = await nft.connectWith(signer).estimateGas.approve(to, tokenId, overrides);
-      return tx;
+      const estimate = await this.reader(this.abi(nft)).estimateGas.approve([to as Hex, tokenId], {
+        account: walletClient.account,
+        ...params,
+      });
+      return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async populateTransaction({ toAddress, tokenId }: ApproveArgs, overrides: WriteOverrides = {}) {
+  async populateTransaction({ toAddress, tokenId }: ApproveArgs, params?: WriteParameters) {
     const nft = this.partition('nft');
     const to = await asAddress(toAddress);
-    tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
-      const tx = await nft.connectReadOnly().populateTransaction.approve(to, tokenId, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(nft)).simulate.approve([to as Hex, tokenId], params);
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

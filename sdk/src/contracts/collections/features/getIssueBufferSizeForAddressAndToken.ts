@@ -1,8 +1,8 @@
 import { Addressish, asAddress, isZeroAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, CallOverrides } from 'ethers';
+import { Hex } from 'viem';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { TokenId } from '../types';
+import type { ReadParameters, TokenId } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -27,11 +27,11 @@ export type GetIssueBufferSizeForAddressAndTokenArgs = {
 
 export type GetIssueBufferSizeForAddressAndTokenCallArgs = [
   args: GetIssueBufferSizeForAddressAndTokenArgs,
-  overrides?: CallOverrides,
+  params?: ReadParameters,
 ];
 export type GetIssueBufferSizeForAddressAndTokenResponse = IssueBufferSize;
 
-export type IssueBufferSize = BigNumber;
+export type IssueBufferSize = bigint;
 
 export class GetIssueBufferSizeForAddressAndToken extends ContractFunction<
   GetIssueBufferSizeForAddressAndTokenInterfaces,
@@ -58,18 +58,18 @@ export class GetIssueBufferSizeForAddressAndToken extends ContractFunction<
 
   async getIssueBufferSizeForAddressAndToken(
     args: GetIssueBufferSizeForAddressAndTokenArgs,
-    overrides: CallOverrides = {},
+    params?: ReadParameters,
   ): Promise<IssueBufferSize> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.getIssueBufferSizeForAddressAndTokenERC1155(args, overrides);
+        return await this.getIssueBufferSizeForAddressAndTokenERC1155(args, params);
     }
     this.notSupported();
   }
 
   protected async getIssueBufferSizeForAddressAndTokenERC1155(
     { owner, tokenId }: GetIssueBufferSizeForAddressAndTokenArgs,
-    overrides: CallOverrides = {},
+    params?: ReadParameters,
   ): Promise<IssueBufferSize> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
@@ -77,12 +77,13 @@ export class GetIssueBufferSizeForAddressAndToken extends ContractFunction<
     if (isZeroAddress(wallet)) {
       throw new SdkError(SdkErrorCode.INVALID_DATA, { owner }, new Error('Owner cannot be an empty address'));
     }
-    const tokenOwner = await asAddress(owner);
+    const tokenOwner = (await asAddress(owner)) as Hex;
 
     try {
-      const issueBufferSize = await sft
-        .connectReadOnly()
-        .getIssueBufferSizeForAddressAndToken(tokenOwner, tokenId, overrides);
+      const issueBufferSize = await this.reader(this.abi(sft)).read.getIssueBufferSizeForAddressAndToken(
+        [tokenOwner, tokenId],
+        params,
+      );
 
       return issueBufferSize;
     } catch (err) {

@@ -1,5 +1,4 @@
-import { BigNumber, CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -16,8 +15,8 @@ type GetBaseURICountPartitions = typeof GetBaseURICountPartitions;
 const GetBaseURICountInterfaces = Object.values(GetBaseURICountPartitions).flat();
 type GetBaseURICountInterfaces = (typeof GetBaseURICountInterfaces)[number];
 
-export type GetBaseURICountCallArgs = [overrides?: CallOverrides];
-export type GetBaseURICountResponse = BigNumber;
+export type GetBaseURICountCallArgs = [params?: ReadParameters];
+export type GetBaseURICountResponse = bigint;
 
 export class GetBaseURICount extends ContractFunction<
   GetBaseURICountInterfaces,
@@ -35,11 +34,11 @@ export class GetBaseURICount extends ContractFunction<
     return this.GetBaseURICount(...args);
   }
 
-  async GetBaseURICount(overrides: CallOverrides = {}): Promise<BigNumber> {
+  async GetBaseURICount(params?: ReadParameters): Promise<GetBaseURICountResponse> {
     const v1 = this.partition('v1');
 
     try {
-      const indices = await v1.connectReadOnly().getBaseURICount(overrides);
+      const indices = await this.reader(this.abi(v1)).read.getBaseURICount(params);
       return indices;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

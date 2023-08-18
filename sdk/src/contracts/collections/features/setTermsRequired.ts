@@ -1,7 +1,7 @@
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData } from 'viem';
+import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -17,8 +17,8 @@ type SetTermsRequiredPartitions = typeof SetTermsRequiredPartitions;
 const SetTermsRequiredInterfaces = Object.values(SetTermsRequiredPartitions).flat();
 type SetTermsRequiredInterfaces = (typeof SetTermsRequiredInterfaces)[number];
 
-export type SetTermsRequiredCallArgs = [signer: Signerish, termsRequired: boolean, overrides?: WriteOverrides];
-export type SetTermsRequiredResponse = ContractTransaction;
+export type SetTermsRequiredCallArgs = [walletClient: Signer, termsRequired: boolean, params?: WriteParameters];
+export type SetTermsRequiredResponse = TransactionHash;
 
 export class SetTermsRequired extends ContractFunction<
   SetTermsRequiredInterfaces,
@@ -37,37 +37,39 @@ export class SetTermsRequired extends ContractFunction<
   }
 
   async setTermsRequired(
-    signer: Signerish,
+    walletClient: Signer,
     termsRequired: boolean,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<TransactionHash> {
     const v1 = this.partition('v1');
 
     try {
-      const tx = await v1.connectWith(signer).setTermsRequired(termsRequired, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setTermsRequired([termsRequired], params);
+      const tx = await walletClient.sendTransaction(request);
+      return tx as TransactionHash;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async estimateGas(signer: Signerish, termsRequired: boolean, overrides: WriteOverrides = {}): Promise<BigNumber> {
+  async estimateGas(walletClient: Signer, termsRequired: boolean, params?: WriteParameters): Promise<bigint> {
     const v1 = this.partition('v1');
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const estimate = await v1.connectWith(signer).estimateGas.setTermsRequired(termsRequired, overrides);
+      const estimate = await this.reader(this.abi(v1)).estimateGas.setTermsRequired([termsRequired], fullParams);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async populateTransaction(termsRequired: boolean, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
+  async populateTransaction(termsRequired: boolean, params?: WriteParameters): Promise<string> {
     const v1 = this.partition('v1');
 
     try {
-      const tx = await v1.connectReadOnly().populateTransaction.setTermsRequired(termsRequired, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setTermsRequired([termsRequired], params);
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

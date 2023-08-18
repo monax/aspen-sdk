@@ -1,7 +1,7 @@
-import { BigNumber, BytesLike, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, Hex } from 'viem';
+import { BytesLike, CollectionContract, PayableParameters, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -17,8 +17,8 @@ type MulticallPartitions = typeof MulticallPartitions;
 const MulticallInterfaces = Object.values(MulticallPartitions).flat();
 type MulticallInterfaces = (typeof MulticallInterfaces)[number];
 
-export type MulticallCallArgs = [signer: Signerish, data: BytesLike[], overrides?: WriteOverrides];
-export type MulticallResponse = ContractTransaction;
+export type MulticallCallArgs = [walletClient: Signer, data: BytesLike[], params?: PayableParameters];
+export type MulticallResponse = TransactionHash;
 
 export class Multicall extends ContractFunction<
   MulticallInterfaces,
@@ -36,34 +36,36 @@ export class Multicall extends ContractFunction<
     return this.multicall(...args);
   }
 
-  async multicall(signer: Signerish, data: BytesLike[], overrides: WriteOverrides = {}): Promise<ContractTransaction> {
+  async multicall(walletClient: Signer, data: BytesLike[], params?: WriteParameters): Promise<TransactionHash> {
     const v1 = this.partition('v1');
 
     try {
-      const tx = await v1.connectWith(signer).multicall(data, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.multicall([data as ReadonlyArray<Hex>], params);
+      const tx = await walletClient.sendTransaction(request);
+      return tx as TransactionHash;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async estimateGas(signer: Signerish, data: BytesLike[], overrides: WriteOverrides = {}): Promise<BigNumber> {
+  async estimateGas(walletClient: Signer, data: BytesLike[], params?: WriteParameters): Promise<bigint> {
     const v1 = this.partition('v1');
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const estimate = await v1.connectWith(signer).estimateGas.multicall(data, overrides);
+      const estimate = await this.reader(this.abi(v1)).estimateGas.multicall([data as ReadonlyArray<Hex>], fullParams);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async populateTransaction(data: BytesLike[], overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
+  async populateTransaction(data: BytesLike[], params?: WriteParameters): Promise<string> {
     const v1 = this.partition('v1');
 
     try {
-      const tx = await v1.connectReadOnly().populateTransaction.multicall(data, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.multicall([data as ReadonlyArray<Hex>], params);
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

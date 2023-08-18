@@ -1,8 +1,7 @@
-import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, Hex } from 'viem';
+import { CollectionContract, RequiredTokenId, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -19,13 +18,13 @@ const SetRoyaltyInfoForTokenInterfaces = Object.values(SetRoyaltyInfoForTokenPar
 type SetRoyaltyInfoForTokenInterfaces = (typeof SetRoyaltyInfoForTokenInterfaces)[number];
 
 export type SetRoyaltyInfoForTokenCallArgs = [
-  signer: Signerish,
-  tokenId: BigNumber,
+  walletClient: Signer,
+  tokenId: RequiredTokenId,
   royaltyRecipient: Addressish,
-  basisPoints: BigNumber,
-  overrides?: WriteOverrides,
+  basisPoints: bigint | number,
+  params?: WriteParameters,
 ];
-export type SetRoyaltyInfoForTokenResponse = ContractTransaction;
+export type SetRoyaltyInfoForTokenResponse = TransactionHash;
 
 export class SetRoyaltyInfoForToken extends ContractFunction<
   SetRoyaltyInfoForTokenInterfaces,
@@ -44,37 +43,45 @@ export class SetRoyaltyInfoForToken extends ContractFunction<
   }
 
   async setRoyaltyInfoForToken(
-    signer: Signerish,
-    tokenId: BigNumber,
+    walletClient: Signer,
+    tokenId: RequiredTokenId,
     royaltyRecipient: Addressish,
-    basisPoints: BigNumber,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    basisPoints: bigint | number,
+    params?: WriteParameters,
+  ): Promise<TransactionHash> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(royaltyRecipient);
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
-      const tx = await v1.connectWith(signer).setRoyaltyInfoForToken(tokenId, wallet, basisPoints, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setRoyaltyInfoForToken(
+        [tokenId, wallet as Hex, BigInt(basisPoints)],
+        params,
+      );
+      const tx = await walletClient.sendTransaction(request);
+      return tx as TransactionHash;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
   async estimateGas(
-    signer: Signerish,
-    tokenId: BigNumber,
+    walletClient: Signer,
+    tokenId: RequiredTokenId,
     royaltyRecipient: Addressish,
-    basisPoints: BigNumber,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+    basisPoints: bigint | number,
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(royaltyRecipient);
+    const fullParams = { account: walletClient.account, ...params };
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
-      const estimate = await v1
-        .connectWith(signer)
-        .estimateGas.setRoyaltyInfoForToken(tokenId, wallet, basisPoints, overrides);
+      const estimate = await this.reader(this.abi(v1)).estimateGas.setRoyaltyInfoForToken(
+        [tokenId, wallet as Hex, BigInt(basisPoints)],
+        fullParams,
+      );
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -82,19 +89,21 @@ export class SetRoyaltyInfoForToken extends ContractFunction<
   }
 
   async populateTransaction(
-    tokenId: BigNumber,
+    tokenId: RequiredTokenId,
     royaltyRecipient: Addressish,
-    basisPoints: BigNumber,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+    basisPoints: bigint | number,
+    params?: WriteParameters,
+  ): Promise<string> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(royaltyRecipient);
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
-      const tx = await v1
-        .connectReadOnly()
-        .populateTransaction.setRoyaltyInfoForToken(tokenId, wallet, basisPoints, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setRoyaltyInfoForToken(
+        [tokenId, wallet as Hex, BigInt(basisPoints)],
+        params,
+      );
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

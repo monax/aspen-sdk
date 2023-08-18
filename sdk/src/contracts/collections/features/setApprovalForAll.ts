@@ -1,8 +1,8 @@
-import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
+import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, Hex } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
+import type { Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -23,8 +23,8 @@ export type SetApprovalForAllArgs = {
   approved: boolean;
 };
 
-export type SetApprovalForAllCallArgs = [signer: Signerish, args: SetApprovalForAllArgs, overrides?: WriteOverrides];
-export type SetApprovalForAllResponse = ContractTransaction;
+export type SetApprovalForAllCallArgs = [walletClient: Signer, args: SetApprovalForAllArgs, params?: WriteParameters];
+export type SetApprovalForAllResponse = TransactionHash;
 
 export class SetApprovalForAll extends ContractFunction<
   SetApprovalForAllInterfaces,
@@ -43,47 +43,49 @@ export class SetApprovalForAll extends ContractFunction<
   }
 
   async setApprovalForAll(
-    signer: Signerish,
+    walletClient: Signer,
     { operator, approved }: SetApprovalForAllArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<TransactionHash> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(operator);
 
     try {
-      const tx = await v1.connectWith(signer).setApprovalForAll(wallet, approved, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setApprovalForAll([wallet as Hex, approved], params);
+      const tx = await walletClient.sendTransaction(request);
+      return tx as TransactionHash;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { operator, approved });
     }
   }
 
   async estimateGas(
-    signer: Signerish,
+    walletClient: Signer,
     { operator, approved }: SetApprovalForAllArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(operator);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const estimate = await v1.connectWith(signer).estimateGas.setApprovalForAll(wallet, approved, overrides);
+      const estimate = await this.reader(this.abi(v1)).estimateGas.setApprovalForAll(
+        [wallet as Hex, approved],
+        fullParams,
+      );
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { operator, approved });
     }
   }
 
-  async populateTransaction(
-    { operator, approved }: SetApprovalForAllArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction({ operator, approved }: SetApprovalForAllArgs, params?: WriteParameters): Promise<string> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(operator);
 
     try {
-      const tx = await v1.connectReadOnly().populateTransaction.setApprovalForAll(wallet, approved, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setApprovalForAll([wallet as Hex, approved], params);
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { operator, approved });
     }

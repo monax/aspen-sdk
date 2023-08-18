@@ -1,5 +1,5 @@
-import { BytesLike, CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { Hex } from 'viem';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -16,7 +16,7 @@ type SupportsInterfacePartitions = typeof SupportsInterfacePartitions;
 const SupportsInterfaceInterfaces = Object.values(SupportsInterfacePartitions).flat();
 type SupportsInterfaceInterfaces = (typeof SupportsInterfaceInterfaces)[number];
 
-export type SupportsInterfaceCallArgs = [interfaceId: BytesLike, overrides?: CallOverrides];
+export type SupportsInterfaceCallArgs = [interfaceId: Hex, params?: ReadParameters];
 export type SupportsInterfaceResponse = boolean;
 
 export class SupportsInterface extends ContractFunction<
@@ -35,11 +35,11 @@ export class SupportsInterface extends ContractFunction<
     return this.supportsInterface(...args);
   }
 
-  async supportsInterface(interfaceId: BytesLike, overrides: CallOverrides = {}): Promise<boolean> {
+  async supportsInterface(interfaceId: Hex, params?: ReadParameters): Promise<boolean> {
     const v1 = this.partition('v1');
 
     try {
-      const supported = await v1.connectReadOnly().supportsInterface(interfaceId, overrides);
+      const supported = await this.reader(this.abi(v1)).read.supportsInterface([interfaceId], params);
       return supported;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
