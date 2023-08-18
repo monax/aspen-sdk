@@ -1,8 +1,8 @@
 import { Address, Addressish, asAddress, isZeroAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { RequiredTokenId, Signerish, WriteOverrides } from '../types';
+import type { Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -21,17 +21,17 @@ const ChargebackWithdrawalInterfaces = Object.values(ChargebackWithdrawalPartiti
 type ChargebackWithdrawalInterfaces = (typeof ChargebackWithdrawalInterfaces)[number];
 
 export type ChargebackWithdrawalArgs = {
-  tokenId: RequiredTokenId;
+  tokenId: bigint;
   owner?: Addressish;
   quantity?: number;
 };
 
 export type ChargebackWithdrawalCallArgs = [
-  signer: Signerish,
+  walletClient: Signer,
   args: ChargebackWithdrawalArgs,
-  overrides?: WriteOverrides,
+  params?: WriteParameters,
 ];
-export type ChargebackWithdrawalResponse = ContractTransaction;
+export type ChargebackWithdrawalResponse = GetTransactionReceiptReturnType;
 
 export class ChargebackWithdrawal extends ContractFunction<
   ChargebackWithdrawalInterfaces,
@@ -50,146 +50,152 @@ export class ChargebackWithdrawal extends ContractFunction<
   }
 
   async chargebackWithdrawal(
-    signer: Signerish,
+    walletClient: Signer,
     args: ChargebackWithdrawalArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<ChargebackWithdrawalResponse> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.chargebackWithdrawalERC1155(signer, args, overrides);
+        return await this.chargebackWithdrawalERC1155(walletClient, args, params);
       case 'ERC721':
-        return await this.chargebackWithdrawalERC721(signer, args, overrides);
+        return await this.chargebackWithdrawalERC721(walletClient, args, params);
     }
   }
 
   protected async chargebackWithdrawalERC1155(
-    signer: Signerish,
+    walletClient: Signer,
     args: ChargebackWithdrawalArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<ChargebackWithdrawalResponse> {
     const sft = this.partition('sft');
     const { quantity, tokenId, owner } = await this.requireArgs(args);
 
     try {
-      const tx = await sft.connectWith(signer).chargebackWithdrawal(owner, tokenId, quantity, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(sft)).simulate.chargebackWithdrawal(
+        [owner as Hex, tokenId, quantity],
+        params,
+      );
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { owner, tokenId, quantity });
     }
   }
 
   protected async chargebackWithdrawalERC721(
-    signer: Signerish,
+    walletClient: Signer,
     { tokenId }: ChargebackWithdrawalArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
-    tokenId = this.base.requireTokenId(tokenId, this.functionName);
+    params?: WriteParameters,
+  ): Promise<ChargebackWithdrawalResponse> {
     const nft = this.partition('nft');
 
     try {
-      const tx = await nft.connectWith(signer).chargebackWithdrawal(tokenId, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(nft)).simulate.chargebackWithdrawal([tokenId], params);
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { tokenId });
     }
   }
 
-  async estimateGas(
-    signer: Signerish,
-    args: ChargebackWithdrawalArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+  async estimateGas(walletClient: Signer, args: ChargebackWithdrawalArgs, params?: WriteParameters): Promise<bigint> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.estimateGasERC1155(signer, args, overrides);
+        return await this.estimateGasERC1155(walletClient, args, params);
       case 'ERC721':
-        return await this.estimateGasERC721(signer, args, overrides);
+        return await this.estimateGasERC721(walletClient, args, params);
     }
   }
 
   protected async estimateGasERC1155(
-    signer: Signerish,
+    walletClient: Signer,
     args: ChargebackWithdrawalArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const sft = this.partition('sft');
     const { quantity, tokenId, owner } = await this.requireArgs(args);
 
     try {
-      const gas = await sft.connectWith(signer).estimateGas.chargebackWithdrawal(owner, tokenId, quantity, overrides);
-      return gas;
+      const estimate = await this.reader(this.abi(sft)).estimateGas.chargebackWithdrawal(
+        [owner as Hex, tokenId, quantity],
+        {
+          account: walletClient.account,
+          ...params,
+        },
+      );
+      return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { owner, tokenId, quantity });
     }
   }
 
   protected async estimateGasERC721(
-    signer: Signerish,
+    walletClient: Signer,
     { tokenId }: ChargebackWithdrawalArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
-    tokenId = this.base.requireTokenId(tokenId, this.functionName);
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const nft = this.partition('nft');
 
     try {
-      const gas = await nft.connectWith(signer).estimateGas.chargebackWithdrawal(tokenId, overrides);
-      return gas;
+      const estimate = await this.reader(this.abi(nft)).estimateGas.chargebackWithdrawal([tokenId], {
+        account: walletClient.account,
+        ...params,
+      });
+      return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { tokenId });
     }
   }
 
-  async populateTransaction(
-    signer: Signerish,
-    args: ChargebackWithdrawalArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction(args: ChargebackWithdrawalArgs, params?: WriteParameters): Promise<string> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.populateTransactionERC1155(signer, args, overrides);
+        return await this.populateTransactionERC1155(args, params);
       case 'ERC721':
-        return await this.populateTransactionERC721(signer, args, overrides);
+        return await this.populateTransactionERC721(args, params);
     }
   }
 
   protected async populateTransactionERC1155(
-    signer: Signerish,
     args: ChargebackWithdrawalArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+    params?: WriteParameters,
+  ): Promise<string> {
     const sft = this.partition('sft');
     const { quantity, tokenId, owner } = await this.requireArgs(args);
 
     try {
-      const tx = await sft
-        .connectWith(signer)
-        .populateTransaction.chargebackWithdrawal(owner, tokenId, quantity, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(sft)).simulate.chargebackWithdrawal(
+        [owner as Hex, tokenId, quantity],
+        params,
+      );
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { owner, tokenId, quantity });
     }
   }
 
   protected async populateTransactionERC721(
-    signer: Signerish,
     { tokenId }: ChargebackWithdrawalArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
-    tokenId = this.base.requireTokenId(tokenId, this.functionName);
+    params?: WriteParameters,
+  ): Promise<string> {
     const nft = this.partition('nft');
 
     try {
-      const tx = await nft.connectWith(signer).populateTransaction.chargebackWithdrawal(tokenId, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(nft)).simulate.chargebackWithdrawal([tokenId], params);
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { tokenId });
     }
   }
 
   protected async requireArgs({ owner, quantity, tokenId }: ChargebackWithdrawalArgs): Promise<{
-    tokenId: RequiredTokenId;
+    tokenId: bigint;
     owner: Address;
-    quantity: number;
+    quantity: bigint;
   }> {
     if (!owner) throw new SdkError(SdkErrorCode.INVALID_DATA, { owner }, new Error('Owner cannot be undefined'));
     const wallet = await asAddress(owner);
@@ -201,7 +207,7 @@ export class ChargebackWithdrawal extends ContractFunction<
     }
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
-    return { owner: wallet, quantity, tokenId };
+    return { owner: wallet, quantity: BigInt(quantity), tokenId };
   }
 }
 

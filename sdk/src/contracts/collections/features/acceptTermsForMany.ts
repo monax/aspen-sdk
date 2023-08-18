@@ -1,10 +1,9 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
+import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const AcceptTermsForManyFunctions = {
   v1: 'batchAcceptTerms(address[])[]',
@@ -18,8 +17,8 @@ type AcceptTermsForManyPartitions = typeof AcceptTermsForManyPartitions;
 const AcceptTermsForManyInterfaces = Object.values(AcceptTermsForManyPartitions).flat();
 type AcceptTermsForManyInterfaces = (typeof AcceptTermsForManyInterfaces)[number];
 
-export type AcceptTermsForManyCallArgs = [signer: Signerish, acceptors: Addressish[], overrides?: WriteOverrides];
-export type AcceptTermsForManyResponse = ContractTransaction;
+export type AcceptTermsForManyCallArgs = [walletClient: Signer, acceptors: Addressish[], params?: WriteParameters];
+export type AcceptTermsForManyResponse = GetTransactionReceiptReturnType;
 
 export class AcceptTermsForMany extends ContractFunction<
   AcceptTermsForManyInterfaces,
@@ -38,40 +37,46 @@ export class AcceptTermsForMany extends ContractFunction<
   }
 
   async acceptTermsForMany(
-    signer: Signerish,
+    walletClient: Signer,
     acceptors: Addressish[],
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<AcceptTermsForManyResponse> {
     const v1 = this.partition('v1');
     const wallets = await Promise.all(acceptors.map((a) => asAddress(a)));
 
     try {
-      const tx = await v1.connectWith(signer).batchAcceptTerms(wallets, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.batchAcceptTerms([wallets as Hex[]], params);
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async estimateGas(signer: Signerish, acceptors: Addressish[], overrides: WriteOverrides = {}): Promise<BigNumber> {
+  async estimateGas(walletClient: Signer, acceptors: Addressish[], params?: WriteParameters): Promise<bigint> {
     const v1 = this.partition('v1');
     const wallets = await Promise.all(acceptors.map((a) => asAddress(a)));
 
     try {
-      const estimate = await v1.connectWith(signer).estimateGas.batchAcceptTerms(wallets, overrides);
+      const estimate = await this.reader(this.abi(v1)).estimateGas.batchAcceptTerms([wallets as Hex[]], {
+        account: walletClient.account,
+        ...params,
+      });
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async populateTransaction(acceptors: Addressish[], overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
+  async populateTransaction(acceptors: Addressish[], params?: WriteParameters): Promise<string> {
     const v1 = this.partition('v1');
     const wallets = await Promise.all(acceptors.map((a) => asAddress(a)));
 
     try {
-      const tx = await v1.connectReadOnly().populateTransaction.batchAcceptTerms(wallets, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.batchAcceptTerms([wallets as Hex[]], params);
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

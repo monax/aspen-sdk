@@ -1,7 +1,6 @@
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
+import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -23,8 +22,8 @@ type SetClaimPauseStatusPartitions = typeof SetClaimPauseStatusPartitions;
 const SetClaimPauseStatusInterfaces = Object.values(SetClaimPauseStatusPartitions).flat();
 type SetClaimPauseStatusInterfaces = (typeof SetClaimPauseStatusInterfaces)[number];
 
-export type SetClaimPauseStatusCallArgs = [signer: Signerish, pauseStatus: boolean, overrides?: WriteOverrides];
-export type SetClaimPauseStatusResponse = ContractTransaction;
+export type SetClaimPauseStatusCallArgs = [walletClient: Signer, pauseStatus: boolean, params?: WriteParameters];
+export type SetClaimPauseStatusResponse = GetTransactionReceiptReturnType;
 
 export class SetClaimPauseStatus extends ContractFunction<
   SetClaimPauseStatusInterfaces,
@@ -43,21 +42,30 @@ export class SetClaimPauseStatus extends ContractFunction<
   }
 
   async setClaimPauseStatus(
-    signer: Signerish,
+    walletClient: Signer,
     pauseStatus: boolean,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<SetClaimPauseStatusResponse> {
     const { v1, v2 } = this.partitions;
 
     try {
       if (v2) {
-        const tx = await v2.connectWith(signer).setClaimPauseStatus(pauseStatus, overrides);
-        return tx;
+        const { request } = await this.reader(this.abi(v2)).simulate.setClaimPauseStatus([pauseStatus], params);
+        const hash = await walletClient.writeContract(request);
+        return this.base.publicClient.waitForTransactionReceipt({
+          hash,
+        });
       } else if (v1) {
-        const tx = await (pauseStatus
-          ? v1.connectWith(signer).pauseClaims(overrides)
-          : v1.connectWith(signer).unpauseClaims(overrides));
-        return tx;
+        let request;
+        if (pauseStatus) {
+          ({ request } = await this.reader(this.abi(v1)).simulate.pauseClaims(params));
+        } else {
+          ({ request } = await this.reader(this.abi(v1)).simulate.unpauseClaims(params));
+        }
+        const hash = await walletClient.writeContract(request);
+        return this.base.publicClient.waitForTransactionReceipt({
+          hash,
+        });
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -66,17 +74,21 @@ export class SetClaimPauseStatus extends ContractFunction<
     this.notSupported();
   }
 
-  async estimateGas(signer: Signerish, pauseStatus: boolean, overrides: WriteOverrides = {}): Promise<BigNumber> {
+  async estimateGas(walletClient: Signer, pauseStatus: boolean, params?: WriteParameters): Promise<bigint> {
     const { v1, v2 } = this.partitions;
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       if (v2) {
-        const estimate = await v2.connectWith(signer).estimateGas.setClaimPauseStatus(pauseStatus, overrides);
+        const estimate = await this.reader(this.abi(v2)).estimateGas.setClaimPauseStatus([pauseStatus], fullParams);
         return estimate;
       } else if (v1) {
-        const estimate = await (pauseStatus
-          ? v1.connectWith(signer).estimateGas.pauseClaims(overrides)
-          : v1.connectWith(signer).estimateGas.unpauseClaims(overrides));
+        let estimate;
+        if (pauseStatus) {
+          estimate = await this.reader(this.abi(v1)).estimateGas.pauseClaims(fullParams);
+        } else {
+          estimate = await this.reader(this.abi(v1)).estimateGas.unpauseClaims(fullParams);
+        }
         return estimate;
       }
     } catch (err) {
@@ -86,18 +98,21 @@ export class SetClaimPauseStatus extends ContractFunction<
     this.notSupported();
   }
 
-  async populateTransaction(pauseStatus: boolean, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
+  async populateTransaction(pauseStatus: boolean, params?: WriteParameters): Promise<string> {
     const { v1, v2 } = this.partitions;
 
     try {
       if (v2) {
-        const tx = await v2.connectReadOnly().populateTransaction.setClaimPauseStatus(pauseStatus, overrides);
-        return tx;
+        const { request } = await this.reader(this.abi(v2)).simulate.setClaimPauseStatus([pauseStatus], params);
+        return encodeFunctionData(request);
       } else if (v1) {
-        const tx = await (pauseStatus
-          ? v1.connectReadOnly().populateTransaction.pauseClaims(overrides)
-          : v1.connectReadOnly().populateTransaction.unpauseClaims(overrides));
-        return tx;
+        let request;
+        if (pauseStatus) {
+          ({ request } = await this.reader(this.abi(v1)).simulate.pauseClaims(params));
+        } else {
+          ({ request } = await this.reader(this.abi(v1)).simulate.unpauseClaims(params));
+        }
+        return encodeFunctionData(request);
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

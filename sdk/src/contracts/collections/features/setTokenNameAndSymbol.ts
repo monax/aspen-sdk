@@ -1,7 +1,6 @@
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
+import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -18,12 +17,12 @@ const SetTokenNameAndSymbolInterfaces = Object.values(SetTokenNameAndSymbolParti
 type SetTokenNameAndSymbolInterfaces = (typeof SetTokenNameAndSymbolInterfaces)[number];
 
 export type SetTokenNameAndSymbolCallArgs = [
-  signer: Signerish,
+  walletClient: Signer,
   name: string,
   symbol: string,
-  overrides?: WriteOverrides,
+  params?: WriteParameters,
 ];
-export type SetTokenNameAndSymbolResponse = ContractTransaction;
+export type SetTokenNameAndSymbolResponse = GetTransactionReceiptReturnType;
 
 export class SetTokenNameAndSymbol extends ContractFunction<
   SetTokenNameAndSymbolInterfaces,
@@ -42,47 +41,42 @@ export class SetTokenNameAndSymbol extends ContractFunction<
   }
 
   async setTokenNameAndSymbol(
-    signer: Signerish,
+    walletClient: Signer,
     name: string,
     symbol: string,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<SetTokenNameAndSymbolResponse> {
     const v1 = this.partition('v1');
 
     try {
-      const tx = await v1.connectWith(signer).setTokenNameAndSymbol(name, symbol, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setTokenNameAndSymbol([name, symbol], params);
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async estimateGas(
-    signer: Signerish,
-    name: string,
-    symbol: string,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+  async estimateGas(walletClient: Signer, name: string, symbol: string, params?: WriteParameters): Promise<bigint> {
     const v1 = this.partition('v1');
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const estimate = await v1.connectWith(signer).estimateGas.setTokenNameAndSymbol(name, symbol, overrides);
+      const estimate = await this.reader(this.abi(v1)).estimateGas.setTokenNameAndSymbol([name, symbol], fullParams);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async populateTransaction(
-    name: string,
-    symbol: string,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction(name: string, symbol: string, params?: WriteParameters): Promise<string> {
     const v1 = this.partition('v1');
 
     try {
-      const tx = await v1.connectReadOnly().populateTransaction.setTokenNameAndSymbol(name, symbol, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setTokenNameAndSymbol([name, symbol], params);
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

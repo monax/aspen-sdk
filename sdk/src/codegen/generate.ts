@@ -1,9 +1,18 @@
+import {
+  createObjectLiteral,
+  exportConst,
+  exportType,
+  importIoTs,
+  printNodes,
+  writeTypescriptFile
+} from '@monaxlabs/cambium/dist/ast';
+import { ChainId } from '@monaxlabs/phloem/dist/types';
 import { Contract, providers } from 'ethers';
 import { FunctionFragment, ParamType } from 'ethers/lib/utils';
 import * as fs from 'fs';
+import * as g from 'io-ts-codegen';
 import * as path from 'path';
-import prettier from 'prettier';
-import ts from 'typescript';
+import * as ts from 'typescript';
 import { AdditionalABIs } from './abis';
 import { AspenContractManifest, AspenContractsManifest } from './aspen-contracts';
 import { ContractManifest, ContractsManifest } from './manifest';
@@ -12,69 +21,6 @@ const nonFeatureDirs = new Set(['deploy', 'impl']);
 
 export function isFeature(manifest: ContractManifest): boolean {
   return manifest.abi.length > 0 && !nonFeatureDirs.has(manifest.dir);
-}
-
-export function printJsonObjectAsTypescriptConst(constName: string, obj: unknown): string {
-  return `// GENERATED FILE - edits will be lost\n\nexport const ${constName} = ${JSON.stringify(
-    obj,
-    null,
-    2,
-  )} as const;`;
-}
-
-export function printNodes(...nodes: ts.Node[]): string {
-  return ts
-    .createPrinter()
-    .printList(
-      ts.ListFormat.AllowTrailingComma | ts.ListFormat.MultiLine | ts.ListFormat.PreferNewLine,
-      ts.factory.createNodeArray(nodes),
-      ts.createSourceFile('nothing.ts', '', ts.ScriptTarget.Latest),
-    );
-}
-
-export function exportConst(
-  name: string,
-  initializer: ts.Expression,
-  opts?: { comment?: string; asConst?: boolean; type?: ts.TypeNode },
-): ts.VariableStatement {
-  if (opts?.asConst) {
-    initializer = ts.factory.createAsExpression(
-      initializer,
-      ts.factory.createTypeReferenceNode(ts.factory.createIdentifier('const')),
-    );
-  }
-  const variableStatement = ts.factory.createVariableStatement(
-    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
-    ts.factory.createVariableDeclarationList(
-      [ts.factory.createVariableDeclaration(name, undefined, opts?.type, initializer)],
-      ts.NodeFlags.Const,
-    ),
-  );
-  if (opts?.comment) {
-    ts.addSyntheticLeadingComment(variableStatement, ts.SyntaxKind.MultiLineCommentTrivia, opts.comment, true);
-  }
-  return variableStatement;
-}
-
-export function exportType(name: string, type: ts.TypeNode, opts?: { comment?: string }): ts.TypeAliasDeclaration {
-  const typeStatement = ts.factory.createTypeAliasDeclaration(
-    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
-    name,
-    undefined,
-    type,
-  );
-
-  if (opts?.comment) {
-    ts.addSyntheticLeadingComment(typeStatement, ts.SyntaxKind.MultiLineCommentTrivia, opts.comment, true);
-  }
-
-  return typeStatement;
-}
-
-export async function generateTsFile(constName: string, obj: object, outputFileTs: string): Promise<unknown> {
-  const ts = printJsonObjectAsTypescriptConst(constName, obj);
-  await writeTypescriptFile(outputFileTs, ts);
-  return obj;
 }
 
 export async function dumpLatestABIs(abiDir: string, ...manifests: ContractsManifest[]): Promise<void> {
@@ -99,8 +45,15 @@ function writeABI(abiDir: string, manifest: { name: string; abi: unknown; file: 
 
 export function generateAspenContractsFactoriesMapTs(
   manifest: AspenContractsManifest,
+  contractsManifest: ContractsManifest,
   experimentalManifest: ContractsManifest,
 ): ts.Node[] {
+  const abis = Object.fromEntries(
+    Object.values(contractsManifest)
+      .concat(Object.values(experimentalManifest))
+      .map((m) => [m.id, m.abi]),
+  );
+
   const experimentalInterfaceIds = Object.values(experimentalManifest).map((m) => m.id);
 
   const aspenContracts = Object.values(manifest).map((d) => {
@@ -111,39 +64,20 @@ export function generateAspenContractsFactoriesMapTs(
   // make sure we don't have duplicates
   // we don't care about the individual contracts here
   // which is why we allow 'overlapping'
-  const uniqueIterfaces = Object.values(
+  const uniqueInterfaces = Object.values(
     aspenContracts.reduce<Record<string, AspenContractManifest & { file: string; interfaceName: string }>>((acc, d) => {
       acc[d.interfaceId] = d;
       return acc;
     }, {}),
   );
 
-  const interfaceFiles = Array.from(new Set(uniqueIterfaces.map((d) => d.file)));
-
-  // For numbered namespace imports
-  const importIdentifiers = Object.fromEntries(
-    interfaceFiles.map((f, i) => [f, ts.factory.createIdentifier(`factory_${i}`)]),
-  );
-
-  const importNodes = Object.entries(importIdentifiers).flatMap(([file, ident]) =>
-    ts.factory.createImportDeclaration(
-      undefined,
-      ts.factory.createImportClause(false, undefined, ts.factory.createNamespaceImport(ident)),
-      ts.factory.createStringLiteral(path.join('..', '..', 'contracts', 'generated', 'factories', file)),
-      undefined,
-    ),
-  );
-
   const factoriesNode = exportConst(
     'AspenContractFactories',
     ts.factory.createObjectLiteralExpression(
-      uniqueIterfaces.map((d) =>
+      uniqueInterfaces.map((d) =>
         ts.factory.createPropertyAssignment(
           ts.factory.createStringLiteral(d.interfaceId),
-          ts.factory.createPropertyAccessExpression(
-            importIdentifiers[d.file],
-            ts.factory.createIdentifier(d.interfaceName + '__factory'),
-          ),
+          ts.factory.createIdentifier(JSON.stringify(abis[d.interfaceId], null, 0)),
         ),
       ),
     ),
@@ -167,7 +101,7 @@ export function generateAspenContractsFactoriesMapTs(
   const currentVersionByFamily: Record<string, number> = {};
   // includes experimental versions
   const latestVersionByFamily: Record<string, number> = {};
-  const networks: string[] = [];
+  const chainIds: ChainId[] = [];
   const interfaceByFamilyVersion = aspenContracts.reduce<Record<string, Record<number, string>>>((imap, d) => {
     if (
       !experimentalInterfaceIds.includes(d.interfaceId) &&
@@ -179,7 +113,7 @@ export function generateAspenContractsFactoriesMapTs(
       latestVersionByFamily[d.interfaceFamily] = d.version.major;
     }
 
-    networks.push(d.network);
+    chainIds.push(d.chainId);
     if (!imap[d.interfaceFamily]) imap[d.interfaceFamily] = {};
     imap[d.interfaceFamily][d.version.major] = d.interfaceId;
     return imap;
@@ -228,78 +162,50 @@ export function generateAspenContractsFactoriesMapTs(
   );
   const versionNodes = [versionsByFamilyConst, versionsType, versionsFamily, ...currentVersions, ...latestVersions];
 
-  const networksType = exportType(
-    'AspenContractNetworks',
-    ts.factory.createUnionTypeNode(
-      Array.from(new Set(networks)).map((network) =>
-        ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(network)),
-      ),
-    ),
-  );
+  const initializer = createObjectLiteral(Object.fromEntries(Array.from(new Set(chainIds)).map((n) => [n, 'null'])));
+  const networksConst = exportConst('AspenContractNetworks', initializer);
 
-  return [...importNodes, ...factoryNodes, ...versionNodes, networksType];
+  const chainIdSchema = g.unionCombinator(Array.from(new Set(chainIds)).map((id) => g.literalCombinator(id)));
+  const chainIdConst = exportConst('AspenContractChainId', g.printRuntime(chainIdSchema));
+  const chainIdType = exportType('AspenContractChainId', g.printStatic(chainIdSchema));
+
+  return [importIoTs, ...factoryNodes, ...versionNodes, networksConst, chainIdConst, chainIdType];
 }
 
 export async function writeAspenContractsFactoriesMap(
   manifest: AspenContractsManifest,
   aspenContractsFactoryMapFile: string,
+  contractsManifest: ContractsManifest,
   experimentalManifest: ContractsManifest,
 ): Promise<void> {
   return writeTypescriptFile(
     aspenContractsFactoryMapFile,
-    printNodes(...generateAspenContractsFactoriesMapTs(manifest, experimentalManifest)),
+    printNodes(...generateAspenContractsFactoriesMapTs(manifest, contractsManifest, experimentalManifest)),
   );
 }
 
-export function generateFeatureFactoriesMapTs(manifest: ContractsManifest): ts.Node[] {
+export function generateFeatureAbisMapTs(manifest: ContractsManifest): ts.Node[] {
   // Only include features with current Solidity code that Typechain will process and exclude
   // the cedar interfaces that are not features (those under impl, deploy, and standard)
   const currentFeatures = Object.values(manifest).filter(isFeature);
 
-  // const featuresByFile = currentFeatures.reduce(
-  //   (g, m) => ({ ...g, [m.file]: [...(g[m.file] || []), m] }),
-  //   {} as Record<string, ContractManifest[]>,
-  // );
-
-  // For numbered namespace imports
-  const importIdentifiers = Object.fromEntries(
-    Array.from(new Set(currentFeatures.map((m) => m.file)).values()).map((f, i) => [
-      f,
-      ts.factory.createIdentifier(`factory_${i}`),
-    ]),
-  );
-  const importNodes = Object.entries(importIdentifiers).flatMap(([file, ident]) =>
-    ts.factory.createImportDeclaration(
-      undefined,
-      ts.factory.createImportClause(false, undefined, ts.factory.createNamespaceImport(ident)),
-      ts.factory.createStringLiteral(path.join('..', '..', '..', 'contracts', 'generated', 'factories', file)),
-      undefined,
-    ),
-  );
-
   const constNode = exportConst(
-    'FeatureFactories',
+    'FeatureAbis',
     ts.factory.createObjectLiteralExpression(
       currentFeatures.map((m) =>
         ts.factory.createPropertyAssignment(
           ts.factory.createStringLiteral(m.id),
-          ts.factory.createPropertyAccessExpression(
-            importIdentifiers[m.file],
-            ts.factory.createIdentifier(m.name + '__factory'),
-          ),
+          ts.factory.createIdentifier(JSON.stringify(m.abi, null, 0)),
         ),
       ),
     ),
     { asConst: true },
   );
-  return [...importNodes, constNode];
+  return [constNode];
 }
 
-export async function writeFeaturesFactoriesMap(
-  manifest: ContractsManifest,
-  featureFactoryMapFile: string,
-): Promise<void> {
-  await writeTypescriptFile(featureFactoryMapFile, printNodes(...generateFeatureFactoriesMapTs(manifest)));
+export async function writeFeaturesAbisMap(manifest: ContractsManifest, featureFactoryMapFile: string): Promise<void> {
+  await writeTypescriptFile(featureFactoryMapFile, printNodes(...generateFeatureAbisMapTs(manifest)));
 }
 
 function functionParamSignature(p: ParamType) {
@@ -308,7 +214,8 @@ function functionParamSignature(p: ParamType) {
 function functionSignature(f: FunctionFragment, hasOverloads: boolean): string {
   const i = f.inputs.map(functionParamSignature).join(',');
   const o = (f.outputs || []).map(functionParamSignature).join(',');
-  return `${f.name}(${i})${hasOverloads ? '+' : ''}[${o}]`;
+  // with `viem` we don't need to emit different signatures for overloads
+  return `${f.name}(${i})${hasOverloads ? '' : ''}[${o}]`;
 }
 
 export function generateFeatureFunctionsMapTs(manifest: ContractsManifest): ts.Node {
@@ -408,14 +315,3 @@ export async function writeFeaturesList(manifest: ContractsManifest, functionsMa
   await writeTypescriptFile(functionsMapFile, printNodes(generateFeaturesListTs(manifest)));
 }
 
-export async function writeTypescriptFile(filePath: string, contents: string): Promise<void> {
-  await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
-  const options = await prettier.resolveConfig(filePath);
-  return fs.promises.writeFile(
-    filePath,
-    prettier.format(contents, {
-      parser: 'typescript',
-      ...options,
-    }),
-  );
-}

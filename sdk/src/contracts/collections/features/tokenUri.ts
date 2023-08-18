@@ -1,5 +1,4 @@
-import { BigNumberish, CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters, RequiredTokenId } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction, ERC1155StandardInterfaces } from './features';
@@ -21,7 +20,7 @@ type TokenUriPartitions = typeof TokenUriPartitions;
 const TokenUriInterfaces = Object.values(TokenUriPartitions).flat();
 type TokenUriInterfaces = (typeof TokenUriInterfaces)[number];
 
-export type TokenUriCallArgs = [tokenId: BigNumberish, overrides?: CallOverrides];
+export type TokenUriCallArgs = [tokenId: RequiredTokenId, params?: ReadParameters];
 export type TokenUriResponse = string;
 
 export class TokenUri extends ContractFunction<
@@ -40,15 +39,16 @@ export class TokenUri extends ContractFunction<
     return this.tokenUri(...args);
   }
 
-  protected async tokenUri(tokenId: BigNumberish, overrides: CallOverrides = {}): Promise<string> {
+  protected async tokenUri(tokenId: RequiredTokenId, params?: ReadParameters): Promise<string> {
+    const _tokenId = this.base.requireTokenId(tokenId);
     try {
       if (this.base.tokenStandard === 'ERC721') {
         const iface = this.base.assumeFeature('metadata/INFTMetadata.sol:IAspenNFTMetadataV1');
-        const uri = await iface.connectReadOnly().tokenURI(tokenId, overrides);
+        const uri = await this.reader(iface.abi).read.tokenURI([_tokenId], params);
         return uri;
       } else if (this.base.tokenStandard === 'ERC1155') {
         const iface = this.base.assumeFeature('metadata/ISFTMetadata.sol:IAspenSFTMetadataV1');
-        const uri = await iface.connectReadOnly().uri(tokenId, overrides);
+        const uri = await this.reader(iface.abi).read.uri([_tokenId], params);
         return uri;
       }
     } catch (err) {

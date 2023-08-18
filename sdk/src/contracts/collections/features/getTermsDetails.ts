@@ -1,5 +1,4 @@
-import { CallOverrides } from 'ethers';
-import { CollectionContract, IPFS_GATEWAY_PREFIX } from '../..';
+import { CollectionContract, IPFS_GATEWAY_PREFIX, ReadParameters } from '../..';
 import { resolveIpfsUrl } from '../../../utils';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -23,7 +22,7 @@ type GetTermsDetailsPartitions = typeof GetTermsDetailsPartitions;
 const GetTermsDetailsInterfaces = Object.values(GetTermsDetailsPartitions).flat();
 type GetTermsDetailsInterfaces = (typeof GetTermsDetailsInterfaces)[number];
 
-export type GetTermsDetailsCallArgs = [overrides?: CallOverrides];
+export type GetTermsDetailsCallArgs = [params?: ReadParameters];
 export type GetTermsDetailsResponse = TermsDetails;
 
 export type TermsDetails = {
@@ -48,19 +47,19 @@ export class GetTermsDetails extends ContractFunction<
     return this.getTermsDetails(...args);
   }
 
-  async getTermsDetails(overrides: CallOverrides = {}): Promise<TermsDetails> {
+  async getTermsDetails(params?: ReadParameters): Promise<TermsDetails> {
     const { v1, v2 } = this.partitions;
 
     try {
       if (v2) {
-        const iAgreement = await v2.connectReadOnly();
-        const { termsActivated, termsVersion, termsURI } = await iAgreement.getTermsDetails(overrides);
+        const iAgreement = await this.reader(this.abi(v2));
+        const [termsURI, termsVersion, termsActivated] = await iAgreement.read.getTermsDetails(params);
         return { termsActivated, termsVersion, termsLink: resolveIpfsUrl(termsURI, IPFS_GATEWAY_PREFIX) };
       } else if (v1) {
-        const iAgreement = v1.connectReadOnly();
+        const iAgreement = this.reader(this.abi(v1));
         const [termsActivated, termsURI] = await Promise.all([
-          iAgreement.termsActivated(overrides),
-          iAgreement.userAgreement(overrides),
+          iAgreement.read.termsActivated(params),
+          iAgreement.read.userAgreement(params),
         ]);
         return { termsActivated, termsVersion: 0, termsLink: resolveIpfsUrl(termsURI, IPFS_GATEWAY_PREFIX) };
       }

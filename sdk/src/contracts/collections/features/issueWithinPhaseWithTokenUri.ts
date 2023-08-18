@@ -1,12 +1,11 @@
 import { asAddress, isZeroAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, ContractReceipt, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { IssueWithTokenUriArgs } from '../..';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex, TransactionReceipt } from 'viem';
+import { IssuedToken, IssueWithTokenUriArgs } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
+import type { Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
-import { IssuedToken } from './issue';
 
 const IssueWithinPhaseWithTokenUriFunctions = {
   nft: 'issueWithinPhaseWithTokenURI(address,string)[]',
@@ -21,11 +20,11 @@ const IssueWithinPhaseWithTokenUriInterfaces = Object.values(IssueWithinPhaseWit
 type IssueWithinPhaseWithTokenUriInterfaces = (typeof IssueWithinPhaseWithTokenUriInterfaces)[number];
 
 export type IssueWithinPhaseWithTokenUriCallArgs = [
-  signer: Signerish,
+  walletClient: Signer,
   args: IssueWithTokenUriArgs,
-  overrides?: WriteOverrides,
+  overrides?: WriteParameters,
 ];
-export type IssueWithinPhaseWithTokenUriResponse = ContractTransaction;
+export type IssueWithinPhaseWithTokenUriResponse = GetTransactionReceiptReturnType;
 
 export class IssueWithinPhaseWithTokenUri extends ContractFunction<
   IssueWithinPhaseWithTokenUriInterfaces,
@@ -49,54 +48,58 @@ export class IssueWithinPhaseWithTokenUri extends ContractFunction<
   }
 
   async issueWithinPhaseWithTokenUri(
-    signer: Signerish,
+    walletClient: Signer,
     args: IssueWithTokenUriArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<IssueWithinPhaseWithTokenUriResponse> {
     this.validateArgs(args);
     const nft = this.partition('nft');
     const wallet = await asAddress(args.receiver);
 
     try {
-      const tx = await nft.connectWith(signer).issueWithinPhaseWithTokenURI(wallet, args.tokenURI, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(nft)).simulate.issueWithinPhaseWithTokenURI(
+        [wallet as Hex, args.tokenURI],
+        params,
+      );
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
   }
 
-  async estimateGas(
-    signer: Signerish,
-    args: IssueWithTokenUriArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+  async estimateGas(walletClient: Signer, args: IssueWithTokenUriArgs, params?: WriteParameters): Promise<bigint> {
     this.validateArgs(args);
     const nft = this.partition('nft');
     const wallet = await asAddress(args.receiver);
 
     try {
-      const estimate = await nft
-        .connectWith(signer)
-        .estimateGas.issueWithinPhaseWithTokenURI(wallet, args.tokenURI, overrides);
+      const estimate = await this.reader(this.abi(nft)).estimateGas.issueWithinPhaseWithTokenURI(
+        [wallet as Hex, args.tokenURI],
+        {
+          account: walletClient.account,
+          ...params,
+        },
+      );
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
   }
 
-  async populateTransaction(
-    args: IssueWithTokenUriArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction(args: IssueWithTokenUriArgs, params?: WriteParameters): Promise<string> {
     this.validateArgs(args);
     const nft = this.partition('nft');
     const wallet = await asAddress(args.receiver);
 
     try {
-      const tx = await nft
-        .connectReadOnly()
-        .populateTransaction.issueWithinPhaseWithTokenURI(wallet, args.tokenURI, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(nft)).simulate.issueWithinPhaseWithTokenURI(
+        [wallet as Hex, args.tokenURI],
+        params,
+      );
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
@@ -109,7 +112,7 @@ export class IssueWithinPhaseWithTokenUri extends ContractFunction<
     }
   }
 
-  async parseReceiptLogs(receipt: ContractReceipt): Promise<IssuedToken[]> {
+  async parseReceiptLogs(receipt: TransactionReceipt): Promise<IssuedToken[]> {
     return this.base.issueWithinPhase.parseReceiptLogs(receipt);
   }
 }

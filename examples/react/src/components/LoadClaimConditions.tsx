@@ -1,53 +1,55 @@
-import { ClaimConditionsState } from "@monaxlabs/aspen-sdk";
-import { ethers } from "ethers";
-import styles from "../styles/Home.module.css";
+import { Card, CardBody, Heading, Text } from '@chakra-ui/react';
+import { ClaimConditionsState } from '@monaxlabs/aspen-sdk';
 import React from 'react';
+import { formatEther } from 'viem';
+
+export const MaxUint256 = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
 
 const LoadClaimConditions: React.FC<{
   conditions: ClaimConditionsState | null;
 }> = ({ conditions }) => {
   if (!conditions) return null;
 
-  const maxClaimableSupply = conditions.maxClaimableSupply.gt(1e9)
-    ? Infinity
-    : conditions.maxClaimableSupply.toString();
-
   return (
     <>
-      <div className={styles.card}>
-        <h4>Active Claim Conditions : </h4>
-        <p>
-          Max Claimable Supply :{" "}
-          {maxClaimableSupply === Infinity ? "∞" : maxClaimableSupply}
-        </p>
-        {conditions.pricePerToken && (
-          <p>
-            Price Per Token :{" "}
-            {ethers.utils.formatEther(conditions.pricePerToken)}
-          </p>
-        )}
-      </div>
-      <div className={styles.card}>
-        <h4>User Claim Conditions : </h4>
-        <p>Wallet Claim Count : {conditions.walletClaimCount.toString()}</p>
-        {conditions.walletClaimedCountInPhase && (
-          <p>
-            Wallet Claimed Count In Phase :{" "}
-            {conditions.walletClaimedCountInPhase.toString()}
-          </p>
-        )}
-      </div>
+      <Card w="full">
+        <CardBody>
+          <Heading size="sm" pb={3}>
+            Active Claim Conditions
+          </Heading>
+          <Text>
+            Max Claimable Supply :{' '}
+            {conditions.maxClaimableSupply === MaxUint256 ? '∞' : String(conditions.maxClaimableSupply)}
+          </Text>
+          {conditions.pricePerToken ? `Price Per Token: ${formatEther(conditions.pricePerToken)}` : <></>}
+        </CardBody>
+      </Card>
 
-      <div className={styles.card}>
-        <h4>User Claim Restrictions : </h4>
-        <p>Available Quantity : {conditions.availableQuantity.toString()}</p>
-        <p>
-          Can Claim Tokens :{" "}
-          {conditions.canClaimTokens ? "YES" : `NO (${conditions.claimState})`}
-        </p>
-        <p>Can Mint After : {conditions.canMintAfter.toDateString()}</p>
-        <p>Wallet Allow List Status : {conditions.allowlist.status}</p>
-      </div>
+      <Card w="full">
+        <CardBody>
+          <Heading size="sm" pb={3}>
+            User Claim Conditions
+          </Heading>
+          <Text>Wallet Claim Count : {conditions.walletClaimCount.toString()}</Text>
+          {conditions.walletClaimedCountInPhase ? (
+            <Text>Wallet Claimed Count In Phase : {conditions.walletClaimedCountInPhase.toString()}</Text>
+          ) : (
+            <></>
+          )}
+        </CardBody>
+      </Card>
+
+      <Card w="full">
+        <CardBody>
+          <Heading size="sm" pb={3}>
+            User Claim Restrictions
+          </Heading>
+          <Text>Available Quantity : {conditions.availableQuantity.toString()}</Text>
+          <Text>Can Claim Tokens : {conditions.canClaimTokens ? 'YES' : `NO (${conditions.claimState})`}</Text>
+          <Text>Can Mint After : {conditions.canMintAfter.toDateString()}</Text>
+          <Text>Wallet Allow List Status : {conditions.allowlist.status}</Text>
+        </CardBody>
+      </Card>
     </>
   );
 };

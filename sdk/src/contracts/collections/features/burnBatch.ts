@@ -1,8 +1,9 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, BigNumberish, ContractTransaction, PopulatedTransaction } from 'ethers';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
+import { normalise } from '../number';
+import type { BigIntish, Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction, ERC1155StandardInterfaces } from './features';
 
@@ -21,13 +22,13 @@ const BurnBatchInterfaces = Object.values(BurnBatchPartitions).flat();
 type BurnBatchInterfaces = (typeof BurnBatchInterfaces)[number];
 
 export type BurnBatchCallArgs = [
-  signer: Signerish,
-  tokenIds: BigNumberish[],
+  walletClient: Signer,
+  tokenIds: BigIntish[],
   wallet: Addressish,
-  amount: BigNumberish[],
-  overrides?: WriteOverrides,
+  amount: BigIntish[],
+  params?: WriteParameters,
 ];
-export type BurnBatchResponse = ContractTransaction;
+export type BurnBatchResponse = GetTransactionReceiptReturnType;
 
 export class BurnBatch extends ContractFunction<
   BurnBatchInterfaces,
@@ -46,37 +47,47 @@ export class BurnBatch extends ContractFunction<
   }
 
   async burnBatch(
-    signer: Signerish,
-    tokenIds: BigNumberish[],
+    walletClient: Signer,
+    tokenIds: BigIntish[],
     wallet: Addressish,
-    amount: BigNumberish[],
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    amount: BigIntish[],
+    params?: WriteParameters,
+  ): Promise<BurnBatchResponse> {
     const sft = this.partition('sft');
     const account = await asAddress(wallet);
-    tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
 
     try {
-      const tx = await sft.connectWith(signer).burnBatch(account, tokenIds, amount, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(sft)).simulate.burnBatch(
+        [account as Hex, tokenIds.map(normalise), amount.map(normalise)],
+        params,
+      );
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
   async estimateGas(
-    signer: Signerish,
-    tokenIds: BigNumberish[],
+    walletClient: Signer,
+    tokenIds: BigIntish[],
     wallet: Addressish,
-    amount: BigNumberish[],
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+    amount: BigIntish[],
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const sft = this.partition('sft');
     const account = await asAddress(wallet);
-    tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
 
     try {
-      const estimate = await sft.connectWith(signer).estimateGas.burnBatch(account, tokenIds, amount, overrides);
+      const estimate = await this.reader(this.abi(sft)).estimateGas.burnBatch(
+        [account as Hex, tokenIds.map(normalise), amount.map(normalise)],
+        {
+          account: walletClient.account,
+          ...params,
+        },
+      );
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -84,18 +95,21 @@ export class BurnBatch extends ContractFunction<
   }
 
   async populateTransaction(
-    tokenIds: BigNumberish[],
+    tokenIds: BigIntish[],
     wallet: Addressish,
-    amount: BigNumberish[],
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+    amount: BigIntish[],
+    params?: WriteParameters,
+  ): Promise<string> {
     const sft = this.partition('sft');
     const account = await asAddress(wallet);
     tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
 
     try {
-      const tx = await sft.connectReadOnly().populateTransaction.burnBatch(account, tokenIds, amount, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(sft)).simulate.burnBatch(
+        [account as Hex, tokenIds.map(normalise), amount.map(normalise)],
+        params,
+      );
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

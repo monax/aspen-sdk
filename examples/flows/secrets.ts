@@ -9,12 +9,15 @@ import {
   getIdentityClient,
   IdentityAPI,
   parse,
+  privateKeyAccountFor,
   ProviderConfig,
   SupportedNetwork,
-  walletFor,
 } from '@monaxlabs/aspen-sdk';
-import { walletLogin } from '@monaxlabs/aspen-sdk/dist/apis/identity/auth';
+import { walletLogin } from '@monaxlabs/aspen-sdk/dist/apis/identity';
+import { Wallet } from 'ethers';
 import { promises as fs } from 'fs';
+import merge from 'ts-deepmerge';
+import { allUserOrganizationsScope } from '../../sdk/dist/apis/identity';
 
 export const providersFile = __dirname + '/../secrets/providers.json';
 export const apisFile = __dirname + '/../secrets/apis.json';
@@ -40,30 +43,32 @@ export async function getAPIKeys(): Promise<APIKeys> {
 export async function authenticate(
   network: SupportedNetwork,
   environment: AspenEnvironment,
-): Promise<{ aspenClient: AspenClient }> {
+): Promise<{ aspenClient: AspenClient; wallet: Wallet }> {
   // Store global auth token
   const providerConfig = await getProviderConfig();
   const apiConfigs = await getApiConfigs();
-  const wallet = await walletFor(providerConfig, network);
+  const account = await privateKeyAccountFor(providerConfig, network);
   const identityClient = await getIdentityClient(apiConfigs, environment);
-  const response = await walletLogin(wallet, identityClient);
-  const walletAddress = parse(Address, await wallet.getAddress());
-  const keys = await getAPIKeys();
-  let apiKey = keys[walletAddress];
+  const response = await walletLogin(account, network, identityClient);
+  const walletAddress = parse(Address, account.address);
+  let keys = await getAPIKeys();
+  let apiKey = keys[environment]?.[network]?.[walletAddress];
 
   if (apiKey) {
     console.error(`Found API key for ${walletAddress}, reusing...`);
   } else {
     console.error(`Generating API key for ${walletAddress}`);
     const keyResponse = await IdentityAPI.ProfileService.generateApiKeyForSignedInUser({
-      requestBody: { name: flowKeyName },
+      requestBody: { name: flowKeyName, scopes: allUserOrganizationsScope },
     });
     apiKey = keyResponse.key;
-    keys[walletAddress] = apiKey;
+    keys = merge(keys, { [environment]: { [walletAddress]: apiKey } });
     await fs.writeFile(apiKeysFile, JSON.stringify(keys, null, 2));
+    console.error(`Generated API key and saved to ${apiKeysFile}`);
   }
 
-  return { aspenClient: getAspenClient(apiConfigs, environment, apiKey) };
+  const aspenClient = getAspenClient(apiConfigs, environment, apiKey);
+  return { wallet, aspenClient };
 }
 
 async function readJsonFile(file: string): Promise<unknown> {

@@ -1,5 +1,4 @@
-import { BigNumber, CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -16,8 +15,8 @@ type GetBaseURIIndicesPartitions = typeof GetBaseURIIndicesPartitions;
 const GetBaseURIIndicesInterfaces = Object.values(GetBaseURIIndicesPartitions).flat();
 type GetBaseURIIndicesInterfaces = (typeof GetBaseURIIndicesInterfaces)[number];
 
-export type GetBaseURIIndicesCallArgs = [overrides?: CallOverrides];
-export type GetBaseURIIndicesResponse = BigNumber[];
+export type GetBaseURIIndicesCallArgs = [params?: ReadParameters];
+export type GetBaseURIIndicesResponse = readonly bigint[];
 
 export class GetBaseURIIndices extends ContractFunction<
   GetBaseURIIndicesInterfaces,
@@ -35,11 +34,11 @@ export class GetBaseURIIndices extends ContractFunction<
     return this.getBaseURIIndices(...args);
   }
 
-  async getBaseURIIndices(overrides: CallOverrides = {}): Promise<BigNumber[]> {
+  async getBaseURIIndices(params?: ReadParameters): Promise<GetBaseURIIndicesResponse> {
     const v1 = this.partition('v1');
 
     try {
-      const indices = await v1.connectReadOnly().getBaseURIIndices(overrides);
+      const indices = await this.reader(this.abi(v1)).read.getBaseURIIndices(params);
       return indices;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

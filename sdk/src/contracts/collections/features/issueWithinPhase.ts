@@ -1,11 +1,10 @@
-import { parse } from '@monaxlabs/phloem/dist/schema';
+import { parse } from '@monaxlabs/phloem/dist/schema/parse';
 import { Address, asAddress, isSameAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, ContractReceipt, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { extractEventsFromLogs, IssueArgs, IssuedToken, ZERO_ADDRESS } from '../..';
-import { CollectionContract } from '../collections';
+import { decodeEventLog, encodeFunctionData, GetTransactionReceiptReturnType, Hex, TransactionReceipt } from 'viem';
+import { CollectionContract, IssueArgs, IssuedToken, ZERO_ADDRESS } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import { bnRange, One } from '../number';
-import type { Signerish, WriteOverrides } from '../types';
+import { bigIntRange, normalise, One } from '../number';
+import type { Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -23,8 +22,8 @@ type IssueWithinPhasePartitions = typeof IssueWithinPhasePartitions;
 const IssueWithinPhaseInterfaces = Object.values(IssueWithinPhasePartitions).flat();
 type IssueWithinPhaseInterfaces = (typeof IssueWithinPhaseInterfaces)[number];
 
-export type IssueWithinPhaseCallArgs = [signer: Signerish, args: IssueArgs, overrides?: WriteOverrides];
-export type IssueWithinPhaseResponse = ContractTransaction;
+export type IssueWithinPhaseCallArgs = [walletClient: Signer, args: IssueArgs, params?: WriteParameters];
+export type IssueWithinPhaseResponse = GetTransactionReceiptReturnType;
 
 export class IssueWithinPhase extends ContractFunction<
   IssueWithinPhaseInterfaces,
@@ -43,75 +42,93 @@ export class IssueWithinPhase extends ContractFunction<
   }
 
   async issueWithinPhase(
-    signer: Signerish,
+    walletClient: Signer,
     args: IssueArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<IssueWithinPhaseResponse> {
     this.validateArgs(args);
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.issueWithinPhaseERC1155(signer, args, overrides);
+        return await this.issueWithinPhaseERC1155(walletClient, args, params);
       case 'ERC721':
-        return await this.issueWithinPhaseERC721(signer, args, overrides);
+        return await this.issueWithinPhaseERC721(walletClient, args, params);
     }
   }
 
   protected async issueWithinPhaseERC1155(
-    signer: Signerish,
+    walletClient: Signer,
     { receiver, tokenId, quantity }: IssueArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<IssueWithinPhaseResponse> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
     const wallet = await asAddress(receiver);
 
     try {
-      const tx = await sft.connectWith(signer).issueWithinPhase(wallet, tokenId, quantity, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(sft)).simulate.issueWithinPhase(
+        [wallet as Hex, tokenId, normalise(quantity)],
+        params,
+      );
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, tokenId, quantity });
     }
   }
 
   protected async issueWithinPhaseERC721(
-    signer: Signerish,
+    walletClient: Signer,
     { receiver, quantity }: IssueArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<IssueWithinPhaseResponse> {
     const nft = this.partition('nft');
     const wallet = await asAddress(receiver);
 
     try {
-      const tx = await nft.connectWith(signer).issueWithinPhase(wallet, quantity, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(nft)).simulate.issueWithinPhase(
+        [wallet as Hex, normalise(quantity)],
+        params,
+      );
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, quantity });
     }
   }
 
-  async estimateGas(signer: Signerish, args: IssueArgs, overrides: WriteOverrides = {}): Promise<BigNumber> {
+  async estimateGas(walletClient: Signer, args: IssueArgs, params?: WriteParameters): Promise<bigint> {
     this.validateArgs(args);
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.estimateGasERC1155(signer, args, overrides);
+        return await this.estimateGasERC1155(walletClient, args, params);
       case 'ERC721':
-        return await this.estimateGasERC721(signer, args, overrides);
+        return await this.estimateGasERC721(walletClient, args, params);
     }
   }
 
   protected async estimateGasERC1155(
-    signer: Signerish,
+    walletClient: Signer,
     { receiver, tokenId, quantity }: IssueArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+    params?: WriteParameters,
+  ): Promise<bigint> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
     const wallet = await asAddress(receiver);
 
     try {
-      const estimate = await sft.connectWith(signer).estimateGas.issueWithinPhase(wallet, tokenId, quantity, overrides);
+      const estimate = await this.reader(this.abi(sft)).estimateGas.issueWithinPhase(
+        [wallet as Hex, tokenId, normalise(quantity)],
+        {
+          account: walletClient.account,
+          ...params,
+        },
+      );
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, tokenId, quantity });
@@ -119,43 +136,50 @@ export class IssueWithinPhase extends ContractFunction<
   }
 
   protected async estimateGasERC721(
-    signer: Signerish,
+    walletClient: Signer,
     { receiver, quantity }: IssueArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const nft = this.partition('nft');
     const wallet = await asAddress(receiver);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const estimate = await nft.connectWith(signer).estimateGas.issueWithinPhase(wallet, quantity, overrides);
+      const estimate = await this.reader(this.abi(nft)).estimateGas.issueWithinPhase(
+        [wallet as Hex, normalise(quantity)],
+        fullParams,
+      );
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, quantity });
     }
   }
 
-  async populateTransaction(args: IssueArgs, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
+  async populateTransaction(args: IssueArgs, params?: WriteParameters): Promise<string> {
     this.validateArgs(args);
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.populateTransactionERC1155(args, overrides);
+        return await this.populateTransactionERC1155(args, params);
       case 'ERC721':
-        return await this.populateTransactionERC721(args, overrides);
+        return await this.populateTransactionERC721(args, params);
     }
   }
 
   protected async populateTransactionERC1155(
     { receiver, tokenId, quantity }: IssueArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+    params?: WriteParameters,
+  ): Promise<string> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
     const wallet = await asAddress(receiver);
 
     try {
-      const tx = await sft.connectReadOnly().populateTransaction.issueWithinPhase(wallet, tokenId, quantity, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(sft)).simulate.issueWithinPhase(
+        [wallet as Hex, tokenId, normalise(quantity)],
+        params,
+      );
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, tokenId, quantity });
     }
@@ -163,14 +187,17 @@ export class IssueWithinPhase extends ContractFunction<
 
   protected async populateTransactionERC721(
     { receiver, quantity }: IssueArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+    params?: WriteParameters,
+  ): Promise<string> {
     const nft = this.partition('nft');
     const wallet = await asAddress(receiver);
 
     try {
-      const tx = await nft.connectReadOnly().populateTransaction.issueWithinPhase(wallet, quantity, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(nft)).simulate.issueWithinPhase(
+        [wallet as Hex, normalise(quantity)],
+        params,
+      );
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, quantity });
     }
@@ -183,73 +210,72 @@ export class IssueWithinPhase extends ContractFunction<
     }
   }
 
-  async parseReceiptLogs(receipt: ContractReceipt): Promise<IssuedToken[]> {
+  async parseReceiptLogs(receipt: TransactionReceipt): Promise<IssuedToken[]> {
     const { nft, sft } = this.partitions;
     const { chainId, address } = this.base;
     const issueWithinPhaseTokens: IssuedToken[] = [];
 
     try {
       if (nft) {
-        const contract = nft.connectReadOnly();
+        for (const log of receipt.logs) {
+          const event = decodeEventLog({
+            abi: this.base.assumeFeature('issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV4').abi,
+            data: log.data,
+            topics: log.topics,
+          });
 
-        issueWithinPhaseTokens.push(
-          ...extractEventsFromLogs(contract.filters.TokensIssued(), contract.interface, receipt.logs)
-            .map(({ startTokenId, issuer, receiver, quantity }) => {
-              const events: IssuedToken[] = [];
-              for (const tokenId of bnRange(startTokenId, quantity)) {
-                events.push({
-                  chainId,
-                  address,
-                  tokenId,
-                  standard: 'ERC721',
-                  issuer: parse(Address, issuer),
-                  receiver: parse(Address, receiver),
-                  tokenURI: null,
-                  quantity: One,
-                });
-              }
-              return events;
-            })
-            .flat(),
-        );
-
-        issueWithinPhaseTokens.push(
-          ...extractEventsFromLogs(contract.filters.TokenIssued(), contract.interface, receipt.logs).map(
-            ({ tokenId, issuer, receiver, tokenURI }) => {
-              const event: IssuedToken = {
+          if (event.eventName === 'TokensIssued') {
+            const { startTokenId, issuer, receiver, quantity } = event.args;
+            for (const tokenId of bigIntRange(startTokenId, quantity)) {
+              issueWithinPhaseTokens.push({
                 chainId,
                 address,
                 tokenId,
                 standard: 'ERC721',
                 issuer: parse(Address, issuer),
                 receiver: parse(Address, receiver),
-                tokenURI: tokenURI,
-                quantity: One,
-              };
-              return event;
-            },
-          ),
-        );
-      } else if (sft) {
-        const contract = sft.connectReadOnly();
-
-        issueWithinPhaseTokens.push(
-          ...extractEventsFromLogs(contract.filters.TokensIssued(), contract.interface, receipt.logs).map(
-            ({ tokenId, issuer, receiver, quantityClaimed }) => {
-              const event: IssuedToken = {
-                chainId,
-                address,
-                tokenId,
-                standard: 'ERC1155',
-                issuer: parse(Address, issuer),
-                receiver: parse(Address, receiver),
                 tokenURI: null,
-                quantity: quantityClaimed,
-              };
-              return event;
-            },
-          ),
-        );
+                quantity: One,
+              });
+            }
+          }
+
+          if (event.eventName === 'TokenIssued') {
+            const { tokenId, issuer, receiver, tokenURI } = event.args;
+            issueWithinPhaseTokens.push({
+              chainId,
+              address,
+              tokenId,
+              standard: 'ERC721',
+              issuer: parse(Address, issuer),
+              receiver: parse(Address, receiver),
+              tokenURI: tokenURI,
+              quantity: One,
+            });
+          }
+        }
+      } else if (sft) {
+        for (const log of receipt.logs) {
+          const event = decodeEventLog({
+            abi: this.base.assumeFeature('issuance/ICedarSFTIssuance.sol:IRestrictedSFTIssuanceV4').abi,
+            data: log.data,
+            topics: log.topics,
+          });
+
+          if (event.eventName === 'TokensIssued') {
+            const { tokenId, issuer, receiver, quantityClaimed } = event.args;
+            issueWithinPhaseTokens.push({
+              chainId,
+              address,
+              tokenId,
+              standard: 'ERC1155',
+              issuer: parse(Address, issuer),
+              receiver: parse(Address, receiver),
+              tokenURI: null,
+              quantity: quantityClaimed,
+            });
+          }
+        }
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.INVALID_DATA, { receipt });

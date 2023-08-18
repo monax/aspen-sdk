@@ -1,21 +1,27 @@
-import { Provider } from '@ethersproject/providers';
 import { parseThenOrElse } from '@monaxlabs/phloem/dist/schema';
-import { Address } from '@monaxlabs/phloem/dist/types';
-import { Signer } from 'ethers';
 import { NonEmptyArray } from 'fp-ts/NonEmptyArray';
 import * as t from 'io-ts';
+import { Abi, GetContractReturnType, PublicClient } from 'viem';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import { Signerish } from '../types';
 import { ExperimentalFeatures } from './experimental-features.gen';
-import { FeatureFactories } from './feature-factories.gen';
+import { FeatureAbis } from './feature-abis.gen';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 
-export const FeatureInterfaceId = t.keyof(FeatureFactories);
+export const FeatureInterfaceId = t.keyof(FeatureAbis);
 export type FeatureInterfaceId = t.TypeOf<typeof FeatureInterfaceId>;
-export type FeatureFactories = typeof FeatureFactories;
-export type FeatureFactory<T extends FeatureInterfaceId> = FeatureFactories[T];
-export type FeatureContract<T extends FeatureInterfaceId> = ReturnType<FeatureFactory<T>['connect']>;
+export type FeatureFactories = typeof FeatureAbis;
+export type FeatureAbi<T extends FeatureInterfaceId> = (typeof FeatureAbis)[T];
+
+type OnlyNever<T> = { [K in keyof T as T[K] extends never ? K : never]: T[K] };
+type ExpandAbi<T extends FeatureInterfaceId> = {
+  [K in T]: Exclude<T, K> extends never
+    ? FeatureAbi<K>[number]
+    : Extract<FeatureAbi<K>[number], FeatureAbi<Exclude<T, K>>[number]>;
+};
+export type CommonAbi<T extends FeatureInterfaceId> = keyof OnlyNever<ExpandAbi<T>> extends never
+  ? ExpandAbi<T>[T][]
+  : never;
 
 export type ExperimentalFeatureInterfaceId = (typeof ExperimentalFeatures)[number];
 export interface ReleasedFeatureInterfaceIdBrand {
@@ -185,48 +191,15 @@ export const ContractFunctionIds = [
   'getOperatorRestriction',
 ] as const;
 
-export interface FeatureInterfaceFactory<T extends FeatureInterfaceId> {
-  connect(address: string, signerOrProvider: Signer | Provider): FeatureContract<T>;
-  createInterface(): FeatureContract<T>['interface'];
-}
-
 export class FeatureInterface<T extends FeatureInterfaceId> {
-  private readonly _factory: FeatureInterfaceFactory<T>;
-  private readonly _address: Address;
-  private readonly _signer: Signerish;
-  private connection: FeatureContract<T> | null = null;
+  constructor(private _abi: FeatureAbi<T>) {}
 
-  constructor(factory: FeatureInterfaceFactory<T>, address: Address, signer: Signerish) {
-    this._factory = factory;
-    this._address = address;
-    this._signer = signer;
+  get abi() {
+    return this._abi;
   }
 
-  connectReadOnly(): FeatureContract<T> {
-    if (!this.connection) {
-      this.connection = this._factory.connect(this._address, this._signer);
-    }
-
-    return this.connection;
-  }
-
-  connectWith(signer: Signerish): FeatureContract<T> {
-    return this._factory.connect(this._address, signer);
-  }
-
-  get interface(): FeatureContract<T>['interface'] {
-    return this._factory.createInterface();
-  }
-
-  static fromFeature<T extends FeatureInterfaceId>(
-    feature: T,
-    address: Address,
-    signer: Signerish,
-  ): FeatureInterface<T> {
-    const factory = FeatureFactories[feature];
-    // FIXME[Silas]: this makes me sad but typescript is not smart enough to understand that the map key union
-    //  is correlated with the map value union and narrow appropriately (even though this _does_ work with a literal key)
-    return new FeatureInterface(factory as unknown as FeatureInterfaceFactory<T>, address, signer);
+  static fromFeature<T extends FeatureInterfaceId>(feature: T): FeatureInterface<T> {
+    return new FeatureInterface(FeatureAbis[feature]);
   }
 }
 
@@ -291,6 +264,21 @@ export abstract class ContractFunction<
   }
 
   abstract execute(...args: A): Promise<R>;
+
+  protected abi<T extends FeatureInterfaceId>(feature: FeatureInterface<T>) {
+    return feature.abi as unknown as CommonAbi<T>;
+  }
+
+  protected reader<A extends Abi>(abi: A): GetContractReturnType<A, PublicClient> {
+    return this.base.reader(abi);
+  }
+
+  // NB: this approach clogs the IDE TS server
+  // protected reader<T extends FeatureInterfaceId>(
+  //   feature: FeatureInterface<T>,
+  // ): GetContractReturnType<CommonAbi<T>, PublicClient> {
+  //   return this.base.reader(feature.abi as unknown as CommonAbi<T>);
+  // }
 }
 
 export function extractKnownSupportedFeatures(
@@ -331,8 +319,8 @@ export type CallableFeatureFunction<
   R,
 > = FeatureFunction<T, C, A, R>['call'] & FeatureFunction<T, C, A, R>;
 
+/*
 type PartitionExhausted = typeof FeatureFunction.PARTITION_EXHAUSTED;
-
 type Unsupported = typeof FeatureFunction.UNSUPPORTED;
 
 export class FeatureFunction<
@@ -423,6 +411,107 @@ export class FeatureFunction<
     }
     return p;
   }
+  get supported(): boolean {
+    // The contract must implement at least one handled feature
+    return this.handledFeatures.some((f) => Boolean(this.base.interfaces[f]));
+  }
+}
+
+*/
+
+const PartitionExhausted: unique symbol = Symbol('UNSUPPORTED');
+const Unsupported: unique symbol = Symbol('PARTITION_EXHAUSTED');
+
+type PartitionExhausted = typeof PartitionExhausted;
+type Unsupported = typeof Unsupported;
+
+export class FeatureFunction<
+  T extends FeatureInterfaceId,
+  C extends Record<string, NonEmptyArray<T>>,
+  A extends unknown[],
+  R,
+> {
+  private _partition?: Partition<T, C>;
+
+  // If only a single subset of features need to be composed rather than partitioned
+  static fromFeatures<T extends FeatureInterfaceId, A extends unknown[], R>(
+    functionName: string,
+    base: CollectionContract,
+    handledFeatures: NonEmptyArray<T>,
+    func: (partition: Partition<T, { factory: NonEmptyArray<T> }>) => (...args: A) => Promise<R | PartitionExhausted>,
+  ): CallableFeatureFunction<T, { factory: NonEmptyArray<T> }, A, R> {
+    return new FeatureFunction(functionName, base, handledFeatures, { factory: handledFeatures }, func).asCallable();
+  }
+
+  // Define a feature function by partitioning as set of features
+  static fromFeaturePartition<
+    T extends FeatureInterfaceId,
+    C extends Record<string, NonEmptyArray<T>>,
+    A extends unknown[],
+    R,
+  >(
+    functionName: string,
+    base: CollectionContract,
+    handledFeatures: NonEmptyArray<T>,
+    cover: Cover<T, C>,
+    func: (partition: Partition<T, C>) => (...args: A) => Promise<R | PartitionExhausted>,
+  ): CallableFeatureFunction<T, C, A, R> {
+    return new FeatureFunction(functionName, base, handledFeatures, cover, func).asCallable();
+  }
+
+  protected constructor(
+    readonly functionName: string,
+    readonly base: CollectionContract,
+    readonly handledFeatures: NonEmptyArray<T>,
+    readonly cover: Cover<T, C>,
+    // We need the function curry for type inference
+    readonly func: (partition: Partition<T, C>) => (...args: A) => Promise<R | PartitionExhausted>,
+  ) {}
+
+  asCallable(errorOnUnsupported = false): CallableFeatureFunction<T, C, A, R> {
+    return extendWithPrototype(errorOnUnsupported ? this.call.bind(this) : this.must.bind(this), this);
+  }
+
+  get partition() {
+    if (!this._partition) {
+      this._partition = getPartition(this.base, this.handledFeatures, this.cover);
+    }
+    return this._partition;
+  }
+
+  async call(...args: A): Promise<R | Unsupported> {
+    if (!this.supported) {
+      return Unsupported;
+    }
+    const result = await this.func(this.partition)(...args);
+    if (result === PartitionExhausted) {
+      throw new Error(
+        `The feature function ${this.functionName} appears to be supported was not able to find suitable features to implement itself`,
+      );
+    }
+    return result;
+  }
+
+  async must(...args: A): Promise<R> {
+    const result = await this.call(...args);
+    if (this.unsupported(result)) {
+      throw new Error(`Function '${this.functionName}' is not supported on the contract at ${this.base.address}`);
+    }
+    return result;
+  }
+
+  unsupported<T>(result: T | Unsupported): result is Unsupported {
+    return result === Unsupported;
+  }
+
+  // Hey, I just met you, and this is crazy...
+  async maybe<P>(p: P, ...args: A): Promise<P | R | Unsupported> {
+    if (p === Unsupported) {
+      return this.call(...args);
+    }
+    return p;
+  }
+
   /**
    * @returns True if the contract supports Agreement interface
    */
@@ -495,7 +584,7 @@ export const asExecutable = <T extends { execute: CallableFunction }>(obj: T): T
     apply: (target, _thisArg, argumentsList) => {
       return target(...argumentsList);
     },
-    get: (target, prop, receiver) => {
+    get: (target, prop) => {
       return Reflect.get(obj, prop, obj);
     },
   }) as T['execute'] & T;

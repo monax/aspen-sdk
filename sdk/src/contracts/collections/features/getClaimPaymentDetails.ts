@@ -1,6 +1,5 @@
 import { Addressish, asAddress, isSameAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, BigNumberish, CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -18,17 +17,17 @@ const GetClaimPaymentDetailsInterfaces = Object.values(GetClaimPaymentDetailsPar
 type GetClaimPaymentDetailsInterfaces = (typeof GetClaimPaymentDetailsInterfaces)[number];
 
 export type GetClaimPaymentDetailsCallArgs = [
-  quantity: BigNumberish,
-  pricePerToken: BigNumberish,
+  quantity: bigint,
+  pricePerToken: bigint,
   currency: Addressish,
-  overrides?: CallOverrides,
+  params?: ReadParameters,
 ];
 export type GetClaimPaymentDetailsResponse = {
   claimCurrency: string;
-  claimPrice: BigNumber;
-  claimFee: BigNumber;
+  claimPrice: bigint;
+  claimFee: bigint;
   collectorFeeCurrency: string;
-  collectorFee: BigNumber;
+  collectorFee: bigint;
 };
 
 export class GetClaimPaymentDetails extends ContractFunction<
@@ -48,18 +47,18 @@ export class GetClaimPaymentDetails extends ContractFunction<
   }
 
   async getClaimPaymentDetails(
-    quantity: BigNumberish,
-    pricePerToken: BigNumberish,
+    quantity: bigint,
+    pricePerToken: bigint,
     currency: Addressish,
-    overrides: CallOverrides = {},
+    params?: ReadParameters,
   ): Promise<GetClaimPaymentDetailsResponse> {
     const v1 = this.partition('v1');
     const currencyAddress = await asAddress(currency);
 
     try {
-      const { claimCurrency, claimFee, claimPrice, collectorFee, collectorFeeCurrency } = await v1
-        .connectReadOnly()
-        .getClaimPaymentDetails(quantity, pricePerToken, currencyAddress, overrides);
+      const [claimCurrency, claimPrice, claimFee, collectorFeeCurrency, collectorFee] = await this.reader(
+        v1.abi,
+      ).read.getClaimPaymentDetails([quantity, pricePerToken, currencyAddress as `0x{string}`], params);
 
       const paymentDetails = { claimCurrency, claimFee, claimPrice, collectorFee, collectorFeeCurrency };
 

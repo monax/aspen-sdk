@@ -1,7 +1,8 @@
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
+import { Signer } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
+import { WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -18,11 +19,11 @@ const UpdateChargebackProtectionPeriodInterfaces = Object.values(UpdateChargebac
 type UpdateChargebackProtectionPeriodInterfaces = (typeof UpdateChargebackProtectionPeriodInterfaces)[number];
 
 export type UpdateChargebackProtectionPeriodCallArgs = [
-  signer: Signerish,
-  newPeriodInSeconds: number,
-  overrides?: WriteOverrides,
+  walletClient: Signer,
+  newPeriodInSeconds: bigint | number,
+  params?: WriteParameters,
 ];
-export type UpdateChargebackProtectionPeriodResponse = ContractTransaction;
+export type UpdateChargebackProtectionPeriodResponse = GetTransactionReceiptReturnType;
 
 export class UpdateChargebackProtectionPeriod extends ContractFunction<
   UpdateChargebackProtectionPeriodInterfaces,
@@ -46,40 +47,54 @@ export class UpdateChargebackProtectionPeriod extends ContractFunction<
   }
 
   async updateChargebackProtectionPeriod(
-    signer: Signerish,
-    newPeriodInSeconds: number,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    walletClient: Signer,
+    newPeriodInSeconds: bigint | number,
+    params?: WriteParameters,
+  ): Promise<UpdateChargebackProtectionPeriodResponse> {
     const v1 = this.partition('v1');
 
     try {
-      const tx = await v1.connectWith(signer).updateChargebackProtectionPeriod(newPeriodInSeconds, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.updateChargebackProtectionPeriod(
+        [BigInt(newPeriodInSeconds)],
+        params,
+      );
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { newPeriodInSeconds });
     }
   }
 
-  async estimateGas(signer: Signerish, newPeriodInSeconds: number, overrides: WriteOverrides = {}): Promise<BigNumber> {
+  async estimateGas(
+    walletClient: Signer,
+    newPeriodInSeconds: bigint | number,
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const v1 = this.partition('v1');
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const gas = await v1
-        .connectWith(signer)
-        .estimateGas.updateChargebackProtectionPeriod(newPeriodInSeconds, overrides);
-      return gas;
+      const estimate = await this.reader(this.abi(v1)).estimateGas.updateChargebackProtectionPeriod(
+        [BigInt(newPeriodInSeconds)],
+        fullParams,
+      );
+      return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { newPeriodInSeconds });
     }
   }
 
-  async populateTransaction(newPeriodInSeconds: number, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
+  async populateTransaction(newPeriodInSeconds: bigint | number, params?: WriteParameters): Promise<string> {
     const v1 = this.partition('v1');
+
     try {
-      const tx = await v1
-        .connectReadOnly()
-        .populateTransaction.updateChargebackProtectionPeriod(newPeriodInSeconds, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.updateChargebackProtectionPeriod(
+        [BigInt(newPeriodInSeconds)],
+        params,
+      );
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { newPeriodInSeconds });
     }

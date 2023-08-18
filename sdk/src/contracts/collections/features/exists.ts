@@ -1,8 +1,8 @@
-import { BigNumberish, CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { BigIntish, CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
+import { normalise } from '../number';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
+import { CatchAllInterfaces, ContractFunction, asCallableClass } from './features';
 
 const ExistsFunctions = {
   v1: 'exists(uint256)[bool]',
@@ -18,7 +18,7 @@ type ExistsPartitions = typeof ExistsPartitions;
 const ExistsInterfaces = Object.values(ExistsPartitions).flat();
 type ExistsInterfaces = (typeof ExistsInterfaces)[number];
 
-export type ExistsCallArgs = [tokenId: BigNumberish, overrides?: CallOverrides];
+export type ExistsCallArgs = [tokenId: BigIntish, params?: ReadParameters];
 export type ExistsResponse = boolean;
 
 export class Exists extends ContractFunction<ExistsInterfaces, ExistsPartitions, ExistsCallArgs, ExistsResponse> {
@@ -33,14 +33,13 @@ export class Exists extends ContractFunction<ExistsInterfaces, ExistsPartitions,
     return this.exists(...args);
   }
 
-  async exists(tokenId: BigNumberish, overrides: CallOverrides = {}): Promise<boolean> {
-    tokenId = this.base.requireTokenId(tokenId, this.functionName);
-
+  async exists(tokenId: BigIntish, params?: ReadParameters): Promise<ExistsResponse> {
     try {
       const token = this.base.assumeFeature('standard/IERC1155.sol:IERC1155SupplyV2');
-      const exists = await token.connectReadOnly().exists(tokenId, overrides);
+      const exists = await this.reader(token.abi).read.exists([normalise(tokenId)], params);
       return exists;
     } catch (err) {
+      console.error(err);
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { tokenId });
     }
   }

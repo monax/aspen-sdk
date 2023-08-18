@@ -1,6 +1,6 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, BytesLike, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { AccessControl__factory, CollectionContract, Signerish, WriteOverrides } from '../..';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex, parseAbi } from 'viem';
+import { BytesLike, CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
 
@@ -16,12 +16,14 @@ const RenounceRoleInterfaces = Object.values(RenounceRolePartitions).flat();
 type RenounceRoleInterfaces = (typeof RenounceRoleInterfaces)[number];
 
 export type RenounceRoleCallArgs = [
-  signer: Signerish,
+  walletClient: Signer,
   role: BytesLike,
   account: Addressish,
-  overrides?: WriteOverrides,
+  params?: WriteParameters,
 ];
-export type RenounceRoleResponse = ContractTransaction;
+export type RenounceRoleResponse = GetTransactionReceiptReturnType;
+
+const RenounceRoleAbi = ['function renounceRole(bytes32 role, address account) external'];
 
 export class RenounceRole extends ContractFunction<
   RenounceRoleInterfaces,
@@ -40,50 +42,50 @@ export class RenounceRole extends ContractFunction<
   }
 
   async renounceRole(
-    signer: Signerish,
+    walletClient: Signer,
     role: BytesLike,
     account: Addressish,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<RenounceRoleResponse> {
     const wallet = await asAddress(account);
 
     try {
-      const contract = AccessControl__factory.connect(this.base.address, signer);
-      const tx = await contract.renounceRole(role, wallet, overrides);
-      return tx;
+      const abi = parseAbi(RenounceRoleAbi);
+      const { request } = await this.reader(abi).simulate.renounceRole([role as Hex, wallet as Hex], params);
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
   async estimateGas(
-    signer: Signerish,
+    walletClient: Signer,
     role: BytesLike,
     account: Addressish,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const wallet = await asAddress(account);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const contract = AccessControl__factory.connect(this.base.address, signer);
-      const estimate = await contract.estimateGas.renounceRole(role, wallet, overrides);
+      const abi = parseAbi(RenounceRoleAbi);
+      const estimate = await this.reader(abi).estimateGas.renounceRole([role as Hex, wallet as Hex], fullParams);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async populateTransaction(
-    role: BytesLike,
-    account: Addressish,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction(role: BytesLike, account: Addressish, params?: WriteParameters): Promise<string> {
     const wallet = await asAddress(account);
 
     try {
-      const contract = AccessControl__factory.connect(this.base.address, this.base.provider);
-      const tx = await contract.populateTransaction.renounceRole(role, wallet, overrides);
-      return tx;
+      const abi = parseAbi(RenounceRoleAbi);
+      const { request } = await this.reader(abi).simulate.renounceRole([role as Hex, wallet as Hex], params);
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

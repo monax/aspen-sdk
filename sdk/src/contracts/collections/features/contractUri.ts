@@ -1,5 +1,4 @@
-import { CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -16,7 +15,7 @@ type ContractUriPartitions = typeof ContractUriPartitions;
 const ContractUriInterfaces = Object.values(ContractUriPartitions).flat();
 type ContractUriInterfaces = (typeof ContractUriInterfaces)[number];
 
-export type ContractUriCallArgs = [overrides?: CallOverrides];
+export type ContractUriCallArgs = [params?: ReadParameters];
 export type ContractUriResponse = string;
 
 export class ContractUri extends ContractFunction<
@@ -35,11 +34,11 @@ export class ContractUri extends ContractFunction<
     return this.contractUri(...args);
   }
 
-  async contractUri(overrides: CallOverrides = {}): Promise<string> {
+  async contractUri(params?: ReadParameters): Promise<ContractUriResponse> {
     const v1 = this.partition('v1');
 
     try {
-      const uri = await v1.connectReadOnly().contractURI(overrides);
+      const uri = await this.reader(this.abi(v1)).read.contractURI(params);
       return uri;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

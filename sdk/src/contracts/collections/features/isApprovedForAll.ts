@@ -1,6 +1,6 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { Hex } from 'viem';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -17,7 +17,7 @@ type IsApprovedForAllPartitions = typeof IsApprovedForAllPartitions;
 const IsApprovedForAllInterfaces = Object.values(IsApprovedForAllPartitions).flat();
 type IsApprovedForAllInterfaces = (typeof IsApprovedForAllInterfaces)[number];
 
-export type IsApprovedForAllCallArgs = [args: IsApprovedForAllArgs, overrides?: CallOverrides];
+export type IsApprovedForAllCallArgs = [args: IsApprovedForAllArgs, params?: ReadParameters];
 export type IsApprovedForAllResponse = boolean;
 
 export type IsApprovedForAllArgs = {
@@ -41,13 +41,16 @@ export class IsApprovedForAll extends ContractFunction<
     return this.isApprovedForAll(...args);
   }
 
-  async isApprovedForAll({ owner, operator }: IsApprovedForAllArgs, overrides: CallOverrides = {}): Promise<boolean> {
+  async isApprovedForAll({ owner, operator }: IsApprovedForAllArgs, params?: ReadParameters): Promise<boolean> {
     const v1 = this.partition('v1');
     const _owner = await asAddress(owner);
     const _operator = await asAddress(operator);
 
     try {
-      const isApproved = await v1.connectReadOnly().isApprovedForAll(_owner, _operator, overrides);
+      const isApproved = await this.reader(this.abi(v1)).read.isApprovedForAll(
+        [_owner as Hex, _operator as Hex],
+        params,
+      );
       return isApproved;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

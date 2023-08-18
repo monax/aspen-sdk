@@ -1,7 +1,5 @@
-import { BigNumber, CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import { Zero } from '../number';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -19,13 +17,13 @@ type ImplementationVersionPartitions = typeof ImplementationVersionPartitions;
 const ImplementationVersionInterfaces = Object.values(ImplementationVersionPartitions).flat();
 type ImplementationVersionInterfaces = (typeof ImplementationVersionInterfaces)[number];
 
-export type ImplementationVersionCallArgs = [overrides?: CallOverrides];
+export type ImplementationVersionCallArgs = [params?: ReadParameters];
 export type ImplementationVersionResponse = AspenContractVersion;
 
 export type AspenContractVersion = {
-  major: BigNumber;
-  minor: BigNumber;
-  patch: BigNumber;
+  major: bigint;
+  minor: bigint;
+  patch: bigint;
 };
 
 export class ImplementationVersion extends ContractFunction<
@@ -44,16 +42,16 @@ export class ImplementationVersion extends ContractFunction<
     return this.implementationVersion(...args);
   }
 
-  async implementationVersion(overrides: CallOverrides = {}): Promise<AspenContractVersion> {
+  async implementationVersion(params?: ReadParameters): Promise<AspenContractVersion> {
     const { v1, v2 } = this.partitions;
 
     try {
       if (v2) {
-        const version = await v2.connectReadOnly().implementationVersion(overrides);
-        return version;
+        const [major, minor, patch] = await this.reader(this.abi(v2)).read.implementationVersion(params);
+        return { major, minor, patch };
       } else if (v1) {
-        const { minor, patch } = await v1.connectReadOnly().minorVersion(overrides);
-        return { major: Zero, minor, patch };
+        const [minor, patch] = await this.reader(this.abi(v1)).read.minorVersion(params);
+        return { major: BigInt(0), minor, patch };
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

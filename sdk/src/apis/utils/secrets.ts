@@ -1,8 +1,9 @@
+import { partialRecord } from '@monaxlabs/phloem/dist/schema';
 import { Address } from '@monaxlabs/phloem/dist/types';
-import { Wallet } from 'ethers';
-import { providers } from 'ethers/lib/ethers';
 import * as t from 'io-ts';
 import { OidcClient } from 'oidc-client-ts';
+import { Hex, PrivateKeyAccount } from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
 import { AspenClient } from '../aspen';
 
 export const NetworkSecrets = t.partial({
@@ -13,10 +14,6 @@ export const NetworkSecrets = t.partial({
 });
 
 export type NetworkSecrets = t.TypeOf<typeof NetworkSecrets>;
-
-export const APIKeys = t.record(Address, t.string);
-
-export type APIKeys = t.TypeOf<typeof APIKeys>;
 
 export const ProviderConfig = t.type({
   providerUrls: NetworkSecrets,
@@ -35,38 +32,35 @@ export const ApiConfig = t.type({
   redirectUri: t.string,
 });
 
-export type IdentityClientConfig = t.TypeOf<typeof ApiConfig>;
+export type ApiConfig = t.TypeOf<typeof ApiConfig>;
 
-export const ApiConfigs = t.partial({
-  staging: ApiConfig,
-  develop: ApiConfig,
-  production: ApiConfig,
-  localhost: ApiConfig,
+export const AspenEnvironment = t.keyof({
+  stagingmain: null,
+  nightlymain: null,
+  production: null,
+  develop: null,
+  localhost: null,
 });
+
+export type AspenEnvironment = t.TypeOf<typeof AspenEnvironment>;
+
+export const ApiConfigs = partialRecord(AspenEnvironment, ApiConfig);
 
 export type ApiConfigs = t.TypeOf<typeof ApiConfigs>;
 
-export type AspenEnvironment = keyof ApiConfigs;
-export const AspenEnvironment = t.keyof(ApiConfigs.props);
+export const APIKeys = partialRecord(AspenEnvironment, partialRecord(SupportedNetwork, t.record(Address, t.string)));
 
-export async function walletFor(config: ProviderConfig, network: SupportedNetwork): Promise<Wallet> {
+export type APIKeys = t.TypeOf<typeof APIKeys>;
+
+export async function privateKeyAccountFor(
+  config: ProviderConfig,
+  network: SupportedNetwork,
+): Promise<PrivateKeyAccount> {
   const privateKey = config.privateKeys[network];
   if (!privateKey) {
     throw new Error(`No private key found for network ${network}`);
   }
-  const wallet = new Wallet(privateKey);
-  return wallet.connect(await providerFor(config, network));
-}
-
-export async function providerFor(
-  { providerUrls }: ProviderConfig,
-  network: SupportedNetwork,
-): Promise<providers.JsonRpcProvider> {
-  const providerUrl = providerUrls[network];
-  if (!providerUrl) {
-    throw new Error(`No provider URL found for network ${network}`);
-  }
-  return new providers.JsonRpcProvider(providerUrl);
+  return privateKeyToAccount(privateKey as Hex);
 }
 
 export function getAspenClient(configs: ApiConfigs, env: AspenEnvironment, apiKey: string): AspenClient {
@@ -75,7 +69,7 @@ export function getAspenClient(configs: ApiConfigs, env: AspenEnvironment, apiKe
     throw new Error(`No aspen client config found for environment ${env}`);
   }
   const { aspenHost } = config;
-  return new AspenClient({ baseUrl: aspenHost, apiKey });
+  return AspenClient.new({ baseUrl: aspenHost, apiKey });
 }
 
 export function getIdentityClient(configs: ApiConfigs, env: AspenEnvironment): OidcClient {

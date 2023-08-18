@@ -1,5 +1,4 @@
-import { BigNumber, CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -16,8 +15,8 @@ type SupportedFeatureCodesPartitions = typeof SupportedFeatureCodesPartitions;
 const SupportedFeatureCodesInterfaces = Object.values(SupportedFeatureCodesPartitions).flat();
 type SupportedFeatureCodesInterfaces = (typeof SupportedFeatureCodesInterfaces)[number];
 
-export type SupportedFeatureCodesCallArgs = [overrides?: CallOverrides];
-export type SupportedFeatureCodesResponse = BigNumber[];
+export type SupportedFeatureCodesCallArgs = [params?: ReadParameters];
+export type SupportedFeatureCodesResponse = readonly bigint[];
 
 export class SupportedFeatureCodes extends ContractFunction<
   SupportedFeatureCodesInterfaces,
@@ -35,11 +34,11 @@ export class SupportedFeatureCodes extends ContractFunction<
     return this.supportedFeatureCodes(...args);
   }
 
-  async supportedFeatureCodes(overrides: CallOverrides = {}): Promise<BigNumber[]> {
+  async supportedFeatureCodes(params?: ReadParameters): Promise<readonly bigint[]> {
     const v1 = this.partition('v1');
 
     try {
-      const codes = await v1.connectReadOnly().supportedFeatureCodes(overrides);
+      const codes = await this.reader(this.abi(v1)).read.supportedFeatureCodes(params);
       return codes;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

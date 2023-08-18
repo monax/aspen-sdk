@@ -1,5 +1,4 @@
-import { CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -16,7 +15,7 @@ type IsAspenFeaturesV1Partitions = typeof IsAspenFeaturesV1Partitions;
 const IsAspenFeaturesV1Interfaces = Object.values(IsAspenFeaturesV1Partitions).flat();
 type IsAspenFeaturesV1Interfaces = (typeof IsAspenFeaturesV1Interfaces)[number];
 
-export type IsAspenFeaturesV1CallArgs = [overrides?: CallOverrides];
+export type IsAspenFeaturesV1CallArgs = [params?: ReadParameters];
 export type IsAspenFeaturesV1Response = boolean;
 
 export class IsAspenFeaturesV1 extends ContractFunction<
@@ -35,11 +34,11 @@ export class IsAspenFeaturesV1 extends ContractFunction<
     return this.isAspenFeaturesV1(...args);
   }
 
-  async isAspenFeaturesV1(overrides: CallOverrides = {}): Promise<boolean> {
+  async isAspenFeaturesV1(params?: ReadParameters): Promise<boolean> {
     const v1 = this.partition('v1');
 
     try {
-      const isAspen = await v1.connectReadOnly().isIAspenFeaturesV1(overrides);
+      const isAspen = await this.reader(this.abi(v1)).read.isIAspenFeaturesV1(params);
       return isAspen;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

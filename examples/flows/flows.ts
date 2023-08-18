@@ -1,4 +1,4 @@
-import { Address, Chain, parse } from '@monaxlabs/aspen-sdk';
+import { Address, AspenClient, Chain, parse, StringInteger } from '@monaxlabs/aspen-sdk';
 import { generateAccounts, getProvider, getSigner } from '@monaxlabs/aspen-sdk/dist/api-utils';
 import {
   AspenEnvironment,
@@ -21,7 +21,7 @@ import {
   IssueSuccessState,
   PendingIssue,
 } from '@monaxlabs/aspen-sdk/dist/contracts';
-import { BigNumber, BigNumberish, Signer } from 'ethers';
+import { BigNumber, BigNumberish, Signer, Wallet } from 'ethers';
 import { providers } from 'ethers/lib/ethers';
 import { formatEther } from 'ethers/lib/utils';
 import { format } from 'util';
@@ -55,20 +55,15 @@ const flows = {
 
 // Change this to perform a different run
 // const flowToRun: (keyof typeof flows)[] = [1, 2, 3, 4];
-const flowToRun: (keyof typeof flows)[] = [1, 4];
+const flowToRun: (keyof typeof flows)[] = [1];
 
 let providerConfig: ProviderConfig;
+let aspenClient: AspenClient;
+let wallet: Wallet;
 
 async function main(): Promise<void> {
-  // Store global auth token
-  const { aspenClient } = await authenticate(network, environment);
-  const resp = await aspenClient.request(
-    'getStorefrontPublicChainIdAndAddress',
-    { chainId: Chain.Mainnet, address: parse(Address, '0x3006d58cB3f1b94074D3898dF6367BD8cCf5f908') },
-    null,
-    null,
-  );
-  console.log(resp);
+  ({ aspenClient, wallet } = await authenticate(network, environment));
+  await runFlows();
 }
 
 async function runFlows(): Promise<void> {
@@ -78,6 +73,29 @@ async function runFlows(): Promise<void> {
     await cmd();
     console.error('\n');
   }
+}
+
+async function subs(): Promise<void> {
+  // Store global auth token
+  const { aspenClient, wallet } = await authenticate(network, environment);
+  const storeFrontAddress = parse(Address, '0x3006d58cB3f1b94074D3898dF6367BD8cCf5f908');
+  const chainId = Chain.Mainnet;
+  const { id: storefrontId } = await aspenClient.getStorefrontPublicChainIdAndAddress({
+    parameters: {
+      chainId,
+      address: storeFrontAddress,
+    },
+  });
+  const walletAddress = parse(Address, await wallet.getAddress());
+  await aspenClient.createSubscription({
+    parameters: { storefrontId },
+    body: {
+      name: 'foo',
+      duration: { minutes: 4 },
+      payments: { chainId, amount: parse(StringInteger, '1000'), recipient: walletAddress, token: storeFrontAddress },
+    },
+  });
+  console.log(storefrontId);
 }
 
 async function cmdDeployCollections(): Promise<void> {
@@ -96,7 +114,7 @@ async function cmdDeployCollections(): Promise<void> {
   }
 
   const collections: CollectionPair[] = await Promise.all(
-    new Array(numberOfCollectionPairs).fill(null).map(() => deployERC721Pair()),
+    new Array(numberOfCollectionPairs).fill(null).map(() => deployERC721Pair(wallet, aspenClient)),
   );
 
   await writeCollectionInfo({
@@ -192,9 +210,9 @@ async function cmdGateA(): Promise<void> {
 
 // Support functions
 
-async function deployERC721Pair(): Promise<CollectionPair> {
-  const a = await deployERC721(network, { maxTokens: numberOfTokensPerCollection });
-  const b = await deployERC721(network, { maxTokens: numberOfTokensPerCollection });
+async function deployERC721Pair(signer: Signer, client: AspenClient): Promise<CollectionPair> {
+  const a = await deployERC721(signer, client, { name: 'TokenA', maxTokens: numberOfTokensPerCollection });
+  const b = await deployERC721(signer, client, { name: 'TokenB', maxTokens: numberOfTokensPerCollection });
   return { a, b };
 }
 

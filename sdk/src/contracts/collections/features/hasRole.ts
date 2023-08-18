@@ -1,6 +1,6 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BytesLike, CallOverrides } from 'ethers';
-import { AccessControl__factory, CollectionContract } from '../..';
+import { Hex, parseAbi } from 'viem';
+import { BytesLike, CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
 
@@ -15,7 +15,7 @@ type HasRolePartitions = typeof HasRolePartitions;
 const HasRoleInterfaces = Object.values(HasRolePartitions).flat();
 type HasRoleInterfaces = (typeof HasRoleInterfaces)[number];
 
-export type HasRoleCallArgs = [role: BytesLike, account: Addressish, overrides?: CallOverrides];
+export type HasRoleCallArgs = [role: BytesLike, account: Addressish, params?: ReadParameters];
 export type HasRoleResponse = boolean;
 
 export class HasRole extends ContractFunction<HasRoleInterfaces, HasRolePartitions, HasRoleCallArgs, HasRoleResponse> {
@@ -29,12 +29,13 @@ export class HasRole extends ContractFunction<HasRoleInterfaces, HasRolePartitio
     return this.hasRole(...args);
   }
 
-  async hasRole(role: BytesLike, account: Addressish, overrides: CallOverrides = {}): Promise<boolean> {
+  async hasRole(role: BytesLike, account: Addressish, params?: ReadParameters): Promise<boolean> {
     const wallet = await asAddress(account);
 
     try {
-      const contract = AccessControl__factory.connect(this.base.address, this.base.provider);
-      return await contract.hasRole(role, wallet, overrides);
+      const abi = parseAbi(['function hasRole(bytes32 role, address account) external view returns (bool)']);
+      const hasRole = await this.reader(abi).read.hasRole([role as Hex, wallet as Hex], params);
+      return hasRole;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

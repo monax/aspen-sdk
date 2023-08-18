@@ -1,7 +1,6 @@
 import { parse } from '@monaxlabs/phloem/dist/schema';
 import { Address } from '@monaxlabs/phloem/dist/types';
-import { CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -18,7 +17,7 @@ type GetDefaultRoyaltyInfoPartitions = typeof GetDefaultRoyaltyInfoPartitions;
 const GetDefaultRoyaltyInfoInterfaces = Object.values(GetDefaultRoyaltyInfoPartitions).flat();
 type GetDefaultRoyaltyInfoInterfaces = (typeof GetDefaultRoyaltyInfoInterfaces)[number];
 
-export type GetDefaultRoyaltyInfoCallArgs = [overrides?: CallOverrides];
+export type GetDefaultRoyaltyInfoCallArgs = [params?: ReadParameters];
 export type GetDefaultRoyaltyInfoResponse = DefaultRoyaltyInfo;
 
 export type DefaultRoyaltyInfo = {
@@ -42,11 +41,12 @@ export class GetDefaultRoyaltyInfo extends ContractFunction<
     return this.getDefaultRoyaltyInfo(...args);
   }
 
-  async getDefaultRoyaltyInfo(overrides: CallOverrides = {}): Promise<DefaultRoyaltyInfo> {
+  async getDefaultRoyaltyInfo(params?: ReadParameters): Promise<DefaultRoyaltyInfo> {
     const v1 = this.partition('v1');
 
     try {
-      const [recipient, basisPoints] = await v1.connectReadOnly().getDefaultRoyaltyInfo(overrides);
+      const [recipient, basisPoints] = await this.reader(this.abi(v1)).read.getDefaultRoyaltyInfo(params);
+
       return { recipient: parse(Address, recipient), basisPoints };
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

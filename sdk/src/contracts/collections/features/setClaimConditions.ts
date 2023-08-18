@@ -1,11 +1,16 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, BigNumberish, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
+import { claimConditionsForChain, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
+import type {
+  CollectionContractClaimCondition,
+  CollectionContractClaimConditionOnChain,
+  Signer,
+  TokenId,
+  WriteParameters,
+} from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
-import { CollectionContractClaimCondition } from './getClaimConditionById';
 
 const SetClaimConditionsFunctions = {
   nft: 'setClaimConditions(tuple[],bool)[]',
@@ -21,8 +26,8 @@ type SetClaimConditionsPartitions = typeof SetClaimConditionsPartitions;
 const SetClaimConditionsInterfaces = Object.values(SetClaimConditionsPartitions).flat();
 type SetClaimConditionsInterfaces = (typeof SetClaimConditionsInterfaces)[number];
 
-export type SetClaimConditionsCallArgs = [signer: Signerish, args: ConditionArgs, overrides?: WriteOverrides];
-export type SetClaimConditionsResponse = ContractTransaction;
+export type SetClaimConditionsCallArgs = [walletClient: Signer, args: ConditionArgs, params?: WriteParameters];
+export type SetClaimConditionsResponse = GetTransactionReceiptReturnType;
 
 export type LooseCollectionContractClaimCondition = Omit<CollectionContractClaimCondition, 'currency'> & {
   currency: Addressish;
@@ -30,7 +35,7 @@ export type LooseCollectionContractClaimCondition = Omit<CollectionContractClaim
 
 export type ConditionArgs = {
   conditions: LooseCollectionContractClaimCondition[];
-  tokenId: BigNumberish | null;
+  tokenId: TokenId;
   resetClaimEligibility: boolean;
 };
 
@@ -51,13 +56,13 @@ export class SetClaimConditions extends ContractFunction<
   }
 
   async setClaimConditions(
-    signer: Signerish,
+    walletClient: Signer,
     { conditions, tokenId, resetClaimEligibility }: ConditionArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<SetClaimConditionsResponse> {
     const { nft, sft } = this.partitions;
-    const strictConditions: CollectionContractClaimCondition[] = await Promise.all(
-      conditions.map(async (c) => ({ ...c, currency: await asAddress(c.currency) })),
+    const strictConditions: CollectionContractClaimConditionOnChain[] = await Promise.all(
+      conditions.map(async (c) => claimConditionsForChain({ ...c, currency: await asAddress(c.currency) })),
     );
 
     try {
@@ -65,19 +70,27 @@ export class SetClaimConditions extends ContractFunction<
         case 'ERC1155':
           if (sft) {
             tokenId = this.base.requireTokenId(tokenId, this.functionName);
-            const tx = await sft
-              .connectWith(signer)
-              .setClaimConditions(tokenId, strictConditions, resetClaimEligibility, overrides);
-            return tx;
+            const { request } = await this.reader(this.abi(sft)).simulate.setClaimConditions(
+              [tokenId, strictConditions, resetClaimEligibility],
+              params,
+            );
+            const hash = await walletClient.writeContract(request);
+            return this.base.publicClient.waitForTransactionReceipt({
+              hash,
+            });
           }
           break;
         case 'ERC721':
           if (nft) {
             this.base.rejectTokenId(tokenId, this.functionName);
-            const tx = await nft
-              .connectWith(signer)
-              .setClaimConditions(strictConditions, resetClaimEligibility, overrides);
-            return tx;
+            const { request } = await this.reader(this.abi(nft)).simulate.setClaimConditions(
+              [strictConditions, resetClaimEligibility],
+              params,
+            );
+            const hash = await walletClient.writeContract(request);
+            return this.base.publicClient.waitForTransactionReceipt({
+              hash,
+            });
           }
           break;
       }
@@ -89,13 +102,14 @@ export class SetClaimConditions extends ContractFunction<
   }
 
   async estimateGas(
-    signer: Signerish,
+    walletClient: Signer,
     { conditions, tokenId, resetClaimEligibility }: ConditionArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const { nft, sft } = this.partitions;
-    const strictConditions: CollectionContractClaimCondition[] = await Promise.all(
-      conditions.map(async (c) => ({ ...c, currency: await asAddress(c.currency) })),
+    const fullParams = { account: walletClient.account, ...params };
+    const strictConditions: CollectionContractClaimConditionOnChain[] = await Promise.all(
+      conditions.map(async (c) => claimConditionsForChain({ ...c, currency: await asAddress(c.currency) })),
     );
 
     try {
@@ -103,18 +117,20 @@ export class SetClaimConditions extends ContractFunction<
         case 'ERC1155':
           if (sft) {
             tokenId = this.base.requireTokenId(tokenId, this.functionName);
-            const estimate = await sft
-              .connectWith(signer)
-              .estimateGas.setClaimConditions(tokenId, strictConditions, resetClaimEligibility, overrides);
+            const estimate = await this.reader(this.abi(sft)).estimateGas.setClaimConditions(
+              [tokenId, strictConditions, resetClaimEligibility],
+              fullParams,
+            );
             return estimate;
           }
           break;
         case 'ERC721':
           if (nft) {
             this.base.rejectTokenId(tokenId, this.functionName);
-            const estimate = await nft
-              .connectWith(signer)
-              .estimateGas.setClaimConditions(strictConditions, resetClaimEligibility, overrides);
+            const estimate = await this.reader(this.abi(nft)).estimateGas.setClaimConditions(
+              [strictConditions, resetClaimEligibility],
+              fullParams,
+            );
             return estimate;
           }
           break;
@@ -128,11 +144,11 @@ export class SetClaimConditions extends ContractFunction<
 
   async populateTransaction(
     { conditions, tokenId, resetClaimEligibility }: ConditionArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+    params?: WriteParameters,
+  ): Promise<string> {
     const { nft, sft } = this.partitions;
-    const strictConditions: CollectionContractClaimCondition[] = await Promise.all(
-      conditions.map(async (c) => ({ ...c, currency: await asAddress(c.currency) })),
+    const strictConditions: CollectionContractClaimConditionOnChain[] = await Promise.all(
+      conditions.map(async (c) => claimConditionsForChain({ ...c, currency: await asAddress(c.currency) })),
     );
 
     try {
@@ -140,19 +156,21 @@ export class SetClaimConditions extends ContractFunction<
         case 'ERC1155':
           if (sft) {
             tokenId = this.base.requireTokenId(tokenId, this.functionName);
-            const tx = await sft
-              .connectReadOnly()
-              .populateTransaction.setClaimConditions(tokenId, strictConditions, resetClaimEligibility, overrides);
-            return tx;
+            const { request } = await this.reader(this.abi(sft)).simulate.setClaimConditions(
+              [tokenId, strictConditions, resetClaimEligibility],
+              params,
+            );
+            return encodeFunctionData(request);
           }
           break;
         case 'ERC721':
           if (nft) {
             this.base.rejectTokenId(tokenId, this.functionName);
-            const tx = await nft
-              .connectReadOnly()
-              .populateTransaction.setClaimConditions(strictConditions, resetClaimEligibility, overrides);
-            return tx;
+            const { request } = await this.reader(this.abi(nft)).simulate.setClaimConditions(
+              [strictConditions, resetClaimEligibility],
+              params,
+            );
+            return encodeFunctionData(request);
           }
           break;
       }

@@ -1,10 +1,11 @@
-import { Chain, ChainNames } from '@monaxlabs/phloem/dist/types';
-import { Signerish } from '../collections';
+import { ChainNames } from '@monaxlabs/phloem/dist/types';
+import { getContract, GetContractReturnType, Hex } from 'viem';
+import { Provider, Signer } from '../..';
 import {
+  AspenContractChainId,
   AspenContractFactories,
   AspenContractFamilyId,
   AspenContractInterfaceId,
-  AspenContractNetworks,
   AspenContractsFamilyVersions,
   CurrentAspenCoreRegistryVersion,
   CurrentAspenDeployerVersion,
@@ -14,7 +15,6 @@ import {
 } from './core-factories.gen';
 import { AspenContracts } from './core.gen';
 
-export type AspenContractChainId = (typeof Chain)[AspenContractNetworks];
 export type AspenContract = (typeof AspenContracts)[number];
 
 const versionToNumber = ({ major, minor, patch }: AspenContract['version']): number => {
@@ -25,9 +25,9 @@ export function getAspenContractInfo<F extends AspenContractFamilyId, V extends 
   chainId: AspenContractChainId,
   family: F,
   version: V,
-): AspenContract | null {
+): AspenContract {
   const network = ChainNames[chainId];
-  return AspenContracts.reduce<AspenContract | null>((aspenContract, d) => {
+  const contract = AspenContracts.reduce<AspenContract | null>((aspenContract, d) => {
     if (d.network !== network || d.interfaceFamily !== family || d.version.major !== version) return aspenContract;
 
     if (!aspenContract || versionToNumber(d.version) >= versionToNumber(aspenContract.version)) {
@@ -36,45 +36,99 @@ export function getAspenContractInfo<F extends AspenContractFamilyId, V extends 
 
     return aspenContract;
   }, null);
+
+  if (!contract)
+    throw new Error(`Contract family ${family}(version ${version.toString()}) isn't deployed on chain #${chainId}`);
+
+  return contract;
 }
+
+export type AspenContractInstance<
+  F extends AspenContractFamilyId,
+  V extends keyof AspenContractsFamilyVersions[F],
+  C extends Provider | Signer,
+  I extends AspenContractsFamilyVersions[F][V] & AspenContractInterfaceId = AspenContractsFamilyVersions[F][V] &
+    AspenContractInterfaceId,
+> = GetContractReturnType<
+  AspenContractFactories[I],
+  C extends Provider ? Provider : unknown,
+  C extends Signer ? Signer : unknown
+>;
 
 export function getAspenContract<
   F extends AspenContractFamilyId,
   V extends keyof AspenContractsFamilyVersions[F],
   I extends AspenContractsFamilyVersions[F][V] & AspenContractInterfaceId,
->(
-  signerOrProvider: Signerish,
-  chainId: AspenContractChainId,
-  family: F,
-  version: V,
-): ReturnType<AspenContractFactories[I]['connect']> {
+  C extends Provider | Signer,
+>(client: C, family: F, version: V): AspenContractInstance<F, V, C> {
+  const chainId = client.chain.id;
+  if (!chainId) throw new Error('No chainId provided');
+
   const interfaceId = AspenContractsFamilyVersions[family][version] as I;
   if (!interfaceId) throw new Error(`Contract family ${family} doesn't have version ${version.toString()}`);
 
-  const aspenContract = getAspenContractInfo(chainId, family, version);
+  const aspenContract = getAspenContractInfo(chainId as AspenContractChainId, family, version);
   if (!aspenContract)
     throw new Error(`Contract family ${family}(version ${version.toString()}) isn't deployed on chain #${chainId}`);
 
-  const contract = AspenContractFactories[interfaceId].connect(aspenContract.contractAddress, signerOrProvider);
-  return contract as ReturnType<AspenContractFactories[I]['connect']>;
+  return getContract({
+    address: aspenContract.contractAddress as Hex,
+    abi: AspenContractFactories[interfaceId],
+    publicClient: client.type === 'publicClient' ? (client as Provider) : undefined,
+    walletClient: client.type === 'walletClient' ? (client as Signer) : undefined,
+  }) as AspenContractInstance<F, V, C>;
 }
 
-export function getCurrentCedarDeployer(signerOrProvider: Signerish, chainId: AspenContractChainId) {
-  return getAspenContract(signerOrProvider, chainId, 'CedarDeployer', CurrentCedarDeployerVersion);
+export function getCurrentAspenDeployer<C extends Provider | Signer>(client: C) {
+  return getAspenDeployer(client, CurrentAspenDeployerVersion);
 }
 
-export function getCurrentDeployer(signerOrProvider: Signerish, chainId: AspenContractChainId) {
-  return getAspenContract(signerOrProvider, chainId, 'AspenDeployer', CurrentAspenDeployerVersion);
+// FIXME: Make this type saner
+type IAspenDeployer<V extends keyof AspenContractsFamilyVersions['AspenDeployer'], C extends Provider | Signer> = AspenContractInstance<'AspenDeployer', V, C>;
+
+export function getAspenDeployer<
+  C extends Provider | Signer,
+  V extends keyof AspenContractsFamilyVersions['AspenDeployer'],
+>(client: C, version: V): IAspenDeployer<V, C> {
+  return getAspenContract(client, 'AspenDeployer', version);
 }
 
-export function getCurrentCoreRegistry(signerOrProvider: Signerish, chainId: AspenContractChainId) {
-  return getAspenContract(signerOrProvider, chainId, 'AspenCoreRegistry', CurrentAspenCoreRegistryVersion);
+export function getCurrentAspenCoreRegistry<C extends Provider | Signer>(client: C) {
+  return getAspenCoreRegistry(client, CurrentAspenCoreRegistryVersion);
+}
+export function getAspenCoreRegistry<
+  C extends Provider | Signer,
+  V extends keyof AspenContractsFamilyVersions['AspenCoreRegistry'],
+>(client: C, version: V) {
+  return getAspenContract(client, 'AspenCoreRegistry', version);
 }
 
-export function getCurrentPaymentsNotary(signerOrProvider: Signerish, chainId: AspenContractChainId) {
-  return getAspenContract(signerOrProvider, chainId, 'AspenPaymentsNotary', CurrentAspenPaymentsNotaryVersion);
+export function getCurrentAspenPaymentsNotary<C extends Provider | Signer>(client: C) {
+  return getAspenPaymentsNotary(client, CurrentAspenPaymentsNotaryVersion);
+}
+export function getAspenPaymentsNotary<
+  C extends Provider | Signer,
+  V extends keyof AspenContractsFamilyVersions['AspenPaymentsNotary'],
+>(client: C, version: V) {
+  return getAspenContract(client, 'AspenPaymentsNotary', version);
 }
 
-export function getCurrentTermsRegistry(signerOrProvider: Signerish, chainId: AspenContractChainId) {
-  return getAspenContract(signerOrProvider, chainId, 'TermsRegistry', CurrentTermsRegistryVersion);
+export function getCurrentTermsRegistry<C extends Provider | Signer>(client: C) {
+  return getTermsRegistry(client, CurrentTermsRegistryVersion);
+}
+export function getTermsRegistry<
+  C extends Provider | Signer,
+  V extends keyof AspenContractsFamilyVersions['TermsRegistry'],
+>(client: C, version: V) {
+  return getAspenContract(client, 'TermsRegistry', version);
+}
+
+export function getCurrentCedarDeployer<C extends Provider | Signer>(client: C) {
+  return getCedarDeployer(client, CurrentCedarDeployerVersion);
+}
+export function getCedarDeployer<
+  C extends Provider | Signer,
+  V extends keyof AspenContractsFamilyVersions['CedarDeployer'],
+>(client: C, version: V) {
+  return getAspenContract(client, 'CedarDeployer', version);
 }

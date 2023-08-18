@@ -1,5 +1,4 @@
-import { CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -18,7 +17,7 @@ type IsAspenFeaturesPartitions = typeof IsAspenFeaturesPartitions;
 const IsAspenFeaturesInterfaces = Object.values(IsAspenFeaturesPartitions).flat();
 type IsAspenFeaturesInterfaces = (typeof IsAspenFeaturesInterfaces)[number];
 
-export type IsAspenFeaturesCallArgs = [overrides?: CallOverrides];
+export type IsAspenFeaturesCallArgs = [params?: ReadParameters];
 export type IsAspenFeaturesResponse = boolean;
 
 export class IsAspenFeatures extends ContractFunction<
@@ -37,15 +36,15 @@ export class IsAspenFeatures extends ContractFunction<
     return this.isAspenFeatures(...args);
   }
 
-  async isAspenFeatures(overrides: CallOverrides = {}): Promise<boolean> {
+  async isAspenFeatures(params?: ReadParameters): Promise<boolean> {
     const { v1, v2 } = this.partitions;
 
     try {
       if (v1) {
-        const isAspen = await v1.connectReadOnly().isICedarFeaturesV0(overrides);
+        const isAspen = await this.reader(this.abi(v1)).read.isICedarFeaturesV0(params);
         return isAspen;
       } else if (v2) {
-        const isAspen = await v2.connectReadOnly().isIAspenFeaturesV0(overrides);
+        const isAspen = await this.reader(this.abi(v2)).read.isIAspenFeaturesV0(params);
         return isAspen;
       }
     } catch (err) {

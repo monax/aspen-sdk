@@ -1,7 +1,6 @@
-import { BigNumber, BigNumberish, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
+import { BigIntish, CollectionContract, Signer, TokenId, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -20,12 +19,12 @@ const SetMaxTotalSupplyInterfaces = Object.values(SetMaxTotalSupplyPartitions).f
 type SetMaxTotalSupplyInterfaces = (typeof SetMaxTotalSupplyInterfaces)[number];
 
 export type SetMaxTotalSupplyCallArgs = [
-  signer: Signerish,
-  totalSupply: BigNumberish,
-  tokenId: BigNumberish | null,
-  overrides?: WriteOverrides,
+  walletClient: Signer,
+  totalSupply: BigIntish,
+  tokenId: TokenId,
+  params?: WriteParameters,
 ];
-export type SetMaxTotalSupplyResponse = ContractTransaction;
+export type SetMaxTotalSupplyResponse = GetTransactionReceiptReturnType;
 
 export class SetMaxTotalSupply extends ContractFunction<
   SetMaxTotalSupplyInterfaces,
@@ -45,22 +44,31 @@ export class SetMaxTotalSupply extends ContractFunction<
   }
 
   async setMaxTotalSupply(
-    signer: Signerish,
-    totalSupply: BigNumberish,
-    tokenId: BigNumberish | null = null,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    walletClient: Signer,
+    totalSupply: BigIntish,
+    tokenId: TokenId = null,
+    params?: WriteParameters,
+  ): Promise<SetMaxTotalSupplyResponse> {
     const { nft, sft } = this.partitions;
 
     try {
       if (sft) {
         tokenId = this.base.requireTokenId(tokenId, this.functionName);
-        const tx = await sft.connectWith(signer).setMaxTotalSupply(tokenId, totalSupply, overrides);
-        return tx;
+        const { request } = await this.reader(this.abi(sft)).simulate.setMaxTotalSupply(
+          [tokenId, BigInt(totalSupply)],
+          params,
+        );
+        const hash = await walletClient.writeContract(request);
+        return this.base.publicClient.waitForTransactionReceipt({
+          hash,
+        });
       } else if (nft) {
         this.base.rejectTokenId(tokenId, this.functionName);
-        const tx = await nft.connectWith(signer).setMaxTotalSupply(totalSupply, overrides);
-        return tx;
+        const { request } = await this.reader(this.abi(nft)).simulate.setMaxTotalSupply([BigInt(totalSupply)], params);
+        const hash = await walletClient.writeContract(request);
+        return this.base.publicClient.waitForTransactionReceipt({
+          hash,
+        });
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -70,21 +78,28 @@ export class SetMaxTotalSupply extends ContractFunction<
   }
 
   async estimateGas(
-    signer: Signerish,
-    totalSupply: BigNumberish,
-    tokenId: BigNumberish | null = null,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+    walletClient: Signer,
+    totalSupply: bigint | number,
+    tokenId: TokenId = null,
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const { nft, sft } = this.partitions;
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       if (sft) {
         tokenId = this.base.requireTokenId(tokenId, this.functionName);
-        const estimate = await sft.connectWith(signer).estimateGas.setMaxTotalSupply(tokenId, totalSupply, overrides);
+        const estimate = await this.reader(this.abi(sft)).estimateGas.setMaxTotalSupply(
+          [tokenId, BigInt(totalSupply)],
+          fullParams,
+        );
         return estimate;
       } else if (nft) {
         this.base.rejectTokenId(tokenId, this.functionName);
-        const estimate = await nft.connectWith(signer).estimateGas.setMaxTotalSupply(totalSupply, overrides);
+        const estimate = await this.reader(this.abi(nft)).estimateGas.setMaxTotalSupply(
+          [BigInt(totalSupply)],
+          fullParams,
+        );
         return estimate;
       }
     } catch (err) {
@@ -95,21 +110,24 @@ export class SetMaxTotalSupply extends ContractFunction<
   }
 
   async populateTransaction(
-    totalSupply: BigNumberish,
-    tokenId: BigNumberish | null = null,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+    totalSupply: bigint | number,
+    tokenId: TokenId = null,
+    params?: WriteParameters,
+  ): Promise<string> {
     const { nft, sft } = this.partitions;
 
     try {
       if (sft) {
         tokenId = this.base.requireTokenId(tokenId, this.functionName);
-        const tx = await sft.connectReadOnly().populateTransaction.setMaxTotalSupply(tokenId, totalSupply, overrides);
-        return tx;
+        const { request } = await this.reader(this.abi(sft)).simulate.setMaxTotalSupply(
+          [tokenId, BigInt(totalSupply)],
+          params,
+        );
+        return encodeFunctionData(request);
       } else if (nft) {
         this.base.rejectTokenId(tokenId, this.functionName);
-        const tx = await nft.connectReadOnly().populateTransaction.setMaxTotalSupply(totalSupply, overrides);
-        return tx;
+        const { request } = await this.reader(this.abi(nft)).simulate.setMaxTotalSupply([BigInt(totalSupply)], params);
+        return encodeFunctionData(request);
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
