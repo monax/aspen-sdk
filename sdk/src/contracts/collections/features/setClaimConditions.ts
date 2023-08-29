@@ -1,5 +1,5 @@
-import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
 import { claimConditionsForChain, CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type {
@@ -27,7 +27,7 @@ const SetClaimConditionsInterfaces = Object.values(SetClaimConditionsPartitions)
 type SetClaimConditionsInterfaces = (typeof SetClaimConditionsInterfaces)[number];
 
 export type SetClaimConditionsCallArgs = [walletClient: Signer, args: ConditionArgs, params?: WriteParameters];
-export type SetClaimConditionsResponse = TransactionHash;
+export type SetClaimConditionsResponse = GetTransactionReceiptReturnType;
 
 export type LooseCollectionContractClaimCondition = Omit<CollectionContractClaimCondition, 'currency'> & {
   currency: Addressish;
@@ -59,7 +59,7 @@ export class SetClaimConditions extends ContractFunction<
     walletClient: Signer,
     { conditions, tokenId, resetClaimEligibility }: ConditionArgs,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<SetClaimConditionsResponse> {
     const { nft, sft } = this.partitions;
     const strictConditions: CollectionContractClaimConditionOnChain[] = await Promise.all(
       conditions.map(async (c) => claimConditionsForChain({ ...c, currency: await asAddress(c.currency) })),
@@ -74,8 +74,10 @@ export class SetClaimConditions extends ContractFunction<
               [tokenId, strictConditions, resetClaimEligibility],
               params,
             );
-            const tx = await walletClient.sendTransaction(request);
-            return tx as TransactionHash;
+            const hash = await walletClient.writeContract(request);
+            return this.base.publicClient.waitForTransactionReceipt({
+              hash,
+            });
           }
           break;
         case 'ERC721':
@@ -85,8 +87,10 @@ export class SetClaimConditions extends ContractFunction<
               [strictConditions, resetClaimEligibility],
               params,
             );
-            const tx = await walletClient.sendTransaction(request);
-            return tx as TransactionHash;
+            const hash = await walletClient.writeContract(request);
+            return this.base.publicClient.waitForTransactionReceipt({
+              hash,
+            });
           }
           break;
       }

@@ -1,9 +1,8 @@
-import { TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, Hex } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { BytesLike, CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const LazyMintFunctions = {
   v1: 'lazyMint(uint256,string,bytes)[]',
@@ -20,7 +19,7 @@ const LazyMintInterfaces = Object.values(LazyMintPartitions).flat();
 type LazyMintInterfaces = (typeof LazyMintInterfaces)[number];
 
 export type LazyMintCallArgs = [walletClient: Signer, mint: MintAgs, params?: WriteParameters];
-export type LazyMintResponse = TransactionHash;
+export type LazyMintResponse = GetTransactionReceiptReturnType;
 
 export type MintAgs = {
   amount: bigint;
@@ -48,14 +47,16 @@ export class LazyMint extends ContractFunction<
     walletClient: Signer,
     { amount, baseURI, encryptedBaseURI }: MintAgs,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<LazyMintResponse> {
     const { v1, v2 } = this.partitions;
 
     try {
       if (v2) {
         const { request } = await this.reader(this.abi(v2)).simulate.lazyMint([amount, baseURI], params);
-        const tx = await walletClient.sendTransaction(request);
-        return tx as TransactionHash;
+        const hash = await walletClient.writeContract(request);
+        return this.base.publicClient.waitForTransactionReceipt({
+          hash,
+        });
       } else if (v1) {
         if (encryptedBaseURI === undefined) {
           throw new SdkError(SdkErrorCode.INVALID_DATA, undefined, new Error('encryptedBaseURI is required'));
@@ -64,8 +65,10 @@ export class LazyMint extends ContractFunction<
           [amount, baseURI, encryptedBaseURI as Hex],
           params,
         );
-        const tx = await walletClient.sendTransaction(request);
-        return tx as TransactionHash;
+        const hash = await walletClient.writeContract(request);
+        return this.base.publicClient.waitForTransactionReceipt({
+          hash,
+        });
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { amount, baseURI, encryptedBaseURI });

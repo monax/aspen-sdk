@@ -1,8 +1,9 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
+import { Hex } from 'viem';
 import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const BalanceOfBatchFunctions = {
   sft: 'balanceOfBatch(address[],uint256[])[uint256[]]',
@@ -45,10 +46,7 @@ export class BalanceOfBatch extends ContractFunction<
     tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
     try {
       const sft = this.partition('sft');
-      const balances = await this.reader(this.abi(sft)).read.balanceOfBatch(
-        [wallets as `0x${string}`[], tokenIds],
-        params,
-      );
+      const balances = await this.reader(this.abi(sft)).read.balanceOfBatch([wallets as Hex[], tokenIds], params);
       return balances.map((b, i) => ({ balance: b, address: addresses[i], tokenId: tokenIds[i] }));
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { addresses, tokenIds });

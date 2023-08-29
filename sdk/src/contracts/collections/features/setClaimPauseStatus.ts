@@ -1,5 +1,4 @@
-import { TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
 import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -24,7 +23,7 @@ const SetClaimPauseStatusInterfaces = Object.values(SetClaimPauseStatusPartition
 type SetClaimPauseStatusInterfaces = (typeof SetClaimPauseStatusInterfaces)[number];
 
 export type SetClaimPauseStatusCallArgs = [walletClient: Signer, pauseStatus: boolean, params?: WriteParameters];
-export type SetClaimPauseStatusResponse = TransactionHash;
+export type SetClaimPauseStatusResponse = GetTransactionReceiptReturnType;
 
 export class SetClaimPauseStatus extends ContractFunction<
   SetClaimPauseStatusInterfaces,
@@ -46,14 +45,16 @@ export class SetClaimPauseStatus extends ContractFunction<
     walletClient: Signer,
     pauseStatus: boolean,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<SetClaimPauseStatusResponse> {
     const { v1, v2 } = this.partitions;
 
     try {
       if (v2) {
         const { request } = await this.reader(this.abi(v2)).simulate.setClaimPauseStatus([pauseStatus], params);
-        const tx = await walletClient.writeContract(request);
-        return tx as TransactionHash;
+        const hash = await walletClient.writeContract(request);
+        return this.base.publicClient.waitForTransactionReceipt({
+          hash,
+        });
       } else if (v1) {
         let request;
         if (pauseStatus) {
@@ -61,8 +62,10 @@ export class SetClaimPauseStatus extends ContractFunction<
         } else {
           ({ request } = await this.reader(this.abi(v1)).simulate.unpauseClaims(params));
         }
-        const tx = await walletClient.writeContract(request);
-        return tx as TransactionHash;
+        const hash = await walletClient.writeContract(request);
+        return this.base.publicClient.waitForTransactionReceipt({
+          hash,
+        });
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

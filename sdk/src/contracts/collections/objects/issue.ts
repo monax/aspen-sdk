@@ -1,5 +1,5 @@
 import { Address, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { Hex, TransactionReceipt } from 'viem';
+import { GetTransactionReceiptReturnType, TransactionReceipt } from 'viem';
 import { BigIntish, CollectionContract, OperationStatus, Provider, Signer, TokenId, WriteParameters } from '..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { IssuedToken } from '../features';
@@ -8,8 +8,8 @@ import { ContractObject } from './object';
 export type IssueState =
   | { status: 'signing-transaction' }
   | { status: 'cancelled-transaction'; error: SdkError }
-  | { status: 'pending-transaction'; tx: TransactionHash }
-  | { status: 'transaction-failed'; tx: TransactionHash; error: SdkError }
+  | { status: 'pending-transaction'; receipt: TransactionReceipt }
+  | { status: 'transaction-failed'; receipt: TransactionReceipt; error: SdkError }
   | { status: 'success'; tx: TransactionHash; receipt: TransactionReceipt; tokens: IssuedToken[] };
 
 export type IssueSuccessState = Extract<IssueState, { status: 'success' }>;
@@ -70,23 +70,20 @@ export class PendingIssue extends ContractObject {
     onStateChange: (state: IssueState) => void,
     params?: WriteParameters,
   ) {
-    const { success, result: tx, error } = await this.execute(walletClient, receiver, quantity, params);
+    const { success, result: receipt, error } = await this.execute(walletClient, receiver, quantity, params);
     if (!success) {
       onStateChange({ status: 'cancelled-transaction', error });
       return;
     }
 
-    onStateChange({ status: 'pending-transaction', tx });
+    onStateChange({ status: 'pending-transaction', receipt });
 
     try {
-      const receipt = await publicClient.waitForTransactionReceipt({
-        hash: tx as Hex,
-      });
       const tokens = await this.base.issue.parseReceiptLogs(receipt);
-      onStateChange({ status: 'success', tx, receipt, tokens });
+      onStateChange({ status: 'success', tx: receipt.transactionHash as TransactionHash, receipt, tokens });
     } catch (err) {
       const error = SdkError.from(err, SdkErrorCode.UNKNOWN_ERROR, { receiver, quantity });
-      onStateChange({ status: 'transaction-failed', tx, error });
+      onStateChange({ status: 'transaction-failed', receipt, error });
       return;
     }
   }
@@ -96,7 +93,7 @@ export class PendingIssue extends ContractObject {
     receiver: Address,
     quantity: BigIntish,
     params?: WriteParameters,
-  ): Promise<OperationStatus<TransactionHash>> {
+  ): Promise<OperationStatus<GetTransactionReceiptReturnType>> {
     return await this.run(async () => {
       const args = { receiver, quantity, tokenId: this.tokenId };
       return await this.base.issue(walletClient, args, params);

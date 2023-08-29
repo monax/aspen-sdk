@@ -1,5 +1,5 @@
-import { Address, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { Address, asAddress } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
 import { BatchIssueWithTokenUriArgs, Signer, WriteParameters, ZERO_ADDRESS } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
@@ -23,7 +23,7 @@ export type BatchIssueWithinPhaseWithTokenUriCallArgs = [
   args: BatchIssueWithTokenUriArgs,
   params?: WriteParameters,
 ];
-export type BatchIssueWithinPhaseWithTokenUriResponse = TransactionHash;
+export type BatchIssueWithinPhaseWithTokenUriResponse = GetTransactionReceiptReturnType;
 
 export class BatchIssueWithinPhaseWithTokenUri extends ContractFunction<
   BatchIssueWithinPhaseWithTokenUriInterfaces,
@@ -57,11 +57,13 @@ export class BatchIssueWithinPhaseWithTokenUri extends ContractFunction<
 
     try {
       const { request } = await this.reader(this.abi(nft)).simulate.batchIssueWithinPhaseWithTokenURI(
-        [wallets as `0x${string}`[], args.tokenURIs],
+        [wallets as Hex[], args.tokenURIs],
         params,
       );
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
@@ -74,7 +76,7 @@ export class BatchIssueWithinPhaseWithTokenUri extends ContractFunction<
 
     try {
       const estimate = await this.reader(this.abi(nft)).estimateGas.batchIssueWithinPhaseWithTokenURI(
-        [wallets as `0x${string}`[], args.tokenURIs],
+        [wallets as Hex[], args.tokenURIs],
         {
           account: walletClient.account,
           ...params,
@@ -93,7 +95,7 @@ export class BatchIssueWithinPhaseWithTokenUri extends ContractFunction<
 
     try {
       const { request } = await this.reader(this.abi(nft)).simulate.batchIssueWithinPhaseWithTokenURI(
-        [wallets as `0x${string}`[], args.tokenURIs],
+        [wallets as Hex[], args.tokenURIs],
         params,
       );
       return encodeFunctionData(request);

@@ -1,5 +1,4 @@
-import { TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
 import { CollectionContract, Signer, TokenId, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -26,7 +25,7 @@ export type SetMaxWalletClaimCountCallArgs = [
   tokenId: TokenId,
   params?: WriteParameters,
 ];
-export type SetMaxWalletClaimCountResponse = TransactionHash;
+export type SetMaxWalletClaimCountResponse = GetTransactionReceiptReturnType;
 
 export class SetMaxWalletClaimCount extends ContractFunction<
   SetMaxWalletClaimCountInterfaces,
@@ -49,7 +48,7 @@ export class SetMaxWalletClaimCount extends ContractFunction<
     maxWalletClaimCount: bigint | number,
     tokenId: TokenId = null,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<SetMaxWalletClaimCountResponse> {
     const { nft, sft } = this.partitions;
 
     try {
@@ -61,8 +60,10 @@ export class SetMaxWalletClaimCount extends ContractFunction<
             [tokenId, BigInt(maxWalletClaimCount)],
             params,
           );
-          const tx = await walletClient.sendTransaction(request);
-          return tx as TransactionHash;
+          const hash = await walletClient.writeContract(request);
+          return this.base.publicClient.waitForTransactionReceipt({
+            hash,
+          });
         }
 
         case 'ERC721': {
@@ -72,8 +73,10 @@ export class SetMaxWalletClaimCount extends ContractFunction<
             [BigInt(maxWalletClaimCount)],
             params,
           );
-          const tx = await walletClient.sendTransaction(request);
-          return tx as TransactionHash;
+          const hash = await walletClient.writeContract(request);
+          return this.base.publicClient.waitForTransactionReceipt({
+            hash,
+          });
         }
       }
     } catch (err) {

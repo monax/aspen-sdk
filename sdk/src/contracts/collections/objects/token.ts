@@ -1,6 +1,7 @@
-import { Addressish, asAddress, ChainId, TransactionHash } from '@monaxlabs/phloem/dist/types';
+import { Addressish, asAddress, ChainId } from '@monaxlabs/phloem/dist/types';
 import axios from 'axios';
 import { add } from 'date-fns';
+import { GetTransactionReceiptReturnType } from 'viem';
 import {
   BigIntish,
   ClaimConditionsState,
@@ -114,7 +115,7 @@ export class Token extends ContractObject {
     walletClient: Signer,
     tokenUri: string,
     params?: WriteParameters,
-  ): Promise<OperationStatus<TransactionHash>> {
+  ): Promise<OperationStatus<GetTransactionReceiptReturnType>> {
     return await this.run(async () => {
       const tokenId = this.base.requireTokenId(this.tokenId);
       return await this.base.setTokenUri(walletClient, tokenId, tokenUri, params);
@@ -125,7 +126,7 @@ export class Token extends ContractObject {
     walletClient: Signer,
     tokenUri: string,
     params?: WriteParameters,
-  ): Promise<OperationStatus<TransactionHash>> {
+  ): Promise<OperationStatus<GetTransactionReceiptReturnType>> {
     return await this.run(async () => {
       const tokenId = this.base.requireTokenId(this.tokenId);
       return await this.base.setPermanentTokenUri(walletClient, tokenId, tokenUri, params);
@@ -136,7 +137,7 @@ export class Token extends ContractObject {
     walletClient: Signer,
     totalSupply: BigIntish,
     params?: WriteParameters,
-  ): Promise<OperationStatus<TransactionHash>> {
+  ): Promise<OperationStatus<GetTransactionReceiptReturnType>> {
     return await this.run(async () => {
       return await this.base.setMaxTotalSupply(walletClient, totalSupply, this.tokenId, params);
     });
@@ -147,7 +148,7 @@ export class Token extends ContractObject {
     conditions: LooseCollectionContractClaimCondition[],
     resetClaimEligibility: boolean,
     params?: WriteParameters,
-  ): Promise<OperationStatus<TransactionHash>> {
+  ): Promise<OperationStatus<GetTransactionReceiptReturnType>> {
     return await this.run(async () => {
       const args = { conditions, resetClaimEligibility, tokenId: this.tokenId };
       return await this.base.setClaimConditions(walletClient, args, params);

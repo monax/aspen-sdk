@@ -1,5 +1,4 @@
-import { TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
 import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -20,7 +19,7 @@ const SetTermsActivationInterfaces = Object.values(SetTermsActivationPartitions)
 type SetTermsActivationInterfaces = (typeof SetTermsActivationInterfaces)[number];
 
 export type SetTermsActivationCallArgs = [walletClient: Signer, termsEnabled: boolean, params?: WriteParameters];
-export type SetTermsActivationResponse = TransactionHash;
+export type SetTermsActivationResponse = GetTransactionReceiptReturnType;
 
 export class SetTermsActivation extends ContractFunction<
   SetTermsActivationInterfaces,
@@ -42,18 +41,22 @@ export class SetTermsActivation extends ContractFunction<
     walletClient: Signer,
     termsEnabled: boolean,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<SetTermsActivationResponse> {
     const { v1, v2 } = this.partitions;
 
     try {
       if (v2) {
         const { request } = await this.reader(this.abi(v2)).simulate.setTermsActivation([termsEnabled], params);
-        const tx = await walletClient.sendTransaction(request);
-        return tx as TransactionHash;
+        const hash = await walletClient.writeContract(request);
+        return this.base.publicClient.waitForTransactionReceipt({
+          hash,
+        });
       } else if (v1) {
         const { request } = await this.reader(this.abi(v1)).simulate.setTermsStatus([termsEnabled], params);
-        const tx = await walletClient.sendTransaction(request);
-        return tx as TransactionHash;
+        const hash = await walletClient.writeContract(request);
+        return this.base.publicClient.waitForTransactionReceipt({
+          hash,
+        });
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

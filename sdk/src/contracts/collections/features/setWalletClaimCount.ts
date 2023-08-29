@@ -1,5 +1,5 @@
-import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, Hex } from 'viem';
+import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
 import { CollectionContract, Signer, TokenId, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -27,7 +27,7 @@ export type SetWalletClaimCountCallArgs = [
   tokenId: TokenId,
   params?: WriteParameters,
 ];
-export type SetWalletClaimCountResponse = TransactionHash;
+export type SetWalletClaimCountResponse = GetTransactionReceiptReturnType;
 
 export class SetWalletClaimCount extends ContractFunction<
   SetWalletClaimCountInterfaces,
@@ -51,7 +51,7 @@ export class SetWalletClaimCount extends ContractFunction<
     maxWalletClaimCount: bigint | number,
     tokenId: TokenId = null,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<SetWalletClaimCountResponse> {
     const { nft, sft } = this.partitions;
     const address = await asAddress(userAddress);
 
@@ -64,8 +64,10 @@ export class SetWalletClaimCount extends ContractFunction<
               [tokenId, address as Hex, BigInt(maxWalletClaimCount)],
               params,
             );
-            const tx = await walletClient.sendTransaction(request);
-            return tx as TransactionHash;
+            const hash = await walletClient.writeContract(request);
+            return this.base.publicClient.waitForTransactionReceipt({
+              hash,
+            });
           }
           break;
 
@@ -76,8 +78,10 @@ export class SetWalletClaimCount extends ContractFunction<
               [address as Hex, BigInt(maxWalletClaimCount)],
               params,
             );
-            const tx = await walletClient.sendTransaction(request);
-            return tx as TransactionHash;
+            const hash = await walletClient.writeContract(request);
+            return this.base.publicClient.waitForTransactionReceipt({
+              hash,
+            });
           }
           break;
       }

@@ -1,5 +1,5 @@
-import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, Hex } from 'viem';
+import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
 import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -25,7 +25,7 @@ export type SetPlatformFeesCallArgs = [
   basisPoints: bigint | number,
   params?: WriteParameters,
 ];
-export type SetPlatformFeesResponse = TransactionHash;
+export type SetPlatformFeesResponse = GetTransactionReceiptReturnType;
 
 export class SetPlatformFees extends ContractFunction<
   SetPlatformFeesInterfaces,
@@ -48,7 +48,7 @@ export class SetPlatformFees extends ContractFunction<
     recipient: Addressish,
     basisPoints: bigint | number,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<SetPlatformFeesResponse> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(recipient);
 
@@ -57,8 +57,10 @@ export class SetPlatformFees extends ContractFunction<
         [wallet as Hex, BigInt(basisPoints)],
         params,
       );
-      const tx = await walletClient.sendTransaction(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

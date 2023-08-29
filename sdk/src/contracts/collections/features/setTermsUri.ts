@@ -1,5 +1,4 @@
-import { TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
 import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -18,7 +17,7 @@ const SetTermsUriInterfaces = Object.values(SetTermsUriPartitions).flat();
 type SetTermsUriInterfaces = (typeof SetTermsUriInterfaces)[number];
 
 export type SetTermsUriCallArgs = [walletClient: Signer, termsUri: string, params?: WriteParameters];
-export type SetTermsUriResponse = TransactionHash;
+export type SetTermsUriResponse = GetTransactionReceiptReturnType;
 
 export class SetTermsUri extends ContractFunction<
   SetTermsUriInterfaces,
@@ -36,13 +35,15 @@ export class SetTermsUri extends ContractFunction<
     return this.setTermsUri(...args);
   }
 
-  async setTermsUri(walletClient: Signer, termsUri: string, params?: WriteParameters): Promise<TransactionHash> {
+  async setTermsUri(walletClient: Signer, termsUri: string, params?: WriteParameters): Promise<SetTermsUriResponse> {
     const v1 = this.partition('v1');
 
     try {
       const { request } = await this.reader(this.abi(v1)).simulate.setTermsURI([termsUri], params);
-      const tx = await walletClient.sendTransaction(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

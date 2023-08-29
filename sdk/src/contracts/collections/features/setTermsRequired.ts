@@ -1,5 +1,4 @@
-import { TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
 import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -18,7 +17,7 @@ const SetTermsRequiredInterfaces = Object.values(SetTermsRequiredPartitions).fla
 type SetTermsRequiredInterfaces = (typeof SetTermsRequiredInterfaces)[number];
 
 export type SetTermsRequiredCallArgs = [walletClient: Signer, termsRequired: boolean, params?: WriteParameters];
-export type SetTermsRequiredResponse = TransactionHash;
+export type SetTermsRequiredResponse = GetTransactionReceiptReturnType;
 
 export class SetTermsRequired extends ContractFunction<
   SetTermsRequiredInterfaces,
@@ -40,13 +39,15 @@ export class SetTermsRequired extends ContractFunction<
     walletClient: Signer,
     termsRequired: boolean,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<SetTermsRequiredResponse> {
     const v1 = this.partition('v1');
 
     try {
       const { request } = await this.reader(this.abi(v1)).simulate.setTermsRequired([termsRequired], params);
-      const tx = await walletClient.sendTransaction(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

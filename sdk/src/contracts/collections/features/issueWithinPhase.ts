@@ -1,6 +1,6 @@
 import { parse } from '@monaxlabs/phloem/dist/schema/parse';
-import { Address, asAddress, isSameAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { decodeEventLog, encodeFunctionData, Hex, TransactionReceipt } from 'viem';
+import { Address, asAddress, isSameAddress } from '@monaxlabs/phloem/dist/types';
+import { decodeEventLog, encodeFunctionData, GetTransactionReceiptReturnType, Hex, TransactionReceipt } from 'viem';
 import { CollectionContract, IssueArgs, IssuedToken, ZERO_ADDRESS } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { bigIntRange, normalise, One } from '../number';
@@ -23,7 +23,7 @@ const IssueWithinPhaseInterfaces = Object.values(IssueWithinPhasePartitions).fla
 type IssueWithinPhaseInterfaces = (typeof IssueWithinPhaseInterfaces)[number];
 
 export type IssueWithinPhaseCallArgs = [walletClient: Signer, args: IssueArgs, params?: WriteParameters];
-export type IssueWithinPhaseResponse = TransactionHash;
+export type IssueWithinPhaseResponse = GetTransactionReceiptReturnType;
 
 export class IssueWithinPhase extends ContractFunction<
   IssueWithinPhaseInterfaces,
@@ -41,7 +41,11 @@ export class IssueWithinPhase extends ContractFunction<
     return this.issueWithinPhase(...args);
   }
 
-  async issueWithinPhase(walletClient: Signer, args: IssueArgs, params?: WriteParameters): Promise<TransactionHash> {
+  async issueWithinPhase(
+    walletClient: Signer,
+    args: IssueArgs,
+    params?: WriteParameters,
+  ): Promise<IssueWithinPhaseResponse> {
     this.validateArgs(args);
 
     switch (this.base.tokenStandard) {
@@ -56,7 +60,7 @@ export class IssueWithinPhase extends ContractFunction<
     walletClient: Signer,
     { receiver, tokenId, quantity }: IssueArgs,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<IssueWithinPhaseResponse> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
     const wallet = await asAddress(receiver);
@@ -66,8 +70,10 @@ export class IssueWithinPhase extends ContractFunction<
         [wallet as Hex, tokenId, normalise(quantity)],
         params,
       );
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, tokenId, quantity });
     }
@@ -77,7 +83,7 @@ export class IssueWithinPhase extends ContractFunction<
     walletClient: Signer,
     { receiver, quantity }: IssueArgs,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<IssueWithinPhaseResponse> {
     const nft = this.partition('nft');
     const wallet = await asAddress(receiver);
 
@@ -86,8 +92,10 @@ export class IssueWithinPhase extends ContractFunction<
         [wallet as Hex, normalise(quantity)],
         params,
       );
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, quantity });
     }

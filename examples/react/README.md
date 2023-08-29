@@ -26,17 +26,14 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 To be able to run the examples first you need to connect to the Wallet:
 
-`ConnectWallet` component provides a button whenever the wallet is not connected, otherwise network informations should be displayed.
+`Profile` component provides a button whenever the wallet is not connected, otherwise network informations should be displayed.
 You need to connect with Mumbai network where examples contract are deployed.
 
-`index.tsx` component shows how to set up connection with a contract. To be able to use its features you need to pass as an arguments `provider` and `contract address` to the `CollectionContract`
+`App.tsx` component shows how to set up connection with a contract. To be able to use its features you need to pass as an arguments `publicClient` and `contract address` to the `CollectionContract`
 then `contract` needs to be loaded :
 
 ```js
-const collectionContract = await CollectionContract.from(
-  library,
-  parse(Address, contractAddress)
-);
+const collectionContract = await CollectionContract.from(publicClient, parse(Address, contractAddress));
 ```
 
 When contract is loaded you can access features provided :
@@ -50,7 +47,6 @@ When contract is loaded you can access features provided :
 In `Mint.tsx` two ways of minting were implemeted:
 
 - Mint via crypto payment
-- Mint via Fiat
 
 Pay attention that user can mint only if claim status is "ok" :
 
@@ -75,10 +71,8 @@ and if terms were accepted if required:
 
 ```js
 const termsAccepted = useMemo(
-  () =>
-    !termsInfo?.termsActivated ||
-    (termsInfo?.termsActivated && termsInfo?.termsAccepted),
-  [termsInfo]
+  () => !termsInfo?.termsActivated || (termsInfo?.termsActivated && termsInfo?.termsAccepted),
+  [termsInfo],
 );
 ```
 
@@ -93,21 +87,10 @@ const tx = await contract.issuance.claim(
   library.getSigner(), // The signer for the user entitled to claim
   parse(Address, account), // Claiming account
   tokenId, // TokenId if ERC1155, null if ERC721
-  BigNumber.from(1), // Quantity to claim (multiple tokens can be claimed in a single call for both ERC721 and ERC1155)
+  1, // Quantity to claim (multiple tokens can be claimed in a single call for both ERC721 and ERC1155)
   activeClaimConditions.activeClaimCondition.currency, // Currency
   activeClaimConditions.activeClaimCondition.pricePerToken, // Price per token
   [],
-  BigNumber.from(0)
+  0,
 );
-```
-
-When the transaction succeeds, function `onUpdate` is called:
-
-```js
-if (tx) {
-  const receipt = await tx.wait();
-  if (receipt.status === 1) {
-    onUpdate(); // Update Wallet Claim Count and Wallet Claimed Count In Phase
-  }
-}
 ```

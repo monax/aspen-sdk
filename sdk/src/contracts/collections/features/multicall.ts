@@ -1,5 +1,4 @@
-import { TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, Hex } from 'viem';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
 import { BytesLike, CollectionContract, PayableParameters, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -18,7 +17,7 @@ const MulticallInterfaces = Object.values(MulticallPartitions).flat();
 type MulticallInterfaces = (typeof MulticallInterfaces)[number];
 
 export type MulticallCallArgs = [walletClient: Signer, data: BytesLike[], params?: PayableParameters];
-export type MulticallResponse = TransactionHash;
+export type MulticallResponse = GetTransactionReceiptReturnType;
 
 export class Multicall extends ContractFunction<
   MulticallInterfaces,
@@ -36,13 +35,15 @@ export class Multicall extends ContractFunction<
     return this.multicall(...args);
   }
 
-  async multicall(walletClient: Signer, data: BytesLike[], params?: WriteParameters): Promise<TransactionHash> {
+  async multicall(walletClient: Signer, data: BytesLike[], params?: WriteParameters): Promise<MulticallResponse> {
     const v1 = this.partition('v1');
 
     try {
       const { request } = await this.reader(this.abi(v1)).simulate.multicall([data as ReadonlyArray<Hex>], params);
-      const tx = await walletClient.sendTransaction(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

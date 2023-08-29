@@ -1,5 +1,5 @@
-import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, Hex } from 'viem';
+import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { BytesLike, RequiredTokenId, Signer, WriteParameters } from '../types';
@@ -23,7 +23,7 @@ export type SafeBatchTransferFromCallArgs = [
   args: SafeBatchTransferFromArgs,
   params?: WriteParameters,
 ];
-export type SafeBatchTransferFromResponse = TransactionHash;
+export type SafeBatchTransferFromResponse = GetTransactionReceiptReturnType;
 
 export type SafeBatchTransferFromArgs = {
   fromAddress: Addressish;
@@ -53,7 +53,7 @@ export class SafeBatchTransferFrom extends ContractFunction<
     walletClient: Signer,
     { fromAddress, toAddress, tokenIds, bytes, amounts }: SafeBatchTransferFromArgs,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<SafeBatchTransferFromResponse> {
     const sft = this.partition('sft');
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
@@ -65,8 +65,10 @@ export class SafeBatchTransferFrom extends ContractFunction<
         [from as Hex, to as Hex, _tokenIds, _amounts, bytes as Hex],
         params,
       );
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

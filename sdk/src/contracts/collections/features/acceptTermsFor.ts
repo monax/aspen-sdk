@@ -1,5 +1,5 @@
-import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, Hex } from 'viem';
+import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signer, WriteParameters } from '../types';
@@ -19,7 +19,7 @@ const AcceptTermsForInterfaces = Object.values(AcceptTermsForPartitions).flat();
 type AcceptTermsForInterfaces = (typeof AcceptTermsForInterfaces)[number];
 
 export type AcceptTermsForCallArgs = [walletClient: Signer, acceptor: Addressish, params?: WriteParameters];
-export type AcceptTermsForResponse = TransactionHash;
+export type AcceptTermsForResponse = GetTransactionReceiptReturnType;
 
 export class AcceptTermsFor extends ContractFunction<
   AcceptTermsForInterfaces,
@@ -47,8 +47,10 @@ export class AcceptTermsFor extends ContractFunction<
 
     try {
       const { request } = await this.reader(this.abi(v1)).simulate.acceptTerms([wallet as Hex], params);
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

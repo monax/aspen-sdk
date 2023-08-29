@@ -1,5 +1,4 @@
-import { TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
 import { BigIntish, CollectionContract, Signer, TokenId, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -25,7 +24,7 @@ export type SetMaxTotalSupplyCallArgs = [
   tokenId: TokenId,
   params?: WriteParameters,
 ];
-export type SetMaxTotalSupplyResponse = TransactionHash;
+export type SetMaxTotalSupplyResponse = GetTransactionReceiptReturnType;
 
 export class SetMaxTotalSupply extends ContractFunction<
   SetMaxTotalSupplyInterfaces,
@@ -49,7 +48,7 @@ export class SetMaxTotalSupply extends ContractFunction<
     totalSupply: BigIntish,
     tokenId: TokenId = null,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<SetMaxTotalSupplyResponse> {
     const { nft, sft } = this.partitions;
 
     try {
@@ -59,13 +58,17 @@ export class SetMaxTotalSupply extends ContractFunction<
           [tokenId, BigInt(totalSupply)],
           params,
         );
-        const tx = await walletClient.writeContract(request);
-        return tx as TransactionHash;
+        const hash = await walletClient.writeContract(request);
+        return this.base.publicClient.waitForTransactionReceipt({
+          hash,
+        });
       } else if (nft) {
         this.base.rejectTokenId(tokenId, this.functionName);
         const { request } = await this.reader(this.abi(nft)).simulate.setMaxTotalSupply([BigInt(totalSupply)], params);
-        const tx = await walletClient.writeContract(request);
-        return tx as TransactionHash;
+        const hash = await walletClient.writeContract(request);
+        return this.base.publicClient.waitForTransactionReceipt({
+          hash,
+        });
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

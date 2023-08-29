@@ -1,5 +1,5 @@
-import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, Hex } from 'viem';
+import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signer, WriteParameters } from '../types';
@@ -24,7 +24,7 @@ export type SetApprovalForAllArgs = {
 };
 
 export type SetApprovalForAllCallArgs = [walletClient: Signer, args: SetApprovalForAllArgs, params?: WriteParameters];
-export type SetApprovalForAllResponse = TransactionHash;
+export type SetApprovalForAllResponse = GetTransactionReceiptReturnType;
 
 export class SetApprovalForAll extends ContractFunction<
   SetApprovalForAllInterfaces,
@@ -46,14 +46,16 @@ export class SetApprovalForAll extends ContractFunction<
     walletClient: Signer,
     { operator, approved }: SetApprovalForAllArgs,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<SetApprovalForAllResponse> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(operator);
 
     try {
       const { request } = await this.reader(this.abi(v1)).simulate.setApprovalForAll([wallet as Hex, approved], params);
-      const tx = await walletClient.sendTransaction(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { operator, approved });
     }

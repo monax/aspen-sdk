@@ -1,5 +1,4 @@
-import { TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
 import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -23,7 +22,7 @@ export type SetTokenNameAndSymbolCallArgs = [
   symbol: string,
   params?: WriteParameters,
 ];
-export type SetTokenNameAndSymbolResponse = TransactionHash;
+export type SetTokenNameAndSymbolResponse = GetTransactionReceiptReturnType;
 
 export class SetTokenNameAndSymbol extends ContractFunction<
   SetTokenNameAndSymbolInterfaces,
@@ -46,13 +45,15 @@ export class SetTokenNameAndSymbol extends ContractFunction<
     name: string,
     symbol: string,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<SetTokenNameAndSymbolResponse> {
     const v1 = this.partition('v1');
 
     try {
       const { request } = await this.reader(this.abi(v1)).simulate.setTokenNameAndSymbol([name, symbol], params);
-      const tx = await walletClient.sendTransaction(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

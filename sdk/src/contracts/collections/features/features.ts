@@ -584,7 +584,7 @@ export const asExecutable = <T extends { execute: CallableFunction }>(obj: T): T
     apply: (target, _thisArg, argumentsList) => {
       return target(...argumentsList);
     },
-    get: (target, prop, receiver) => {
+    get: (target, prop) => {
       return Reflect.get(obj, prop, obj);
     },
   }) as T['execute'] & T;

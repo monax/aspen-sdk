@@ -1,6 +1,6 @@
 import { parse } from '@monaxlabs/phloem/dist/schema/parse';
-import { Address, Addressish, asAddress, ChainId, isZeroAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { decodeEventLog, encodeFunctionData, Hex, TransactionReceipt } from 'viem';
+import { Address, Addressish, asAddress, ChainId, isZeroAddress } from '@monaxlabs/phloem/dist/types';
+import { decodeEventLog, encodeFunctionData, GetTransactionReceiptReturnType, Hex, TransactionReceipt } from 'viem';
 import { BigIntish, Signer, TokenId, TokenStandard, WriteParameters } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
@@ -23,7 +23,7 @@ const IssueInterfaces = Object.values(IssuePartitions).flat();
 type IssueInterfaces = (typeof IssueInterfaces)[number];
 
 export type IssueCallArgs = [walletClient: Signer, args: IssueArgs, params?: WriteParameters];
-export type IssueResponse = TransactionHash;
+export type IssueResponse = GetTransactionReceiptReturnType;
 
 export type IssueArgs = {
   receiver: Addressish;
@@ -53,7 +53,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     return this.issue(...args);
   }
 
-  async issue(signer: Signer, args: IssueArgs, params?: WriteParameters): Promise<TransactionHash> {
+  async issue(signer: Signer, args: IssueArgs, params?: WriteParameters): Promise<IssueResponse> {
     this.validateArgs(args);
 
     switch (this.base.tokenStandard) {
@@ -68,7 +68,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     walletClient: Signer,
     { receiver, tokenId, quantity }: IssueArgs,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<IssueResponse> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
     const wallet = await asAddress(receiver);
@@ -78,8 +78,10 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
         [wallet as Hex, tokenId, normalise(quantity)],
         params,
       );
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, tokenId, quantity });
     }
@@ -89,7 +91,7 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     walletClient: Signer,
     { receiver, quantity }: IssueArgs,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<IssueResponse> {
     // const nft = this.partition('nft');
     const wallet = await asAddress(receiver);
 
@@ -97,8 +99,10 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
       // bypass ABI divercence
       const iface = this.base.assumeFeature('issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV0');
       const { request } = await this.reader(iface.abi).simulate.issue([wallet as Hex, normalise(quantity)], params);
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, quantity });
     }

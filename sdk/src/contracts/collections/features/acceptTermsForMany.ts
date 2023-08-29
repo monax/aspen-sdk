@@ -1,9 +1,9 @@
-import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const AcceptTermsForManyFunctions = {
   v1: 'batchAcceptTerms(address[])[]',
@@ -18,7 +18,7 @@ const AcceptTermsForManyInterfaces = Object.values(AcceptTermsForManyPartitions)
 type AcceptTermsForManyInterfaces = (typeof AcceptTermsForManyInterfaces)[number];
 
 export type AcceptTermsForManyCallArgs = [walletClient: Signer, acceptors: Addressish[], params?: WriteParameters];
-export type AcceptTermsForManyResponse = TransactionHash;
+export type AcceptTermsForManyResponse = GetTransactionReceiptReturnType;
 
 export class AcceptTermsForMany extends ContractFunction<
   AcceptTermsForManyInterfaces,
@@ -45,12 +45,11 @@ export class AcceptTermsForMany extends ContractFunction<
     const wallets = await Promise.all(acceptors.map((a) => asAddress(a)));
 
     try {
-      const { request } = await this.reader(this.abi(v1)).simulate.batchAcceptTerms(
-        [wallets as `0x${string}`[]],
-        params,
-      );
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const { request } = await this.reader(this.abi(v1)).simulate.batchAcceptTerms([wallets as Hex[]], params);
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
@@ -61,7 +60,7 @@ export class AcceptTermsForMany extends ContractFunction<
     const wallets = await Promise.all(acceptors.map((a) => asAddress(a)));
 
     try {
-      const estimate = await this.reader(this.abi(v1)).estimateGas.batchAcceptTerms([wallets as `0x${string}`[]], {
+      const estimate = await this.reader(this.abi(v1)).estimateGas.batchAcceptTerms([wallets as Hex[]], {
         account: walletClient.account,
         ...params,
       });
@@ -76,10 +75,7 @@ export class AcceptTermsForMany extends ContractFunction<
     const wallets = await Promise.all(acceptors.map((a) => asAddress(a)));
 
     try {
-      const { request } = await this.reader(this.abi(v1)).simulate.batchAcceptTerms(
-        [wallets as `0x${string}`[]],
-        params,
-      );
+      const { request } = await this.reader(this.abi(v1)).simulate.batchAcceptTerms([wallets as Hex[]], params);
       return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

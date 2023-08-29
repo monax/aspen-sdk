@@ -1,5 +1,5 @@
-import { Address, Addressish, asAddress, isZeroAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { Address, Addressish, asAddress, isZeroAddress } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signer, WriteParameters } from '../types';
@@ -31,7 +31,7 @@ export type ChargebackWithdrawalCallArgs = [
   args: ChargebackWithdrawalArgs,
   params?: WriteParameters,
 ];
-export type ChargebackWithdrawalResponse = TransactionHash;
+export type ChargebackWithdrawalResponse = GetTransactionReceiptReturnType;
 
 export class ChargebackWithdrawal extends ContractFunction<
   ChargebackWithdrawalInterfaces,
@@ -72,11 +72,13 @@ export class ChargebackWithdrawal extends ContractFunction<
 
     try {
       const { request } = await this.reader(this.abi(sft)).simulate.chargebackWithdrawal(
-        [owner as `0x${string}`, tokenId, quantity],
+        [owner as Hex, tokenId, quantity],
         params,
       );
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { owner, tokenId, quantity });
     }
@@ -91,8 +93,10 @@ export class ChargebackWithdrawal extends ContractFunction<
 
     try {
       const { request } = await this.reader(this.abi(nft)).simulate.chargebackWithdrawal([tokenId], params);
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { tokenId });
     }
@@ -117,7 +121,7 @@ export class ChargebackWithdrawal extends ContractFunction<
 
     try {
       const estimate = await this.reader(this.abi(sft)).estimateGas.chargebackWithdrawal(
-        [owner as `0x${string}`, tokenId, quantity],
+        [owner as Hex, tokenId, quantity],
         {
           account: walletClient.account,
           ...params,
@@ -165,7 +169,7 @@ export class ChargebackWithdrawal extends ContractFunction<
 
     try {
       const { request } = await this.reader(this.abi(sft)).simulate.chargebackWithdrawal(
-        [owner as `0x${string}`, tokenId, quantity],
+        [owner as Hex, tokenId, quantity],
         params,
       );
       return encodeFunctionData(request);

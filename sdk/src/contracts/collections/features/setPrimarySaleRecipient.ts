@@ -1,5 +1,5 @@
-import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, Hex } from 'viem';
+import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
 import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -18,7 +18,7 @@ const SetPrimarySaleRecipientInterfaces = Object.values(SetPrimarySaleRecipientP
 type SetPrimarySaleRecipientInterfaces = (typeof SetPrimarySaleRecipientInterfaces)[number];
 
 export type SetPrimarySaleRecipientCallArgs = [walletClient: Signer, recipient: Addressish, params?: WriteParameters];
-export type SetPrimarySaleRecipientResponse = TransactionHash;
+export type SetPrimarySaleRecipientResponse = GetTransactionReceiptReturnType;
 
 export class SetPrimarySaleRecipient extends ContractFunction<
   SetPrimarySaleRecipientInterfaces,
@@ -40,14 +40,16 @@ export class SetPrimarySaleRecipient extends ContractFunction<
     walletClient: Signer,
     recipient: Addressish,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<SetPrimarySaleRecipientResponse> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(recipient);
 
     try {
       const { request } = await this.reader(this.abi(v1)).simulate.setPrimarySaleRecipient([wallet as Hex], params);
-      const tx = await walletClient.sendTransaction(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

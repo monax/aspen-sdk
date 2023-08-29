@@ -1,5 +1,4 @@
-import { TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
 import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -23,7 +22,7 @@ export type UpdateBaseUriCallArgs = [
   baseURI: string,
   params?: WriteParameters,
 ];
-export type UpdateBaseUriResponse = TransactionHash;
+export type UpdateBaseUriResponse = GetTransactionReceiptReturnType;
 
 export class UpdateBaseUri extends ContractFunction<
   UpdateBaseUriInterfaces,
@@ -46,7 +45,7 @@ export class UpdateBaseUri extends ContractFunction<
     baseURIIndex: bigint | number,
     baseURI: string,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<UpdateBaseUriResponse> {
     const v1 = this.partition('v1');
 
     try {
@@ -54,8 +53,10 @@ export class UpdateBaseUri extends ContractFunction<
         [BigInt(baseURIIndex), baseURI],
         params,
       );
-      const tx = await walletClient.sendTransaction(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

@@ -1,5 +1,5 @@
-import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { normalise } from '../number';
@@ -28,7 +28,7 @@ export type BurnBatchCallArgs = [
   amount: BigIntish[],
   params?: WriteParameters,
 ];
-export type BurnBatchResponse = TransactionHash;
+export type BurnBatchResponse = GetTransactionReceiptReturnType;
 
 export class BurnBatch extends ContractFunction<
   BurnBatchInterfaces,
@@ -58,11 +58,13 @@ export class BurnBatch extends ContractFunction<
 
     try {
       const { request } = await this.reader(this.abi(sft)).simulate.burnBatch(
-        [account as `0x${string}`, tokenIds.map(normalise), amount.map(normalise)],
+        [account as Hex, tokenIds.map(normalise), amount.map(normalise)],
         params,
       );
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
@@ -80,7 +82,7 @@ export class BurnBatch extends ContractFunction<
 
     try {
       const estimate = await this.reader(this.abi(sft)).estimateGas.burnBatch(
-        [account as `0x${string}`, tokenIds.map(normalise), amount.map(normalise)],
+        [account as Hex, tokenIds.map(normalise), amount.map(normalise)],
         {
           account: walletClient.account,
           ...params,
@@ -104,7 +106,7 @@ export class BurnBatch extends ContractFunction<
 
     try {
       const { request } = await this.reader(this.abi(sft)).simulate.burnBatch(
-        [account as `0x${string}`, tokenIds.map(normalise), amount.map(normalise)],
+        [account as Hex, tokenIds.map(normalise), amount.map(normalise)],
         params,
       );
       return encodeFunctionData(request);

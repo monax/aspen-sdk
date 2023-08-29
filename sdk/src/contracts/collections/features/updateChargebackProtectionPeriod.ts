@@ -1,5 +1,4 @@
-import { TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
 import { Signer } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
@@ -24,7 +23,7 @@ export type UpdateChargebackProtectionPeriodCallArgs = [
   newPeriodInSeconds: bigint | number,
   params?: WriteParameters,
 ];
-export type UpdateChargebackProtectionPeriodResponse = TransactionHash;
+export type UpdateChargebackProtectionPeriodResponse = GetTransactionReceiptReturnType;
 
 export class UpdateChargebackProtectionPeriod extends ContractFunction<
   UpdateChargebackProtectionPeriodInterfaces,
@@ -51,7 +50,7 @@ export class UpdateChargebackProtectionPeriod extends ContractFunction<
     walletClient: Signer,
     newPeriodInSeconds: bigint | number,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<UpdateChargebackProtectionPeriodResponse> {
     const v1 = this.partition('v1');
 
     try {
@@ -59,8 +58,10 @@ export class UpdateChargebackProtectionPeriod extends ContractFunction<
         [BigInt(newPeriodInSeconds)],
         params,
       );
-      const tx = await walletClient.sendTransaction(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { newPeriodInSeconds });
     }

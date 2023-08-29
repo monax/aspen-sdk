@@ -1,5 +1,4 @@
-import { TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { GetTransactionReceiptReturnType, encodeFunctionData } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signer, WriteParameters } from '../types';
@@ -19,7 +18,7 @@ const AcceptTermsInterfaces = Object.values(AcceptTermsPartitions).flat();
 type AcceptTermsInterfaces = (typeof AcceptTermsInterfaces)[number];
 
 export type AcceptTermsCallArgs = [walletClient: Signer, params?: WriteParameters];
-export type AcceptTermsResponse = TransactionHash;
+export type AcceptTermsResponse = GetTransactionReceiptReturnType;
 
 export class AcceptTerms extends ContractFunction<
   AcceptTermsInterfaces,
@@ -43,8 +42,10 @@ export class AcceptTerms extends ContractFunction<
 
     try {
       const { request } = await this.reader(this.abi(v1)).simulate.acceptTerms(params);
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

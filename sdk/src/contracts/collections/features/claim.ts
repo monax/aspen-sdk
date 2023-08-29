@@ -1,6 +1,6 @@
 import { parse } from '@monaxlabs/phloem/dist/schema/parse';
-import { Address, Addressish, asAddress, ChainId, isSameAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { decodeEventLog, encodeFunctionData, TransactionReceipt } from 'viem';
+import { Address, Addressish, asAddress, ChainId, isSameAddress } from '@monaxlabs/phloem/dist/types';
+import { decodeEventLog, encodeFunctionData, GetTransactionReceiptReturnType, Hex, TransactionReceipt } from 'viem';
 import { NATIVE_TOKEN } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
@@ -24,7 +24,7 @@ const ClaimInterfaces = Object.values(ClaimPartitions).flat();
 type ClaimInterfaces = (typeof ClaimInterfaces)[number];
 
 export type ClaimCallArgs = [walletClient: Signer, args: ClaimArgs, params?: PayableParameters];
-export type ClaimResponse = TransactionHash;
+export type ClaimResponse = GetTransactionReceiptReturnType;
 
 export type ClaimArgs = {
   conditionId: number;
@@ -57,7 +57,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     return this.claim(...args);
   }
 
-  protected async claim(...[walletClient, args, params]: ClaimCallArgs): Promise<TransactionHash> {
+  protected async claim(...[walletClient, args, params]: ClaimCallArgs): Promise<ClaimResponse> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
         return await this.claimERC1155(walletClient, args, params);
@@ -72,7 +72,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     params: PayableParameters = {
       value: Zero,
     },
-  ): Promise<TransactionHash> {
+  ): Promise<ClaimResponse> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
     const wallet = await asAddress(receiver);
@@ -85,19 +85,21 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
 
       const { request } = await this.reader(this.abi(sft)).simulate.claim(
         [
-          wallet as `0x${string}`,
+          wallet as Hex,
           tokenId,
           normalise(quantity),
-          tokenAddress as `0x${string}`,
+          tokenAddress as Hex,
           normalise(pricePerToken),
-          proofs as `0x${string}`[],
+          proofs as Hex[],
           normalise(proofMaxQuantityPerTransaction),
         ],
         params,
       );
 
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       const args = { receiver, tokenId, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction };
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
@@ -110,7 +112,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     params: PayableParameters = {
       value: Zero,
     },
-  ): Promise<TransactionHash> {
+  ): Promise<ClaimResponse> {
     const nft = this.partition('nft');
     const wallet = await asAddress(receiver);
     const tokenAddress = await asAddress(currency);
@@ -122,18 +124,20 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
 
       const { request } = await this.reader(this.abi(nft)).simulate.claim(
         [
-          wallet as `0x${string}`,
+          wallet as Hex,
           normalise(quantity),
-          tokenAddress as `0x${string}`,
+          tokenAddress as Hex,
           normalise(pricePerToken),
-          proofs as `0x${string}`[],
+          proofs as Hex[],
           normalise(proofMaxQuantityPerTransaction),
         ],
         params,
       );
 
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       const args = { receiver, quantity, currency, pricePerToken, proofs, proofMaxQuantityPerTransaction };
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
@@ -168,12 +172,12 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
 
       const estimate = await this.reader(this.abi(sft)).estimateGas.claim(
         [
-          wallet as `0x${string}`,
+          wallet as Hex,
           tokenId,
           normalise(quantity),
-          tokenAddress as `0x${string}`,
+          tokenAddress as Hex,
           normalise(pricePerToken),
-          proofs as `0x${string}`[],
+          proofs as Hex[],
           normalise(proofMaxQuantityPerTransaction),
         ],
         {
@@ -206,11 +210,11 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
 
       const estimate = await this.reader(this.abi(nft)).estimateGas.claim(
         [
-          wallet as `0x${string}`,
+          wallet as Hex,
           normalise(quantity),
-          tokenAddress as `0x${string}`,
+          tokenAddress as Hex,
           normalise(pricePerToken),
-          proofs as `0x${string}`[],
+          proofs as Hex[],
           normalise(proofMaxQuantityPerTransaction),
         ],
         {
@@ -252,12 +256,12 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
 
       const { request } = await this.reader(this.abi(sft)).simulate.claim(
         [
-          wallet as `0x${string}`,
+          wallet as Hex,
           tokenId,
           normalise(quantity),
-          tokenAddress as `0x${string}`,
+          tokenAddress as Hex,
           normalise(pricePerToken),
-          proofs as `0x${string}`[],
+          proofs as Hex[],
           normalise(proofMaxQuantityPerTransaction),
         ],
         params,
@@ -286,11 +290,11 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
 
       const { request } = await this.reader(this.abi(nft)).simulate.claim(
         [
-          wallet as `0x${string}`,
+          wallet as Hex,
           normalise(quantity),
-          tokenAddress as `0x${string}`,
+          tokenAddress as Hex,
           normalise(pricePerToken),
-          proofs as `0x${string}`[],
+          proofs as Hex[],
           normalise(proofMaxQuantityPerTransaction),
         ],
         params,
@@ -333,8 +337,10 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
         }
       } else if (sft) {
         for (const log of receipt.logs) {
+          const abi = [...sft.abi, ...this.base.assumeFeature('standard/IERC1155.sol:IERC1155SupplyV2').abi];
+
           const event = decodeEventLog({
-            abi: this.base.assumeFeature('issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2').abi,
+            abi: abi,
             data: log.data,
             topics: log.topics,
           });

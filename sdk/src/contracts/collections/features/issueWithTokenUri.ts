@@ -1,5 +1,5 @@
-import { Addressish, asAddress, isZeroAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, Hex, TransactionReceipt } from 'viem';
+import { Addressish, asAddress, isZeroAddress } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex, TransactionReceipt } from 'viem';
 import { IssuedToken } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
@@ -24,7 +24,7 @@ export type IssueWithTokenUriCallArgs = [
   args: IssueWithTokenUriArgs,
   overrides?: WriteParameters,
 ];
-export type IssueWithTokenUriResponse = TransactionHash;
+export type IssueWithTokenUriResponse = GetTransactionReceiptReturnType;
 
 export type IssueWithTokenUriArgs = {
   receiver: Addressish;
@@ -51,7 +51,7 @@ export class IssueWithTokenUri extends ContractFunction<
     walletClient: Signer,
     args: IssueWithTokenUriArgs,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<IssueWithTokenUriResponse> {
     this.validateArgs(args);
     const nft = this.partition('nft');
     const wallet = await asAddress(args.receiver);
@@ -61,8 +61,10 @@ export class IssueWithTokenUri extends ContractFunction<
         [wallet as Hex, args.tokenURI],
         params,
       );
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }

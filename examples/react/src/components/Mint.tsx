@@ -1,23 +1,16 @@
-import { Web3Provider } from '@ethersproject/providers';
-import { Address, ClaimConditionsState, CollectionContract, parse, PendingClaim } from '@monaxlabs/aspen-sdk';
-import { useWeb3React } from '@web3-react/core';
-import { TermsUserAcceptanceState } from 'pages';
-import React, { useEffect, useMemo, useState } from 'react';
-import { Options as ToastOptions, useToasts } from 'react-toast-notifications';
-import styles from '../styles/Home.module.css';
-
-const TOAST_SUCCESS: ToastOptions = {
-  appearance: 'success',
-  autoDismiss: true,
-};
-const TOAST_INFO: ToastOptions = {
-  appearance: 'info',
-  autoDismiss: true,
-};
-const TOAST_ERROR: ToastOptions = {
-  appearance: 'error',
-  autoDismiss: true,
-};
+import { Button, ButtonGroup, Card, CardBody, Heading, useToast } from '@chakra-ui/react';
+import {
+  Address,
+  ClaimConditionsState,
+  CollectionContract,
+  PendingClaim,
+  Provider,
+  Signer,
+  parse,
+} from '@monaxlabs/aspen-sdk';
+import React, { useEffect, useState } from 'react';
+import { useAccount, usePublicClient, useWalletClient } from 'wagmi';
+import { TermsUserAcceptanceState } from '../App';
 
 const Mint: React.FC<{
   contract: CollectionContract;
@@ -26,91 +19,130 @@ const Mint: React.FC<{
   termsInfo: TermsUserAcceptanceState | null;
   onUpdate: () => void;
 }> = ({ contract, tokenId, conditions, termsInfo, onUpdate }) => {
-  const { account, library } = useWeb3React<Web3Provider>();
+  const toast = useToast();
+
+  const { address: accountAddress } = useAccount();
+
+  const publicClient = usePublicClient();
+  const { data: walletClient } = useWalletClient();
+
   const [canMint, setCanMint] = useState(false);
   const [loadingMintButton, setLoadingMintButton] = useState(false);
-  const { addToast } = useToasts();
 
   const onMint = () => {
-    if (!library || loadingMintButton) return;
+    if (!walletClient || loadingMintButton || !accountAddress) return;
+
+    const termsAccepted = !termsInfo?.termsActivated || (termsInfo?.termsActivated && termsInfo?.termsAccepted);
+
+    if (!termsAccepted) {
+      toast({
+        status: 'error',
+        description: 'Please accept terms first',
+      });
+      return;
+    }
 
     if (!conditions) {
-      addToast('No active claim condition', TOAST_ERROR);
+      toast({
+        status: 'error',
+        description: 'No active claim condition',
+      });
       return;
     }
 
     setLoadingMintButton(true);
 
     const pendingClaim = new PendingClaim(contract, tokenId, conditions);
-    const signer = library.getSigner();
-    const recipient = parse(Address, account);
-    const overrides = undefined;
+    const recipient = parse(Address, accountAddress);
     const qty = 1; // quantity
 
-    pendingClaim.processCallback(signer, recipient, qty, overrides, (state) => {
+    pendingClaim.processCallback(walletClient as Signer, publicClient as Provider, recipient, qty, (state) => {
       switch (state.status) {
         case 'verifying-claim':
-          addToast('Verifying the claim', TOAST_INFO);
+          toast({
+            status: 'info',
+            description: 'Verifying the claim',
+          });
           return;
         case 'verification-failed':
-          addToast('Claim did not verify!', TOAST_ERROR);
+          toast({
+            status: 'error',
+            description: 'Claim did not verify!',
+          });
           setLoadingMintButton(false);
           return;
         case 'signing-transaction':
-          addToast('Waiting for transaction signature', TOAST_INFO);
+          toast({
+            status: 'info',
+            description: 'Waiting for transaction signature',
+          });
           return;
         case 'cancelled-transaction':
-          addToast('Claim did not verify!', TOAST_ERROR);
+          toast({
+            status: 'error',
+            description: 'Claim did not verify!',
+          });
           setLoadingMintButton(false);
           return;
         case 'pending-transaction':
-          const msg = 'Transaction created! Waiting for confirmation.';
-          addToast(msg, TOAST_INFO);
+          toast({
+            status: 'info',
+            description: 'Transaction created! Waiting for confirmation.',
+          });
           return;
         case 'transaction-failed':
-          addToast('Claim transaction failed!', TOAST_ERROR);
           setLoadingMintButton(false);
+          toast({
+            status: 'error',
+            description: 'Claim transaction failed!',
+          });
           return;
         case 'success':
-          addToast('Successfully claimed a token!', TOAST_SUCCESS);
+          toast({
+            status: 'success',
+            description: 'Successfully claimed a token!',
+          });
           onUpdate();
           setLoadingMintButton(false);
           return;
+        default:
+          throw new Error('Unhandled claim state!');
       }
-
-      throw new Error('Unhandled claim state!');
     });
   };
 
   useEffect(() => {
     setCanMint(conditions?.claimState === 'ok');
+
+    console.log({
+      conditions,
+    });
   }, [conditions]);
 
-  const query = new URLSearchParams({
-    walletAddress: `${account}`,
-    collectionGuid: process.env.NEXT_PUBLIC_TEST_CONTRACT_GUID!,
-    tokenId,
-  });
-  const termsAccepted = useMemo(
-    () => !termsInfo?.termsActivated || (termsInfo?.termsActivated && termsInfo?.termsAccepted),
-    [termsInfo],
-  );
+  // const query = new URLSearchParams({
+  //   walletAddress: `${accountAddress}`,
+  //   collectionGuid: process.env.NEXT_PUBLIC_TEST_CONTRACT_GUID!,
+  //   tokenId,
+  // });
 
   return (
-    <div className="flex">
-      {canMint && termsAccepted && (
-        <div className={styles.footer}>
-          <button className={loadingMintButton ? styles.loading : styles.button} type="button" onClick={onMint}>
-            Mint
-          </button>
-          <form id="mintToken" action={`/api/mint-with-fiat?${query.toString()}`} method="POST">
-            <button className={styles.button} type="submit">
-              Mint with fiat
-            </button>
-          </form>
-        </div>
-      )}
-    </div>
+    canMint && (
+      <Card w="full">
+        <CardBody>
+          <Heading size="sm" pb={3}>
+            Minting
+          </Heading>
+          <ButtonGroup>
+            <Button isLoading={loadingMintButton} onClick={onMint}>
+              Mint Now
+            </Button>
+            {/* <form id="mintToken" action={`/api/mint-with-fiat?${query.toString()}`} method="POST">
+        <Button type="submit">Mint with fiat</Button>
+      </form> */}
+          </ButtonGroup>
+        </CardBody>
+      </Card>
+    )
   );
 };
 

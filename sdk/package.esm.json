@@ -102,7 +102,7 @@
     "ts-jest": "^29.0.3",
     "ts-node": "^10.9.1",
     "typechain": "^8.1.1",
-    "typescript": "^4.8.4"
+    "typescript": "^5.0.2"
   },
   "jest": {
     "extensionsToTreatAsEsm": [".ts"],

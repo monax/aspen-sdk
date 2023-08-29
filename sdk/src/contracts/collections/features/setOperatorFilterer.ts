@@ -1,9 +1,8 @@
-import { TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, Hex } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { BytesLike, CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const SetOperatorFiltererFunctions = {
   v1: 'setOperatorFilterer(bytes32)[]',
@@ -18,7 +17,7 @@ const SetOperatorFiltererInterfaces = Object.values(SetOperatorFiltererPartition
 type SetOperatorFiltererInterfaces = (typeof SetOperatorFiltererInterfaces)[number];
 
 export type SetOperatorFiltererCallArgs = [walletClient: Signer, operatorId: BytesLike, params?: WriteParameters];
-export type SetOperatorFiltererResponse = TransactionHash;
+export type SetOperatorFiltererResponse = GetTransactionReceiptReturnType;
 
 export class SetOperatorFilterer extends ContractFunction<
   SetOperatorFiltererInterfaces,
@@ -40,13 +39,15 @@ export class SetOperatorFilterer extends ContractFunction<
     walletClient: Signer,
     operatorId: BytesLike,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<SetOperatorFiltererResponse> {
     const v1 = this.partition('v1');
 
     try {
       const { request } = await this.reader(this.abi(v1)).simulate.setOperatorFilterer([operatorId as Hex], params);
-      const tx = await walletClient.sendTransaction(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

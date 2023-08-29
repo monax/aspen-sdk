@@ -1,5 +1,5 @@
-import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, Hex } from 'viem';
+import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signer, WriteParameters } from '../types';
@@ -19,7 +19,7 @@ const ApproveInterfaces = Object.values(ApprovePartitions).flat();
 type ApproveInterfaces = (typeof ApproveInterfaces)[number];
 
 export type ApproveCallArgs = [walletClient: Signer, args: ApproveArgs, params?: WriteParameters];
-export type ApproveResponse = TransactionHash;
+export type ApproveResponse = GetTransactionReceiptReturnType;
 
 export type ApproveArgs = {
   toAddress: Addressish;
@@ -47,8 +47,10 @@ export class Approve extends ContractFunction<ApproveInterfaces, ApprovePartitio
 
     try {
       const { request } = await this.reader(this.abi(nft)).simulate.approve([to as Hex, tokenId], params);
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

@@ -1,5 +1,4 @@
-import { TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
 import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -20,7 +19,7 @@ const SetOperatorRestrictionInterfaces = Object.values(SetOperatorRestrictionPar
 type SetOperatorRestrictionInterfaces = (typeof SetOperatorRestrictionInterfaces)[number];
 
 export type SetOperatorRestrictionCallArgs = [walletClient: Signer, enabled: boolean, params?: WriteParameters];
-export type SetOperatorRestrictionResponse = TransactionHash;
+export type SetOperatorRestrictionResponse = GetTransactionReceiptReturnType;
 
 export class SetOperatorRestriction extends ContractFunction<
   SetOperatorRestrictionInterfaces,
@@ -42,18 +41,22 @@ export class SetOperatorRestriction extends ContractFunction<
     walletClient: Signer,
     enabled: boolean,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<SetOperatorRestrictionResponse> {
     const { v1, v2 } = this.partitions;
 
     try {
       if (v2) {
         const { request } = await this.reader(this.abi(v2)).simulate.setOperatorRestriction([enabled], params);
-        const tx = await walletClient.writeContract(request);
-        return tx as TransactionHash;
+        const hash = await walletClient.writeContract(request);
+        return this.base.publicClient.waitForTransactionReceipt({
+          hash,
+        });
       } else if (v1) {
         const { request } = await this.reader(this.abi(v1)).simulate.setOperatorFiltererStatus([enabled], params);
-        const tx = await walletClient.writeContract(request);
-        return tx as TransactionHash;
+        const hash = await walletClient.writeContract(request);
+        return this.base.publicClient.waitForTransactionReceipt({
+          hash,
+        });
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

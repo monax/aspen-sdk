@@ -1,5 +1,4 @@
-import { TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
 import { CollectionContract, RequiredTokenId, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -23,7 +22,7 @@ export type SetPermanentTokenUriCallArgs = [
   tokenUri: string,
   params?: WriteParameters,
 ];
-export type SetPermanentTokenUriResponse = TransactionHash;
+export type SetPermanentTokenUriResponse = GetTransactionReceiptReturnType;
 
 export class SetPermanentTokenUri extends ContractFunction<
   SetPermanentTokenUriInterfaces,
@@ -46,7 +45,7 @@ export class SetPermanentTokenUri extends ContractFunction<
     tokenId: RequiredTokenId,
     tokenUri: string,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<SetPermanentTokenUriResponse> {
     const v1 = this.partition('v1');
 
     try {
@@ -54,8 +53,10 @@ export class SetPermanentTokenUri extends ContractFunction<
         [BigInt(tokenId), tokenUri],
         params,
       );
-      const tx = await walletClient.sendTransaction(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

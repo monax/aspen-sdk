@@ -1,5 +1,5 @@
-import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, Hex } from 'viem';
+import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
 import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
@@ -23,7 +23,7 @@ export type SetDefaultRoyaltyInfoCallArgs = [
   basisPoints: bigint,
   params?: WriteParameters,
 ];
-export type SetDefaultRoyaltyInfoResponse = TransactionHash;
+export type SetDefaultRoyaltyInfoResponse = GetTransactionReceiptReturnType;
 
 export class SetDefaultRoyaltyInfo extends ContractFunction<
   SetDefaultRoyaltyInfoInterfaces,
@@ -46,7 +46,7 @@ export class SetDefaultRoyaltyInfo extends ContractFunction<
     royaltyRecipient: Addressish,
     basisPoints: bigint,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<SetDefaultRoyaltyInfoResponse> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(royaltyRecipient);
 
@@ -55,8 +55,10 @@ export class SetDefaultRoyaltyInfo extends ContractFunction<
         [wallet as Hex, basisPoints],
         params,
       );
-      const tx = await walletClient.sendTransaction(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

@@ -1,11 +1,11 @@
-import { Address, Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { Address, Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { ZERO_ADDRESS } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const BatchIssueFunctions = {
   nft: 'batchIssue(address[],uint256[])[]',
@@ -22,7 +22,7 @@ const BatchIssueInterfaces = Object.values(BatchIssuePartitions).flat();
 type BatchIssueInterfaces = (typeof BatchIssueInterfaces)[number];
 
 export type BatchIssueCallArgs = [walletClient: Signer, args: BatchIssueArgs, params?: WriteParameters];
-export type BatchIssueResponse = TransactionHash;
+export type BatchIssueResponse = GetTransactionReceiptReturnType;
 
 export type BatchIssueArgs = {
   receivers: Addressish[];
@@ -67,11 +67,13 @@ export class BatchIssue extends ContractFunction<
 
     try {
       const { request } = await this.reader(this.abi(sft)).simulate.batchIssue(
-        [wallets as `0x${string}`[], tokenIds, quantities],
+        [wallets as Hex[], tokenIds, quantities],
         params,
       );
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receivers, tokenIds, quantities });
     }
@@ -86,12 +88,11 @@ export class BatchIssue extends ContractFunction<
     const wallets = await Promise.all(receivers.map((receiver) => asAddress(receiver)));
 
     try {
-      const { request } = await this.reader(this.abi(nft)).simulate.batchIssue(
-        [wallets as `0x${string}`[], quantities],
-        params,
-      );
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const { request } = await this.reader(this.abi(nft)).simulate.batchIssue([wallets as Hex[], quantities], params);
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receivers, quantities });
     }
@@ -118,7 +119,7 @@ export class BatchIssue extends ContractFunction<
 
     try {
       const estimate = await this.reader(this.abi(sft)).estimateGas.batchIssue(
-        [wallets as `0x${string}`[], tokenIds, quantities],
+        [wallets as Hex[], tokenIds, quantities],
         {
           account: walletClient.account,
           ...params,
@@ -139,13 +140,10 @@ export class BatchIssue extends ContractFunction<
     const wallets = await Promise.all(receivers.map((receiver) => asAddress(receiver)));
 
     try {
-      const estimate = await this.reader(this.abi(nft)).estimateGas.batchIssue(
-        [wallets as `0x${string}`[], quantities],
-        {
-          account: walletClient.account,
-          ...params,
-        },
-      );
+      const estimate = await this.reader(this.abi(nft)).estimateGas.batchIssue([wallets as Hex[], quantities], {
+        account: walletClient.account,
+        ...params,
+      });
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receivers, quantities });
@@ -172,7 +170,7 @@ export class BatchIssue extends ContractFunction<
 
     try {
       const { request } = await this.reader(this.abi(sft)).simulate.batchIssue(
-        [wallets as `0x${string}`[], tokenIds, quantities],
+        [wallets as Hex[], tokenIds, quantities],
         params,
       );
       return encodeFunctionData(request);
@@ -189,10 +187,7 @@ export class BatchIssue extends ContractFunction<
     const wallets = await Promise.all(receivers.map((receiver) => asAddress(receiver)));
 
     try {
-      const { request } = await this.reader(this.abi(nft)).simulate.batchIssue(
-        [wallets as `0x${string}`[], quantities],
-        params,
-      );
+      const { request } = await this.reader(this.abi(nft)).simulate.batchIssue([wallets as Hex[], quantities], params);
       return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receivers, quantities });

@@ -1,11 +1,11 @@
-import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import { normalise, Zero } from '../number';
+import { Zero, normalise } from '../number';
 import type { BigIntish, Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
+import { CatchAllInterfaces, ContractFunction, asCallableClass } from './features';
 
 const BurnFunctions = {
   nft: 'burn(uint256)[]',
@@ -30,7 +30,7 @@ export type BurnCallArgs = [
   amount?: BigIntish,
   params?: WriteParameters,
 ];
-export type BurnResponse = TransactionHash;
+export type BurnResponse = GetTransactionReceiptReturnType;
 
 export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnCallArgs, BurnResponse> {
   readonly functionName = 'burn';
@@ -57,18 +57,22 @@ export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnC
           const sft = this.base.assumeFeature('standard/IERC1155.sol:IERC1155SupplyV2');
           const account = await asAddress(wallet || '');
           const { request } = await this.reader(this.abi(sft)).simulate.burn(
-            [account as `0x${string}`, tokenId, normalise(amount || Zero)],
+            [account as Hex, tokenId, normalise(amount || Zero)],
             params,
           );
-          const tx = await walletClient.writeContract(request);
-          return tx as TransactionHash;
+          const hash = await walletClient.writeContract(request);
+          return this.base.publicClient.waitForTransactionReceipt({
+            hash,
+          });
         }
 
         case 'ERC721': {
           const nft = this.base.assumeFeature('standard/IERC721.sol:IERC721V2');
           const { request } = await this.reader(this.abi(nft)).simulate.burn([tokenId], params);
-          const tx = await walletClient.writeContract(request);
-          return tx as TransactionHash;
+          const hash = await walletClient.writeContract(request);
+          return this.base.publicClient.waitForTransactionReceipt({
+            hash,
+          });
         }
       }
     } catch (err) {
@@ -90,7 +94,7 @@ export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnC
           const sft = this.base.assumeFeature('standard/IERC1155.sol:IERC1155SupplyV2');
           const account = await asAddress(wallet || '');
           const estimate = await this.reader(this.abi(sft)).estimateGas.burn(
-            [account as `0x${string}`, tokenId, normalise(amount || Zero)],
+            [account as Hex, tokenId, normalise(amount || Zero)],
             {
               account: walletClient.account,
               ...params,
@@ -127,7 +131,7 @@ export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnC
           const sft = this.base.assumeFeature('standard/IERC1155.sol:IERC1155SupplyV2');
           const account = await asAddress(wallet || '');
           const { request } = await this.reader(this.abi(sft)).simulate.burn(
-            [account as `0x${string}`, tokenId, normalise(amount || Zero)],
+            [account as Hex, tokenId, normalise(amount || Zero)],
             params,
           );
           return encodeFunctionData(request);

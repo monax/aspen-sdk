@@ -1,11 +1,11 @@
-import { Address, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData } from 'viem';
+import { Address, asAddress } from '@monaxlabs/phloem/dist/types';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { BatchIssueArgs, ZERO_ADDRESS } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const BatchIssueWithinPhaseFunctions = {
   nft: 'batchIssueWithinPhase(address[],uint256[])[]',
@@ -22,7 +22,7 @@ const BatchIssueWithinPhaseInterfaces = Object.values(BatchIssueWithinPhaseParti
 type BatchIssueWithinPhaseInterfaces = (typeof BatchIssueWithinPhaseInterfaces)[number];
 
 export type BatchIssueWithinPhaseCallArgs = [walletClient: Signer, args: BatchIssueArgs, params?: WriteParameters];
-export type BatchIssueWithinPhaseResponse = TransactionHash;
+export type BatchIssueWithinPhaseResponse = GetTransactionReceiptReturnType;
 
 export class BatchIssueWithinPhase extends ContractFunction<
   BatchIssueWithinPhaseInterfaces,
@@ -65,11 +65,13 @@ export class BatchIssueWithinPhase extends ContractFunction<
 
     try {
       const { request } = await this.reader(this.abi(sft)).simulate.batchIssueWithinPhase(
-        [wallets as `0x${string}`[], tokenIds, quantities],
+        [wallets as Hex[], tokenIds, quantities],
         params,
       );
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receivers, tokenIds, quantities });
     }
@@ -85,11 +87,13 @@ export class BatchIssueWithinPhase extends ContractFunction<
 
     try {
       const { request } = await this.reader(this.abi(nft)).simulate.batchIssueWithinPhase(
-        [wallets as `0x${string}`[], quantities],
+        [wallets as Hex[], quantities],
         params,
       );
-      const tx = await walletClient.writeContract(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receivers, quantities });
     }
@@ -116,7 +120,7 @@ export class BatchIssueWithinPhase extends ContractFunction<
 
     try {
       const estimate = await this.reader(this.abi(sft)).estimateGas.batchIssueWithinPhase(
-        [wallets as `0x${string}`[], tokenIds, quantities],
+        [wallets as Hex[], tokenIds, quantities],
         {
           account: walletClient.account,
           ...params,
@@ -138,7 +142,7 @@ export class BatchIssueWithinPhase extends ContractFunction<
 
     try {
       const estimate = await this.reader(this.abi(nft)).estimateGas.batchIssueWithinPhase(
-        [wallets as `0x${string}`[], quantities],
+        [wallets as Hex[], quantities],
         {
           account: walletClient.account,
           ...params,
@@ -170,7 +174,7 @@ export class BatchIssueWithinPhase extends ContractFunction<
 
     try {
       const { request } = await this.reader(this.abi(sft)).simulate.batchIssueWithinPhase(
-        [wallets as `0x${string}`[], tokenIds, quantities],
+        [wallets as Hex[], tokenIds, quantities],
         params,
       );
       return encodeFunctionData(request);
@@ -188,7 +192,7 @@ export class BatchIssueWithinPhase extends ContractFunction<
 
     try {
       const { request } = await this.reader(this.abi(nft)).simulate.batchIssueWithinPhase(
-        [wallets as `0x${string}`[], quantities],
+        [wallets as Hex[], quantities],
         params,
       );
       return encodeFunctionData(request);

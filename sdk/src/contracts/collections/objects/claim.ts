@@ -1,5 +1,5 @@
 import { Address, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { Hex, TransactionReceipt } from 'viem';
+import { GetTransactionReceiptReturnType, TransactionReceipt } from 'viem';
 import {
   BigIntish,
   ClaimConditionsState,
@@ -19,8 +19,8 @@ export type ClaimState =
   | { status: 'verification-failed'; error: SdkError }
   | { status: 'signing-transaction' }
   | { status: 'cancelled-transaction'; error: SdkError }
-  | { status: 'pending-transaction'; tx: TransactionHash }
-  | { status: 'transaction-failed'; tx: TransactionHash; error: SdkError }
+  | { status: 'pending-transaction'; receipt: TransactionReceipt }
+  | { status: 'transaction-failed'; receipt: TransactionReceipt; error: SdkError }
   | { status: 'success'; tx: TransactionHash; receipt: TransactionReceipt; tokens: ClaimedToken[] };
 
 export type ClaimSuccessState = Extract<ClaimState, { status: 'success' }>;
@@ -104,23 +104,24 @@ export class PendingClaim extends ContractObject {
       return;
     }
 
-    const { success: hasTransaction, result: tx, error } = await this.execute(walletClient, receiver, quantity, params);
+    const {
+      success: hasTransaction,
+      result: receipt,
+      error,
+    } = await this.execute(walletClient, receiver, quantity, params);
     if (!hasTransaction) {
       onStateChange({ status: 'cancelled-transaction', error });
       return;
     }
 
-    onStateChange({ status: 'pending-transaction', tx });
+    onStateChange({ status: 'pending-transaction', receipt });
 
     try {
-      const receipt = await publicClient.waitForTransactionReceipt({
-        hash: tx as Hex,
-      });
       const tokens = await this.base.claim.parseReceiptLogs(receipt);
-      onStateChange({ status: 'success', tx, receipt, tokens });
+      onStateChange({ status: 'success', tx: receipt.transactionHash as TransactionHash, receipt, tokens });
     } catch (err) {
       const error = SdkError.from(err, SdkErrorCode.UNKNOWN_ERROR, { receiver, quantity });
-      onStateChange({ status: 'transaction-failed', tx, error });
+      onStateChange({ status: 'transaction-failed', receipt, error });
       return;
     }
   }
@@ -130,7 +131,7 @@ export class PendingClaim extends ContractObject {
     receiver: Address,
     quantity: BigIntish,
     params?: PayableParameters,
-  ): Promise<OperationStatus<TransactionHash>> {
+  ): Promise<OperationStatus<GetTransactionReceiptReturnType>> {
     return await this.run(async () => {
       const args = { ...this.getArgs(), receiver, quantity };
       return await this.base.claim(walletClient, args, params);

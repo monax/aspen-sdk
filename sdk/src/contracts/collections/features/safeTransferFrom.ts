@@ -1,5 +1,5 @@
-import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, Hex } from 'viem';
+import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { RequiredTokenId, Signer, WriteParameters } from '../types';
@@ -23,7 +23,7 @@ const SafeTransferFromInterfaces = Object.values(SafeTransferFromPartitions).fla
 type SafeTransferFromInterfaces = (typeof SafeTransferFromInterfaces)[number];
 
 export type SafeTransferFromCallArgs = [walletClient: Signer, args: SafeTransferFromArgs, params?: WriteParameters];
-export type SafeTransferFromResponse = TransactionHash;
+export type SafeTransferFromResponse = GetTransactionReceiptReturnType;
 
 export type SafeTransferFromArgs = {
   fromAddress: Addressish;
@@ -53,7 +53,7 @@ export class SafeTransferFrom extends ContractFunction<
     walletClient: Signer,
     { fromAddress, toAddress, tokenId, bytes, amount }: SafeTransferFromArgs,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<SafeTransferFromResponse> {
     const { nft, nftV2, sft } = this.partitions;
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
@@ -67,8 +67,10 @@ export class SafeTransferFrom extends ContractFunction<
               [from as Hex, to as Hex, tokenId, BigInt(amount || 0), bytes ?? '0x'],
               params,
             );
-            const tx = await walletClient.writeContract(request);
-            return tx as TransactionHash;
+            const hash = await walletClient.writeContract(request);
+            return this.base.publicClient.waitForTransactionReceipt({
+              hash,
+            });
           }
           break;
         case 'ERC721':
@@ -77,15 +79,19 @@ export class SafeTransferFrom extends ContractFunction<
               [from as Hex, to as Hex, tokenId, bytes],
               params,
             );
-            const tx = await walletClient.writeContract(request);
-            return tx as TransactionHash;
+            const hash = await walletClient.writeContract(request);
+            return this.base.publicClient.waitForTransactionReceipt({
+              hash,
+            });
           } else if (nftV2 && !bytes) {
             const { request } = await this.reader(this.abi(nftV2)).simulate.safeTransferFrom(
               [from as Hex, to as Hex, tokenId],
               params,
             );
-            const tx = await walletClient.writeContract(request);
-            return tx as TransactionHash;
+            const hash = await walletClient.writeContract(request);
+            return this.base.publicClient.waitForTransactionReceipt({
+              hash,
+            });
           }
           break;
       }

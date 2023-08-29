@@ -1,5 +1,5 @@
-import { Addressish, asAddress, TransactionHash } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, Hex, parseAbi } from 'viem';
+import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex, parseAbi } from 'viem';
 import { BytesLike, CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
@@ -16,7 +16,7 @@ const GrantRoleInterfaces = Object.values(GrantRolePartitions).flat();
 type GrantRoleInterfaces = (typeof GrantRoleInterfaces)[number];
 
 export type GrantRoleCallArgs = [walletClient: Signer, role: BytesLike, account: Addressish, params?: WriteParameters];
-export type GrantRoleResponse = TransactionHash;
+export type GrantRoleResponse = GetTransactionReceiptReturnType;
 
 const GrantRoleAbi = ['function grantRole(bytes32 role, address account) public'];
 
@@ -41,14 +41,16 @@ export class GrantRole extends ContractFunction<
     role: BytesLike,
     account: Addressish,
     params?: WriteParameters,
-  ): Promise<TransactionHash> {
+  ): Promise<GrantRoleResponse> {
     const wallet = await asAddress(account);
 
     try {
       const abi = parseAbi(GrantRoleAbi);
       const { request } = await this.reader(abi).simulate.grantRole([role as Hex, wallet as Hex], params);
-      const tx = await walletClient.sendTransaction(request);
-      return tx as TransactionHash;
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
