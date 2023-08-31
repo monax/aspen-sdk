@@ -11,7 +11,6 @@ const network = {
   80001: "Mumbai",
   11297108109: "Palm",
   11297108099: "PalmTestnet",
-  7700: "Canto",
 };
 const ConnectWallet: React.FC = () => {
   const injectedConnector = useMemo(
