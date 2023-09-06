@@ -14,6 +14,7 @@ import {
   StringInteger,
   TokenStringIdentifier,
   TransactionHash,
+  U256ToString,
   UInt256ToString,
   UUIDFromString,
 } from '@monaxlabs/phloem/dist/types';
@@ -612,6 +613,10 @@ export type GetNftsByTokenListResponse = Array<t.TypeOf<typeof Nft>>;
 
 export const GetNftsByTokenListResponse = t.array(Nft);
 
+export type FiatCurrencies = 'USD';
+
+export const FiatCurrencies = t.literal('USD');
+
 export interface Phase {
   /** The phase name */
   name: string;
@@ -625,6 +630,8 @@ export interface Phase {
   pricePerToken: t.TypeOf<typeof UInt256ToString>;
   /** The currency that will be used to derive the price (must be a contract address or "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" if the native token) */
   currency: t.TypeOf<typeof Address>;
+  fiatPricePerToken: t.TypeOf<typeof NumberToString> | null;
+  fiatCurrency: t.TypeOf<typeof FiatCurrencies> | null;
   allowlistId: t.TypeOf<typeof UUIDFromString> | null;
   /** The maximum number of NFTs that can be claimed by any wallet in one transaction */
   quantityLimitPerTransaction: t.TypeOf<typeof UInt256ToString>;
@@ -648,6 +655,8 @@ export const Phase = t.exact(
     pricePerToken: UInt256ToString,
     /** The currency that will be used to derive the price (must be a contract address or "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" if the native token) */
     currency: Address,
+    fiatPricePerToken: t.union([NumberToString, t.null]),
+    fiatCurrency: t.union([FiatCurrencies, t.null]),
     allowlistId: t.union([UUIDFromString, t.null]),
     /** The maximum number of NFTs that can be claimed by any wallet in one transaction */
     quantityLimitPerTransaction: UInt256ToString,
@@ -671,6 +680,8 @@ export interface PublicPhase {
   pricePerToken: t.TypeOf<typeof UInt256ToString>;
   /** The currency that will be used to derive the price (must be a contract address or "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" if the native token) */
   currency: t.TypeOf<typeof Address>;
+  fiatPricePerToken: t.TypeOf<typeof NumberToString> | null;
+  fiatCurrency: t.TypeOf<typeof FiatCurrencies> | null;
   allowlistId: t.TypeOf<typeof UUIDFromString> | null;
 }
 
@@ -688,6 +699,8 @@ export const PublicPhase = t.exact(
     pricePerToken: UInt256ToString,
     /** The currency that will be used to derive the price (must be a contract address or "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" if the native token) */
     currency: Address,
+    fiatPricePerToken: t.union([NumberToString, t.null]),
+    fiatCurrency: t.union([FiatCurrencies, t.null]),
     allowlistId: t.union([UUIDFromString, t.null]),
   }),
 );
@@ -705,6 +718,8 @@ export interface EditPhase {
   pricePerToken: t.TypeOf<typeof UInt256ToString>;
   /** The currency that will be used to derive the price (must be a contract address or "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" if the native token) */
   currency: t.TypeOf<typeof Address>;
+  fiatPricePerToken: t.TypeOf<typeof NumberToString> | null;
+  fiatCurrency: t.TypeOf<typeof FiatCurrencies> | null;
   allowlistId: t.TypeOf<typeof UUIDFromString> | null;
   /** The maximum number of NFTs that can be claimed by any wallet in one transaction */
   quantityLimitPerTransaction: t.TypeOf<typeof UInt256ToString>;
@@ -726,6 +741,8 @@ export const EditPhase = t.exact(
     pricePerToken: UInt256ToString,
     /** The currency that will be used to derive the price (must be a contract address or "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" if the native token) */
     currency: Address,
+    fiatPricePerToken: t.union([NumberToString, t.null]),
+    fiatCurrency: t.union([FiatCurrencies, t.null]),
     allowlistId: t.union([UUIDFromString, t.null]),
     /** The maximum number of NFTs that can be claimed by any wallet in one transaction */
     quantityLimitPerTransaction: UInt256ToString,
@@ -1354,6 +1371,10 @@ export type StorefrontFreeDistributionMode = 'None' | 'TokenPerPad';
 
 export const StorefrontFreeDistributionMode = t.union([t.literal('None'), t.literal('TokenPerPad')]);
 
+export type StorefrontCurrencyOption = 'Crypto' | 'Fiat' | 'FiatAndCrypto';
+
+export const StorefrontCurrencyOption = t.union([t.literal('Crypto'), t.literal('Fiat'), t.literal('FiatAndCrypto')]);
+
 export type StorefrontContractType = 'ERC721' | 'ERC1155';
 
 export const StorefrontContractType = t.union([t.literal('ERC721'), t.literal('ERC1155')]);
@@ -1554,10 +1575,6 @@ export const StorefrontEmailCapture = t.exact(
   }),
 );
 
-export type CreatorsInformation = Array<t.TypeOf<typeof CreatorInformation>>;
-
-export const CreatorsInformation = t.array(CreatorInformation);
-
 export interface PatchStorefront {
   chainId?: t.TypeOf<typeof ChainIdToString> | null;
   /** The contract address of the collection; will be null until it is deployed */
@@ -1583,18 +1600,14 @@ export interface PatchStorefront {
   /** The payee that will receive any royalties associated with secondary sales of the storefront; if a payment splitter is used then the address of the splitter should be put here; else put a single payee */
   secondarySalePayee?: t.TypeOf<typeof Address> | null;
   secondarySaleRecipients?: t.TypeOf<typeof AmountRecipients> | null;
-  categories?: t.TypeOf<typeof StorefrontCategories> | null;
-  /** Flag to set whether the storefront includes explicit content */
-  explicitContent?: boolean;
   /** Whether or not trading is enabled for this storefront */
   marketplaceEnabled?: boolean;
   contractType?: t.TypeOf<typeof StorefrontContractType> | null;
   freeDistributionMode?: t.TypeOf<typeof StorefrontFreeDistributionMode> | null;
+  currencyOption?: t.TypeOf<typeof StorefrontCurrencyOption> | null;
   media?: t.TypeOf<typeof StorefrontMedia> | null;
   links?: t.TypeOf<typeof Linkset> | null;
   mediaType?: t.TypeOf<typeof StorefrontMediaType> | null;
-  /** The maximum number of tokenIds used; if a 1155 is used then this will not relate to the number of individual tokens under each token idea */
-  maxTokens?: t.TypeOf<typeof UInt256ToString> | null;
   /** The id of the draft tokenset for the collection; only usable after the collection is deployed */
   draftTokensetId?: t.TypeOf<typeof UUIDFromString> | null;
   /** The maximum amount of tokens that a single wallet can claim, set to 0 for no limit */
@@ -1610,7 +1623,6 @@ export interface PatchStorefront {
   /** The storefront allows royalties to be paidback */
   royaltiesCanPayback?: boolean;
   deployerOrOwnerWallet?: t.TypeOf<typeof Address> | null;
-  ownerInfo?: t.TypeOf<typeof CreatorsInformation> | null;
   emailCapture?: t.TypeOf<typeof StorefrontEmailCapture> | null;
   adSpaces?: t.TypeOf<typeof AdSpaces>;
   /** Whether or not the storefront has a placeholder token */
@@ -1643,18 +1655,14 @@ export const PatchStorefront = t.exact(
     /** The payee that will receive any royalties associated with secondary sales of the storefront; if a payment splitter is used then the address of the splitter should be put here; else put a single payee */
     secondarySalePayee: t.union([Address, t.null]),
     secondarySaleRecipients: t.union([AmountRecipients, t.null]),
-    categories: t.union([StorefrontCategories, t.null]),
-    /** Flag to set whether the storefront includes explicit content */
-    explicitContent: t.boolean,
     /** Whether or not trading is enabled for this storefront */
     marketplaceEnabled: t.boolean,
     contractType: t.union([StorefrontContractType, t.null]),
     freeDistributionMode: t.union([StorefrontFreeDistributionMode, t.null]),
+    currencyOption: t.union([StorefrontCurrencyOption, t.null]),
     media: t.union([StorefrontMedia, t.null]),
     links: t.union([Linkset, t.null]),
     mediaType: t.union([StorefrontMediaType, t.null]),
-    /** The maximum number of tokenIds used; if a 1155 is used then this will not relate to the number of individual tokens under each token idea */
-    maxTokens: t.union([UInt256ToString, t.null]),
     /** The id of the draft tokenset for the collection; only usable after the collection is deployed */
     draftTokensetId: t.union([UUIDFromString, t.null]),
     /** The maximum amount of tokens that a single wallet can claim, set to 0 for no limit */
@@ -1670,7 +1678,6 @@ export const PatchStorefront = t.exact(
     /** The storefront allows royalties to be paidback */
     royaltiesCanPayback: t.boolean,
     deployerOrOwnerWallet: t.union([Address, t.null]),
-    ownerInfo: t.union([CreatorsInformation, t.null]),
     emailCapture: t.union([StorefrontEmailCapture, t.null]),
     adSpaces: AdSpaces,
     /** Whether or not the storefront has a placeholder token */
@@ -1703,18 +1710,14 @@ export interface EditStorefront {
   /** The payee that will receive any royalties associated with secondary sales of the storefront; if a payment splitter is used then the address of the splitter should be put here; else put a single payee */
   secondarySalePayee: t.TypeOf<typeof Address> | null;
   secondarySaleRecipients: t.TypeOf<typeof AmountRecipients> | null;
-  categories: t.TypeOf<typeof StorefrontCategories> | null;
-  /** Flag to set whether the storefront includes explicit content */
-  explicitContent: boolean;
   /** Whether or not trading is enabled for this storefront */
   marketplaceEnabled: boolean;
   contractType: t.TypeOf<typeof StorefrontContractType> | null;
   freeDistributionMode: t.TypeOf<typeof StorefrontFreeDistributionMode> | null;
+  currencyOption: t.TypeOf<typeof StorefrontCurrencyOption> | null;
   media: t.TypeOf<typeof StorefrontMedia> | null;
   links: t.TypeOf<typeof Linkset> | null;
   mediaType: t.TypeOf<typeof StorefrontMediaType> | null;
-  /** The maximum number of tokenIds used; if a 1155 is used then this will not relate to the number of individual tokens under each token idea */
-  maxTokens: t.TypeOf<typeof UInt256ToString> | null;
   /** The id of the draft tokenset for the collection; only usable after the collection is deployed */
   draftTokensetId: t.TypeOf<typeof UUIDFromString> | null;
   /** The maximum amount of tokens that a single wallet can claim, set to 0 for no limit */
@@ -1730,7 +1733,6 @@ export interface EditStorefront {
   /** The storefront allows royalties to be paidback */
   royaltiesCanPayback: boolean;
   deployerOrOwnerWallet: t.TypeOf<typeof Address> | null;
-  ownerInfo: t.TypeOf<typeof CreatorsInformation> | null;
   emailCapture: t.TypeOf<typeof StorefrontEmailCapture> | null;
   adSpaces: t.TypeOf<typeof AdSpaces>;
   /** Whether or not the storefront has a placeholder token */
@@ -1763,18 +1765,14 @@ export const EditStorefront = t.exact(
     /** The payee that will receive any royalties associated with secondary sales of the storefront; if a payment splitter is used then the address of the splitter should be put here; else put a single payee */
     secondarySalePayee: t.union([Address, t.null]),
     secondarySaleRecipients: t.union([AmountRecipients, t.null]),
-    categories: t.union([StorefrontCategories, t.null]),
-    /** Flag to set whether the storefront includes explicit content */
-    explicitContent: t.boolean,
     /** Whether or not trading is enabled for this storefront */
     marketplaceEnabled: t.boolean,
     contractType: t.union([StorefrontContractType, t.null]),
     freeDistributionMode: t.union([StorefrontFreeDistributionMode, t.null]),
+    currencyOption: t.union([StorefrontCurrencyOption, t.null]),
     media: t.union([StorefrontMedia, t.null]),
     links: t.union([Linkset, t.null]),
     mediaType: t.union([StorefrontMediaType, t.null]),
-    /** The maximum number of tokenIds used; if a 1155 is used then this will not relate to the number of individual tokens under each token idea */
-    maxTokens: t.union([UInt256ToString, t.null]),
     /** The id of the draft tokenset for the collection; only usable after the collection is deployed */
     draftTokensetId: t.union([UUIDFromString, t.null]),
     /** The maximum amount of tokens that a single wallet can claim, set to 0 for no limit */
@@ -1790,7 +1788,6 @@ export const EditStorefront = t.exact(
     /** The storefront allows royalties to be paidback */
     royaltiesCanPayback: t.boolean,
     deployerOrOwnerWallet: t.union([Address, t.null]),
-    ownerInfo: t.union([CreatorsInformation, t.null]),
     emailCapture: t.union([StorefrontEmailCapture, t.null]),
     adSpaces: AdSpaces,
     /** Whether or not the storefront has a placeholder token */
@@ -1813,8 +1810,6 @@ export interface Storefront {
   createdAt: t.TypeOf<typeof DateFromISODateString>;
   importInfo: t.TypeOf<typeof ImportCollectionInfo> | null;
   claimInvoiceId: t.TypeOf<typeof IntegerToString> | null;
-  /** Whether or not intercom is enabled for this storefront */
-  enableIntercom: boolean;
   chainId: t.TypeOf<typeof ChainIdToString> | null;
   /** The contract address of the collection; will be null until it is deployed */
   address: t.TypeOf<typeof Address> | null;
@@ -1839,18 +1834,14 @@ export interface Storefront {
   /** The payee that will receive any royalties associated with secondary sales of the storefront; if a payment splitter is used then the address of the splitter should be put here; else put a single payee */
   secondarySalePayee: t.TypeOf<typeof Address> | null;
   secondarySaleRecipients: t.TypeOf<typeof AmountRecipients> | null;
-  categories: t.TypeOf<typeof StorefrontCategories> | null;
-  /** Flag to set whether the storefront includes explicit content */
-  explicitContent: boolean;
   /** Whether or not trading is enabled for this storefront */
   marketplaceEnabled: boolean;
   contractType: t.TypeOf<typeof StorefrontContractType> | null;
   freeDistributionMode: t.TypeOf<typeof StorefrontFreeDistributionMode> | null;
+  currencyOption: t.TypeOf<typeof StorefrontCurrencyOption> | null;
   media: t.TypeOf<typeof StorefrontMedia> | null;
   links: t.TypeOf<typeof Linkset> | null;
   mediaType: t.TypeOf<typeof StorefrontMediaType> | null;
-  /** The maximum number of tokenIds used; if a 1155 is used then this will not relate to the number of individual tokens under each token idea */
-  maxTokens: t.TypeOf<typeof UInt256ToString> | null;
   /** The id of the draft tokenset for the collection; only usable after the collection is deployed */
   draftTokensetId: t.TypeOf<typeof UUIDFromString> | null;
   /** The maximum amount of tokens that a single wallet can claim, set to 0 for no limit */
@@ -1866,7 +1857,6 @@ export interface Storefront {
   /** The storefront allows royalties to be paidback */
   royaltiesCanPayback: boolean;
   deployerOrOwnerWallet: t.TypeOf<typeof Address> | null;
-  ownerInfo: t.TypeOf<typeof CreatorsInformation> | null;
   emailCapture: t.TypeOf<typeof StorefrontEmailCapture> | null;
   adSpaces: t.TypeOf<typeof AdSpaces>;
   /** Whether or not the storefront has a placeholder token */
@@ -1889,8 +1879,6 @@ export const Storefront = t.exact(
     createdAt: DateFromISODateString,
     importInfo: t.union([ImportCollectionInfo, t.null]),
     claimInvoiceId: t.union([IntegerToString, t.null]),
-    /** Whether or not intercom is enabled for this storefront */
-    enableIntercom: t.boolean,
     chainId: t.union([ChainIdToString, t.null]),
     /** The contract address of the collection; will be null until it is deployed */
     address: t.union([Address, t.null]),
@@ -1915,18 +1903,14 @@ export const Storefront = t.exact(
     /** The payee that will receive any royalties associated with secondary sales of the storefront; if a payment splitter is used then the address of the splitter should be put here; else put a single payee */
     secondarySalePayee: t.union([Address, t.null]),
     secondarySaleRecipients: t.union([AmountRecipients, t.null]),
-    categories: t.union([StorefrontCategories, t.null]),
-    /** Flag to set whether the storefront includes explicit content */
-    explicitContent: t.boolean,
     /** Whether or not trading is enabled for this storefront */
     marketplaceEnabled: t.boolean,
     contractType: t.union([StorefrontContractType, t.null]),
     freeDistributionMode: t.union([StorefrontFreeDistributionMode, t.null]),
+    currencyOption: t.union([StorefrontCurrencyOption, t.null]),
     media: t.union([StorefrontMedia, t.null]),
     links: t.union([Linkset, t.null]),
     mediaType: t.union([StorefrontMediaType, t.null]),
-    /** The maximum number of tokenIds used; if a 1155 is used then this will not relate to the number of individual tokens under each token idea */
-    maxTokens: t.union([UInt256ToString, t.null]),
     /** The id of the draft tokenset for the collection; only usable after the collection is deployed */
     draftTokensetId: t.union([UUIDFromString, t.null]),
     /** The maximum amount of tokens that a single wallet can claim, set to 0 for no limit */
@@ -1942,7 +1926,6 @@ export const Storefront = t.exact(
     /** The storefront allows royalties to be paidback */
     royaltiesCanPayback: t.boolean,
     deployerOrOwnerWallet: t.union([Address, t.null]),
-    ownerInfo: t.union([CreatorsInformation, t.null]),
     emailCapture: t.union([StorefrontEmailCapture, t.null]),
     adSpaces: AdSpaces,
     /** Whether or not the storefront has a placeholder token */
@@ -1965,8 +1948,6 @@ export interface DeployedStorefront {
   createdAt: t.TypeOf<typeof DateFromISODateString>;
   importInfo: t.TypeOf<typeof ImportCollectionInfo> | null;
   claimInvoiceId: t.TypeOf<typeof IntegerToString> | null;
-  /** Whether or not intercom is enabled for this storefront */
-  enableIntercom: boolean;
   chainId: t.TypeOf<typeof ChainIdToString>;
   /** The contract address of the collection; will be null until it is deployed */
   address: t.TypeOf<typeof Address>;
@@ -1991,18 +1972,14 @@ export interface DeployedStorefront {
   /** The payee that will receive any royalties associated with secondary sales of the storefront; if a payment splitter is used then the address of the splitter should be put here; else put a single payee */
   secondarySalePayee: t.TypeOf<typeof Address> | null;
   secondarySaleRecipients: t.TypeOf<typeof AmountRecipients> | null;
-  categories: t.TypeOf<typeof StorefrontCategories> | null;
-  /** Flag to set whether the storefront includes explicit content */
-  explicitContent: boolean;
   /** Whether or not trading is enabled for this storefront */
   marketplaceEnabled: boolean;
   contractType: t.TypeOf<typeof StorefrontContractType> | null;
   freeDistributionMode: t.TypeOf<typeof StorefrontFreeDistributionMode> | null;
+  currencyOption: t.TypeOf<typeof StorefrontCurrencyOption> | null;
   media: t.TypeOf<typeof StorefrontMedia> | null;
   links: t.TypeOf<typeof Linkset> | null;
   mediaType: t.TypeOf<typeof StorefrontMediaType> | null;
-  /** The maximum number of tokenIds used; if a 1155 is used then this will not relate to the number of individual tokens under each token idea */
-  maxTokens: t.TypeOf<typeof UInt256ToString> | null;
   /** The id of the draft tokenset for the collection; only usable after the collection is deployed */
   draftTokensetId: t.TypeOf<typeof UUIDFromString> | null;
   /** The maximum amount of tokens that a single wallet can claim, set to 0 for no limit */
@@ -2018,7 +1995,6 @@ export interface DeployedStorefront {
   /** The storefront allows royalties to be paidback */
   royaltiesCanPayback: boolean;
   deployerOrOwnerWallet: t.TypeOf<typeof Address> | null;
-  ownerInfo: t.TypeOf<typeof CreatorsInformation> | null;
   emailCapture: t.TypeOf<typeof StorefrontEmailCapture> | null;
   adSpaces: t.TypeOf<typeof AdSpaces>;
   /** Whether or not the storefront has a placeholder token */
@@ -2041,8 +2017,6 @@ export const DeployedStorefront = t.exact(
     createdAt: DateFromISODateString,
     importInfo: t.union([ImportCollectionInfo, t.null]),
     claimInvoiceId: t.union([IntegerToString, t.null]),
-    /** Whether or not intercom is enabled for this storefront */
-    enableIntercom: t.boolean,
     chainId: ChainIdToString,
     /** The contract address of the collection; will be null until it is deployed */
     address: Address,
@@ -2067,18 +2041,14 @@ export const DeployedStorefront = t.exact(
     /** The payee that will receive any royalties associated with secondary sales of the storefront; if a payment splitter is used then the address of the splitter should be put here; else put a single payee */
     secondarySalePayee: t.union([Address, t.null]),
     secondarySaleRecipients: t.union([AmountRecipients, t.null]),
-    categories: t.union([StorefrontCategories, t.null]),
-    /** Flag to set whether the storefront includes explicit content */
-    explicitContent: t.boolean,
     /** Whether or not trading is enabled for this storefront */
     marketplaceEnabled: t.boolean,
     contractType: t.union([StorefrontContractType, t.null]),
     freeDistributionMode: t.union([StorefrontFreeDistributionMode, t.null]),
+    currencyOption: t.union([StorefrontCurrencyOption, t.null]),
     media: t.union([StorefrontMedia, t.null]),
     links: t.union([Linkset, t.null]),
     mediaType: t.union([StorefrontMediaType, t.null]),
-    /** The maximum number of tokenIds used; if a 1155 is used then this will not relate to the number of individual tokens under each token idea */
-    maxTokens: t.union([UInt256ToString, t.null]),
     /** The id of the draft tokenset for the collection; only usable after the collection is deployed */
     draftTokensetId: t.union([UUIDFromString, t.null]),
     /** The maximum amount of tokens that a single wallet can claim, set to 0 for no limit */
@@ -2094,7 +2064,6 @@ export const DeployedStorefront = t.exact(
     /** The storefront allows royalties to be paidback */
     royaltiesCanPayback: t.boolean,
     deployerOrOwnerWallet: t.union([Address, t.null]),
-    ownerInfo: t.union([CreatorsInformation, t.null]),
     emailCapture: t.union([StorefrontEmailCapture, t.null]),
     adSpaces: AdSpaces,
     /** Whether or not the storefront has a placeholder token */
@@ -2124,7 +2093,6 @@ export interface PublicStorefront {
   /** The contract address of the collection; will be null until it is deployed */
   address: t.TypeOf<typeof Address> | null;
   links: t.TypeOf<typeof Linkset> | null;
-  categories: t.TypeOf<typeof StorefrontCategories> | null;
   /** Whether or not trading is enabled for this storefront */
   marketplaceEnabled: boolean;
   /** The id of the tokenset for the collection */
@@ -2133,14 +2101,14 @@ export interface PublicStorefront {
   /** The id of the phaseset for the collection */
   phasesetId: t.TypeOf<typeof UUIDFromString> | null;
   tokens: Array<t.TypeOf<typeof PublicToken>>;
-  /** Flag to set whether the storefront includes explicit content */
-  explicitContent: boolean;
   freeDistributionMode: t.TypeOf<typeof StorefrontFreeDistributionMode> | null;
+  currencyOption: t.TypeOf<typeof StorefrontCurrencyOption> | null;
   phases: Array<t.TypeOf<typeof PublicPhase>>;
   media: t.TypeOf<typeof StorefrontMedia> | null;
   emailCapture: t.TypeOf<typeof StorefrontEmailCapture> | null;
   tokenAttributeSummaries: Array<t.TypeOf<typeof TokenAttributeSummary>>;
-  ownerInfo: t.TypeOf<typeof CreatorsInformation> | null;
+  /** The name of the storefront's organization */
+  organizationName: string;
   /** The storefront allows royalties to be paidback */
   royaltiesCanPayback: boolean;
   /** The storefront allows royalties status to be appealed */
@@ -2154,11 +2122,11 @@ export interface PublicStorefront {
   secondarySalePayee: t.TypeOf<typeof Address> | null;
   secondarySaleRecipients: t.TypeOf<typeof AmountRecipients> | null;
   adSpaces: t.TypeOf<typeof AdSpaces>;
-  /** Whether or not intercom is enabled for this storefront */
-  enableIntercom: boolean;
   /** Version of TermsRegistry used by non-Aspen collections */
   userTermsRegistryVersion: number | null;
   placeholderToken: t.TypeOf<typeof TokenDefinition> | null;
+  /** The maximum number of tokenIds used; if a 1155 is used then this will not relate to the number of individual tokens under each token idea */
+  uniqueTokens: t.TypeOf<typeof U256ToString> | null;
 }
 
 export const PublicStorefront = t.exact(
@@ -2180,7 +2148,6 @@ export const PublicStorefront = t.exact(
     /** The contract address of the collection; will be null until it is deployed */
     address: t.union([Address, t.null]),
     links: t.union([Linkset, t.null]),
-    categories: t.union([StorefrontCategories, t.null]),
     /** Whether or not trading is enabled for this storefront */
     marketplaceEnabled: t.boolean,
     /** The id of the tokenset for the collection */
@@ -2189,14 +2156,14 @@ export const PublicStorefront = t.exact(
     /** The id of the phaseset for the collection */
     phasesetId: t.union([UUIDFromString, t.null]),
     tokens: t.array(PublicToken),
-    /** Flag to set whether the storefront includes explicit content */
-    explicitContent: t.boolean,
     freeDistributionMode: t.union([StorefrontFreeDistributionMode, t.null]),
+    currencyOption: t.union([StorefrontCurrencyOption, t.null]),
     phases: t.array(PublicPhase),
     media: t.union([StorefrontMedia, t.null]),
     emailCapture: t.union([StorefrontEmailCapture, t.null]),
     tokenAttributeSummaries: t.array(TokenAttributeSummary),
-    ownerInfo: t.union([CreatorsInformation, t.null]),
+    /** The name of the storefront's organization */
+    organizationName: t.string,
     /** The storefront allows royalties to be paidback */
     royaltiesCanPayback: t.boolean,
     /** The storefront allows royalties status to be appealed */
@@ -2210,11 +2177,11 @@ export const PublicStorefront = t.exact(
     secondarySalePayee: t.union([Address, t.null]),
     secondarySaleRecipients: t.union([AmountRecipients, t.null]),
     adSpaces: AdSpaces,
-    /** Whether or not intercom is enabled for this storefront */
-    enableIntercom: t.boolean,
     /** Version of TermsRegistry used by non-Aspen collections */
     userTermsRegistryVersion: t.union([t.number, t.null]),
     placeholderToken: t.union([TokenDefinition, t.null]),
+    /** The maximum number of tokenIds used; if a 1155 is used then this will not relate to the number of individual tokens under each token idea */
+    uniqueTokens: t.union([U256ToString, t.null]),
   }),
 );
 
@@ -2282,8 +2249,7 @@ export type Storefronts = Array<t.TypeOf<typeof Storefront>>;
 
 export const Storefronts = t.array(Storefront);
 
-export interface RoyaltyStats {
-  storefront: t.TypeOf<typeof RoyaltiesEnabledStorefront>;
+export interface RoyaltyStatistics {
   /** The last time the statistics (`fractionPaid`, etc.) were updated for this storefront. Date is in ISO format. */
   updatedAt: t.TypeOf<typeof DateFromISODateString>;
   fractionPaid: number;
@@ -2295,9 +2261,8 @@ export interface RoyaltyStats {
   cleanActiveTokens: number;
 }
 
-export const RoyaltyStats = t.exact(
+export const RoyaltyStatistics = t.exact(
   t.type({
-    storefront: RoyaltiesEnabledStorefront,
     /** The last time the statistics (`fractionPaid`, etc.) were updated for this storefront. Date is in ISO format. */
     updatedAt: DateFromISODateString,
     fractionPaid: t.number,
@@ -2310,45 +2275,21 @@ export const RoyaltyStats = t.exact(
   }),
 );
 
-export type RoyaltiesStats = Array<t.TypeOf<typeof RoyaltyStats>>;
-
-export const RoyaltiesStats = t.array(RoyaltyStats);
-
-export interface ContractRoyaltiesStats {
-  status: string;
-  message?: string;
-  data?: {
-    /** The last time the statistics (`fractionPaid`, etc.) were updated for this storefront. Date is in ISO format. */
-    updatedAt: t.TypeOf<typeof DateFromISODateString>;
-    fractionPaid: number;
-    received: t.TypeOf<typeof BigIntToString>;
-    recouped: t.TypeOf<typeof BigIntToString>;
-    outstanding: t.TypeOf<typeof BigIntToString>;
-    leaked: t.TypeOf<typeof BigIntToString>;
-  };
+export interface StorefrontRoyaltyStats {
+  storefront: t.TypeOf<typeof RoyaltiesEnabledStorefront>;
+  statistics: t.TypeOf<typeof RoyaltyStatistics>;
 }
 
-export const ContractRoyaltiesStats = t.exact(
-  t.intersection([
-    t.type({
-      status: t.string,
-    }),
-    t.partial({
-      message: t.string,
-      data: t.exact(
-        t.type({
-          /** The last time the statistics (`fractionPaid`, etc.) were updated for this storefront. Date is in ISO format. */
-          updatedAt: DateFromISODateString,
-          fractionPaid: t.number,
-          received: BigIntToString,
-          recouped: BigIntToString,
-          outstanding: BigIntToString,
-          leaked: BigIntToString,
-        }),
-      ),
-    }),
-  ]),
+export const StorefrontRoyaltyStats = t.exact(
+  t.type({
+    storefront: RoyaltiesEnabledStorefront,
+    statistics: RoyaltyStatistics,
+  }),
 );
+
+export type RoyaltiesStats = Array<t.TypeOf<typeof StorefrontRoyaltyStats>>;
+
+export const RoyaltiesStats = t.array(StorefrontRoyaltyStats);
 
 export interface ClaimProofForAddress {
   merkleProof: Array<string>;
@@ -2373,7 +2314,8 @@ export type StorefrontMediaFileType =
   | 'bannerImage'
   | 'adSpaceImage'
   | 'adSpaceVideoPoster'
-  | 'redeemImage';
+  | 'redeemImage'
+  | 'membershipListImage';
 
 export const StorefrontMediaFileType = t.union([
   t.literal('logoImage'),
@@ -2381,9 +2323,16 @@ export const StorefrontMediaFileType = t.union([
   t.literal('adSpaceImage'),
   t.literal('adSpaceVideoPoster'),
   t.literal('redeemImage'),
+  t.literal('membershipListImage'),
 ]);
 
-export type StorefrontFileType = 'logoImage' | 'bannerImage' | 'adSpaceImage' | 'adSpaceVideoPoster' | 'redeemImage';
+export type StorefrontFileType =
+  | 'logoImage'
+  | 'bannerImage'
+  | 'adSpaceImage'
+  | 'adSpaceVideoPoster'
+  | 'redeemImage'
+  | 'membershipListImage';
 
 export const StorefrontFileType = t.union([
   t.literal('logoImage'),
@@ -2391,6 +2340,7 @@ export const StorefrontFileType = t.union([
   t.literal('adSpaceImage'),
   t.literal('adSpaceVideoPoster'),
   t.literal('redeemImage'),
+  t.literal('membershipListImage'),
 ]);
 
 export interface UploadedStorefrontFile {
@@ -2518,6 +2468,103 @@ export const BaseCollectionInfo = t.exact(
     userTermsRegistryVersion: t.union([t.number, t.null]),
   }),
 );
+
+export interface NumericCondition {
+  satisfied: boolean;
+  metadata: {
+    required: t.TypeOf<typeof IntegerToString>;
+    actual: t.TypeOf<typeof IntegerToString>;
+  };
+}
+
+export const NumericCondition = t.exact(
+  t.type({
+    satisfied: t.boolean,
+    metadata: t.exact(
+      t.type({
+        required: IntegerToString,
+        actual: IntegerToString,
+      }),
+    ),
+  }),
+);
+
+export interface BooleanCondition {
+  satisfied: boolean;
+}
+
+export const BooleanCondition = t.exact(
+  t.type({
+    satisfied: t.boolean,
+  }),
+);
+
+export interface SubscribedCondition {
+  satisfied: boolean;
+  metadata: {
+    subscriptionId: t.TypeOf<typeof UUIDFromString>;
+  };
+}
+
+export const SubscribedCondition = t.exact(
+  t.type({
+    satisfied: t.boolean,
+    metadata: t.exact(
+      t.type({
+        subscriptionId: UUIDFromString,
+      }),
+    ),
+  }),
+);
+
+export interface StorefrontMembership {
+  conditions: {
+    tokensHeld: t.TypeOf<typeof NumericCondition> | null;
+    royaltyCleanTokensHeld: t.TypeOf<typeof NumericCondition> | null;
+    emailDisclosed: t.TypeOf<typeof BooleanCondition> | null;
+    subscribed: t.TypeOf<typeof SubscribedCondition> | null;
+  };
+  name: string;
+  description: string | null;
+  image: string | null;
+  utility: {
+    discord?: {
+      discordLink: string;
+    } | null;
+  };
+}
+
+export const StorefrontMembership = t.exact(
+  t.type({
+    conditions: t.exact(
+      t.type({
+        tokensHeld: t.union([NumericCondition, t.null]),
+        royaltyCleanTokensHeld: t.union([NumericCondition, t.null]),
+        emailDisclosed: t.union([BooleanCondition, t.null]),
+        subscribed: t.union([SubscribedCondition, t.null]),
+      }),
+    ),
+    name: t.string,
+    description: t.union([t.string, t.null]),
+    image: t.union([t.string, t.null]),
+    utility: t.exact(
+      t.partial({
+        discord: t.union([
+          t.exact(
+            t.type({
+              discordLink: t.string,
+            }),
+          ),
+          t.null,
+        ]),
+      }),
+    ),
+  }),
+);
+
+export type StorefrontMemberships = Array<t.TypeOf<typeof StorefrontMembership>>;
+
+export const StorefrontMemberships = t.array(StorefrontMembership);
 
 export interface OneTimePad {
   chainId: t.TypeOf<typeof ChainIdToString>;
@@ -2766,18 +2813,20 @@ export const Invitation = t.exact(
 );
 
 export interface Organization {
-  id?: t.TypeOf<typeof UUIDFromString>;
+  id: t.TypeOf<typeof UUIDFromString>;
   name: string;
   information: t.TypeOf<typeof CreatorInformation> | null;
   members: Array<t.TypeOf<typeof MemberInformation>>;
   invitees: Array<t.TypeOf<typeof Invitation>>;
   storefronts: Array<t.TypeOf<typeof UUIDFromString>>;
   reservoirWallet: t.TypeOf<typeof Address> | null;
+  stripeAccount?: string | null;
 }
 
 export const Organization = t.exact(
   t.intersection([
     t.type({
+      id: UUIDFromString,
       name: t.string,
       information: t.union([CreatorInformation, t.null]),
       members: t.array(MemberInformation),
@@ -2786,16 +2835,30 @@ export const Organization = t.exact(
       reservoirWallet: t.union([Address, t.null]),
     }),
     t.partial({
-      id: UUIDFromString,
+      stripeAccount: t.union([t.string, t.null]),
     }),
   ]),
 );
 
-export interface ReservoirWallet {
+export interface CreateOrganization {
+  name: string;
+  information: t.TypeOf<typeof CreatorInformation> | null;
+  members: Array<t.TypeOf<typeof MemberInformation>>;
+}
+
+export const CreateOrganization = t.exact(
+  t.type({
+    name: t.string,
+    information: t.union([CreatorInformation, t.null]),
+    members: t.array(MemberInformation),
+  }),
+);
+
+export interface CreateGasWalletResponse {
   reservoirWallet: string | null;
 }
 
-export const ReservoirWallet = t.exact(
+export const CreateGasWalletResponse = t.exact(
   t.type({
     reservoirWallet: t.union([t.string, t.null]),
   }),
@@ -2855,6 +2918,26 @@ export const JobStatus = t.exact(
   }),
 );
 
+export interface ConnectStripeAccountBody {
+  code: string;
+}
+
+export const ConnectStripeAccountBody = t.exact(
+  t.type({
+    code: t.string,
+  }),
+);
+
+export interface DisconnectStripeAccountBody {
+  stripeUserId: string;
+}
+
+export const DisconnectStripeAccountBody = t.exact(
+  t.type({
+    stripeUserId: t.string,
+  }),
+);
+
 export type GassedBy = 'USER' | 'PLATFORM';
 
 export const GassedBy = t.union([t.literal('USER'), t.literal('PLATFORM')]);
@@ -2884,7 +2967,7 @@ export const RelayerPermission = t.exact(
 
 export interface RelayPool {
   /** the organization that controls the relay pool */
-  owner: t.TypeOf<typeof UUIDFromString>;
+  organizationId: t.TypeOf<typeof UUIDFromString>;
   /** the address that users will top up */
   reservoir: t.TypeOf<typeof Address>;
   /** the number of signature relayers requested */
@@ -2896,7 +2979,7 @@ export interface RelayPool {
 export const RelayPool = t.exact(
   t.type({
     /** the organization that controls the relay pool */
-    owner: UUIDFromString,
+    organizationId: UUIDFromString,
     /** the address that users will top up */
     reservoir: Address,
     /** the number of signature relayers requested */
@@ -3225,35 +3308,12 @@ export const SubscriptionPaymentDetails = t.exact(
   }),
 );
 
-export interface DiscordService {
-  guildId: string;
-  roleId: string;
-}
-
-export const DiscordService = t.exact(
-  t.type({
-    guildId: t.string,
-    roleId: t.string,
-  }),
-);
-
-export interface SubscriptionServices {
-  discord?: t.TypeOf<typeof DiscordService>;
-}
-
-export const SubscriptionServices = t.exact(
-  t.partial({
-    discord: DiscordService,
-  }),
-);
-
 export interface Subscription {
   id: t.TypeOf<typeof UUIDFromString>;
   storefrontId: t.TypeOf<typeof UUIDFromString>;
   name: string;
   duration: t.TypeOf<typeof Duration>;
   payments: t.TypeOf<typeof SubscriptionPaymentDetails>;
-  services: t.TypeOf<typeof SubscriptionServices>;
 }
 
 export const Subscription = t.exact(
@@ -3263,9 +3323,12 @@ export const Subscription = t.exact(
     name: t.string,
     duration: Duration,
     payments: SubscriptionPaymentDetails,
-    services: SubscriptionServices,
   }),
 );
+
+export type SubscriptionService = 'discord';
+
+export const SubscriptionService = t.literal('discord');
 
 export type Subscriptions = Array<t.TypeOf<typeof Subscription>>;
 
@@ -3335,7 +3398,6 @@ export interface CreateSubscriptionBody {
   name: string;
   duration: t.TypeOf<typeof Duration>;
   payments: t.TypeOf<typeof SubscriptionPaymentDetails>;
-  services: t.TypeOf<typeof SubscriptionServices>;
 }
 
 export const CreateSubscriptionBody = t.exact(
@@ -3343,7 +3405,6 @@ export const CreateSubscriptionBody = t.exact(
     name: t.string,
     duration: Duration,
     payments: SubscriptionPaymentDetails,
-    services: SubscriptionServices,
   }),
 );
 
@@ -3351,7 +3412,6 @@ export interface EditSubscription {
   name: string;
   duration: t.TypeOf<typeof Duration>;
   payments: t.TypeOf<typeof SubscriptionPaymentDetails>;
-  services: t.TypeOf<typeof SubscriptionServices>;
   releaseStatus: t.TypeOf<typeof SubscriptionReleaseStatus>;
 }
 
@@ -3360,7 +3420,6 @@ export const EditSubscription = t.exact(
     name: t.string,
     duration: Duration,
     payments: SubscriptionPaymentDetails,
-    services: SubscriptionServices,
     releaseStatus: SubscriptionReleaseStatus,
   }),
 );
@@ -3627,6 +3686,38 @@ export const GetSubscriptionPaymentsResponse = t.exact(
   }),
 );
 
+export interface SubscriptionInvoice {
+  invoiceId: number;
+  subscriptionId: t.TypeOf<typeof UUIDFromString>;
+  createdAt: t.TypeOf<typeof DateFromISODateString>;
+  processedAt?: t.TypeOf<typeof DateFromISODateString> | null;
+  duration: t.TypeOf<typeof Duration>;
+}
+
+export const SubscriptionInvoice = t.exact(
+  t.intersection([
+    t.type({
+      invoiceId: t.number,
+      subscriptionId: UUIDFromString,
+      createdAt: DateFromISODateString,
+      duration: Duration,
+    }),
+    t.partial({
+      processedAt: t.union([DateFromISODateString, t.null]),
+    }),
+  ]),
+);
+
+export interface GetUserSubscriptionInvoicesResponse {
+  invoices: Array<t.TypeOf<typeof SubscriptionInvoice>>;
+}
+
+export const GetUserSubscriptionInvoicesResponse = t.exact(
+  t.type({
+    invoices: t.array(SubscriptionInvoice),
+  }),
+);
+
 export type BeehiveJobStatus = 'running' | 'completed' | 'errored' | 'unknown';
 
 export const BeehiveJobStatus = t.union([
@@ -3647,7 +3738,8 @@ export type BeehiveRoutingTag =
   | 'publishing'
   | 'testdiscordsetup'
   | 'webhooks'
-  | 'stripeproductsync';
+  | 'stripeproductsync'
+  | 'royaltiesstats';
 
 export const BeehiveRoutingTag = t.union([
   t.literal('appealssetup'),
@@ -3661,6 +3753,7 @@ export const BeehiveRoutingTag = t.union([
   t.literal('testdiscordsetup'),
   t.literal('webhooks'),
   t.literal('stripeproductsync'),
+  t.literal('royaltiesstats'),
 ]);
 
 export interface BeehiveJob {
@@ -3882,7 +3975,10 @@ export type StorefrontsMembershipListOverview = Array<t.TypeOf<typeof Storefront
 export const StorefrontsMembershipListOverview = t.array(StorefrontMembershipListOverview);
 
 export interface MembershipList {
+  storefrontId: t.TypeOf<typeof UUIDFromString>;
   name: string;
+  description: string | null;
+  image: string | null;
   status: t.TypeOf<typeof MembershipListStatus>;
   freezeAt: t.TypeOf<typeof DateFromISODateString> | null;
   integrations: Array<t.TypeOf<typeof Integration>>;
@@ -3891,7 +3987,10 @@ export interface MembershipList {
 
 export const MembershipList = t.exact(
   t.type({
+    storefrontId: UUIDFromString,
     name: t.string,
+    description: t.union([t.string, t.null]),
+    image: t.union([t.string, t.null]),
     status: MembershipListStatus,
     freezeAt: t.union([DateFromISODateString, t.null]),
     integrations: t.array(Integration),
@@ -3947,6 +4046,7 @@ export interface RedemptionConfigPublic {
   image: string | null;
   requireEmail: boolean;
   requireShippingAddress: boolean;
+  webhookId: t.TypeOf<typeof UUIDFromString> | null;
 }
 
 export const RedemptionConfigPublic = t.exact(
@@ -3960,6 +4060,7 @@ export const RedemptionConfigPublic = t.exact(
     image: t.union([t.string, t.null]),
     requireEmail: t.boolean,
     requireShippingAddress: t.boolean,
+    webhookId: t.union([UUIDFromString, t.null]),
   }),
 );
 
@@ -3975,6 +4076,7 @@ export interface EditRedemptionConfig {
   image: string | null;
   requireEmail: boolean;
   requireShippingAddress: boolean;
+  webhookId: t.TypeOf<typeof UUIDFromString> | null;
 }
 
 export const EditRedemptionConfig = t.exact(
@@ -3986,6 +4088,7 @@ export const EditRedemptionConfig = t.exact(
     image: t.union([t.string, t.null]),
     requireEmail: t.boolean,
     requireShippingAddress: t.boolean,
+    webhookId: t.union([UUIDFromString, t.null]),
   }),
 );
 
@@ -3997,6 +4100,7 @@ export interface RedemptionConfig {
   image: string | null;
   requireEmail: boolean;
   requireShippingAddress: boolean;
+  webhookId: t.TypeOf<typeof UUIDFromString> | null;
   id: t.TypeOf<typeof UUIDFromString>;
   published: boolean;
 }
@@ -4010,6 +4114,7 @@ export const RedemptionConfig = t.exact(
     image: t.union([t.string, t.null]),
     requireEmail: t.boolean,
     requireShippingAddress: t.boolean,
+    webhookId: t.union([UUIDFromString, t.null]),
     id: UUIDFromString,
     published: t.boolean,
   }),
@@ -4092,6 +4197,8 @@ export interface NftRedemptionEvent {
   email?: string;
   requireEmail?: boolean;
   requireShippingAddress?: boolean;
+  date?: t.TypeOf<typeof DateFromISODateString>;
+  orderId?: string;
 }
 
 export const NftRedemptionEvent = t.exact(
@@ -4107,6 +4214,8 @@ export const NftRedemptionEvent = t.exact(
       email: t.string,
       requireEmail: t.boolean,
       requireShippingAddress: t.boolean,
+      date: DateFromISODateString,
+      orderId: t.string,
     }),
   ]),
 );
@@ -4127,7 +4236,7 @@ export const PasswordResetEvent = t.exact(
   }),
 );
 
-export type NotificationEvents =
+export type NotificationEvent =
   | 'SUBSCRIPTION_CREATED'
   | 'SUBSCRIPTION_EXTENDED'
   | 'SUBSCRIPTION_EXPIRING'
@@ -4135,7 +4244,7 @@ export type NotificationEvents =
   | 'NFT_REDEMPTION'
   | 'PASSWORD_RESET';
 
-export const NotificationEvents = t.union([
+export const NotificationEvent = t.union([
   t.literal('SUBSCRIPTION_CREATED'),
   t.literal('SUBSCRIPTION_EXTENDED'),
   t.literal('SUBSCRIPTION_EXPIRING'),
@@ -4144,7 +4253,7 @@ export const NotificationEvents = t.union([
   t.literal('PASSWORD_RESET'),
 ]);
 
-export type NotificationEventsPayload =
+export type NotificationEventPayload =
   | t.TypeOf<typeof SubscriptionCreatedEvent>
   | t.TypeOf<typeof SubscriptionExtendedEvent>
   | t.TypeOf<typeof SubscriptionExpiringEvent>
@@ -4152,7 +4261,7 @@ export type NotificationEventsPayload =
   | t.TypeOf<typeof NftRedemptionEvent>
   | t.TypeOf<typeof PasswordResetEvent>;
 
-export const NotificationEventsPayload = t.union([
+export const NotificationEventPayload = t.union([
   SubscriptionCreatedEvent,
   SubscriptionExtendedEvent,
   SubscriptionExpiringEvent,
@@ -4326,7 +4435,6 @@ export interface EditWebhook {
   secret?: string | null;
   isActive: boolean;
   authConfig: t.TypeOf<typeof WebhookAuthConfig> | null;
-  events: Array<t.TypeOf<typeof NotificationEvents>>;
 }
 
 export const EditWebhook = t.exact(
@@ -4337,7 +4445,6 @@ export const EditWebhook = t.exact(
       url: t.union([t.string, t.null]),
       isActive: t.boolean,
       authConfig: t.union([WebhookAuthConfig, t.null]),
-      events: t.array(NotificationEvents),
     }),
     t.partial({
       secret: t.union([t.string, t.null]),
@@ -4359,13 +4466,11 @@ export const Webhooks = t.array(Webhook);
 
 export interface CreateWebhook {
   name: string;
-  events: Array<t.TypeOf<typeof NotificationEvents>>;
 }
 
 export const CreateWebhook = t.exact(
   t.type({
     name: t.string,
-    events: t.array(NotificationEvents),
   }),
 );
 
@@ -4376,6 +4481,58 @@ export const CreateWebhooks = t.array(CreateWebhook);
 export type CreateWebhooksResponse = Array<t.TypeOf<typeof UUIDFromString>>;
 
 export const CreateWebhooksResponse = t.array(UUIDFromString);
+
+export interface TokenCheckoutItem {
+  /** Quantity of tokens to issue */
+  quantity: t.TypeOf<typeof IntegerToString>;
+  tokenId?: string | null;
+}
+
+export const TokenCheckoutItem = t.exact(
+  t.intersection([
+    t.type({
+      /** Quantity of tokens to issue */
+      quantity: IntegerToString,
+    }),
+    t.partial({
+      tokenId: t.union([t.string, t.null]),
+    }),
+  ]),
+);
+
+export interface CreatePaymentIntentBody {
+  /** Payment id generated on the frontend to help keep track of this checkout between frontend and api */
+  paymentId: t.TypeOf<typeof UUIDFromString>;
+  /** Storefront the tokens belong to */
+  storefrontId: t.TypeOf<typeof UUIDFromString>;
+  /** The address of the tokens receiver */
+  receiverAddress: t.TypeOf<typeof Address>;
+  checkoutCart: Array<t.TypeOf<typeof TokenCheckoutItem>>;
+  env: string;
+}
+
+export const CreatePaymentIntentBody = t.exact(
+  t.type({
+    /** Payment id generated on the frontend to help keep track of this checkout between frontend and api */
+    paymentId: UUIDFromString,
+    /** Storefront the tokens belong to */
+    storefrontId: UUIDFromString,
+    /** The address of the tokens receiver */
+    receiverAddress: Address,
+    checkoutCart: t.array(TokenCheckoutItem),
+    env: t.string,
+  }),
+);
+
+export interface CreatePaymentIntentResponse {
+  clientSecret: string;
+}
+
+export const CreatePaymentIntentResponse = t.exact(
+  t.type({
+    clientSecret: t.string,
+  }),
+);
 
 export const ChainTypeEnum = { mainnet: 'mainnet', testnet: 'testnet', local: 'local' } as const;
 export const MarketplaceEnum = { OPENSEA: 'opensea', BLUR: 'blur' } as const;
@@ -4433,6 +4590,7 @@ export const NftRoyaltyStatusEnum = {
   //royalty not paid and appeal refused
   APPEAL_REJECTED: 'APPEAL_REJECTED',
 } as const;
+export const FiatCurrenciesEnum = { USD: 'USD' } as const;
 export const TokenDisplayTypeEnum = {
   BOOST_NUMBER: 'boost_number',
   BOOST_PERCENTAGE: 'boost_percentage',
@@ -4467,6 +4625,7 @@ export const StorefrontMediaTypeEnum = {
   OTHER: 'Other',
 } as const;
 export const StorefrontFreeDistributionModeEnum = { NONE: 'None', TOKENPERPAD: 'TokenPerPad' } as const;
+export const StorefrontCurrencyOptionEnum = { CRYPTO: 'Crypto', FIAT: 'Fiat', FIATANDCRYPTO: 'FiatAndCrypto' } as const;
 export const StorefrontContractTypeEnum = { ERC721: 'ERC721', ERC1155: 'ERC1155' } as const;
 export const AdSpaceTemplatesEnum = { image: 'image', video: 'video' } as const;
 export const StorefrontMediaFileTypeEnum = {
@@ -4475,6 +4634,7 @@ export const StorefrontMediaFileTypeEnum = {
   adSpaceImage: 'adSpaceImage',
   adSpaceVideoPoster: 'adSpaceVideoPoster',
   redeemImage: 'redeemImage',
+  membershipListImage: 'membershipListImage',
 } as const;
 export const StorefrontFileTypeEnum = {
   logoImage: 'logoImage',
@@ -4482,6 +4642,7 @@ export const StorefrontFileTypeEnum = {
   adSpaceImage: 'adSpaceImage',
   adSpaceVideoPoster: 'adSpaceVideoPoster',
   redeemImage: 'redeemImage',
+  membershipListImage: 'membershipListImage',
 } as const;
 export const CollectionModificationEnum = {
   //Collection contract was published to the chain
@@ -4522,6 +4683,7 @@ export const AppealsStatusEnum = {
 } as const;
 export const RoyaltiesAppealsVenueEnum = { inApp: 'inApp', discord: 'discord' } as const;
 export const RoyaltiesChangedEventSourceEnum = { onChain: 'onChain', userEntry: 'userEntry' } as const;
+export const SubscriptionServiceEnum = { discord: 'discord' } as const;
 export const SubscriptionReleaseStatusEnum = { PRIVATE: 'PRIVATE', PUBLISHED: 'PUBLISHED' } as const;
 export const BeehiveJobStatusEnum = {
   RUNNING: 'running',
@@ -4541,6 +4703,7 @@ export const BeehiveRoutingTagEnum = {
   DISCORD_SETUP: 'testdiscordsetup',
   WEBHOOKS: 'webhooks',
   STRIPEPRODUCTSYNC: 'stripeproductsync',
+  ROYALTIES_STATS: 'royaltiesstats',
 } as const;
 export const SegmentUserTypeEnum = { creator: 'creator', collector: 'collector' } as const;
 export const CorrespondenceTypeEnum = { NEWSLETTER: 'newsletter' } as const;
@@ -4551,7 +4714,7 @@ export const ReportsKindEnum = {
 } as const;
 export const IntegrationKindEnum = { DISCORD: 'DISCORD', WEBHOOK: 'WEBHOOK' } as const;
 export const MembershipListStatusEnum = { ACTIVE: 'ACTIVE', INACTIVE: 'INACTIVE' } as const;
-export const NotificationEventsEnum = {
+export const NotificationEventEnum = {
   SUBSCRIPTION_CREATED: 'SUBSCRIPTION_CREATED',
   SUBSCRIPTION_EXTENDED: 'SUBSCRIPTION_EXTENDED',
   SUBSCRIPTION_EXPIRING: 'SUBSCRIPTION_EXPIRING',
@@ -4577,11 +4740,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: true,
     isBodyFormData: true,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: t.record(t.string, t.unknown),
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -4601,11 +4765,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: false,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(t.type({})),
@@ -4621,7 +4786,6 @@ export const pathMeta = {
     hasParams: false,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.exact(
@@ -4631,6 +4795,8 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set(['accountAddresses', 'chainIds']),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -4655,7 +4821,6 @@ export const pathMeta = {
     hasParams: false,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.exact(
@@ -4665,6 +4830,8 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set(['chainId', 'contractAddress']),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -4689,7 +4856,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -4699,6 +4865,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'pad']),
     requestSchema: t.exact(
@@ -4723,7 +4891,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -4732,6 +4899,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: RedeemNftDropOneTimePadRequest,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -4756,11 +4925,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: false,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(t.type({})),
@@ -4776,7 +4946,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -4790,6 +4959,8 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set(['limit', 'offset']),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -4819,7 +4990,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: true,
     paramsSchema: t.exact(
       t.type({
@@ -4828,6 +4998,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -4851,7 +5023,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: true,
     paramsSchema: t.exact(
       t.type({
@@ -4860,6 +5031,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -4883,7 +5056,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -4892,6 +5064,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -4915,7 +5089,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -4925,6 +5098,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: SendRequestNftDropEmailRequest,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['chainId', 'contractAddress']),
     requestSchema: t.exact(
@@ -4950,7 +5125,6 @@ export const pathMeta = {
     hasParams: false,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.exact(
@@ -4969,6 +5143,8 @@ export const pathMeta = {
       ]),
     ),
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([
       'accountAddresses',
       'nftChainIds',
@@ -5010,7 +5186,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5025,6 +5200,8 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set(['limit', 'cursor']),
     pathParameters: new Set(['chainId', 'contractAddress']),
     requestSchema: t.exact(
@@ -5055,7 +5232,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5066,6 +5242,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['chainId', 'contractAddress', 'tokenId']),
     requestSchema: t.exact(
@@ -5091,7 +5269,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5102,6 +5279,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['chainId', 'contractAddress', 'tokenId']),
     requestSchema: t.exact(
@@ -5127,7 +5306,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5137,6 +5315,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['chainId', 'contractAddress']),
     requestSchema: t.exact(
@@ -5161,7 +5341,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5172,6 +5351,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['chainId', 'contractAddress', 'tokenId']),
     requestSchema: t.exact(
@@ -5197,7 +5378,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5208,6 +5388,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['chainId', 'contractAddress', 'tokenId']),
     requestSchema: t.exact(
@@ -5233,11 +5415,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: GetNftsByTokenListRequest,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -5257,11 +5440,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: false,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(t.type({})),
@@ -5277,16 +5461,17 @@ export const pathMeta = {
     hasParams: false,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
-    bodySchema: Organization,
+    bodySchema: CreateOrganization,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(
       t.type({
-        body: Organization,
+        body: CreateOrganization,
       }),
     ),
     responseSchema: Organization,
@@ -5301,7 +5486,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5310,6 +5494,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId']),
     requestSchema: t.exact(
@@ -5333,7 +5519,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5342,6 +5527,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: CreatorInformation,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId']),
     requestSchema: t.exact(
@@ -5366,7 +5553,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5375,6 +5561,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId']),
     requestSchema: t.exact(
@@ -5398,7 +5586,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5407,6 +5594,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: UpdateOrganizationNameRequest,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId']),
     requestSchema: t.exact(
@@ -5431,7 +5620,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5440,6 +5628,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: Invitation,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId']),
     requestSchema: t.exact(
@@ -5464,7 +5654,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5474,6 +5663,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId', 'inviteId']),
     requestSchema: t.exact(
@@ -5498,7 +5689,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5508,6 +5698,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId', 'inviteId']),
     requestSchema: t.exact(
@@ -5532,11 +5724,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: false,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(t.type({})),
@@ -5552,7 +5745,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5562,6 +5754,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: MemberInformation,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId', 'userId']),
     requestSchema: t.exact(
@@ -5587,7 +5781,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5597,6 +5790,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId', 'userId']),
     requestSchema: t.exact(
@@ -5621,7 +5816,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5630,6 +5824,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId']),
     requestSchema: t.exact(
@@ -5653,7 +5849,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5662,6 +5857,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: CreateWebhooks,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId']),
     requestSchema: t.exact(
@@ -5686,11 +5883,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: EditWebhooks,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -5710,7 +5908,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5719,6 +5916,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId']),
     requestSchema: t.exact(
@@ -5742,7 +5941,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5751,6 +5949,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['webhookId']),
     requestSchema: t.exact(
@@ -5774,7 +5974,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5783,6 +5982,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditWebhook,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['webhookId']),
     requestSchema: t.exact(
@@ -5807,7 +6008,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5816,6 +6016,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['webhookId']),
     requestSchema: t.exact(
@@ -5839,7 +6041,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5848,6 +6049,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['webhookId']),
     requestSchema: t.exact(
@@ -5871,7 +6074,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5880,6 +6082,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['webhookId']),
     requestSchema: t.exact(
@@ -5903,7 +6107,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5912,6 +6115,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditPhaseset,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -5936,7 +6141,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5946,6 +6150,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'phasesetId']),
     requestSchema: t.exact(
@@ -5970,7 +6176,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -5980,6 +6185,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditPhaseset,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'phasesetId']),
     requestSchema: t.exact(
@@ -6005,7 +6212,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6015,6 +6221,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'phasesetId']),
     requestSchema: t.exact(
@@ -6039,7 +6247,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6048,6 +6255,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditAllowlist,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -6072,7 +6281,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6082,6 +6290,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'allowlistId']),
     requestSchema: t.exact(
@@ -6106,7 +6316,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6116,6 +6325,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditAllowlist,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'allowlistId']),
     requestSchema: t.exact(
@@ -6141,7 +6352,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6151,6 +6361,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'allowlistId']),
     requestSchema: t.exact(
@@ -6175,7 +6387,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6184,6 +6395,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -6207,7 +6420,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6222,6 +6434,8 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set(['phaseStartTimestamp', 'tokenIndex']),
     pathParameters: new Set(['storefrontId', 'address']),
     requestSchema: t.exact(
@@ -6252,7 +6466,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6268,6 +6481,8 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set(['tokenIndex', 'phaseStartTimestamp', 'amount']),
     pathParameters: new Set(['storefrontId', 'address']),
     requestSchema: t.exact(
@@ -6299,7 +6514,6 @@ export const pathMeta = {
     hasParams: false,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: true,
     paramsSchema: t.null,
     querySchema: t.exact(
@@ -6308,6 +6522,8 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set(['url']),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -6331,7 +6547,6 @@ export const pathMeta = {
     hasParams: false,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: true,
     paramsSchema: t.null,
     querySchema: t.exact(
@@ -6340,6 +6555,8 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set(['url']),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -6363,7 +6580,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6372,6 +6588,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId']),
     requestSchema: t.exact(
@@ -6395,7 +6613,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6404,6 +6621,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId']),
     requestSchema: t.exact(
@@ -6427,7 +6646,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6436,6 +6654,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: TransactionRelay,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId']),
     requestSchema: t.exact(
@@ -6460,7 +6680,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6470,6 +6689,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId', 'transactionId']),
     requestSchema: t.exact(
@@ -6494,7 +6715,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6503,6 +6723,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId']),
     requestSchema: t.exact(
@@ -6526,7 +6748,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6535,6 +6756,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: TokenIssuance,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId']),
     requestSchema: t.exact(
@@ -6559,7 +6782,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6569,6 +6791,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId', 'issuanceId']),
     requestSchema: t.exact(
@@ -6593,11 +6817,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: ClaimProofForCollection,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -6617,7 +6842,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6626,6 +6850,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: RaiseClaimInvoiceBody,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -6650,7 +6876,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6659,6 +6884,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -6682,7 +6909,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6691,6 +6917,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -6714,7 +6942,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6723,6 +6950,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -6746,7 +6975,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6755,6 +6983,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: AcceptClaimCollectionTermsResponse,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -6779,11 +7009,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: CreateStorefront,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -6803,7 +7034,6 @@ export const pathMeta = {
     hasParams: false,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.exact(
@@ -6815,6 +7045,8 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set(['organizationId', 'isDeployed', 'limit', 'offset']),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -6841,11 +7073,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: false,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(t.type({})),
@@ -6861,7 +7094,6 @@ export const pathMeta = {
     hasParams: false,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.exact(
@@ -6871,6 +7103,8 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set(['accountAddresses', 'chainIds']),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -6895,7 +7129,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6905,6 +7138,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'organizationId']),
     requestSchema: t.exact(
@@ -6929,7 +7164,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6939,6 +7173,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'slug']),
     requestSchema: t.exact(
@@ -6963,7 +7199,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -6972,6 +7207,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -6995,7 +7232,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7004,6 +7240,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: PatchStorefront,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -7028,7 +7266,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7037,6 +7274,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditStorefront,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -7061,7 +7300,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7070,6 +7308,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -7093,7 +7333,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7102,6 +7341,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -7125,7 +7366,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7135,6 +7375,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['chainId', 'address']),
     requestSchema: t.exact(
@@ -7159,7 +7401,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7169,6 +7410,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['chainId', 'address']),
     requestSchema: t.exact(
@@ -7193,7 +7436,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: true,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7202,6 +7444,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.record(t.string, t.unknown),
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -7226,7 +7470,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7235,6 +7478,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: CollectionHistoryEntry,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -7259,7 +7504,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7269,6 +7513,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['chainId', 'contractAddress']),
     requestSchema: t.exact(
@@ -7293,7 +7539,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7302,6 +7547,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId']),
     requestSchema: t.exact(
@@ -7315,50 +7562,38 @@ export const pathMeta = {
     ),
     responseSchema: RoyaltiesStats,
   },
-  getContractRoyaltiesStats: {
-    operationId: 'getContractRoyaltiesStats',
-    url: '/storefronts/royalties/contract-stats/:chainId/:contractAddress',
+  getStorefrontRoyaltiesStats: {
+    operationId: 'getStorefrontRoyaltiesStats',
+    url: '/storefronts/royalties/contract-stats/:storefrontId',
     method: 'get',
     category: 'Storefronts',
     security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
-    hasQuery: true,
+    hasQuery: false,
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
-        chainId: ChainIdToString,
-        contractAddress: Address,
+        storefrontId: UUIDFromString,
       }),
     ),
-    querySchema: t.exact(
-      t.partial({
-        bps: IntegerToString,
-        recipient: Address,
-      }),
-    ),
+    querySchema: t.null,
     bodySchema: t.null,
-    queryParameters: new Set(['bps', 'recipient']),
-    pathParameters: new Set(['chainId', 'contractAddress']),
+    hasRequest: true,
+    hasResponse: true,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
       t.type({
         parameters: t.exact(
-          t.intersection([
-            t.type({
-              chainId: ChainIdToString,
-              contractAddress: Address,
-            }),
-            t.partial({
-              bps: IntegerToString,
-              recipient: Address,
-            }),
-          ]),
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
         ),
       }),
     ),
-    responseSchema: ContractRoyaltiesStats,
+    responseSchema: RoyaltyStatistics,
   },
   downloadRoyaltiesReport: {
     operationId: 'downloadRoyaltiesReport',
@@ -7370,7 +7605,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: true,
     paramsSchema: t.exact(
       t.type({
@@ -7379,6 +7613,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -7392,6 +7628,39 @@ export const pathMeta = {
     ),
     responseSchema: t.string,
   },
+  getMembershipsOnStorefront: {
+    operationId: 'getMembershipsOnStorefront',
+    url: '/storefronts/storefront/:storefrontId/memberships',
+    method: 'get',
+    category: 'Storefronts',
+    security: [{ OptionalAuth: [] }],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: false,
+    isBodyFormData: false,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        storefrontId: t.string,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: t.string,
+          }),
+        ),
+      }),
+    ),
+    responseSchema: StorefrontMemberships,
+  },
   getSubscriptionsByOrganization: {
     operationId: 'getSubscriptionsByOrganization',
     url: '/subscriptions/organization/:organizationId',
@@ -7402,7 +7671,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7411,6 +7679,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId']),
     requestSchema: t.exact(
@@ -7434,7 +7704,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7443,6 +7712,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: CreateSubscriptionBody,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -7467,7 +7738,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7476,6 +7746,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -7489,8 +7761,8 @@ export const pathMeta = {
     ),
     responseSchema: Subscriptions,
   },
-  userSatisfiesSubscriptionRequirements: {
-    operationId: 'userSatisfiesSubscriptionRequirements',
+  getUserSatisfiesSubscriptionRequirements: {
+    operationId: 'getUserSatisfiesSubscriptionRequirements',
     url: '/subscriptions/:subscriptionId/user-satisfies-subscription-requirements',
     method: 'get',
     category: 'Subscription',
@@ -7499,7 +7771,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7508,6 +7779,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['subscriptionId']),
     requestSchema: t.exact(
@@ -7521,6 +7794,39 @@ export const pathMeta = {
     ),
     responseSchema: UserSatisfiesSubscriptionRequirementsResponse,
   },
+  getUserSubscriptionInvoices: {
+    operationId: 'getUserSubscriptionInvoices',
+    url: '/subscriptions/:subscriptionId/user-subscription-invoices',
+    method: 'get',
+    category: 'Subscription',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: false,
+    isBodyFormData: false,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        subscriptionId: UUIDFromString,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['subscriptionId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            subscriptionId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
+    responseSchema: GetUserSubscriptionInvoicesResponse,
+  },
   getSubscription: {
     operationId: 'getSubscription',
     url: '/subscriptions/:subscriptionId',
@@ -7531,7 +7837,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7540,6 +7845,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['subscriptionId']),
     requestSchema: t.exact(
@@ -7563,7 +7870,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7573,6 +7879,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditSubscription,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['subscriptionId', 'storefrontId']),
     requestSchema: t.exact(
@@ -7598,7 +7906,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7607,6 +7914,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['subscriptionId']),
     requestSchema: t.exact(
@@ -7630,7 +7939,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7639,10 +7947,12 @@ export const pathMeta = {
     ),
     querySchema: t.exact(
       t.partial({
-        service: t.string,
+        service: SubscriptionService,
       }),
     ),
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set(['service']),
     pathParameters: new Set(['subscriptionId']),
     requestSchema: t.exact(
@@ -7653,7 +7963,7 @@ export const pathMeta = {
               subscriptionId: UUIDFromString,
             }),
             t.partial({
-              service: t.string,
+              service: SubscriptionService,
             }),
           ]),
         ),
@@ -7671,7 +7981,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7680,6 +7989,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['subscriptionId']),
     requestSchema: t.exact(
@@ -7703,7 +8014,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7712,6 +8022,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['subscriptionId']),
     requestSchema: t.exact(
@@ -7735,7 +8047,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7744,6 +8055,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: CreateSubscriptionCouponBody,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['subscriptionId']),
     requestSchema: t.exact(
@@ -7768,7 +8081,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7778,6 +8090,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['subscriptionId', 'couponName']),
     requestSchema: t.exact(
@@ -7802,7 +8116,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7812,6 +8125,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['subscriptionId', 'couponId']),
     requestSchema: t.exact(
@@ -7836,7 +8151,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7845,6 +8159,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: CreateVoucherCampaignBody,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['subscriptionId']),
     requestSchema: t.exact(
@@ -7869,7 +8185,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7878,6 +8193,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['subscriptionId']),
     requestSchema: t.exact(
@@ -7901,7 +8218,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7911,6 +8227,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: RedeemSubscriptionVoucherBody,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['subscriptionId', 'voucherId']),
     requestSchema: t.exact(
@@ -7936,7 +8254,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7945,6 +8262,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: RaiseSubscriptionInvoiceBody,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['subscriptionId']),
     requestSchema: t.exact(
@@ -7969,7 +8288,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -7978,6 +8296,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: SetSubscriptionReleaseStatusBody,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['subscriptionId']),
     requestSchema: t.exact(
@@ -8002,7 +8322,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8011,6 +8330,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditVoucherCampaign,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['voucherCampaignId']),
     requestSchema: t.exact(
@@ -8035,7 +8356,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8049,6 +8369,8 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set(['limit', 'offset']),
     pathParameters: new Set(['voucherCampaignId']),
     requestSchema: t.exact(
@@ -8078,7 +8400,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8087,6 +8408,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -8110,7 +8433,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8119,6 +8441,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -8142,7 +8466,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8152,6 +8475,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'tokensetId']),
     requestSchema: t.exact(
@@ -8176,7 +8501,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8186,6 +8510,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'tokensetId']),
     requestSchema: t.exact(
@@ -8210,7 +8536,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8220,6 +8545,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: CreateOrUpdateTokenDefinitionRequest,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'tokensetId']),
     requestSchema: t.exact(
@@ -8245,7 +8572,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8255,6 +8581,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'tokensetId']),
     requestSchema: t.exact(
@@ -8279,7 +8607,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8289,6 +8616,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'tokensetId']),
     requestSchema: t.exact(
@@ -8313,7 +8642,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8323,6 +8651,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditTokenDefinition,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'tokensetId']),
     requestSchema: t.exact(
@@ -8348,7 +8678,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8359,6 +8688,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'tokensetId', 'tokenId']),
     requestSchema: t.exact(
@@ -8384,7 +8715,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8395,6 +8725,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'tokensetId', 'tokenId']),
     requestSchema: t.exact(
@@ -8420,7 +8752,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8435,6 +8766,8 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set(['limit', 'offset']),
     pathParameters: new Set(['storefrontId', 'tokensetId']),
     requestSchema: t.exact(
@@ -8465,7 +8798,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8475,6 +8807,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'tokensetId']),
     requestSchema: t.exact(
@@ -8499,7 +8833,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8508,6 +8841,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -8531,7 +8866,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8541,6 +8875,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['routingTag', 'requestId']),
     requestSchema: t.exact(
@@ -8565,7 +8901,6 @@ export const pathMeta = {
     hasParams: false,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.exact(
@@ -8583,6 +8918,8 @@ export const pathMeta = {
       ]),
     ),
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set(['chainId', 'chainAddresses', 'collectionIds', 'limit', 'cursor', 'verifiedOnly']),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -8607,7 +8944,7 @@ export const pathMeta = {
   },
   getUserPortfolioNfts: {
     operationId: 'getUserPortfolioNfts',
-    url: '/user-portfolio-nfts/:chainId/:contractAddress',
+    url: '/user-portfolio-nfts/:chainId/:storefrontId',
     method: 'get',
     category: 'UserNfts',
     security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
@@ -8615,12 +8952,11 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
         chainId: ChainIdToString,
-        contractAddress: Address,
+        storefrontId: UUIDFromString,
       }),
     ),
     querySchema: t.exact(
@@ -8630,15 +8966,17 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set(['limit', 'cursor']),
-    pathParameters: new Set(['chainId', 'contractAddress']),
+    pathParameters: new Set(['chainId', 'storefrontId']),
     requestSchema: t.exact(
       t.type({
         parameters: t.exact(
           t.intersection([
             t.type({
               chainId: ChainIdToString,
-              contractAddress: Address,
+              storefrontId: UUIDFromString,
             }),
             t.partial({
               limit: IntegerToString,
@@ -8660,7 +8998,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8669,6 +9006,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['chainId']),
     requestSchema: t.exact(
@@ -8692,11 +9031,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: false,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(t.type({})),
@@ -8712,7 +9052,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8722,6 +9061,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['chainId', 'contractAddress']),
     requestSchema: t.exact(
@@ -8746,7 +9087,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8758,6 +9098,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: CreateRoyaltiesAppealBody,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['chainId', 'blockHash', 'transactionHash', 'logIndex']),
     requestSchema: t.exact(
@@ -8785,7 +9127,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8797,6 +9138,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['chainId', 'blockHash', 'transactionHash', 'logIndex']),
     requestSchema: t.exact(
@@ -8823,11 +9166,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: NftAcquisitionKeys,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -8847,7 +9191,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8856,6 +9199,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: NftAcquisitionKeys,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['currency']),
     requestSchema: t.exact(
@@ -8880,7 +9225,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8889,6 +9233,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -8912,7 +9258,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -8921,6 +9266,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: RoyaltiesConfiguration,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -8945,11 +9292,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: TrackIdentifyBody,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -8969,11 +9317,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: TrackEventBody,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -8993,11 +9342,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: UserCorrespondence,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -9017,11 +9367,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: UserCorrespondence,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -9041,11 +9392,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: false,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(t.type({})),
@@ -9061,7 +9413,6 @@ export const pathMeta = {
     hasParams: false,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.exact(
@@ -9073,6 +9424,8 @@ export const pathMeta = {
       }),
     ),
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set(['organizationId', 'hasEmailCapture', 'limit', 'offset']),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -9099,11 +9452,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: StorefrontIds,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -9123,7 +9477,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -9132,6 +9485,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId']),
     requestSchema: t.exact(
@@ -9155,7 +9510,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -9164,6 +9518,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: MembershipList,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -9188,7 +9544,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -9197,6 +9552,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -9220,7 +9577,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -9229,6 +9585,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: MembershipList,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['listId']),
     requestSchema: t.exact(
@@ -9253,7 +9611,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -9262,6 +9619,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['listId']),
     requestSchema: t.exact(
@@ -9285,7 +9644,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: true,
     paramsSchema: t.exact(
       t.type({
@@ -9294,6 +9652,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: AvailableReports,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['listId']),
     requestSchema: t.exact(
@@ -9318,11 +9678,12 @@ export const pathMeta = {
     hasParams: false,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
     bodySchema: Conditions,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(
@@ -9342,7 +9703,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -9351,6 +9711,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -9374,7 +9736,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -9383,6 +9744,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['organizationId']),
     requestSchema: t.exact(
@@ -9394,7 +9757,75 @@ export const pathMeta = {
         ),
       }),
     ),
-    responseSchema: ReservoirWallet,
+    responseSchema: CreateGasWalletResponse,
+  },
+  connectStripeAccount: {
+    operationId: 'connectStripeAccount',
+    url: '/organization/:organizationId/connect-stripe-account/',
+    method: 'post',
+    category: 'Organizations',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: true,
+    isBodyFormData: false,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        organizationId: UUIDFromString,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: ConnectStripeAccountBody,
+    hasRequest: true,
+    hasResponse: true,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+        body: ConnectStripeAccountBody,
+      }),
+    ),
+    responseSchema: Organization,
+  },
+  disconnectStripeAccount: {
+    operationId: 'disconnectStripeAccount',
+    url: '/organization/:organizationId/disconnect-stripe-account/',
+    method: 'post',
+    category: 'Organizations',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: true,
+    isBodyFormData: false,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        organizationId: UUIDFromString,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: DisconnectStripeAccountBody,
+    hasRequest: true,
+    hasResponse: true,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+        body: DisconnectStripeAccountBody,
+      }),
+    ),
+    responseSchema: Organization,
   },
   getRedemptionsForToken: {
     operationId: 'getRedemptionsForToken',
@@ -9406,7 +9837,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -9415,6 +9845,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['token']),
     requestSchema: t.exact(
@@ -9438,7 +9870,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -9447,6 +9878,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: Redemption,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['token']),
     requestSchema: t.exact(
@@ -9471,7 +9904,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -9480,6 +9912,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -9503,7 +9937,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -9512,6 +9945,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditRedemptionConfig,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId']),
     requestSchema: t.exact(
@@ -9536,7 +9971,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: true,
     isBodyFormData: false,
-    hasResponse: true,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -9546,6 +9980,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: EditRedemptionConfig,
+    hasRequest: true,
+    hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'configurationId']),
     requestSchema: t.exact(
@@ -9571,7 +10007,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -9581,6 +10016,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'configurationId']),
     requestSchema: t.exact(
@@ -9605,7 +10042,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -9615,6 +10051,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'configurationId']),
     requestSchema: t.exact(
@@ -9639,7 +10077,6 @@ export const pathMeta = {
     hasParams: true,
     hasBody: false,
     isBodyFormData: false,
-    hasResponse: false,
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
@@ -9649,6 +10086,8 @@ export const pathMeta = {
     ),
     querySchema: t.null,
     bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: false,
     queryParameters: new Set([]),
     pathParameters: new Set(['storefrontId', 'configurationId']),
     requestSchema: t.exact(
@@ -9662,6 +10101,31 @@ export const pathMeta = {
       }),
     ),
     responseSchema: t.null,
+  },
+  createPaymentIntent: {
+    operationId: 'createPaymentIntent',
+    url: '/stripe/create-payment-intent',
+    method: 'post',
+    category: 'Stripe',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: false,
+    hasBody: true,
+    isBodyFormData: false,
+    hasBinaryResponse: false,
+    paramsSchema: t.null,
+    querySchema: t.null,
+    bodySchema: CreatePaymentIntentBody,
+    hasRequest: true,
+    hasResponse: true,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        body: CreatePaymentIntentBody,
+      }),
+    ),
+    responseSchema: CreatePaymentIntentResponse,
   },
 } as const;
 

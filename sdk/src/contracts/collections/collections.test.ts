@@ -56,6 +56,7 @@ const NON_DROP_CONTRACT_INTERFACE_FILES = [
   'issuance/ICedarNativePayable.sol',
   'issuance/ICedarClaimable.sol',
   'agreement/IAgreementsRegistry.sol',
+  'agreement/IAgreementsNotary.sol',
   'baseURI/ICedarUpgradeBaseURI.sol',
 ];
 

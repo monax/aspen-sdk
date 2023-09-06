@@ -54,7 +54,8 @@
     "@ethersproject/abstract-provider": "^5.7.0",
     "@ethersproject/logger": "^5.7.0",
     "@ethersproject/providers": "^5.7.2",
-    "@monaxlabs/phloem": "0.16.2",
+    "@monaxlabs/phloem": "0.16.21",
+    "@monaxlabs/cambium": "0.16.21",
     "axios": "^1.2.2",
     "date-fns": "^2.29.3",
     "ethers": "^5.7.2",
@@ -71,7 +72,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
-    "@monaxlabs/spec": "0.16.2",
+    "@monaxlabs/spec": "0.16.21",
     "@openzeppelin/contracts": "^4.8.1",
     "@typechain/ethers-v5": "^10.2.0",
     "@types/jest": "^29.2.5",
