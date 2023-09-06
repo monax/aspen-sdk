@@ -1,6 +1,7 @@
-import { generateOAS, Spec } from '@monaxlabs/phloem/dist/gen';
-import { getIoTsConfig, IoTsTypeVisitor } from '@monaxlabs/phloem/dist/gen/json-schema/io-ts';
+import { generateOAS } from '@monaxlabs/cambium/dist';
+import { getIoTsConfig, IoTsTypeVisitor } from '@monaxlabs/cambium/dist/json-schema/io-ts';
 import { parse } from '@monaxlabs/phloem/dist/schema';
+import { Spec } from '@monaxlabs/phloem/dist/types/oas';
 import * as fs from 'fs';
 import * as t from 'io-ts';
 import * as path from 'path';

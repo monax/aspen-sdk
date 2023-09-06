@@ -226,7 +226,7 @@ export function generateAspenContractsFactoriesMapTs(
       ts.factory.createTypeReferenceNode(ts.factory.createIdentifier('AspenContractsFamilyVersions')),
     ),
   );
-  const versoinNodes = [versionsByFamilyConst, versionsType, versionsFamily, ...currentVersions, ...latestVersions];
+  const versionNodes = [versionsByFamilyConst, versionsType, versionsFamily, ...currentVersions, ...latestVersions];
 
   const networksType = exportType(
     'AspenContractNetworks',
@@ -237,7 +237,7 @@ export function generateAspenContractsFactoriesMapTs(
     ),
   );
 
-  return [...importNodes, ...factoryNodes, ...versoinNodes, networksType];
+  return [...importNodes, ...factoryNodes, ...versionNodes, networksType];
 }
 
 export async function writeAspenContractsFactoriesMap(
