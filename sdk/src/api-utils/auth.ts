@@ -1,6 +1,6 @@
 import { JsonFromString } from 'io-ts-types';
 import * as path from 'path';
-import { AspenEnvironment, ApiConfigs } from '../apis';
+import { ApiConfigs, AspenEnvironment } from '../apis';
 import { authenticateAll } from '../apis/identity/auth';
 import { parseFromEnvOrFile } from './environment';
 
@@ -14,11 +14,7 @@ export async function authenticateAllFromFile(
   credentialsFile = defaultCredentialsFile,
   credentialsEnvVarName = defaultCedentialsEnvVarName,
 ): Promise<void> {
-  const envCreds = await parseFromEnvOrFile(
-    JsonFromString.pipe(ApiConfigs),
-    credentialsFile,
-    credentialsEnvVarName,
-  );
+  const envCreds = await parseFromEnvOrFile(JsonFromString.pipe(ApiConfigs), credentialsFile, credentialsEnvVarName);
 
   const creds = envCreds[environment];
   if (!creds) {

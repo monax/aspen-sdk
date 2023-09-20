@@ -111,14 +111,12 @@ export const DocumentMimeType = t.union([
 export interface CurrencyAmount {
   amount: t.TypeOf<typeof BigIntToString>;
   currency: t.TypeOf<typeof Address>;
-  decimals: number;
 }
 
 export const CurrencyAmount = t.exact(
   t.type({
     amount: BigIntToString,
     currency: Address,
-    decimals: t.number,
   }),
 );
 
@@ -1134,6 +1132,258 @@ export type GetTokensetPlaceholderResponse = t.TypeOf<typeof TokenDefinition> | 
 
 export const GetTokensetPlaceholderResponse = t.union([TokenDefinition, t.null]);
 
+export type ReportsKind = 'AllTokens' | 'EligibleEmailAddresses' | 'EligibleDiscordUserIds';
+
+export const ReportsKind = t.union([
+  t.literal('AllTokens'),
+  t.literal('EligibleEmailAddresses'),
+  t.literal('EligibleDiscordUserIds'),
+]);
+
+export type AvailableReports = Array<t.TypeOf<typeof ReportsKind>>;
+
+export const AvailableReports = t.array(ReportsKind);
+
+export type IntegrationKind = 'DISCORD' | 'WEBHOOK';
+
+export const IntegrationKind = t.union([t.literal('DISCORD'), t.literal('WEBHOOK')]);
+
+export interface DiscordIntegrationConfig {
+  discordRoleId: string;
+  discordGuildId: string;
+  discordLink: string;
+}
+
+export const DiscordIntegrationConfig = t.exact(
+  t.type({
+    discordRoleId: t.string,
+    discordGuildId: t.string,
+    discordLink: t.string,
+  }),
+);
+
+export interface DiscordIntegration {
+  kind: 'DISCORD';
+  config: t.TypeOf<typeof DiscordIntegrationConfig>;
+}
+
+export const DiscordIntegration = t.exact(
+  t.type({
+    kind: t.literal('DISCORD'),
+    config: DiscordIntegrationConfig,
+  }),
+);
+
+export interface WebhookIntegrationConfig {
+  webhookId: t.TypeOf<typeof UUIDFromString>;
+}
+
+export const WebhookIntegrationConfig = t.exact(
+  t.type({
+    webhookId: UUIDFromString,
+  }),
+);
+
+export interface WebhookIntegration {
+  kind: 'WEBHOOK';
+  config: t.TypeOf<typeof WebhookIntegrationConfig>;
+}
+
+export const WebhookIntegration = t.exact(
+  t.type({
+    kind: t.literal('WEBHOOK'),
+    config: WebhookIntegrationConfig,
+  }),
+);
+
+export type Integration = t.TypeOf<typeof DiscordIntegration> | t.TypeOf<typeof WebhookIntegration>;
+
+export const Integration = t.union([DiscordIntegration, WebhookIntegration]);
+
+export interface Conditions {
+  minTokensHeld: number;
+  minRoyaltyCleanTokensHeld: number;
+  needTermsAccepted: boolean;
+  needEmailDisclosed: boolean;
+  needSubscriptionId: t.TypeOf<typeof UUIDFromString> | null;
+}
+
+export const Conditions = t.exact(
+  t.type({
+    minTokensHeld: t.number,
+    minRoyaltyCleanTokensHeld: t.number,
+    needTermsAccepted: t.boolean,
+    needEmailDisclosed: t.boolean,
+    needSubscriptionId: t.union([UUIDFromString, t.null]),
+  }),
+);
+
+export type MembershipListStatus = 'ACTIVE' | 'INACTIVE';
+
+export const MembershipListStatus = t.union([t.literal('ACTIVE'), t.literal('INACTIVE')]);
+
+export interface MembershipListOverview {
+  id: number;
+  name: string;
+  status: t.TypeOf<typeof MembershipListStatus>;
+  freezeAt: t.TypeOf<typeof DateFromISODateString> | null;
+  lastSyncedAt: t.TypeOf<typeof DateFromISODateString> | null;
+  lastSyncEligibleHoldingsCount: number;
+  availableReports: Array<t.TypeOf<typeof ReportsKind>>;
+  displayOrder: number;
+}
+
+export const MembershipListOverview = t.exact(
+  t.type({
+    id: t.number,
+    name: t.string,
+    status: MembershipListStatus,
+    freezeAt: t.union([DateFromISODateString, t.null]),
+    lastSyncedAt: t.union([DateFromISODateString, t.null]),
+    lastSyncEligibleHoldingsCount: t.number,
+    availableReports: t.array(ReportsKind),
+    displayOrder: t.number,
+  }),
+);
+
+export type MembershipListsOverview = Array<t.TypeOf<typeof MembershipListOverview>>;
+
+export const MembershipListsOverview = t.array(MembershipListOverview);
+
+export interface StorefrontMembershipListOverview {
+  storefrontId: t.TypeOf<typeof UUIDFromString>;
+  name: string;
+  lists: t.TypeOf<typeof MembershipListsOverview>;
+}
+
+export const StorefrontMembershipListOverview = t.exact(
+  t.type({
+    storefrontId: UUIDFromString,
+    name: t.string,
+    lists: MembershipListsOverview,
+  }),
+);
+
+export type StorefrontsMembershipListOverview = Array<t.TypeOf<typeof StorefrontMembershipListOverview>>;
+
+export const StorefrontsMembershipListOverview = t.array(StorefrontMembershipListOverview);
+
+export interface MembershipListConfig {
+  subscription?: {
+    /** CTA Text to display when the user has no eligible subscription */
+    subscribeCTAText?: string | null;
+    /** CTA Text to display when the user is eligible to extend their subscription */
+    extendSubscriptionCTAText?: string | null;
+    /** Subscription title text to display */
+    titleText?: string | null;
+    /** The text to display for the duration unit */
+    optionsDurationUnitText?: string | null;
+    /** The maximum number of single duration options to display */
+    optionsDurationMaxIndividual?: number | null;
+    /** The maximum number of grouped duration options to display */
+    optionsDurationMaxGrouped?: number | null;
+  } | null;
+  discord?: {
+    /** Benefit tag text to display */
+    benefitTagText?: string | null;
+    /** Text to display when the user is eligible for the membership but has not yet been added to the discord server */
+    membershipPendingText?: string | null;
+    /** Text to display when the user is eligible for the membership and has been added to the discord server */
+    membershipActiveText?: string | null;
+  } | null;
+}
+
+export const MembershipListConfig = t.exact(
+  t.partial({
+    subscription: t.union([
+      t.exact(
+        t.partial({
+          /** CTA Text to display when the user has no eligible subscription */
+          subscribeCTAText: t.union([t.string, t.null]),
+          /** CTA Text to display when the user is eligible to extend their subscription */
+          extendSubscriptionCTAText: t.union([t.string, t.null]),
+          /** Subscription title text to display */
+          titleText: t.union([t.string, t.null]),
+          /** The text to display for the duration unit */
+          optionsDurationUnitText: t.union([t.string, t.null]),
+          /** The maximum number of single duration options to display */
+          optionsDurationMaxIndividual: t.union([t.number, t.null]),
+          /** The maximum number of grouped duration options to display */
+          optionsDurationMaxGrouped: t.union([t.number, t.null]),
+        }),
+      ),
+      t.null,
+    ]),
+    discord: t.union([
+      t.exact(
+        t.partial({
+          /** Benefit tag text to display */
+          benefitTagText: t.union([t.string, t.null]),
+          /** Text to display when the user is eligible for the membership but has not yet been added to the discord server */
+          membershipPendingText: t.union([t.string, t.null]),
+          /** Text to display when the user is eligible for the membership and has been added to the discord server */
+          membershipActiveText: t.union([t.string, t.null]),
+        }),
+      ),
+      t.null,
+    ]),
+  }),
+);
+
+export interface MembershipList {
+  storefrontId: t.TypeOf<typeof UUIDFromString>;
+  name: string;
+  description: string | null;
+  displayOrder: number;
+  image: string | null;
+  status: t.TypeOf<typeof MembershipListStatus>;
+  freezeAt: t.TypeOf<typeof DateFromISODateString> | null;
+  integrations: Array<t.TypeOf<typeof Integration>>;
+  conditions: t.TypeOf<typeof Conditions>;
+  config: t.TypeOf<typeof MembershipListConfig>;
+}
+
+export const MembershipList = t.exact(
+  t.type({
+    storefrontId: UUIDFromString,
+    name: t.string,
+    description: t.union([t.string, t.null]),
+    displayOrder: t.number,
+    image: t.union([t.string, t.null]),
+    status: MembershipListStatus,
+    freezeAt: t.union([DateFromISODateString, t.null]),
+    integrations: t.array(Integration),
+    conditions: Conditions,
+    config: MembershipListConfig,
+  }),
+);
+
+export type MembershipLists = Array<t.TypeOf<typeof MembershipList>>;
+
+export const MembershipLists = t.array(MembershipList);
+
+export interface MembershipListResponse {
+  listId: number;
+  listName: string;
+}
+
+export const MembershipListResponse = t.exact(
+  t.type({
+    listId: t.number,
+    listName: t.string,
+  }),
+);
+
+export interface MembershipListUserDiscordStatusResponse {
+  isMemberOfServer: boolean;
+}
+
+export const MembershipListUserDiscordStatusResponse = t.exact(
+  t.type({
+    isMemberOfServer: t.boolean,
+  }),
+);
+
 export type ImportCollectionStatus = 'Pending' | 'In Progress' | 'Complete' | 'Failed';
 
 export const ImportCollectionStatus = t.union([
@@ -2109,6 +2359,7 @@ export interface PublicStorefront {
   tokenAttributeSummaries: Array<t.TypeOf<typeof TokenAttributeSummary>>;
   /** The name of the storefront's organization */
   organizationName: string;
+  organizationStripeAccount: string | null;
   /** The storefront allows royalties to be paidback */
   royaltiesCanPayback: boolean;
   /** The storefront allows royalties status to be appealed */
@@ -2164,6 +2415,7 @@ export const PublicStorefront = t.exact(
     tokenAttributeSummaries: t.array(TokenAttributeSummary),
     /** The name of the storefront's organization */
     organizationName: t.string,
+    organizationStripeAccount: t.union([t.string, t.null]),
     /** The storefront allows royalties to be paidback */
     royaltiesCanPayback: t.boolean,
     /** The storefront allows royalties status to be appealed */
@@ -2525,6 +2777,8 @@ export interface StorefrontMembership {
     subscribed: t.TypeOf<typeof SubscribedCondition> | null;
   };
   name: string;
+  listId: number;
+  displayOrder: number;
   description: string | null;
   image: string | null;
   utility: {
@@ -2532,6 +2786,7 @@ export interface StorefrontMembership {
       discordLink: string;
     } | null;
   };
+  config: t.TypeOf<typeof MembershipListConfig>;
 }
 
 export const StorefrontMembership = t.exact(
@@ -2545,6 +2800,8 @@ export const StorefrontMembership = t.exact(
       }),
     ),
     name: t.string,
+    listId: t.number,
+    displayOrder: t.number,
     description: t.union([t.string, t.null]),
     image: t.union([t.string, t.null]),
     utility: t.exact(
@@ -2559,6 +2816,7 @@ export const StorefrontMembership = t.exact(
         ]),
       }),
     ),
+    config: MembershipListConfig,
   }),
 );
 
@@ -2566,13 +2824,34 @@ export type StorefrontMemberships = Array<t.TypeOf<typeof StorefrontMembership>>
 
 export const StorefrontMemberships = t.array(StorefrontMembership);
 
+export interface StorefrontMembershipListDisplayOrder {
+  listId: number;
+  displayOrder: number;
+}
+
+export const StorefrontMembershipListDisplayOrder = t.exact(
+  t.type({
+    listId: t.number,
+    displayOrder: t.number,
+  }),
+);
+
+export type UpdateStorefrontMembershipListDisplayOrderRequest = Array<
+  t.TypeOf<typeof StorefrontMembershipListDisplayOrder>
+>;
+
+export const UpdateStorefrontMembershipListDisplayOrderRequest = t.array(StorefrontMembershipListDisplayOrder);
+
+export type RedeemableTokenId = t.TypeOf<typeof UInt256ToString> | '--anyToken--' | '--noToken--';
+
+export const RedeemableTokenId = t.union([UInt256ToString, t.literal('--anyToken--'), t.literal('--noToken--')]);
+
 export interface OneTimePad {
   chainId: t.TypeOf<typeof ChainIdToString>;
   contractAddress: t.TypeOf<typeof Address>;
-  /** If this pad for this contractAddress & chainId has been redeemed */
-  redeemed: boolean;
+  redeemableTokenId?: t.TypeOf<typeof RedeemableTokenId>;
   pad: string;
-  issuanceId?: number;
+  issuanceId?: string;
   droppedAt?: string | null;
   emailAddress?: string | null;
 }
@@ -2582,12 +2861,11 @@ export const OneTimePad = t.exact(
     t.type({
       chainId: ChainIdToString,
       contractAddress: Address,
-      /** If this pad for this contractAddress & chainId has been redeemed */
-      redeemed: t.boolean,
       pad: t.string,
     }),
     t.partial({
-      issuanceId: t.number,
+      redeemableTokenId: RedeemableTokenId,
+      issuanceId: t.string,
       droppedAt: t.union([t.string, t.null]),
       emailAddress: t.union([t.string, t.null]),
     }),
@@ -2648,7 +2926,7 @@ export const NftDropStorefront = t.exact(
 
 export interface NftDropStorefrontPad {
   pad: string;
-  redeemed: boolean;
+  redeemableTokenId: t.TypeOf<typeof RedeemableTokenId>;
   droppedAt?: string | null;
   emailAddress?: string | null;
 }
@@ -2657,7 +2935,7 @@ export const NftDropStorefrontPad = t.exact(
   t.intersection([
     t.type({
       pad: t.string,
-      redeemed: t.boolean,
+      redeemableTokenId: RedeemableTokenId,
     }),
     t.partial({
       droppedAt: t.union([t.string, t.null]),
@@ -3739,7 +4017,8 @@ export type BeehiveRoutingTag =
   | 'testdiscordsetup'
   | 'webhooks'
   | 'stripeproductsync'
-  | 'royaltiesstats';
+  | 'royaltiesstats'
+  | 'stripereceiver';
 
 export const BeehiveRoutingTag = t.union([
   t.literal('appealssetup'),
@@ -3754,6 +4033,7 @@ export const BeehiveRoutingTag = t.union([
   t.literal('webhooks'),
   t.literal('stripeproductsync'),
   t.literal('royaltiesstats'),
+  t.literal('stripereceiver'),
 ]);
 
 export interface BeehiveJob {
@@ -3880,132 +4160,6 @@ export type CorrespondenceList = Array<t.TypeOf<typeof CorrespondenceItem>>;
 
 export const CorrespondenceList = t.array(CorrespondenceItem);
 
-export type ReportsKind = 'AllTokens' | 'EligibleEmailAddresses' | 'EligibleDiscordUserIds';
-
-export const ReportsKind = t.union([
-  t.literal('AllTokens'),
-  t.literal('EligibleEmailAddresses'),
-  t.literal('EligibleDiscordUserIds'),
-]);
-
-export type AvailableReports = Array<t.TypeOf<typeof ReportsKind>>;
-
-export const AvailableReports = t.array(ReportsKind);
-
-export type IntegrationKind = 'DISCORD' | 'WEBHOOK';
-
-export const IntegrationKind = t.union([t.literal('DISCORD'), t.literal('WEBHOOK')]);
-
-export interface Integration {
-  kind: t.TypeOf<typeof IntegrationKind>;
-  config: Record<string, unknown>;
-}
-
-export const Integration = t.exact(
-  t.type({
-    kind: IntegrationKind,
-    config: t.record(t.string, t.unknown),
-  }),
-);
-
-export interface Conditions {
-  minTokensHeld: number;
-  minRoyaltyCleanTokensHeld: number;
-  needTermsAccepted: boolean;
-  needEmailDisclosed: boolean;
-  needSubscriptionId: t.TypeOf<typeof UUIDFromString> | null;
-}
-
-export const Conditions = t.exact(
-  t.type({
-    minTokensHeld: t.number,
-    minRoyaltyCleanTokensHeld: t.number,
-    needTermsAccepted: t.boolean,
-    needEmailDisclosed: t.boolean,
-    needSubscriptionId: t.union([UUIDFromString, t.null]),
-  }),
-);
-
-export type MembershipListStatus = 'ACTIVE' | 'INACTIVE';
-
-export const MembershipListStatus = t.union([t.literal('ACTIVE'), t.literal('INACTIVE')]);
-
-export interface MembershipListOverview {
-  id: number;
-  name: string;
-  status: t.TypeOf<typeof MembershipListStatus>;
-  freezeAt: t.TypeOf<typeof DateFromISODateString> | null;
-  lastSyncedAt: t.TypeOf<typeof DateFromISODateString> | null;
-  lastSyncEligibleHoldingsCount: number;
-  availableReports: Array<t.TypeOf<typeof ReportsKind>>;
-}
-
-export const MembershipListOverview = t.exact(
-  t.type({
-    id: t.number,
-    name: t.string,
-    status: MembershipListStatus,
-    freezeAt: t.union([DateFromISODateString, t.null]),
-    lastSyncedAt: t.union([DateFromISODateString, t.null]),
-    lastSyncEligibleHoldingsCount: t.number,
-    availableReports: t.array(ReportsKind),
-  }),
-);
-
-export type MembershipListsOverview = Array<t.TypeOf<typeof MembershipListOverview>>;
-
-export const MembershipListsOverview = t.array(MembershipListOverview);
-
-export interface StorefrontMembershipListOverview {
-  storefrontId: t.TypeOf<typeof UUIDFromString>;
-  name: string;
-  lists: t.TypeOf<typeof MembershipListsOverview>;
-}
-
-export const StorefrontMembershipListOverview = t.exact(
-  t.type({
-    storefrontId: UUIDFromString,
-    name: t.string,
-    lists: MembershipListsOverview,
-  }),
-);
-
-export type StorefrontsMembershipListOverview = Array<t.TypeOf<typeof StorefrontMembershipListOverview>>;
-
-export const StorefrontsMembershipListOverview = t.array(StorefrontMembershipListOverview);
-
-export interface MembershipList {
-  storefrontId: t.TypeOf<typeof UUIDFromString>;
-  name: string;
-  description: string | null;
-  image: string | null;
-  status: t.TypeOf<typeof MembershipListStatus>;
-  freezeAt: t.TypeOf<typeof DateFromISODateString> | null;
-  integrations: Array<t.TypeOf<typeof Integration>>;
-  conditions: t.TypeOf<typeof Conditions>;
-}
-
-export const MembershipList = t.exact(
-  t.type({
-    storefrontId: UUIDFromString,
-    name: t.string,
-    description: t.union([t.string, t.null]),
-    image: t.union([t.string, t.null]),
-    status: MembershipListStatus,
-    freezeAt: t.union([DateFromISODateString, t.null]),
-    integrations: t.array(Integration),
-    conditions: Conditions,
-  }),
-);
-
-export type MembershipLists = Array<t.TypeOf<typeof MembershipList>>;
-
-export const MembershipLists = t.array(MembershipList);
-
-export type MembershipListResponse = string;
-
-export const MembershipListResponse = t.string;
-
 export interface TokenRange {
   chainId: t.TypeOf<typeof ChainIdToString>;
   contractAddress: t.TypeOf<typeof Address>;
@@ -4077,6 +4231,7 @@ export interface EditRedemptionConfig {
   requireEmail: boolean;
   requireShippingAddress: boolean;
   webhookId: t.TypeOf<typeof UUIDFromString> | null;
+  subscriptionVoucherCampaignId: t.TypeOf<typeof UUIDFromString> | null;
 }
 
 export const EditRedemptionConfig = t.exact(
@@ -4089,6 +4244,19 @@ export const EditRedemptionConfig = t.exact(
     requireEmail: t.boolean,
     requireShippingAddress: t.boolean,
     webhookId: t.union([UUIDFromString, t.null]),
+    subscriptionVoucherCampaignId: t.union([UUIDFromString, t.null]),
+  }),
+);
+
+export interface SubscriptionVoucherInfo {
+  subscriptionId: t.TypeOf<typeof UUIDFromString>;
+  subscriptionVoucherCampaignId: t.TypeOf<typeof UUIDFromString>;
+}
+
+export const SubscriptionVoucherInfo = t.exact(
+  t.type({
+    subscriptionId: UUIDFromString,
+    subscriptionVoucherCampaignId: UUIDFromString,
   }),
 );
 
@@ -4103,20 +4271,36 @@ export interface RedemptionConfig {
   webhookId: t.TypeOf<typeof UUIDFromString> | null;
   id: t.TypeOf<typeof UUIDFromString>;
   published: boolean;
+  subscription?: t.TypeOf<typeof SubscriptionVoucherInfo> | null;
 }
 
 export const RedemptionConfig = t.exact(
+  t.intersection([
+    t.type({
+      storefrontId: UUIDFromString,
+      tokenRange: t.union([TokenRange, t.null]),
+      name: t.union([t.string, t.null]),
+      description: t.union([t.string, t.null]),
+      image: t.union([t.string, t.null]),
+      requireEmail: t.boolean,
+      requireShippingAddress: t.boolean,
+      webhookId: t.union([UUIDFromString, t.null]),
+      id: UUIDFromString,
+      published: t.boolean,
+    }),
+    t.partial({
+      subscription: t.union([SubscriptionVoucherInfo, t.null]),
+    }),
+  ]),
+);
+
+export interface EditPublishedRedemptionConfig {
+  description: string;
+}
+
+export const EditPublishedRedemptionConfig = t.exact(
   t.type({
-    storefrontId: UUIDFromString,
-    tokenRange: t.union([TokenRange, t.null]),
-    name: t.union([t.string, t.null]),
-    description: t.union([t.string, t.null]),
-    image: t.union([t.string, t.null]),
-    requireEmail: t.boolean,
-    requireShippingAddress: t.boolean,
-    webhookId: t.union([UUIDFromString, t.null]),
-    id: UUIDFromString,
-    published: t.boolean,
+    description: t.string,
   }),
 );
 
@@ -4236,13 +4420,51 @@ export const PasswordResetEvent = t.exact(
   }),
 );
 
+export interface MembershipStartedEvent {
+  eventName: 'MEMBERSHIP_STARTED';
+  walletAddress: t.TypeOf<typeof Address>;
+  storefrontId: null;
+  token: t.TypeOf<typeof TokenStringIdentifier>;
+  key: string;
+}
+
+export const MembershipStartedEvent = t.exact(
+  t.type({
+    eventName: t.literal('MEMBERSHIP_STARTED'),
+    walletAddress: Address,
+    storefrontId: t.null,
+    token: TokenStringIdentifier,
+    key: t.string,
+  }),
+);
+
+export interface MembershipEndedEvent {
+  eventName: 'MEMBERSHIP_ENDED';
+  walletAddress: t.TypeOf<typeof Address>;
+  storefrontId: null;
+  token: t.TypeOf<typeof TokenStringIdentifier>;
+  key: string;
+}
+
+export const MembershipEndedEvent = t.exact(
+  t.type({
+    eventName: t.literal('MEMBERSHIP_ENDED'),
+    walletAddress: Address,
+    storefrontId: t.null,
+    token: TokenStringIdentifier,
+    key: t.string,
+  }),
+);
+
 export type NotificationEvent =
   | 'SUBSCRIPTION_CREATED'
   | 'SUBSCRIPTION_EXTENDED'
   | 'SUBSCRIPTION_EXPIRING'
   | 'SUBSCRIPTION_EXPIRED'
   | 'NFT_REDEMPTION'
-  | 'PASSWORD_RESET';
+  | 'PASSWORD_RESET'
+  | 'MEMBERSHIP_STARTED'
+  | 'MEMBERSHIP_ENDED';
 
 export const NotificationEvent = t.union([
   t.literal('SUBSCRIPTION_CREATED'),
@@ -4251,6 +4473,8 @@ export const NotificationEvent = t.union([
   t.literal('SUBSCRIPTION_EXPIRED'),
   t.literal('NFT_REDEMPTION'),
   t.literal('PASSWORD_RESET'),
+  t.literal('MEMBERSHIP_STARTED'),
+  t.literal('MEMBERSHIP_ENDED'),
 ]);
 
 export type NotificationEventPayload =
@@ -4259,7 +4483,9 @@ export type NotificationEventPayload =
   | t.TypeOf<typeof SubscriptionExpiringEvent>
   | t.TypeOf<typeof SubscriptionExpiredEvent>
   | t.TypeOf<typeof NftRedemptionEvent>
-  | t.TypeOf<typeof PasswordResetEvent>;
+  | t.TypeOf<typeof PasswordResetEvent>
+  | t.TypeOf<typeof MembershipStartedEvent>
+  | t.TypeOf<typeof MembershipEndedEvent>;
 
 export const NotificationEventPayload = t.union([
   SubscriptionCreatedEvent,
@@ -4268,6 +4494,8 @@ export const NotificationEventPayload = t.union([
   SubscriptionExpiredEvent,
   NftRedemptionEvent,
   PasswordResetEvent,
+  MembershipStartedEvent,
+  MembershipEndedEvent,
 ]);
 
 export type WebhookAuthConfigType = 'BasicAuth' | 'ApiToken' | 'OAuth2' | 'Headers';
@@ -4500,39 +4728,79 @@ export const TokenCheckoutItem = t.exact(
   ]),
 );
 
-export interface CreatePaymentIntentBody {
-  /** Payment id generated on the frontend to help keep track of this checkout between frontend and api */
-  paymentId: t.TypeOf<typeof UUIDFromString>;
+export interface PaymentIntent {
+  id: string;
+  clientSecret: string;
+  metadata?: Record<string, string>;
+}
+
+export const PaymentIntent = t.exact(
+  t.intersection([
+    t.type({
+      id: t.string,
+      clientSecret: t.string,
+    }),
+    t.partial({
+      metadata: t.record(t.string, t.string),
+    }),
+  ]),
+);
+
+export interface PaymentIntentMetadata {
+  env: string;
   /** Storefront the tokens belong to */
   storefrontId: t.TypeOf<typeof UUIDFromString>;
   /** The address of the tokens receiver */
   receiverAddress: t.TypeOf<typeof Address>;
   checkoutCart: Array<t.TypeOf<typeof TokenCheckoutItem>>;
-  env: string;
 }
 
-export const CreatePaymentIntentBody = t.exact(
+export const PaymentIntentMetadata = t.exact(
   t.type({
-    /** Payment id generated on the frontend to help keep track of this checkout between frontend and api */
-    paymentId: UUIDFromString,
+    env: t.string,
     /** Storefront the tokens belong to */
     storefrontId: UUIDFromString,
     /** The address of the tokens receiver */
     receiverAddress: Address,
     checkoutCart: t.array(TokenCheckoutItem),
-    env: t.string,
   }),
 );
 
-export interface CreatePaymentIntentResponse {
-  clientSecret: string;
+export type PendingNftIssuancesStatus = 'complete' | 'failed' | 'pending' | 'processing' | 'refunded';
+
+export const PendingNftIssuancesStatus = t.union([
+  t.literal('complete'),
+  t.literal('failed'),
+  t.literal('pending'),
+  t.literal('processing'),
+  t.literal('refunded'),
+]);
+
+export interface StripeIssuanceStatus {
+  eventStatus: t.TypeOf<typeof PendingNftIssuancesStatus>;
+  quantityIssued: number;
+  quantityToIssue: number;
+  reason?: string | null;
+  tokenId?: string | null;
 }
 
-export const CreatePaymentIntentResponse = t.exact(
-  t.type({
-    clientSecret: t.string,
-  }),
+export const StripeIssuanceStatus = t.exact(
+  t.intersection([
+    t.type({
+      eventStatus: PendingNftIssuancesStatus,
+      quantityIssued: t.number,
+      quantityToIssue: t.number,
+    }),
+    t.partial({
+      reason: t.union([t.string, t.null]),
+      tokenId: t.union([t.string, t.null]),
+    }),
+  ]),
 );
+
+export type StripeIssuanceStatusResponse = Array<t.TypeOf<typeof StripeIssuanceStatus>>;
+
+export const StripeIssuanceStatusResponse = t.array(StripeIssuanceStatus);
 
 export const ChainTypeEnum = { mainnet: 'mainnet', testnet: 'testnet', local: 'local' } as const;
 export const MarketplaceEnum = { OPENSEA: 'opensea', BLUR: 'blur' } as const;
@@ -4597,6 +4865,13 @@ export const TokenDisplayTypeEnum = {
   NUMBER: 'number',
   DATE: 'date',
 } as const;
+export const ReportsKindEnum = {
+  AllTokens: 'AllTokens',
+  EligibleEmailAddresses: 'EligibleEmailAddresses',
+  EligibleDiscordUserIds: 'EligibleDiscordUserIds',
+} as const;
+export const IntegrationKindEnum = { DISCORD: 'DISCORD', WEBHOOK: 'WEBHOOK' } as const;
+export const MembershipListStatusEnum = { ACTIVE: 'ACTIVE', INACTIVE: 'INACTIVE' } as const;
 export const ImportCollectionStatusEnum = {
   PENDING: 'Pending',
   IN_PROGRESS: 'In Progress',
@@ -4704,16 +4979,10 @@ export const BeehiveRoutingTagEnum = {
   WEBHOOKS: 'webhooks',
   STRIPEPRODUCTSYNC: 'stripeproductsync',
   ROYALTIES_STATS: 'royaltiesstats',
+  STRIPERECEIVER: 'stripereceiver',
 } as const;
 export const SegmentUserTypeEnum = { creator: 'creator', collector: 'collector' } as const;
 export const CorrespondenceTypeEnum = { NEWSLETTER: 'newsletter' } as const;
-export const ReportsKindEnum = {
-  AllTokens: 'AllTokens',
-  EligibleEmailAddresses: 'EligibleEmailAddresses',
-  EligibleDiscordUserIds: 'EligibleDiscordUserIds',
-} as const;
-export const IntegrationKindEnum = { DISCORD: 'DISCORD', WEBHOOK: 'WEBHOOK' } as const;
-export const MembershipListStatusEnum = { ACTIVE: 'ACTIVE', INACTIVE: 'INACTIVE' } as const;
 export const NotificationEventEnum = {
   SUBSCRIPTION_CREATED: 'SUBSCRIPTION_CREATED',
   SUBSCRIPTION_EXTENDED: 'SUBSCRIPTION_EXTENDED',
@@ -4721,12 +4990,21 @@ export const NotificationEventEnum = {
   SUBSCRIPTION_EXPIRED: 'SUBSCRIPTION_EXPIRED',
   NFT_REDEMPTION: 'NFT_REDEMPTION',
   PASSWORD_RESET: 'PASSWORD_RESET',
+  MEMBERSHIP_STARTED: 'MEMBERSHIP_STARTED',
+  MEMBERSHIP_ENDED: 'MEMBERSHIP_ENDED',
 } as const;
 export const WebhookAuthConfigTypeEnum = {
   BASIC: 'BasicAuth',
   API_TOKEN: 'ApiToken',
   OAUTH2: 'OAuth2',
   HEADERS: 'Headers',
+} as const;
+export const PendingNftIssuancesStatusEnum = {
+  complete: 'complete',
+  failed: 'failed',
+  pending: 'pending',
+  processing: 'processing',
+  refunded: 'refunded',
 } as const;
 /*API Path Metadata*/
 export const pathMeta = {
@@ -7628,8 +7906,8 @@ export const pathMeta = {
     ),
     responseSchema: t.string,
   },
-  getMembershipsOnStorefront: {
-    operationId: 'getMembershipsOnStorefront',
+  getStorefrontMembershipLists: {
+    operationId: 'getStorefrontMembershipLists',
     url: '/storefronts/storefront/:storefrontId/memberships',
     method: 'get',
     category: 'Storefronts',
@@ -7660,6 +7938,31 @@ export const pathMeta = {
       }),
     ),
     responseSchema: StorefrontMemberships,
+  },
+  updateStorefrontMembershipListDisplayOrder: {
+    operationId: 'updateStorefrontMembershipListDisplayOrder',
+    url: '/storefronts/lists/display-order',
+    method: 'put',
+    category: 'Storefronts',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: false,
+    hasBody: true,
+    isBodyFormData: false,
+    hasBinaryResponse: false,
+    paramsSchema: t.null,
+    querySchema: t.null,
+    bodySchema: UpdateStorefrontMembershipListDisplayOrderRequest,
+    hasRequest: true,
+    hasResponse: false,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        body: UpdateStorefrontMembershipListDisplayOrderRequest,
+      }),
+    ),
+    responseSchema: t.null,
   },
   getSubscriptionsByOrganization: {
     operationId: 'getSubscriptionsByOrganization',
@@ -9467,6 +9770,175 @@ export const pathMeta = {
     ),
     responseSchema: CorrespondenceList,
   },
+  testDiscordConnection: {
+    operationId: 'testDiscordConnection',
+    url: '/organization/storefronts/:storefrontId/discord-connection/test',
+    method: 'post',
+    category: 'Organizations',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: false,
+    isBodyFormData: false,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        storefrontId: UUIDFromString,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
+    responseSchema: JobStatus,
+  },
+  createGasWallet: {
+    operationId: 'createGasWallet',
+    url: '/organization/:organizationId/create-gas-wallet/',
+    method: 'post',
+    category: 'Organizations',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: false,
+    isBodyFormData: false,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        organizationId: UUIDFromString,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+      }),
+    ),
+    responseSchema: CreateGasWalletResponse,
+  },
+  connectStripeAccount: {
+    operationId: 'connectStripeAccount',
+    url: '/organization/:organizationId/connect-stripe-account/',
+    method: 'post',
+    category: 'Organizations',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: true,
+    isBodyFormData: false,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        organizationId: UUIDFromString,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: ConnectStripeAccountBody,
+    hasRequest: true,
+    hasResponse: true,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+        body: ConnectStripeAccountBody,
+      }),
+    ),
+    responseSchema: Organization,
+  },
+  disconnectStripeAccount: {
+    operationId: 'disconnectStripeAccount',
+    url: '/organization/:organizationId/disconnect-stripe-account/',
+    method: 'post',
+    category: 'Organizations',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: true,
+    isBodyFormData: false,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        organizationId: UUIDFromString,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: DisconnectStripeAccountBody,
+    hasRequest: true,
+    hasResponse: true,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+          }),
+        ),
+        body: DisconnectStripeAccountBody,
+      }),
+    ),
+    responseSchema: Organization,
+  },
+  getStripeAccountName: {
+    operationId: 'getStripeAccountName',
+    url: '/organization/:organizationId/get-stripe-account-name/:stripeId',
+    method: 'get',
+    category: 'Organizations',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: false,
+    isBodyFormData: false,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        organizationId: UUIDFromString,
+        stripeId: t.string,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['organizationId', 'stripeId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            organizationId: UUIDFromString,
+            stripeId: t.string,
+          }),
+        ),
+      }),
+    ),
+    responseSchema: t.string,
+  },
   getStorefrontsMembershipListOverview: {
     operationId: 'getStorefrontsMembershipListOverview',
     url: '/memberships/organizations/:organizationId',
@@ -9668,8 +10140,8 @@ export const pathMeta = {
     ),
     responseSchema: t.string,
   },
-  getAvailableReportKinds: {
-    operationId: 'getAvailableReportKinds',
+  getMembershipListAvailableReportKinds: {
+    operationId: 'getMembershipListAvailableReportKinds',
     url: '/memberships/lists/reports',
     method: 'post',
     category: 'Memberships',
@@ -9693,11 +10165,11 @@ export const pathMeta = {
     ),
     responseSchema: AvailableReports,
   },
-  testDiscordConnection: {
-    operationId: 'testDiscordConnection',
-    url: '/organization/storefronts/:storefrontId/discord-connection/test',
-    method: 'post',
-    category: 'Organizations',
+  getMembershipListUserDiscordStatus: {
+    operationId: 'getMembershipListUserDiscordStatus',
+    url: '/memberships/lists/:listId/user-discord-status',
+    method: 'get',
+    category: 'Memberships',
     security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
     hasQuery: false,
     hasParams: true,
@@ -9706,7 +10178,7 @@ export const pathMeta = {
     hasBinaryResponse: false,
     paramsSchema: t.exact(
       t.type({
-        storefrontId: UUIDFromString,
+        listId: IntegerToString,
       }),
     ),
     querySchema: t.null,
@@ -9714,118 +10186,17 @@ export const pathMeta = {
     hasRequest: true,
     hasResponse: true,
     queryParameters: new Set([]),
-    pathParameters: new Set(['storefrontId']),
+    pathParameters: new Set(['listId']),
     requestSchema: t.exact(
       t.type({
         parameters: t.exact(
           t.type({
-            storefrontId: UUIDFromString,
+            listId: IntegerToString,
           }),
         ),
       }),
     ),
-    responseSchema: JobStatus,
-  },
-  createGasWallet: {
-    operationId: 'createGasWallet',
-    url: '/organization/:organizationId/create-gas-wallet/',
-    method: 'post',
-    category: 'Organizations',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
-    hasQuery: false,
-    hasParams: true,
-    hasBody: false,
-    isBodyFormData: false,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
-      t.type({
-        organizationId: UUIDFromString,
-      }),
-    ),
-    querySchema: t.null,
-    bodySchema: t.null,
-    hasRequest: true,
-    hasResponse: true,
-    queryParameters: new Set([]),
-    pathParameters: new Set(['organizationId']),
-    requestSchema: t.exact(
-      t.type({
-        parameters: t.exact(
-          t.type({
-            organizationId: UUIDFromString,
-          }),
-        ),
-      }),
-    ),
-    responseSchema: CreateGasWalletResponse,
-  },
-  connectStripeAccount: {
-    operationId: 'connectStripeAccount',
-    url: '/organization/:organizationId/connect-stripe-account/',
-    method: 'post',
-    category: 'Organizations',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
-    hasQuery: false,
-    hasParams: true,
-    hasBody: true,
-    isBodyFormData: false,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
-      t.type({
-        organizationId: UUIDFromString,
-      }),
-    ),
-    querySchema: t.null,
-    bodySchema: ConnectStripeAccountBody,
-    hasRequest: true,
-    hasResponse: true,
-    queryParameters: new Set([]),
-    pathParameters: new Set(['organizationId']),
-    requestSchema: t.exact(
-      t.type({
-        parameters: t.exact(
-          t.type({
-            organizationId: UUIDFromString,
-          }),
-        ),
-        body: ConnectStripeAccountBody,
-      }),
-    ),
-    responseSchema: Organization,
-  },
-  disconnectStripeAccount: {
-    operationId: 'disconnectStripeAccount',
-    url: '/organization/:organizationId/disconnect-stripe-account/',
-    method: 'post',
-    category: 'Organizations',
-    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
-    hasQuery: false,
-    hasParams: true,
-    hasBody: true,
-    isBodyFormData: false,
-    hasBinaryResponse: false,
-    paramsSchema: t.exact(
-      t.type({
-        organizationId: UUIDFromString,
-      }),
-    ),
-    querySchema: t.null,
-    bodySchema: DisconnectStripeAccountBody,
-    hasRequest: true,
-    hasResponse: true,
-    queryParameters: new Set([]),
-    pathParameters: new Set(['organizationId']),
-    requestSchema: t.exact(
-      t.type({
-        parameters: t.exact(
-          t.type({
-            organizationId: UUIDFromString,
-          }),
-        ),
-        body: DisconnectStripeAccountBody,
-      }),
-    ),
-    responseSchema: Organization,
+    responseSchema: MembershipListUserDiscordStatusResponse,
   },
   getRedemptionsForToken: {
     operationId: 'getRedemptionsForToken',
@@ -10032,6 +10403,42 @@ export const pathMeta = {
     ),
     responseSchema: t.null,
   },
+  updatePublishedRedemptionConfiguration: {
+    operationId: 'updatePublishedRedemptionConfiguration',
+    url: '/redemptions/storefronts/:storefrontId/configuration/:configurationId/published',
+    method: 'put',
+    category: 'Redemptions',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: true,
+    isBodyFormData: false,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        storefrontId: UUIDFromString,
+        configurationId: UUIDFromString,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: EditPublishedRedemptionConfig,
+    hasRequest: true,
+    hasResponse: true,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId', 'configurationId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: UUIDFromString,
+            configurationId: UUIDFromString,
+          }),
+        ),
+        body: EditPublishedRedemptionConfig,
+      }),
+    ),
+    responseSchema: EditPublishedRedemptionConfig,
+  },
   publishRedemptionConfiguration: {
     operationId: 'publishRedemptionConfiguration',
     url: '/redemptions/storefronts/:storefrontId/configuration/:configurationId/publish',
@@ -10104,7 +10511,7 @@ export const pathMeta = {
   },
   createPaymentIntent: {
     operationId: 'createPaymentIntent',
-    url: '/stripe/create-payment-intent',
+    url: '/stripe/payment-intents',
     method: 'post',
     category: 'Stripe',
     security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
@@ -10115,17 +10522,105 @@ export const pathMeta = {
     hasBinaryResponse: false,
     paramsSchema: t.null,
     querySchema: t.null,
-    bodySchema: CreatePaymentIntentBody,
+    bodySchema: PaymentIntentMetadata,
     hasRequest: true,
     hasResponse: true,
     queryParameters: new Set([]),
     pathParameters: new Set([]),
     requestSchema: t.exact(
       t.type({
-        body: CreatePaymentIntentBody,
+        body: PaymentIntentMetadata,
       }),
     ),
-    responseSchema: CreatePaymentIntentResponse,
+    responseSchema: PaymentIntent,
+  },
+  updatePaymentIntent: {
+    operationId: 'updatePaymentIntent',
+    url: '/stripe/payment-intents/:paymentIntentId',
+    method: 'post',
+    category: 'Stripe',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: true,
+    isBodyFormData: false,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        paymentIntentId: t.string,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: PaymentIntentMetadata,
+    hasRequest: true,
+    hasResponse: true,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['paymentIntentId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            paymentIntentId: t.string,
+          }),
+        ),
+        body: PaymentIntentMetadata,
+      }),
+    ),
+    responseSchema: PaymentIntent,
+  },
+  stripeReceiver: {
+    operationId: 'stripeReceiver',
+    url: '/stripe/receiver',
+    method: 'post',
+    category: 'Stripe',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: false,
+    hasBody: false,
+    isBodyFormData: false,
+    hasBinaryResponse: false,
+    paramsSchema: t.null,
+    querySchema: t.null,
+    bodySchema: t.null,
+    hasRequest: false,
+    hasResponse: false,
+    queryParameters: new Set([]),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(t.type({})),
+    responseSchema: t.null,
+  },
+  stripeIssuanceStatus: {
+    operationId: 'stripeIssuanceStatus',
+    url: '/stripe/issuance-status',
+    method: 'get',
+    category: 'Stripe',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: true,
+    hasParams: false,
+    hasBody: false,
+    isBodyFormData: false,
+    hasBinaryResponse: false,
+    paramsSchema: t.null,
+    querySchema: t.exact(
+      t.type({
+        paymentIntentId: t.string,
+      }),
+    ),
+    bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
+    queryParameters: new Set(['paymentIntentId']),
+    pathParameters: new Set([]),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            paymentIntentId: t.string,
+          }),
+        ),
+      }),
+    ),
+    responseSchema: StripeIssuanceStatusResponse,
   },
 } as const;
 
