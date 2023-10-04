@@ -33,9 +33,9 @@ export async function deployERC721(
   });
   const chainId = parse(AspenContractChainId, await signer.getChainId());
   const deployer = getCurrentDeployer(signer, chainId);
-  const tx = await deployer.deployAspenERC721Drop({name, symbol: name, contractURI});
+  const tx = await deployer.deployAspenERC721Drop({ name, symbol: name, contractURI: '' });
   const [{ contractAddress }] = await extractEvents(deployer, (f) => f.AspenInterfaceDeployed(), tx);
-  client.updateStorefront({body: { address: contractAddress, storefrontId: resp.id}}
+  client.updateStorefront({ body: { address: contractAddress, storefrontId: resp.id } });
   return { address: contractAddress, guid: resp.id };
   throw new Error(`Needs to be implemented against Aspen API`);
 }

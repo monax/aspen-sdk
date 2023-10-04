@@ -12,7 +12,7 @@
   "scripts": {
     "build": "tsc --build",
     "tsnode": "ts-node",
-    "flows": "pnpm tsnode flows.ts",
+    "flows": "pnpm tsnode flows.ts.todo",
     "react-test-contract": "pnpm tsnode react-test-contract.ts",
     "clear-state": "rm collection-info.json issuance-info.json"
   },
@@ -29,7 +29,8 @@
     "io-ts-types": "^0.5.19",
     "jose": "^4.11.1",
     "monocle-ts": "^2.3.13",
-    "newtype-ts": "^0.3.5"
+    "newtype-ts": "^0.3.5",
+    "viem": "^1.15.1"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",

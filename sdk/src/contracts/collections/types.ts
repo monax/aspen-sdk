@@ -10,7 +10,7 @@ import {
   Transport,
   WalletClient,
 } from 'viem';
-import { Prettify, UnionOmit } from 'viem/dist/types/types/utils';
+import { Prettify, UnionOmit } from 'viem/_types/types/utils';
 import { AllowlistStatus } from '../index';
 import type { CollectionMetaImageType, CollectionMetaLinkType } from './constants';
 import { SdkError } from './errors';

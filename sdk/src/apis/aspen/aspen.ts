@@ -166,6 +166,33 @@ export const EthereumTransactionTemplate = t.exact(
   }),
 );
 
+export interface ReservoirTokenSetFilter {
+  tokenSetId: string;
+}
+
+export const ReservoirTokenSetFilter = t.exact(
+  t.type({
+    tokenSetId: t.string,
+  }),
+);
+
+export interface ReservoirCollectionsSetFilter {
+  collectionsSetId: string;
+}
+
+export const ReservoirCollectionsSetFilter = t.exact(
+  t.type({
+    collectionsSetId: t.string,
+  }),
+);
+
+export type ReservoirFilter =
+  | t.TypeOf<typeof ReservoirTokenSetFilter>
+  | t.TypeOf<typeof ReservoirCollectionsSetFilter>
+  | null;
+
+export const ReservoirFilter = t.union([ReservoirTokenSetFilter, ReservoirCollectionsSetFilter, t.null]);
+
 /** IPFS hash for the file */
 export type IpfsHash = string;
 
@@ -1286,6 +1313,8 @@ export interface MembershipListConfig {
   discord?: {
     /** Benefit tag text to display */
     benefitTagText?: string | null;
+    /** Benefit description text to display */
+    benefitDescriptionText?: string | null;
     /** Text to display when the user is eligible for the membership but has not yet been added to the discord server */
     membershipPendingText?: string | null;
     /** Text to display when the user is eligible for the membership and has been added to the discord server */
@@ -1319,6 +1348,8 @@ export const MembershipListConfig = t.exact(
         t.partial({
           /** Benefit tag text to display */
           benefitTagText: t.union([t.string, t.null]),
+          /** Benefit description text to display */
+          benefitDescriptionText: t.union([t.string, t.null]),
           /** Text to display when the user is eligible for the membership but has not yet been added to the discord server */
           membershipPendingText: t.union([t.string, t.null]),
           /** Text to display when the user is eligible for the membership and has been added to the discord server */
@@ -1711,13 +1742,52 @@ export const AdSpaceVideo = t.exact(
   }),
 );
 
-export type AdSpaceTemplates = 'image' | 'video';
+export interface AdSpaceStorefrontLinks {
+  type: 'storefrontLinks';
+  config: {
+    title: string;
+    description?: string | null;
+    storefronts: Array<{
+      storefrontId: t.TypeOf<typeof UUIDFromString>;
+      cta: string;
+    }>;
+  };
+}
 
-export const AdSpaceTemplates = t.union([t.literal('image'), t.literal('video')]);
+export const AdSpaceStorefrontLinks = t.exact(
+  t.type({
+    type: t.literal('storefrontLinks'),
+    config: t.exact(
+      t.intersection([
+        t.type({
+          title: t.string,
+          storefronts: t.array(
+            t.exact(
+              t.type({
+                storefrontId: UUIDFromString,
+                cta: t.string,
+              }),
+            ),
+          ),
+        }),
+        t.partial({
+          description: t.union([t.string, t.null]),
+        }),
+      ]),
+    ),
+  }),
+);
 
-export type AdSpaceContent = t.TypeOf<typeof AdSpaceImage> | t.TypeOf<typeof AdSpaceVideo>;
+export type AdSpaceTemplates = 'image' | 'video' | 'storefrontLinks';
 
-export const AdSpaceContent = t.union([AdSpaceImage, AdSpaceVideo]);
+export const AdSpaceTemplates = t.union([t.literal('image'), t.literal('video'), t.literal('storefrontLinks')]);
+
+export type AdSpaceContent =
+  | t.TypeOf<typeof AdSpaceImage>
+  | t.TypeOf<typeof AdSpaceVideo>
+  | t.TypeOf<typeof AdSpaceStorefrontLinks>;
+
+export const AdSpaceContent = t.union([AdSpaceImage, AdSpaceVideo, AdSpaceStorefrontLinks]);
 
 export type AdSpaces = Array<t.TypeOf<typeof AdSpaceContent>>;
 
@@ -2060,6 +2130,7 @@ export interface Storefront {
   createdAt: t.TypeOf<typeof DateFromISODateString>;
   importInfo: t.TypeOf<typeof ImportCollectionInfo> | null;
   claimInvoiceId: t.TypeOf<typeof IntegerToString> | null;
+  emailReceiptDescription: string | null;
   chainId: t.TypeOf<typeof ChainIdToString> | null;
   /** The contract address of the collection; will be null until it is deployed */
   address: t.TypeOf<typeof Address> | null;
@@ -2129,6 +2200,7 @@ export const Storefront = t.exact(
     createdAt: DateFromISODateString,
     importInfo: t.union([ImportCollectionInfo, t.null]),
     claimInvoiceId: t.union([IntegerToString, t.null]),
+    emailReceiptDescription: t.union([t.string, t.null]),
     chainId: t.union([ChainIdToString, t.null]),
     /** The contract address of the collection; will be null until it is deployed */
     address: t.union([Address, t.null]),
@@ -2198,6 +2270,7 @@ export interface DeployedStorefront {
   createdAt: t.TypeOf<typeof DateFromISODateString>;
   importInfo: t.TypeOf<typeof ImportCollectionInfo> | null;
   claimInvoiceId: t.TypeOf<typeof IntegerToString> | null;
+  emailReceiptDescription: string | null;
   chainId: t.TypeOf<typeof ChainIdToString>;
   /** The contract address of the collection; will be null until it is deployed */
   address: t.TypeOf<typeof Address>;
@@ -2267,6 +2340,7 @@ export const DeployedStorefront = t.exact(
     createdAt: DateFromISODateString,
     importInfo: t.union([ImportCollectionInfo, t.null]),
     claimInvoiceId: t.union([IntegerToString, t.null]),
+    emailReceiptDescription: t.union([t.string, t.null]),
     chainId: ChainIdToString,
     /** The contract address of the collection; will be null until it is deployed */
     address: Address,
@@ -3846,9 +3920,9 @@ export const RedeemSubscriptionVoucherBody = t.exact(
   }),
 );
 
-export type RedeemSubscriptionVoucherResponse = string | null;
+export type RedeemSubscriptionVoucherResponse = string;
 
-export const RedeemSubscriptionVoucherResponse = t.union([t.string, t.null]);
+export const RedeemSubscriptionVoucherResponse = t.string;
 
 export interface GetSubscriptionSubscriberResponse {
   expiry: t.TypeOf<typeof DateFromISODateString> | null;
@@ -3993,6 +4067,16 @@ export interface GetUserSubscriptionInvoicesResponse {
 export const GetUserSubscriptionInvoicesResponse = t.exact(
   t.type({
     invoices: t.array(SubscriptionInvoice),
+  }),
+);
+
+export interface GetSubscriptionByVoucherCodeResponse {
+  subscriptionId: t.TypeOf<typeof UUIDFromString>;
+}
+
+export const GetSubscriptionByVoucherCodeResponse = t.exact(
+  t.type({
+    subscriptionId: UUIDFromString,
   }),
 );
 
@@ -4752,18 +4836,26 @@ export interface PaymentIntentMetadata {
   storefrontId: t.TypeOf<typeof UUIDFromString>;
   /** The address of the tokens receiver */
   receiverAddress: t.TypeOf<typeof Address>;
+  /** The email of the purchaser */
+  email?: string;
   checkoutCart: Array<t.TypeOf<typeof TokenCheckoutItem>>;
 }
 
 export const PaymentIntentMetadata = t.exact(
-  t.type({
-    env: t.string,
-    /** Storefront the tokens belong to */
-    storefrontId: UUIDFromString,
-    /** The address of the tokens receiver */
-    receiverAddress: Address,
-    checkoutCart: t.array(TokenCheckoutItem),
-  }),
+  t.intersection([
+    t.type({
+      env: t.string,
+      /** Storefront the tokens belong to */
+      storefrontId: UUIDFromString,
+      /** The address of the tokens receiver */
+      receiverAddress: Address,
+      checkoutCart: t.array(TokenCheckoutItem),
+    }),
+    t.partial({
+      /** The email of the purchaser */
+      email: t.string,
+    }),
+  ]),
 );
 
 export type PendingNftIssuancesStatus = 'complete' | 'failed' | 'pending' | 'processing' | 'refunded';
@@ -4902,7 +4994,7 @@ export const StorefrontMediaTypeEnum = {
 export const StorefrontFreeDistributionModeEnum = { NONE: 'None', TOKENPERPAD: 'TokenPerPad' } as const;
 export const StorefrontCurrencyOptionEnum = { CRYPTO: 'Crypto', FIAT: 'Fiat', FIATANDCRYPTO: 'FiatAndCrypto' } as const;
 export const StorefrontContractTypeEnum = { ERC721: 'ERC721', ERC1155: 'ERC1155' } as const;
-export const AdSpaceTemplatesEnum = { image: 'image', video: 'video' } as const;
+export const AdSpaceTemplatesEnum = { image: 'image', video: 'video', storefrontLinks: 'storefrontLinks' } as const;
 export const StorefrontMediaFileTypeEnum = {
   logoImage: 'logoImage',
   bannerImage: 'bannerImage',
@@ -7634,6 +7726,39 @@ export const pathMeta = {
     ),
     responseSchema: PublicStorefront,
   },
+  getStorefrontReservoirFilter: {
+    operationId: 'getStorefrontReservoirFilter',
+    url: '/storefronts/storefront/public/:storefrontId/reservoir-filter',
+    method: 'get',
+    category: 'Storefronts',
+    security: [{ OptionalAuth: [] }],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: false,
+    isBodyFormData: false,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        storefrontId: t.string,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['storefrontId']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            storefrontId: t.string,
+          }),
+        ),
+      }),
+    ),
+    responseSchema: ReservoirFilter,
+  },
   getStorefrontPublicChainIdAndAddress: {
     operationId: 'getStorefrontPublicChainIdAndAddress',
     url: '/storefronts/storefront/public/chain/:chainId/address/:address',
@@ -8692,6 +8817,39 @@ export const pathMeta = {
       }),
     ),
     responseSchema: Vouchers,
+  },
+  getSubscriptionByVoucherCode: {
+    operationId: 'getSubscriptionByVoucherCode',
+    url: '/subscriptions/subscription/by-voucher/:voucherCode',
+    method: 'get',
+    category: 'Subscription',
+    security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+    hasQuery: false,
+    hasParams: true,
+    hasBody: false,
+    isBodyFormData: false,
+    hasBinaryResponse: false,
+    paramsSchema: t.exact(
+      t.type({
+        voucherCode: t.string,
+      }),
+    ),
+    querySchema: t.null,
+    bodySchema: t.null,
+    hasRequest: true,
+    hasResponse: true,
+    queryParameters: new Set([]),
+    pathParameters: new Set(['voucherCode']),
+    requestSchema: t.exact(
+      t.type({
+        parameters: t.exact(
+          t.type({
+            voucherCode: t.string,
+          }),
+        ),
+      }),
+    ),
+    responseSchema: GetSubscriptionByVoucherCodeResponse,
   },
   createTokenset: {
     operationId: 'createTokenset',

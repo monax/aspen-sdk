@@ -48,7 +48,7 @@
     "print:version": "../scripts/version.sh"
   },
   "dependencies": {
-    "@monaxlabs/phloem": "0.16.36",
+    "@monaxlabs/phloem": "0.16.52",
     "ethers": "^5.7.2",
     "axios": "^1.2.2",
     "ts-deepmerge": "^6.2.0",
@@ -64,11 +64,11 @@
     "newtype-ts": "^0.3.5",
     "oidc-client-ts": "^2.2.4",
     "utility-types": "^3.10.0",
-    "viem": "^1.6.0"
+    "viem": "^1.15.1"
   },
   "devDependencies": {
-    "@monaxlabs/spec": "0.16.36",
-    "@monaxlabs/cambium": "0.16.36",
+    "@monaxlabs/spec": "0.16.52",
+    "@monaxlabs/cambium": "0.16.52",
     "@openzeppelin/contracts": "^4.8.1",
     "typescript": "^5.2.2",
     "@types/node": "^18.11.18",
