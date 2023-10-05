@@ -1,9 +1,8 @@
 import { Address, Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { ZERO_ADDRESS } from '../..';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
+import { Signer, WriteParameters, ZERO_ADDRESS } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -20,11 +19,11 @@ const BatchIssueWithTokenUriInterfaces = Object.values(BatchIssueWithTokenUriPar
 type BatchIssueWithTokenUriInterfaces = (typeof BatchIssueWithTokenUriInterfaces)[number];
 
 export type BatchIssueWithTokenUriCallArgs = [
-  signer: Signerish,
+  walletClient: Signer,
   args: BatchIssueWithTokenUriArgs,
-  overrides?: WriteOverrides,
+  params?: WriteParameters,
 ];
-export type BatchIssueWithTokenUriResponse = ContractTransaction;
+export type BatchIssueWithTokenUriResponse = GetTransactionReceiptReturnType;
 
 export type BatchIssueWithTokenUriArgs = {
   receivers: Addressish[];
@@ -48,54 +47,58 @@ export class BatchIssueWithTokenUri extends ContractFunction<
   }
 
   async batchIssueWithTokenUri(
-    signer: Signerish,
+    walletClient: Signer,
     args: BatchIssueWithTokenUriArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<BatchIssueWithTokenUriResponse> {
     this.validateArgs(args);
     const nft = this.partition('nft');
     const wallets = await Promise.all(args.receivers.map((receiver) => asAddress(receiver)));
 
     try {
-      const tx = await nft.connectWith(signer).batchIssueWithTokenURI(wallets, args.tokenURIs, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(nft)).simulate.batchIssueWithTokenURI(
+        [wallets as Hex[], args.tokenURIs],
+        params,
+      );
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
   }
 
-  async estimateGas(
-    signer: Signerish,
-    args: BatchIssueWithTokenUriArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+  async estimateGas(walletClient: Signer, args: BatchIssueWithTokenUriArgs, params?: WriteParameters): Promise<bigint> {
     this.validateArgs(args);
     const nft = this.partition('nft');
     const wallets = await Promise.all(args.receivers.map((receiver) => asAddress(receiver)));
 
     try {
-      const estimate = await nft
-        .connectWith(signer)
-        .estimateGas.batchIssueWithTokenURI(wallets, args.tokenURIs, overrides);
+      const estimate = await this.reader(this.abi(nft)).estimateGas.batchIssueWithTokenURI(
+        [wallets as Hex[], args.tokenURIs],
+        {
+          account: walletClient.account,
+          ...params,
+        },
+      );
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }
   }
 
-  async populateTransaction(
-    args: BatchIssueWithTokenUriArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction(args: BatchIssueWithTokenUriArgs, params?: WriteParameters): Promise<string> {
     this.validateArgs(args);
     const nft = this.partition('nft');
     const wallets = await Promise.all(args.receivers.map((receiver) => asAddress(receiver)));
 
     try {
-      const tx = await nft
-        .connectReadOnly()
-        .populateTransaction.batchIssueWithTokenURI(wallets, args.tokenURIs, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(nft)).simulate.batchIssueWithTokenURI(
+        [wallets as Hex[], args.tokenURIs],
+        params,
+      );
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
     }

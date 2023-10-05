@@ -1,11 +1,11 @@
 import { Address, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { BatchIssueArgs, ZERO_ADDRESS } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
+import type { Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const BatchIssueWithinPhaseFunctions = {
   nft: 'batchIssueWithinPhase(address[],uint256[])[]',
@@ -21,8 +21,8 @@ type BatchIssueWithinPhasePartitions = typeof BatchIssueWithinPhasePartitions;
 const BatchIssueWithinPhaseInterfaces = Object.values(BatchIssueWithinPhasePartitions).flat();
 type BatchIssueWithinPhaseInterfaces = (typeof BatchIssueWithinPhaseInterfaces)[number];
 
-export type BatchIssueWithinPhaseCallArgs = [signer: Signerish, args: BatchIssueArgs, overrides?: WriteOverrides];
-export type BatchIssueWithinPhaseResponse = ContractTransaction;
+export type BatchIssueWithinPhaseCallArgs = [walletClient: Signer, args: BatchIssueArgs, params?: WriteParameters];
+export type BatchIssueWithinPhaseResponse = GetTransactionReceiptReturnType;
 
 export class BatchIssueWithinPhase extends ContractFunction<
   BatchIssueWithinPhaseInterfaces,
@@ -41,77 +41,91 @@ export class BatchIssueWithinPhase extends ContractFunction<
   }
 
   async batchIssueWithinPhase(
-    signer: Signerish,
+    walletClient: Signer,
     args: BatchIssueArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<BatchIssueWithinPhaseResponse> {
     this.validateArgs(args);
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.batchIssueWithinPhaseERC1155(signer, args as Required<BatchIssueArgs>, overrides);
+        return await this.batchIssueWithinPhaseERC1155(walletClient, args as Required<BatchIssueArgs>, params);
       case 'ERC721':
-        return await this.batchIssueWithinPhaseERC721(signer, args, overrides);
+        return await this.batchIssueWithinPhaseERC721(walletClient, args, params);
     }
   }
 
   protected async batchIssueWithinPhaseERC1155(
-    signer: Signerish,
+    walletClient: Signer,
     { receivers, tokenIds, quantities }: Required<BatchIssueArgs>,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
-    const tokenIdsBN = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
+    params?: WriteParameters,
+  ): Promise<BatchIssueWithinPhaseResponse> {
     const sft = this.partition('sft');
     const wallets = await Promise.all(receivers.map((receiver) => asAddress(receiver)));
 
     try {
-      const tx = await sft.connectWith(signer).batchIssueWithinPhase(wallets, tokenIdsBN, quantities, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(sft)).simulate.batchIssueWithinPhase(
+        [wallets as Hex[], tokenIds, quantities],
+        params,
+      );
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receivers, tokenIds, quantities });
     }
   }
 
   protected async batchIssueWithinPhaseERC721(
-    signer: Signerish,
+    walletClient: Signer,
     { receivers, quantities }: BatchIssueArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<BatchIssueWithinPhaseResponse> {
     const nft = this.partition('nft');
     const wallets = await Promise.all(receivers.map((receiver) => asAddress(receiver)));
 
     try {
-      const tx = await nft.connectWith(signer).batchIssueWithinPhase(wallets, quantities, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(nft)).simulate.batchIssueWithinPhase(
+        [wallets as Hex[], quantities],
+        params,
+      );
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receivers, quantities });
     }
   }
 
-  async estimateGas(signer: Signerish, args: BatchIssueArgs, overrides: WriteOverrides = {}): Promise<BigNumber> {
+  async estimateGas(walletClient: Signer, args: BatchIssueArgs, params?: WriteParameters): Promise<bigint> {
     this.validateArgs(args);
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.estimateGasERC1155(signer, args as Required<BatchIssueArgs>, overrides);
+        return await this.estimateGasERC1155(walletClient, args as Required<BatchIssueArgs>, params);
       case 'ERC721':
-        return await this.estimateGasERC721(signer, args, overrides);
+        return await this.estimateGasERC721(walletClient, args, params);
     }
   }
 
   protected async estimateGasERC1155(
-    signer: Signerish,
+    walletClient: Signer,
     { receivers, tokenIds, quantities }: Required<BatchIssueArgs>,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
-    const tokenIdsBN = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const sft = this.partition('sft');
     const wallets = await Promise.all(receivers.map((receiver) => asAddress(receiver)));
 
     try {
-      const estimate = await sft
-        .connectWith(signer)
-        .estimateGas.batchIssueWithinPhase(wallets, tokenIdsBN, quantities, overrides);
+      const estimate = await this.reader(this.abi(sft)).estimateGas.batchIssueWithinPhase(
+        [wallets as Hex[], tokenIds, quantities],
+        {
+          account: walletClient.account,
+          ...params,
+        },
+      );
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receivers, tokenIds, quantities });
@@ -119,45 +133,51 @@ export class BatchIssueWithinPhase extends ContractFunction<
   }
 
   protected async estimateGasERC721(
-    signer: Signerish,
+    walletClient: Signer,
     { receivers, quantities }: BatchIssueArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const nft = this.partition('nft');
     const wallets = await Promise.all(receivers.map((receiver) => asAddress(receiver)));
 
     try {
-      const estimate = await nft.connectWith(signer).estimateGas.batchIssueWithinPhase(wallets, quantities, overrides);
+      const estimate = await this.reader(this.abi(nft)).estimateGas.batchIssueWithinPhase(
+        [wallets as Hex[], quantities],
+        {
+          account: walletClient.account,
+          ...params,
+        },
+      );
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receivers, quantities });
     }
   }
 
-  async populateTransaction(args: BatchIssueArgs, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
+  async populateTransaction(args: BatchIssueArgs, params?: WriteParameters): Promise<string> {
     this.validateArgs(args);
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.populateTransactionERC1155(args as Required<BatchIssueArgs>, overrides);
+        return await this.populateTransactionERC1155(args as Required<BatchIssueArgs>, params);
       case 'ERC721':
-        return await this.populateTransactionERC721(args, overrides);
+        return await this.populateTransactionERC721(args, params);
     }
   }
 
   protected async populateTransactionERC1155(
     { receivers, tokenIds, quantities }: Required<BatchIssueArgs>,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
-    const tokenIdsBN = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
+    params?: WriteParameters,
+  ): Promise<string> {
     const sft = this.partition('sft');
     const wallets = await Promise.all(receivers.map((receiver) => asAddress(receiver)));
 
     try {
-      const tx = await sft
-        .connectReadOnly()
-        .populateTransaction.batchIssueWithinPhase(wallets, tokenIdsBN, quantities, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(sft)).simulate.batchIssueWithinPhase(
+        [wallets as Hex[], tokenIds, quantities],
+        params,
+      );
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receivers, tokenIds, quantities });
     }
@@ -165,14 +185,17 @@ export class BatchIssueWithinPhase extends ContractFunction<
 
   protected async populateTransactionERC721(
     { receivers, quantities }: BatchIssueArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+    params?: WriteParameters,
+  ): Promise<string> {
     const nft = this.partition('nft');
     const wallets = await Promise.all(receivers.map((receiver) => asAddress(receiver)));
 
     try {
-      const tx = await nft.connectReadOnly().populateTransaction.batchIssueWithinPhase(wallets, quantities, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(nft)).simulate.batchIssueWithinPhase(
+        [wallets as Hex[], quantities],
+        params,
+      );
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receivers, quantities });
     }

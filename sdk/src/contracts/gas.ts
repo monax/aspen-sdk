@@ -1,64 +1,24 @@
-import { Chain } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, ethers } from 'ethers';
+import { Chain, parseGwei, PublicClient, Transport } from 'viem';
+import { polygon, polygonMumbai } from 'viem/chains';
 
 export type GasStrategy = {
-  maxPriorityFeePerGas?: BigNumber;
-  maxFeePerGas?: BigNumber;
+  maxPriorityFeePerGas?: bigint;
+  maxFeePerGas?: bigint;
   gasLimit?: number;
 };
 
-const simpleStrategy: number[] = [Chain.Mumbai, Chain.Polygon];
+const simpleStrategy: Chain[] = [polygonMumbai, polygon];
 
-const priorityFee = ethers.utils.parseUnits('10', 'gwei');
+const priorityFee = parseGwei('10');
 
-export async function getGasStrategy(provider: ethers.providers.Provider): Promise<GasStrategy> {
-  const { chainId } = await provider.getNetwork();
-  if (simpleStrategy.includes(chainId)) {
+export async function getGasStrategy(publicClient: PublicClient<Transport, Chain>): Promise<GasStrategy> {
+  if (simpleStrategy.includes(publicClient.chain)) {
     const maxPriorityFeePerGas = priorityFee;
-    const block = await provider.getBlock('latest');
-    const maxFeePerGas = block.baseFeePerGas?.add(maxPriorityFeePerGas).sub(1);
+    const block = await publicClient.getBlock({
+      blockTag: 'latest',
+    });
+    const maxFeePerGas = block.baseFeePerGas ?? BigInt(0) + maxPriorityFeePerGas - BigInt(1);
     return { maxPriorityFeePerGas, maxFeePerGas };
   }
   return {};
-}
-
-export async function signerWithGasStrategy<T extends ethers.Signer>(signer: T): Promise<T> {
-  const provider = signer.provider;
-  if (!provider) {
-    return signer;
-  }
-  return extendWithPrototype(
-    {
-      provider: await providerWithGasStrategy(provider),
-    },
-    signer,
-  );
-}
-
-export async function providerWithGasStrategy(provider: ethers.providers.Provider): Promise<ethers.providers.Provider> {
-  const gasStrategy = await getGasStrategy(provider);
-  const feeData = await provider.getFeeData();
-  return extendWithPrototype(
-    {
-      getFeeData: async () => {
-        console.error(`Using signer with custom gas strategy`);
-        return {
-          ...feeData,
-          ...gasStrategy,
-        };
-      },
-    },
-    provider,
-  );
-}
-
-// Cannot get type inference to correctly infer keys from the Provider type (inference over class types seem flaky
-// in general), so Object works here
-// eslint-disable-next-line @typescript-eslint/ban-types
-function extendWithPrototype<TObj, TProto extends Object>(
-  obj: TObj,
-  proto: TProto,
-): TObj & TProto & { _pandoExtendWithPrototype: true } {
-  // Proxy everything other than what is defined on obj to proto
-  return Object.assign(Object.create(proto), obj, { _pandoExtendWithPrototype: true });
 }

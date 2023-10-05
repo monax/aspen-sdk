@@ -1,5 +1,6 @@
-import { Signer } from 'ethers';
+import { ChainId } from '@monaxlabs/phloem/dist/types';
 import { OidcClient, SigninResponse } from 'oidc-client-ts';
+import { PrivateKeyAccount } from 'viem';
 import { GatingAPI, IdentityAPI } from '..';
 
 // Authenticate the API in a global state (which is horrible, but hey)
@@ -44,19 +45,22 @@ export type IdentityClientConfig = {
   redirectUri: string;
 };
 
-export async function walletLogin(signer: Signer, identityClient: OidcClient): Promise<SigninResponse> {
-  const walletAddress = await signer.getAddress();
-  const chainId = await signer.getChainId();
+export async function walletLogin(
+  signer: PrivateKeyAccount,
+  chainId: ChainId,
+  identityClient: OidcClient,
+): Promise<SigninResponse> {
+  const { signpad, nonce } = await IdentityAPI.WalletService.getIdentitySignpad({ address: signer.address });
 
-  const { signpad, nonce } = await IdentityAPI.WalletService.getIdentitySignpad({ address: walletAddress });
-
-  const signature = await signer.signMessage(signpad);
+  const signature = await signer.signMessage({
+    message: signpad,
+  });
 
   const request = await identityClient.createSigninRequest({
     extraQueryParams: {
       connection: 'CryptoWallet',
       connectorType: 'MetaMask',
-      address: walletAddress,
+      address: signer.address,
       nonce,
       chainId,
       signature: signature,

@@ -1,8 +1,4 @@
-import { parse } from '@monaxlabs/phloem/dist/schema';
-import { Address } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, BigNumberish, CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
-import { IDropClaimConditionV1 } from '../../generated/impl/IAspenERC1155Drop.sol/IAspenERC1155DropV1';
+import { claimConditionsFromChain, CollectionContract, CollectionContractClaimCondition, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
@@ -24,24 +20,8 @@ type GetClaimConditionByIdPartitions = typeof GetClaimConditionByIdPartitions;
 const GetClaimConditionByIdInterfaces = Object.values(GetClaimConditionByIdPartitions).flat();
 type GetClaimConditionByIdInterfaces = (typeof GetClaimConditionByIdInterfaces)[number];
 
-export type GetClaimConditionByIdCallArgs = [
-  conditionId: BigNumberish,
-  tokenId: BigNumberish | null,
-  overrides?: CallOverrides,
-];
+export type GetClaimConditionByIdCallArgs = [conditionId: bigint, tokenId: bigint | null, params?: ReadParameters];
 export type GetClaimConditionByIdResponse = CollectionContractClaimCondition;
-
-export type CollectionContractClaimCondition = {
-  startTimestamp: number;
-  maxClaimableSupply: BigNumber;
-  supplyClaimed: BigNumber;
-  quantityLimitPerTransaction: BigNumber;
-  waitTimeInSecondsBetweenClaims: number;
-  merkleRoot: string;
-  pricePerToken: BigNumber;
-  currency: Address;
-  phaseId: string;
-};
 
 export class GetClaimConditionById extends ContractFunction<
   GetClaimConditionByIdInterfaces,
@@ -60,10 +40,10 @@ export class GetClaimConditionById extends ContractFunction<
   }
 
   async getClaimConditionById(
-    conditionId: BigNumberish,
-    tokenId: BigNumberish | null,
-    overrides: CallOverrides = {},
-  ): Promise<CollectionContractClaimCondition> {
+    conditionId: bigint,
+    tokenId: bigint | null,
+    params?: ReadParameters,
+  ): Promise<GetClaimConditionByIdResponse> {
     const { nftV2, sftV2 } = this.partitions;
 
     try {
@@ -71,14 +51,14 @@ export class GetClaimConditionById extends ContractFunction<
         case 'ERC1155':
           tokenId = this.base.requireTokenId(tokenId, this.functionName);
           const iface = sftV2 ?? this.base.assumeFeature('issuance/ICedarSFTIssuance.sol:IPublicSFTIssuanceV2');
-          const conditionSft = await iface.connectReadOnly().getClaimConditionById(tokenId, conditionId, overrides);
-          return transformClaimConditions(conditionSft);
+          const conditionSft = await this.reader(iface.abi).read.getClaimConditionById([tokenId, conditionId], params);
+          return claimConditionsFromChain(conditionSft);
 
         case 'ERC721':
           this.base.rejectTokenId(tokenId, this.functionName);
           const nft = nftV2 ?? this.base.assumeFeature('issuance/ICedarNFTIssuance.sol:IPublicNFTIssuanceV2');
-          const conditionNft = await nft.connectReadOnly().getClaimConditionById(conditionId, overrides);
-          return transformClaimConditions(conditionNft);
+          const conditionNft = await this.reader(this.abi(nft)).read.getClaimConditionById([conditionId], params);
+          return claimConditionsFromChain(conditionNft);
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -87,19 +67,3 @@ export class GetClaimConditionById extends ContractFunction<
 }
 
 export const getClaimConditionById = asCallableClass(GetClaimConditionById);
-
-export const transformClaimConditions = (
-  condition: IDropClaimConditionV1.ClaimConditionStructOutput,
-): CollectionContractClaimCondition => {
-  return {
-    startTimestamp: condition.startTimestamp.toNumber(),
-    maxClaimableSupply: condition.maxClaimableSupply,
-    supplyClaimed: condition.supplyClaimed,
-    quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
-    waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
-    merkleRoot: condition.merkleRoot,
-    pricePerToken: condition.pricePerToken,
-    currency: parse(Address, condition.currency),
-    phaseId: condition.phaseId ?? null,
-  };
-};

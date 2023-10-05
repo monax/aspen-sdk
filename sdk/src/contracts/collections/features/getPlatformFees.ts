@@ -1,8 +1,8 @@
 import { parse } from '@monaxlabs/phloem/dist/schema';
 import { Address } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
+import { normalise } from '../number';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -20,12 +20,12 @@ type GetPlatformFeesPartitions = typeof GetPlatformFeesPartitions;
 const GetPlatformFeesInterfaces = Object.values(GetPlatformFeesPartitions).flat();
 type GetPlatformFeesInterfaces = (typeof GetPlatformFeesInterfaces)[number];
 
-export type GetPlatformFeesCallArgs = [overrides?: CallOverrides];
+export type GetPlatformFeesCallArgs = [params?: ReadParameters];
 export type GetPlatformFeesResponse = PlatformFee;
 
 export type PlatformFee = {
   recipient: Address;
-  basisPoints: BigNumber;
+  basisPoints: bigint;
 };
 
 export class GetPlatformFees extends ContractFunction<
@@ -44,16 +44,17 @@ export class GetPlatformFees extends ContractFunction<
     return this.getPlatformFees(...args);
   }
 
-  async getPlatformFees(overrides: CallOverrides = {}): Promise<PlatformFee> {
+  async getPlatformFees(params?: ReadParameters): Promise<PlatformFee> {
     const { v1, v2 } = this.partitions;
-
     try {
       if (v2) {
-        const { platformFeeReceiver, platformFeeBPS } = await v2.connectReadOnly().getPlatformFees(overrides);
-        return { recipient: parse(Address, platformFeeReceiver), basisPoints: BigNumber.from(platformFeeBPS) };
+        const [platformFeeReceiver, platformFeeBPS] = await this.reader(this.abi(v2)).read.getPlatformFees(params);
+        return { recipient: parse(Address, platformFeeReceiver), basisPoints: normalise(platformFeeBPS) };
       } else if (v1) {
-        const [recipient, basisPoints] = await v1.connectReadOnly().getPlatformFeeInfo(overrides);
-        return { recipient: parse(Address, recipient), basisPoints: BigNumber.from(basisPoints) };
+        // bypass ABI divercence
+        const iface = this.base.assumeFeature('royalties/IPlatformFee.sol:IDelegatedPlatformFeeV0');
+        const [recipient, basisPoints] = await this.reader(iface.abi).read.getPlatformFeeInfo(params);
+        return { recipient: parse(Address, recipient), basisPoints: normalise(basisPoints) };
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

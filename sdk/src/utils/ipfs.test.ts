@@ -1,4 +1,4 @@
-import { describe, expect, test } from '@jest/globals';
+import { describe, expect, test } from 'vitest';
 import { looksLikeCid, resolveIpfsUrl } from './ipfs';
 
 const CID = 'QmWU5iKU65xY7bxYQgNLrmEBc3MRr5p8owmdFuk94XXTwS';

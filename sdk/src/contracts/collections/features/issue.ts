@@ -1,11 +1,10 @@
-import { parse } from '@monaxlabs/phloem/dist/schema';
+import { parse } from '@monaxlabs/phloem/dist/schema/parse';
 import { Address, Addressish, asAddress, ChainId, isZeroAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, BigNumberish, ContractReceipt, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { extractEventsFromLogs } from '../..';
+import { decodeEventLog, encodeFunctionData, GetTransactionReceiptReturnType, Hex, TransactionReceipt } from 'viem';
+import { BigIntish, Signer, TokenId, TokenStandard, WriteParameters } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
-import { bnRange, One } from '../number';
-import type { Signerish, TokenId, TokenStandard, WriteOverrides } from '../types';
+import { bigIntRange, normalise, One } from '../number';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -23,23 +22,23 @@ type IssuePartitions = typeof IssuePartitions;
 const IssueInterfaces = Object.values(IssuePartitions).flat();
 type IssueInterfaces = (typeof IssueInterfaces)[number];
 
-export type IssueCallArgs = [signer: Signerish, args: IssueArgs, overrides?: WriteOverrides];
-export type IssueResponse = ContractTransaction;
+export type IssueCallArgs = [walletClient: Signer, args: IssueArgs, params?: WriteParameters];
+export type IssueResponse = GetTransactionReceiptReturnType;
 
 export type IssueArgs = {
   receiver: Addressish;
   tokenId?: TokenId;
-  quantity: BigNumberish;
+  quantity: BigIntish;
 };
 
 export type IssuedToken = {
   chainId: ChainId;
   address: Address;
-  tokenId: BigNumber;
+  tokenId: bigint;
   standard: TokenStandard;
   issuer: Address;
   receiver: Address;
-  quantity: BigNumber;
+  quantity: bigint;
   tokenURI: string | null;
 };
 
@@ -54,72 +53,89 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     return this.issue(...args);
   }
 
-  async issue(signer: Signerish, args: IssueArgs, overrides: WriteOverrides = {}): Promise<ContractTransaction> {
+  async issue(signer: Signer, args: IssueArgs, params?: WriteParameters): Promise<IssueResponse> {
     this.validateArgs(args);
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.issueERC1155(signer, args, overrides);
+        return await this.issueERC1155(signer, args, params);
       case 'ERC721':
-        return await this.issueERC721(signer, args, overrides);
+        return await this.issueERC721(signer, args, params);
     }
   }
 
   protected async issueERC1155(
-    signer: Signerish,
+    walletClient: Signer,
     { receiver, tokenId, quantity }: IssueArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<IssueResponse> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
     const wallet = await asAddress(receiver);
 
     try {
-      const tx = await sft.connectWith(signer).issue(wallet, tokenId, quantity, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(sft)).simulate.issue(
+        [wallet as Hex, tokenId, normalise(quantity)],
+        params,
+      );
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, tokenId, quantity });
     }
   }
 
   protected async issueERC721(
-    signer: Signerish,
+    walletClient: Signer,
     { receiver, quantity }: IssueArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
-    const nft = this.partition('nft');
+    params?: WriteParameters,
+  ): Promise<IssueResponse> {
+    // const nft = this.partition('nft');
     const wallet = await asAddress(receiver);
 
     try {
-      const tx = await nft.connectWith(signer).issue(wallet, quantity, overrides);
-      return tx;
+      // bypass ABI divercence
+      const iface = this.base.assumeFeature('issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV0');
+      const { request } = await this.reader(iface.abi).simulate.issue([wallet as Hex, normalise(quantity)], params);
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, quantity });
     }
   }
 
-  async estimateGas(signer: Signerish, args: IssueArgs, overrides: WriteOverrides = {}): Promise<BigNumber> {
+  async estimateGas(signer: Signer, args: IssueArgs, params?: WriteParameters): Promise<bigint> {
     this.validateArgs(args);
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.estimateGasERC1155(signer, args, overrides);
+        return await this.estimateGasERC1155(signer, args, params);
       case 'ERC721':
-        return await this.estimateGasERC721(signer, args, overrides);
+        return await this.estimateGasERC721(signer, args, params);
     }
   }
 
   protected async estimateGasERC1155(
-    signer: Signerish,
+    walletClient: Signer,
     { receiver, tokenId, quantity }: IssueArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+    params?: WriteParameters,
+  ): Promise<bigint> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
     const wallet = await asAddress(receiver);
 
     try {
-      const estimate = await sft.connectWith(signer).estimateGas.issue(wallet, tokenId, quantity, overrides);
+      const estimate = await this.reader(this.abi(sft)).estimateGas.issue(
+        [wallet as Hex, tokenId, normalise(quantity)],
+        {
+          account: walletClient.account,
+          ...params,
+        },
+      );
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, tokenId, quantity });
@@ -127,43 +143,51 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
   }
 
   protected async estimateGasERC721(
-    signer: Signerish,
+    walletClient: Signer,
     { receiver, quantity }: IssueArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
-    const nft = this.partition('nft');
+    params?: WriteParameters,
+  ): Promise<bigint> {
+    // const nft = this.partition('nft');
     const wallet = await asAddress(receiver);
 
     try {
-      const estimate = await nft.connectWith(signer).estimateGas.issue(wallet, quantity, overrides);
+      // bypass ABI divercence
+      const iface = this.base.assumeFeature('issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV0');
+      const estimate = await this.reader(iface.abi).estimateGas.issue([wallet as Hex, normalise(quantity)], {
+        account: walletClient.account,
+        ...params,
+      });
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, quantity });
     }
   }
 
-  async populateTransaction(args: IssueArgs, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
+  async populateTransaction(args: IssueArgs, params?: WriteParameters): Promise<string> {
     this.validateArgs(args);
 
     switch (this.base.tokenStandard) {
       case 'ERC1155':
-        return await this.populateTransactionERC1155(args, overrides);
+        return await this.populateTransactionERC1155(args, params);
       case 'ERC721':
-        return await this.populateTransactionERC721(args, overrides);
+        return await this.populateTransactionERC721(args, params);
     }
   }
 
   protected async populateTransactionERC1155(
     { receiver, tokenId, quantity }: IssueArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+    params?: WriteParameters,
+  ): Promise<string> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
     const wallet = await asAddress(receiver);
 
     try {
-      const tx = await sft.connectReadOnly().populateTransaction.issue(wallet, tokenId, quantity, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(sft)).simulate.issue(
+        [wallet as Hex, tokenId, normalise(quantity)],
+        params,
+      );
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, tokenId, quantity });
     }
@@ -171,14 +195,16 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
 
   protected async populateTransactionERC721(
     { receiver, quantity }: IssueArgs,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
-    const nft = this.partition('nft');
+    params?: WriteParameters,
+  ): Promise<string> {
+    // const nft = this.partition('nft');
     const wallet = await asAddress(receiver);
 
     try {
-      const tx = await nft.connectReadOnly().populateTransaction.issue(wallet, quantity, overrides);
-      return tx;
+      // bypass ABI divercence
+      const iface = this.base.assumeFeature('issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV0');
+      const { request } = await this.reader(iface.abi).simulate.issue([wallet as Hex, normalise(quantity)], params);
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, quantity });
     }
@@ -191,75 +217,73 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     }
   }
 
-  async parseReceiptLogs(receipt: ContractReceipt): Promise<IssuedToken[]> {
+  async parseReceiptLogs(receipt: TransactionReceipt): Promise<IssuedToken[]> {
     const { nft, sft } = this.partitions;
+
     const { chainId, address } = this.base;
     const issueTokens: IssuedToken[] = [];
 
     try {
       if (nft) {
-        const nftEvents = this.base.assumeFeature('issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2');
-        const contract = nftEvents.connectReadOnly();
+        for (const log of receipt.logs) {
+          const event = decodeEventLog({
+            abi: this.base.assumeFeature('issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV2').abi,
+            data: log.data,
+            topics: log.topics,
+          });
 
-        issueTokens.push(
-          ...extractEventsFromLogs(contract.filters.TokensIssued(), contract.interface, receipt.logs)
-            .map(({ startTokenId, issuer, receiver, quantity }) => {
-              const events: IssuedToken[] = [];
-              for (const tokenId of bnRange(startTokenId, quantity)) {
-                events.push({
-                  chainId,
-                  address,
-                  tokenId,
-                  standard: 'ERC721',
-                  issuer: parse(Address, issuer),
-                  receiver: parse(Address, receiver),
-                  tokenURI: null,
-                  quantity: One,
-                });
-              }
-              return events;
-            })
-            .flat(),
-        );
-
-        issueTokens.push(
-          ...extractEventsFromLogs(contract.filters.TokenIssued(), contract.interface, receipt.logs).map(
-            ({ tokenId, issuer, receiver, tokenURI }) => {
-              const event: IssuedToken = {
+          if (event.eventName === 'TokensIssued') {
+            const { startTokenId, issuer, receiver, quantity } = event.args;
+            for (const tokenId of bigIntRange(startTokenId, quantity)) {
+              issueTokens.push({
                 chainId,
                 address,
                 tokenId,
                 standard: 'ERC721',
                 issuer: parse(Address, issuer),
                 receiver: parse(Address, receiver),
-                tokenURI: tokenURI,
-                quantity: One,
-              };
-              return event;
-            },
-          ),
-        );
-      } else if (sft) {
-        const sftEvents = this.base.assumeFeature('issuance/ICedarSFTIssuance.sol:IRestrictedSFTIssuanceV3');
-        const contract = sftEvents.connectReadOnly();
-
-        issueTokens.push(
-          ...extractEventsFromLogs(contract.filters.TokensIssued(), contract.interface, receipt.logs).map(
-            ({ tokenId, claimer, receiver, quantityClaimed }) => {
-              const event: IssuedToken = {
-                chainId,
-                address,
-                tokenId,
-                standard: 'ERC1155',
-                issuer: parse(Address, claimer),
-                receiver: parse(Address, receiver),
                 tokenURI: null,
-                quantity: quantityClaimed,
-              };
-              return event;
-            },
-          ),
-        );
+                quantity: One,
+              });
+            }
+          }
+
+          if (event.eventName === 'TokenIssued') {
+            const { tokenId, issuer, receiver, tokenURI } = event.args;
+            issueTokens.push({
+              chainId,
+              address,
+              tokenId,
+              standard: 'ERC721',
+              issuer: parse(Address, issuer),
+              receiver: parse(Address, receiver),
+              tokenURI: tokenURI,
+              quantity: One,
+            });
+          }
+        }
+      } else if (sft) {
+        for (const log of receipt.logs) {
+          const event = decodeEventLog({
+            abi: this.base.assumeFeature('issuance/ICedarSFTIssuance.sol:IRestrictedSFTIssuanceV3').abi,
+            data: log.data,
+            topics: log.topics,
+          });
+
+          if (event.eventName === 'TokensIssued') {
+            const { tokenId, claimer, receiver, quantityClaimed } = event.args;
+            issueTokens.push({
+              chainId,
+              address,
+              tokenId,
+              standard: 'ERC1155',
+              issuer: parse(Address, claimer),
+              receiver: parse(Address, receiver),
+              tokenURI: null,
+              quantity: quantityClaimed,
+            });
+          }
+        }
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.INVALID_DATA, { receipt });

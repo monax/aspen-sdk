@@ -1,36 +1,44 @@
-import { BigNumber, BigNumberish, constants } from 'ethers';
+import { BigIntish } from './types';
 
-export const Zero = BigNumber.from(0);
-export const One = BigNumber.from(1);
+export const Zero = BigInt(0);
+export const One = BigInt(1);
+export const MinInt256 = BigInt('0x8000000000000000000000000000000000000000000000000000000000000000') * BigInt(-1);
+export const MaxUint256 = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
 
-export function min(...xs: BigNumberish[]): BigNumber {
-  return xs.map(normalise).reduce((m, x) => (m.gt(x) ? BigNumber.from(x) : m));
+export function min(...xs: BigIntish[]): bigint {
+  return xs.map(normalise).reduce((m, x) => (m > x ? x : m));
 }
 
-export function max(...xs: BigNumberish[]): BigNumber {
-  return xs.map(normalise).reduce((m, x) => (m.gt(x) ? m : BigNumber.from(x)));
+export function max(...xs: BigIntish[]): bigint {
+  return xs.map(normalise).reduce((m, x) => (m > x ? m : x));
 }
 
-export function normalise(x: BigNumberish): BigNumber {
+export function normalise(x: BigIntish): bigint {
   if (x === Infinity) {
-    return constants.MaxUint256;
+    return MaxUint256;
   }
   if (x === -Infinity) {
-    return constants.MinInt256;
+    return MinInt256;
   }
-  return BigNumber.from(x);
+  return BigInt(x);
 }
 
-export function* bnRange(start: BigNumber, length: BigNumberish) {
-  const last = start.add(length);
+export function* bigIntRange(start: bigint, length: BigIntish) {
+  const lengthBI = normalise(length);
 
-  if (start.lt(last)) {
-    for (let idx = start; idx.lt(last); idx = idx.add(One)) {
+  const last = start + lengthBI;
+
+  let idx = start;
+
+  if (start < last) {
+    while (idx < last) {
       yield idx;
+      idx = idx + One;
     }
   } else {
-    for (let idx = start; idx.gt(last); idx = idx.sub(One)) {
+    while (idx > last) {
       yield idx;
+      idx = idx - One;
     }
   }
 }

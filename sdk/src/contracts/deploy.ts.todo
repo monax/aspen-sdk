@@ -1,0 +1,380 @@
+import { getNativeCurrencyName } from '@/utils/chain';
+import { percentage } from '@/utils/number';
+import { addBreadcrumb, captureException } from '@/utils/sentry';
+import { toReadableCurrencyUnitAmount } from '@/utils/units';
+import { parse } from '@monaxlabs/phloem/dist/schema';
+import {
+  Address,
+  NATIVE_ETH_DECIMALS,
+  UUIDFromString,
+  ZERO_ADDRESS,
+  isSameAddress,
+  isZeroAddress,
+} from '@monaxlabs/phloem/dist/types';
+import merge from 'ts-deepmerge';
+import { CollectionHistoryEntry, NATIVE_TOKEN, Provider, Storefront, getAspenDeployer } from '..';
+import { estimateGasForSetupSalesRecipientAddress, setupSalesRecipientAddress } from '../../../deploy/sales-recipients';
+import { OnStepStatusChange } from '../../../types';
+import { AmountRecipient, AspenClient, EditStorefront } from '../apis';
+
+export type IAspenDeployer = ReturnType<typeof getAspenDeployer>;
+
+export type DeployResult =
+  | {
+      success: false;
+    }
+  | {
+      success: true;
+      address: Address;
+      deployerOrOwnerWallet: Address;
+      primarySalePayee?: Address | null;
+      secondarySalePayee?: Address | null;
+    };
+
+export type Deploy = (
+  onStepStatusChange: OnStepStatusChange,
+  logStorefrontChainModification: (entry: CollectionHistoryEntry) => Promise<void>,
+) => Promise<DeployResult>;
+
+export type GetStorefrontDeploy = {
+  deploy: Deploy;
+  deployCostEstimate(): Promise<{ estimate: BigNumber; breakdown: string }>;
+};
+
+type DeployArgs = {
+  defaultAdmin: Address;
+  name: string;
+  symbol: string;
+  contractURI: string;
+  userAgreement: string;
+  trustedForwarders: string[];
+  saleRecipient: Address;
+  royaltyRecipient: Address;
+  royaltyBps: number;
+};
+
+const OperatorFilterers = {
+  noOperator: ethers.utils.solidityKeccak256(['string'], ['NO_OPERATOR']),
+  openSea: ethers.utils.solidityKeccak256(['string'], ['OPEN_SEA']),
+  blur: ethers.utils.solidityKeccak256(['string'], ['BLUR']),
+};
+
+export const getStorefrontDeploy = (
+  storefront: Storefront,
+  signer: Signer,
+  provider: Provider,
+): GetStorefrontDeploy => {
+  const getDeployArgs = (signerAddress: Address, saleRecipient: Address, royaltyRecipient: Address): DeployArgs => {
+    const deployArgs: DeployArgs = {
+      defaultAdmin: signerAddress,
+      name: storefront.name,
+      symbol: storefront.symbol ?? '',
+      contractURI: '', // Not current implemented
+      userAgreement: storefront.userTerms ?? '',
+      trustedForwarders: [] as string[], // Not current implemented
+
+      // Primary sale
+      saleRecipient,
+
+      // Secondary sale
+      royaltyRecipient,
+      royaltyBps: storefront.secondarySaleBasisPoints ?? 0,
+    };
+    return deployArgs;
+  };
+
+  const getCollectionDetails = (
+    deployArgs: DeployArgs,
+  ): Parameters<IAspenDeployer['deployAspenERC721Drop'] | IAspenDeployer['deployAspenERC1155Drop']>[0] => {
+    return {
+      defaultAdmin: deployArgs.defaultAdmin,
+      name: deployArgs.name,
+      symbol: deployArgs.symbol,
+      contractURI: deployArgs.contractURI,
+      trustedForwarders: deployArgs.trustedForwarders,
+      userAgreement: deployArgs.userAgreement,
+      isSBT: false, // For SouldBoundTokens - set to `true` when calling `deployAspenSBT721Drop`
+    };
+  };
+
+  const getFeeDetails = (
+    deployArgs: DeployArgs,
+  ): Parameters<IAspenDeployer['deployAspenERC721Drop'] | IAspenDeployer['deployAspenERC1155Drop']>[1] => {
+    return {
+      chargebackProtectionPeriod: 0, // TODO
+      saleRecipient: deployArgs.saleRecipient,
+      royaltyRecipient: deployArgs.royaltyRecipient,
+      royaltyBps: deployArgs.royaltyBps,
+    };
+  };
+
+  const getOperatorFilterers = () => {
+    return OperatorFilterers.openSea;
+  };
+
+  const getOverrides = (deploymentFee: BigNumber) => {
+    return {
+      value: deploymentFee,
+    };
+  };
+
+  const deploy: Deploy = async (onStepStatusChange, logStorefrontChainModification) => {
+    if (!storefront.chainId) throw new Error('chainId is required for deployment');
+    if (!storefront.name) throw new Error('name is required for deployment');
+    if (!storefront.symbol) throw new Error('symbol is required for deployment');
+
+    try {
+      const deployer = getAspenDeployer(signer, storefront.chainId);
+      const signerAddress = await signer.getAddress();
+
+      const { saleRecipient, royaltyRecipient } = await setupSalesRecipientAddresses(
+        storefront.id,
+        deployer,
+        onStepStatusChange,
+        storefront.primarySaleRecipients,
+        storefront.secondarySaleRecipients,
+      );
+
+      const deployArgs = getDeployArgs(parse(Address, signerAddress), saleRecipient, royaltyRecipient);
+
+      onStepStatusChange({
+        type: 'info',
+        description: 'Waiting on user confirmation (Deploy NFT Contract)',
+        data: { deployArgs },
+      });
+
+      let tx: ContractTransaction | undefined;
+
+      const deploymentFee = await deployer.getDeploymentFeeDetails(signerAddress);
+      if (!isSameAddress(deploymentFee.currency, NATIVE_TOKEN)) {
+        throw new Error('deploy: Unsupported deployment fee currency');
+      }
+
+      if (storefront.contractType === 'ERC721') {
+        tx = await deployer.deployAspenERC721Drop(
+          getCollectionDetails(deployArgs),
+          getFeeDetails(deployArgs),
+          getOperatorFilterers(),
+          getOverrides(deploymentFee.price),
+        );
+      } else if (storefront.contractType === 'ERC1155') {
+        tx = await deployer.deployAspenERC1155Drop(
+          getCollectionDetails(deployArgs),
+          getFeeDetails(deployArgs),
+          getOperatorFilterers(),
+          getOverrides(deploymentFee.price),
+        );
+      } else {
+        throw new Error('deploy: Unhandled contract type');
+      }
+
+      onStepStatusChange({
+        type: 'info',
+        description: 'Waiting on transaction (Deploying NFT Contract)',
+        tx: tx,
+        data: { deployArgs },
+      });
+
+      const contractReceipt = await tx.wait();
+
+      onStepStatusChange({
+        type: 'info',
+        description: 'NFT Contract Deployed',
+        data: { contractReceipt },
+      });
+
+      const [{ contractAddress: contractAddressString }] = await extractEvents(
+        deployer,
+        (f) => f.AspenInterfaceDeployed(),
+        tx,
+      );
+
+      const contractAddress = parse(Address, contractAddressString);
+
+      const primarySalePayee = isZeroAddress(saleRecipient) ? null : saleRecipient;
+      const secondarySalePayee = isZeroAddress(royaltyRecipient) ? null : royaltyRecipient;
+
+      await logStorefrontChainModification({
+        transactionHash: tx.hash,
+        changeNotes: {
+          type: 'Published',
+          notes: 'NFT Contract Deployed',
+        },
+        data: {
+          deployArgs,
+        },
+      });
+
+      return {
+        success: true,
+        address: contractAddress,
+        deployerOrOwnerWallet: parse(Address, signerAddress),
+        primarySalePayee,
+        secondarySalePayee,
+      };
+    } catch (error) {
+      onStepStatusChange({ type: 'error', error });
+      captureException(error, {
+        level: 'fatal',
+        extra: { message: 'Failed to deploy storefront', storefront },
+        tags: { chainId: storefront.chainId },
+      });
+      return {
+        success: false,
+      };
+    }
+  };
+
+  const deployCostEstimate = async (): Promise<{ estimate: BigNumber; breakdown: string }> => {
+    if (!storefront.chainId) throw new Error('chainId is required for deployment');
+
+    const signerAddress = await signer.getAddress();
+
+    const deployer = getAspenDeployer(signer, storefront.chainId);
+
+    const deployArgs = getDeployArgs(parse(Address, signerAddress), ZERO_ADDRESS, ZERO_ADDRESS);
+
+    const deploymentFee = await deployer.getDeploymentFeeDetails(signerAddress);
+    if (!isSameAddress(deploymentFee.currency, NATIVE_TOKEN)) {
+      throw new Error('deploy: Unsupported deployment fee currency');
+    }
+
+    const gasPrice = await provider.getGasPrice();
+
+    const saleRecipientSplitterGas = await estimateGasForSetupSalesRecipientAddress(
+      deployer,
+      storefront.primarySaleRecipients ?? [],
+    );
+
+    const royaltyRecipientSplitterGas = await estimateGasForSetupSalesRecipientAddress(
+      deployer,
+      storefront.secondarySaleRecipients ?? [],
+    );
+
+    let deploymentGas = BigNumber.from(0);
+
+    if (storefront.contractType === 'ERC721') {
+      deploymentGas = await deployer.estimateGas.deployAspenERC721Drop(
+        getCollectionDetails(deployArgs),
+        getFeeDetails(deployArgs),
+        getOperatorFilterers(),
+        { ...getOverrides(deploymentFee.price), from: signerAddress },
+      );
+    } else if (storefront.contractType === 'ERC1155') {
+      deploymentGas = await deployer.estimateGas.deployAspenERC1155Drop(
+        getCollectionDetails(deployArgs),
+        getFeeDetails(deployArgs),
+        getOperatorFilterers(),
+        { ...getOverrides(deploymentFee.price), from: signerAddress },
+      );
+    } else {
+      throw new Error('estimateGas: Unhandled contract type');
+    }
+
+    const saleRecipientSplitterCost = saleRecipientSplitterGas.mul(gasPrice);
+    const royaltyRecipientSplitterCost = royaltyRecipientSplitterGas.mul(gasPrice);
+    const deploymentCost = deploymentGas.mul(gasPrice);
+
+    // This is an amount to account for us under-estimating as well as for the sync cost (40% of deployment cost)
+    const bufferCost = percentage(deploymentCost.add(saleRecipientSplitterCost).add(royaltyRecipientSplitterCost), 40);
+
+    const total = deploymentFee.price
+      .add(saleRecipientSplitterCost)
+      .add(royaltyRecipientSplitterCost)
+      .add(deploymentCost)
+      .add(bufferCost);
+
+    const symbol = getNativeCurrencyName(getBlockchain(storefront.chainId));
+
+    const bufferCostReadable = toReadableCurrencyUnitAmount(bufferCost, NATIVE_ETH_DECIMALS, symbol);
+    const deploymentFeeCostReadable = toReadableCurrencyUnitAmount(deploymentFee.price, NATIVE_ETH_DECIMALS, symbol);
+    const saleRecipientSplitterCostReadable = toReadableCurrencyUnitAmount(
+      saleRecipientSplitterCost,
+      NATIVE_ETH_DECIMALS,
+      symbol,
+    );
+    const royaltyRecipientSplitterCostReadable = toReadableCurrencyUnitAmount(
+      royaltyRecipientSplitterCost,
+      NATIVE_ETH_DECIMALS,
+      symbol,
+    );
+    const deploymentCostReadable = toReadableCurrencyUnitAmount(deploymentCost, NATIVE_ETH_DECIMALS, symbol);
+
+    addBreadcrumb({
+      message: 'Deployment Estimates',
+      data: {
+        gasPrice: gasPrice.toString(),
+
+        bufferCost: bufferCostReadable,
+        deploymentFeeCost: deploymentFeeCostReadable,
+
+        saleRecipientSplitterGas: saleRecipientSplitterGas.toString(),
+        saleRecipientSplitterCost: saleRecipientSplitterCostReadable,
+
+        royaltyRecipientSplitterGas: royaltyRecipientSplitterGas.toString(),
+        royaltyRecipientSplitterCost: royaltyRecipientSplitterCostReadable,
+
+        deploymentGas: deploymentGas.toString(),
+        deploymentCost: deploymentCostReadable,
+
+        total: toReadableCurrencyUnitAmount(
+          total,
+          NATIVE_ETH_DECIMALS,
+          getNativeCurrencyName(getBlockchain(storefront.chainId)),
+        ),
+      },
+    });
+
+    const breakdown: string[] = [];
+    breakdown.push(`Contract Deploy: ${deploymentCostReadable}`);
+    if (saleRecipientSplitterGas.gt(0)) breakdown.push(`Sale Splitter Deploy: ${saleRecipientSplitterCostReadable}`);
+    if (royaltyRecipientSplitterGas.gt(0))
+      breakdown.push(`Sale Splitter Deploy: ${royaltyRecipientSplitterCostReadable}`);
+    breakdown.push(`Aspen Fee: ${deploymentFeeCostReadable}`);
+    breakdown.push(`Buffer: ${bufferCostReadable}`);
+
+    return {
+      estimate: total,
+      breakdown: breakdown.join(' - '),
+    };
+  };
+
+  return { deploy, deployCostEstimate };
+};
+
+const setupSalesRecipientAddresses = async (
+  storefrontId: UUIDFromString,
+  deployer: IAspenDeployer,
+  onStepStatusChange: OnStepStatusChange,
+  primarySaleRecipients?: AmountRecipient[] | null,
+  secondarySaleRecipients?: AmountRecipient[] | null,
+) => {
+  const saleRecipient = await setupSalesRecipientAddress(
+    storefrontId,
+    deployer,
+    onStepStatusChange,
+    'Primary Sales',
+    primarySaleRecipients ?? [],
+  );
+  const royaltyRecipient = await setupSalesRecipientAddress(
+    storefrontId,
+    deployer,
+    onStepStatusChange,
+    'Secondary Sales',
+    secondarySaleRecipients ?? [],
+  );
+  return { saleRecipient, royaltyRecipient };
+};
+
+export type RecursivePartial<T> = {
+  [P in keyof T]?: RecursivePartial<T[P]>;
+};
+export async function updateStorefront(
+  client: AspenClient,
+  storefrontId: UUIDFromString,
+  partialStorefront: RecursivePartial<EditStorefront>,
+) {
+  const storefront = await client.getStorefront({ parameters: { storefrontId } });
+  const editStorefront = merge.withOptions({ mergeArrays: false }, storefront, partialStorefront);
+  return await client.updateStorefront({ parameters: { storefrontId, body: editStorefront } });
+}

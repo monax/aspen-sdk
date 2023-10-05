@@ -1,23 +1,35 @@
-import { Provider } from '@ethersproject/abstract-provider';
+import { parse } from '@monaxlabs/phloem/dist/schema';
 import { Address, ChainId } from '@monaxlabs/phloem/dist/types';
-import type { BigNumber, BigNumberish, Overrides, Signer } from 'ethers';
-import { PromiseOrValue } from '../generated/common';
+import {
+  Account,
+  CallParameters,
+  Chain,
+  Hex,
+  PublicClient,
+  SimulateContractParameters,
+  Transport,
+  WalletClient,
+} from 'viem';
+import { Prettify, UnionOmit } from 'viem/_types/types/utils';
 import { AllowlistStatus } from '../index';
 import type { CollectionMetaImageType, CollectionMetaLinkType } from './constants';
 import { SdkError } from './errors';
 import { UserClaimConditions } from './features';
 
-export type TokenId = BigNumberish | null | undefined;
+export type TokenId = BigIntish | null | undefined;
 
-export type RequiredTokenId = BigNumberish;
-
-export type Signerish = Signer | Provider;
+export type RequiredTokenId = number | bigint;
 
 export type TokenStandard = 'ERC721' | 'ERC1155';
 
-export type WriteOverrides = Overrides & { from?: PromiseOrValue<string> };
-
 export type MetadataKind = 'collection';
+
+export type BytesLike = string | Uint8Array;
+
+export type BigIntish = string | number | bigint;
+
+export type Signer = WalletClient<Transport, Chain, Account>;
+export type Provider = PublicClient<Transport, Chain>;
 
 export type CollectionMetadataPhase = {
   name?: string;
@@ -96,7 +108,7 @@ export type TokenAsset = {
   contractAddress: string;
   tokenId: string;
   standard: TokenStandard;
-  quantity: BigNumber;
+  quantity: bigint;
 };
 
 export type TokenAssetMetadata = {
@@ -120,7 +132,7 @@ export type CollectionUserClaimState =
   | 'claimed-wallet-allowance';
 
 export type UserClaimRestrictions = {
-  availableQuantity: BigNumber;
+  availableQuantity: bigint;
   canClaimTokens: boolean;
   canMintAfter: Date;
   claimState: CollectionUserClaimState;
@@ -152,4 +164,67 @@ export type TermsState = (
   | { termsRequired: false; termsLink: null; termsAccepted: false }
 ) & {
   userAddress: Address;
+};
+
+export type ReadParameters = CallParameters;
+
+export type WriteParameters = UnionOmit<PayableParameters, 'value'>;
+
+export type PayableParameters = Prettify<
+  UnionOmit<SimulateContractParameters, 'abi' | 'address' | 'args' | 'functionName'>
+> & { value: bigint };
+
+export type CollectionContractClaimCondition = {
+  startTimestamp: number;
+  maxClaimableSupply: bigint;
+  supplyClaimed: bigint;
+  quantityLimitPerTransaction: bigint;
+  waitTimeInSecondsBetweenClaims: number;
+  merkleRoot: string;
+  pricePerToken: bigint;
+  currency: Address;
+  phaseId: string;
+};
+
+export type CollectionContractClaimConditionOnChain = {
+  startTimestamp: bigint;
+  maxClaimableSupply: bigint;
+  supplyClaimed: bigint;
+  quantityLimitPerTransaction: bigint;
+  waitTimeInSecondsBetweenClaims: bigint;
+  merkleRoot: Hex;
+  pricePerToken: bigint;
+  currency: Hex;
+  phaseId: string;
+};
+
+export const claimConditionsFromChain = (
+  condition: CollectionContractClaimConditionOnChain,
+): CollectionContractClaimCondition => {
+  return {
+    startTimestamp: Number(condition.startTimestamp),
+    maxClaimableSupply: condition.maxClaimableSupply,
+    supplyClaimed: condition.supplyClaimed,
+    quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
+    waitTimeInSecondsBetweenClaims: Number(condition.waitTimeInSecondsBetweenClaims),
+    merkleRoot: condition.merkleRoot,
+    pricePerToken: condition.pricePerToken,
+    currency: parse(Address, condition.currency),
+    phaseId: condition.phaseId ?? null,
+  };
+};
+export const claimConditionsForChain = (
+  condition: CollectionContractClaimCondition,
+): CollectionContractClaimConditionOnChain => {
+  return {
+    startTimestamp: BigInt(condition.startTimestamp),
+    maxClaimableSupply: condition.maxClaimableSupply,
+    supplyClaimed: condition.supplyClaimed,
+    quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
+    waitTimeInSecondsBetweenClaims: BigInt(condition.waitTimeInSecondsBetweenClaims),
+    merkleRoot: condition.merkleRoot as Hex,
+    pricePerToken: condition.pricePerToken,
+    currency: condition.currency as Hex,
+    phaseId: condition.phaseId ?? null,
+  };
 };

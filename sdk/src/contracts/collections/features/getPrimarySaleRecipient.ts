@@ -1,7 +1,6 @@
 import { parse } from '@monaxlabs/phloem/dist/schema';
 import { Address } from '@monaxlabs/phloem/dist/types';
-import { CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -18,7 +17,7 @@ type GetPrimarySaleRecipientPartitions = typeof GetPrimarySaleRecipientPartition
 const GetPrimarySaleRecipientInterfaces = Object.values(GetPrimarySaleRecipientPartitions).flat();
 type GetPrimarySaleRecipientInterfaces = (typeof GetPrimarySaleRecipientInterfaces)[number];
 
-export type GetPrimarySaleRecipientCallArgs = [overrides?: CallOverrides];
+export type GetPrimarySaleRecipientCallArgs = [params?: ReadParameters];
 export type GetPrimarySaleRecipientResponse = Address;
 
 export class GetPrimarySaleRecipient extends ContractFunction<
@@ -37,11 +36,11 @@ export class GetPrimarySaleRecipient extends ContractFunction<
     return this.getPrimarySaleRecipient(...args);
   }
 
-  async getPrimarySaleRecipient(overrides: CallOverrides = {}): Promise<Address> {
+  async getPrimarySaleRecipient(params?: ReadParameters): Promise<Address> {
     const v1 = this.partition('v1');
 
     try {
-      const recipient = await v1.connectReadOnly().primarySaleRecipient(overrides);
+      const recipient = await this.reader(this.abi(v1)).read.primarySaleRecipient(params);
       return parse(Address, recipient);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

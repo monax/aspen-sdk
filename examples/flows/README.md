@@ -1,5 +1,5 @@
 # Flows
-test [flows.ts](./flows.ts). It implements deploying a 721 access NFT contract, A, and a 721 content NFT contract, B, where each token on B is derived from a specific token on A. Some synthetic users claim some A tokens and then are issued some B tokens based on consultation of a subgraph tracking claims. The final flow also demonstrates gating on A tokens.
+test [flows.ts](./flows.ts.todo). It implements deploying a 721 access NFT contract, A, and a 721 content NFT contract, B, where each token on B is derived from a specific token on A. Some synthetic users claim some A tokens and then are issued some B tokens based on consultation of a subgraph tracking claims. The final flow also demonstrates gating on A tokens.
 
 They can be run with:
 

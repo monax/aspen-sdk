@@ -1,10 +1,10 @@
 import { Address, Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
 import axios from 'axios';
-import { BigNumber } from 'ethers';
 import { CollectionContract, CollectionMetadata, CollectionMetaImageType, OperationStatus, TermsState } from '..';
 import { IPFS_GATEWAY_PREFIX, ZERO_ADDRESS } from '../../../contracts/constants';
 import { resolveIpfsUrl } from '../../../utils/ipfs';
 import { SdkError, SdkErrorCode } from '../errors';
+import { One } from '../number';
 import { ContractObject } from './object';
 
 export const EMPTY_TERMS_STATE: TermsState = {
@@ -20,12 +20,12 @@ export class Collection extends ContractObject {
   }
 
   /** Get the number of unique tokens in the collection */
-  async tokensCount(): Promise<BigNumber> {
+  async tokensCount(): Promise<bigint> {
     switch (this.base.tokenStandard) {
       case 'ERC1155':
         const offset = this.base.getSmallestTokenId.supported ? await this.base.getSmallestTokenId() : 0;
         const largest = await this.base.getLargestTokenId();
-        return largest.add(1 - offset);
+        return largest + One - BigInt(offset);
 
       case 'ERC721':
         const uniqueCount = await this.base.totalSupply();

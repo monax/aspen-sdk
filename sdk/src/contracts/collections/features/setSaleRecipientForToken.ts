@@ -1,8 +1,7 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
+import { CollectionContract, RequiredTokenId, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -19,12 +18,12 @@ const SetSaleRecipientForTokenInterfaces = Object.values(SetSaleRecipientForToke
 type SetSaleRecipientForTokenInterfaces = (typeof SetSaleRecipientForTokenInterfaces)[number];
 
 export type SetSaleRecipientForTokenCallArgs = [
-  signer: Signerish,
-  tokenId: BigNumber,
+  walletClient: Signer,
+  tokenId: RequiredTokenId,
   saleRecipient: Addressish,
-  overrides?: WriteOverrides,
+  params?: WriteParameters,
 ];
-export type SetSaleRecipientForTokenResponse = ContractTransaction;
+export type SetSaleRecipientForTokenResponse = GetTransactionReceiptReturnType;
 
 export class SetSaleRecipientForToken extends ContractFunction<
   SetSaleRecipientForTokenInterfaces,
@@ -48,33 +47,45 @@ export class SetSaleRecipientForToken extends ContractFunction<
   }
 
   async setSaleRecipientForToken(
-    signer: Signerish,
-    tokenId: BigNumber,
+    walletClient: Signer,
+    tokenId: RequiredTokenId,
     saleRecipient: Addressish,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<SetSaleRecipientForTokenResponse> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(saleRecipient);
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
-      const tx = await v1.connectWith(signer).setSaleRecipientForToken(tokenId, wallet, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setSaleRecipientForToken(
+        [tokenId, wallet as Hex],
+        params,
+      );
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
   async estimateGas(
-    signer: Signerish,
-    tokenId: BigNumber,
+    walletClient: Signer,
+    tokenId: RequiredTokenId,
     saleRecipient: Addressish,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(saleRecipient);
+    const fullParams = { account: walletClient.account, ...params };
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
-      const estimate = await v1.connectWith(signer).estimateGas.setSaleRecipientForToken(tokenId, wallet, overrides);
+      const estimate = await this.reader(this.abi(v1)).estimateGas.setSaleRecipientForToken(
+        [tokenId, wallet as Hex],
+        fullParams,
+      );
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -82,16 +93,20 @@ export class SetSaleRecipientForToken extends ContractFunction<
   }
 
   async populateTransaction(
-    tokenId: BigNumber,
+    tokenId: RequiredTokenId,
     saleRecipient: Addressish,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+    params?: WriteParameters,
+  ): Promise<string> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(saleRecipient);
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
-      const tx = await v1.connectReadOnly().populateTransaction.setSaleRecipientForToken(tokenId, wallet, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setSaleRecipientForToken(
+        [tokenId, wallet as Hex],
+        params,
+      );
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

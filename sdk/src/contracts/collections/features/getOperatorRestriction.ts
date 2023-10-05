@@ -1,5 +1,4 @@
-import { CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -18,7 +17,7 @@ type GetOperatorRestrictionPartitions = typeof GetOperatorRestrictionPartitions;
 const GetOperatorRestrictionInterfaces = Object.values(GetOperatorRestrictionPartitions).flat();
 type GetOperatorRestrictionInterfaces = (typeof GetOperatorRestrictionInterfaces)[number];
 
-export type GetOperatorRestrictionCallArgs = [overrides?: CallOverrides];
+export type GetOperatorRestrictionCallArgs = [params?: ReadParameters];
 export type GetOperatorRestrictionResponse = boolean;
 
 export class GetOperatorRestriction extends ContractFunction<
@@ -37,15 +36,15 @@ export class GetOperatorRestriction extends ContractFunction<
     return this.getOperatorRestriction(...args);
   }
 
-  async getOperatorRestriction(overrides: CallOverrides = {}): Promise<boolean> {
+  async getOperatorRestriction(params?: ReadParameters): Promise<boolean> {
     const { v1, v2 } = this.partitions;
 
     try {
       if (v2) {
-        const isRestricted = await v2.connectReadOnly().getOperatorRestriction(overrides);
+        const isRestricted = await this.reader(this.abi(v2)).read.getOperatorRestriction(params);
         return isRestricted;
       } else if (v1) {
-        const isRestricted = await v1.connectReadOnly().operatorRestriction(overrides);
+        const isRestricted = await this.reader(this.abi(v1)).read.operatorRestriction(params);
         return isRestricted;
       }
     } catch (err) {

@@ -1,26 +1,24 @@
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
+import { GetTransactionReceiptReturnType, encodeFunctionData } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
+import type { Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const AcceptTermsFunctions = {
-  v1: 'acceptTerms()+[]',
-  v2: 'acceptTerms()[]',
+  v1: 'acceptTerms()[]',
 } as const;
 
 const AcceptTermsPartitions = {
   v1: [...FeatureFunctionsMap[AcceptTermsFunctions.v1].drop],
-  v2: [...FeatureFunctionsMap[AcceptTermsFunctions.v2].drop],
 };
 type AcceptTermsPartitions = typeof AcceptTermsPartitions;
 
 const AcceptTermsInterfaces = Object.values(AcceptTermsPartitions).flat();
 type AcceptTermsInterfaces = (typeof AcceptTermsInterfaces)[number];
 
-export type AcceptTermsCallArgs = [signer: Signerish, overrides?: WriteOverrides];
-export type AcceptTermsResponse = ContractTransaction;
+export type AcceptTermsCallArgs = [walletClient: Signer, params?: WriteParameters];
+export type AcceptTermsResponse = GetTransactionReceiptReturnType;
 
 export class AcceptTerms extends ContractFunction<
   AcceptTermsInterfaces,
@@ -39,58 +37,43 @@ export class AcceptTerms extends ContractFunction<
     return this.acceptTerms(...args);
   }
 
-  protected async acceptTerms(signer: Signerish, overrides: WriteOverrides = {}): Promise<ContractTransaction> {
-    const { v1, v2 } = this.partitions;
+  protected async acceptTerms(walletClient: Signer, params?: WriteParameters): Promise<AcceptTermsResponse> {
+    const v1 = this.partition('v1');
 
     try {
-      if (v2) {
-        const tx = await v2.connectWith(signer).acceptTerms(overrides);
-        return tx;
-      } else if (v1) {
-        const tx = await v1.connectWith(signer)['acceptTerms()'](overrides);
-        return tx;
-      }
+      const { request } = await this.reader(this.abi(v1)).simulate.acceptTerms(params);
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
-
-    this.notSupported();
   }
 
-  async estimateGas(signer: Signerish, overrides: WriteOverrides = {}): Promise<BigNumber> {
-    const { v1, v2 } = this.partitions;
+  async estimateGas(walletClient: Signer, params?: WriteParameters): Promise<bigint> {
+    const v1 = this.partition('v1');
 
     try {
-      if (v2) {
-        const estimate = await v2.connectWith(signer).estimateGas.acceptTerms(overrides);
-        return estimate;
-      } else if (v1) {
-        const estimate = await v1.connectWith(signer).estimateGas['acceptTerms()'](overrides);
-        return estimate;
-      }
+      const estimate = await this.reader(this.abi(v1)).estimateGas.acceptTerms({
+        account: walletClient.account,
+        ...params,
+      });
+      return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
-
-    this.notSupported();
   }
 
-  async populateTransaction(overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
-    const { v1, v2 } = this.partitions;
+  async populateTransaction(params?: WriteParameters): Promise<string> {
+    const v1 = this.partition('v1');
 
     try {
-      if (v2) {
-        const tx = await v2.connectReadOnly().populateTransaction.acceptTerms(overrides);
-        return tx;
-      } else if (v1) {
-        const tx = await v1.connectReadOnly().populateTransaction['acceptTerms()'](overrides);
-        return tx;
-      }
+      const { request } = await this.reader(this.abi(v1)).simulate.acceptTerms(params);
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
-
-    this.notSupported();
   }
 }
 

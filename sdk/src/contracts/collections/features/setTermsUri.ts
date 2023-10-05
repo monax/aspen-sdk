@@ -1,7 +1,6 @@
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
+import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -17,8 +16,8 @@ type SetTermsUriPartitions = typeof SetTermsUriPartitions;
 const SetTermsUriInterfaces = Object.values(SetTermsUriPartitions).flat();
 type SetTermsUriInterfaces = (typeof SetTermsUriInterfaces)[number];
 
-export type SetTermsUriCallArgs = [signer: Signerish, termsUri: string, overrides?: WriteOverrides];
-export type SetTermsUriResponse = ContractTransaction;
+export type SetTermsUriCallArgs = [walletClient: Signer, termsUri: string, params?: WriteParameters];
+export type SetTermsUriResponse = GetTransactionReceiptReturnType;
 
 export class SetTermsUri extends ContractFunction<
   SetTermsUriInterfaces,
@@ -36,34 +35,38 @@ export class SetTermsUri extends ContractFunction<
     return this.setTermsUri(...args);
   }
 
-  async setTermsUri(signer: Signerish, termsUri: string, overrides: WriteOverrides = {}): Promise<ContractTransaction> {
+  async setTermsUri(walletClient: Signer, termsUri: string, params?: WriteParameters): Promise<SetTermsUriResponse> {
     const v1 = this.partition('v1');
 
     try {
-      const tx = await v1.connectWith(signer).setTermsURI(termsUri, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setTermsURI([termsUri], params);
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async estimateGas(signer: Signerish, termsUri: string, overrides: WriteOverrides = {}): Promise<BigNumber> {
+  async estimateGas(walletClient: Signer, termsUri: string, params?: WriteParameters): Promise<bigint> {
     const v1 = this.partition('v1');
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const estimate = await v1.connectWith(signer).estimateGas.setTermsURI(termsUri, overrides);
+      const estimate = await this.reader(this.abi(v1)).estimateGas.setTermsURI([termsUri], fullParams);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async populateTransaction(termsUri: string, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
+  async populateTransaction(termsUri: string, params?: WriteParameters): Promise<string> {
     const v1 = this.partition('v1');
 
     try {
-      const tx = await v1.connectReadOnly().populateTransaction.setTermsURI(termsUri, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setTermsURI([termsUri], params);
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

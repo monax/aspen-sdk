@@ -1,5 +1,5 @@
-import { BytesLike, CallOverrides } from 'ethers';
-import { AccessControl__factory, CollectionContract } from '../..';
+import { Hex, parseAbi } from 'viem';
+import { BytesLike, CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
 
@@ -14,7 +14,7 @@ type GetRoleAdminPartitions = typeof GetRoleAdminPartitions;
 const GetRoleAdminInterfaces = Object.values(GetRoleAdminPartitions).flat();
 type GetRoleAdminInterfaces = (typeof GetRoleAdminInterfaces)[number];
 
-export type GetRoleAdminCallArgs = [role: BytesLike, overrides?: CallOverrides];
+export type GetRoleAdminCallArgs = [role: BytesLike, params?: ReadParameters];
 export type GetRoleAdminResponse = string;
 
 export class GetRoleAdmin extends ContractFunction<
@@ -33,10 +33,10 @@ export class GetRoleAdmin extends ContractFunction<
     return this.getRoleAdmin(...args);
   }
 
-  async getRoleAdmin(role: BytesLike, overrides: CallOverrides = {}): Promise<string> {
+  async getRoleAdmin(role: BytesLike, params?: ReadParameters): Promise<string> {
     try {
-      const contract = AccessControl__factory.connect(this.base.address, this.base.provider);
-      return await contract.getRoleAdmin(role, overrides);
+      const abi = parseAbi(['function getRoleAdmin(bytes32 role) view returns (bytes32)']);
+      return await this.reader(abi).read.getRoleAdmin([role as Hex], params);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

@@ -1,5 +1,4 @@
-import { BigNumberish, CallOverrides } from 'ethers';
-import { CollectionContract, CollectionContractClaimCondition, transformClaimConditions } from '../..';
+import { claimConditionsFromChain, CollectionContract, CollectionContractClaimCondition, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -18,7 +17,7 @@ type GetClaimConditionsPartitions = typeof GetClaimConditionsPartitions;
 const GetClaimConditionsInterfaces = Object.values(GetClaimConditionsPartitions).flat();
 type GetClaimConditionsInterfaces = (typeof GetClaimConditionsInterfaces)[number];
 
-export type GetClaimConditionsCallArgs = [tokenId: BigNumberish | null, overrides?: CallOverrides];
+export type GetClaimConditionsCallArgs = [tokenId: bigint | null, params?: ReadParameters];
 export type GetClaimConditionsResponse = CollectionContractClaimCondition[];
 
 export class GetClaimConditions extends ContractFunction<
@@ -38,8 +37,8 @@ export class GetClaimConditions extends ContractFunction<
   }
 
   async getClaimConditions(
-    tokenId: BigNumberish | null,
-    overrides: CallOverrides = {},
+    tokenId: bigint | null,
+    params?: ReadParameters,
   ): Promise<CollectionContractClaimCondition[]> {
     const { nft, sft } = this.partitions;
 
@@ -48,16 +47,16 @@ export class GetClaimConditions extends ContractFunction<
         case 'ERC1155':
           if (sft) {
             tokenId = this.base.requireTokenId(tokenId, this.functionName);
-            const conditions = await sft.connectReadOnly().getClaimConditions(tokenId, overrides);
-            return conditions.map(transformClaimConditions);
+            const conditions = await this.reader(this.abi(sft)).read.getClaimConditions([tokenId], params);
+            return conditions.map(claimConditionsFromChain);
           }
           break;
 
         case 'ERC721':
           if (nft) {
             this.base.rejectTokenId(tokenId, this.functionName);
-            const conditions = await nft.connectReadOnly().getClaimConditions(overrides);
-            return conditions.map(transformClaimConditions);
+            const conditions = await this.reader(this.abi(nft)).read.getClaimConditions(params);
+            return conditions.map(claimConditionsFromChain);
           }
           break;
       }

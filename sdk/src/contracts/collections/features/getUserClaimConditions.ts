@@ -1,15 +1,14 @@
 import { parse } from '@monaxlabs/phloem/dist/schema';
-import { Address, Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, BigNumberish, CallOverrides, constants } from 'ethers';
-import { CollectionContract } from '../..';
+import { Address, Addressish, asAddress, MaxUint256n } from '@monaxlabs/phloem/dist/types';
+import { Hex } from 'viem';
+import { CollectionContract, CollectionContractClaimCondition, ReadParameters, TokenId } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { Zero } from '../number';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
-import { CollectionContractClaimCondition } from './getClaimConditionById';
 
 // Reasonably large number to compare with
-export const SUPPLY_THRESHOLD = constants.MaxInt256;
+export const SUPPLY_THRESHOLD = MaxUint256n;
 
 const GetUserClaimConditionsFunctions = {
   // NFT
@@ -64,11 +63,7 @@ type GetUserClaimConditionsPartitions = typeof GetUserClaimConditionsPartitions;
 const GetUserClaimConditionsInterfaces = Object.values(GetUserClaimConditionsPartitions).flat();
 type GetUserClaimConditionsInterfaces = (typeof GetUserClaimConditionsInterfaces)[number];
 
-export type GetUserClaimConditionsCallArgs = [
-  userAddress: Addressish,
-  tokenId: BigNumberish | null,
-  overrides?: CallOverrides,
-];
+export type GetUserClaimConditionsCallArgs = [userAddress: Addressish, tokenId: TokenId, params?: ReadParameters];
 export type GetUserClaimConditionsResponse = UserClaimConditions;
 
 export type UserClaimConditions = PartialUserClaimConditions &
@@ -76,10 +71,10 @@ export type UserClaimConditions = PartialUserClaimConditions &
   Omit<CollectionContractClaimCondition, 'phaseId'> & { isClaimingPaused: boolean; phaseId: string | null };
 
 type ActiveClaimConditions = {
-  maxWalletClaimCount: BigNumber;
-  tokenSupply: BigNumber;
-  maxTotalSupply: BigNumber;
-  maxAvailableSupply: BigNumber;
+  maxWalletClaimCount: bigint;
+  tokenSupply: bigint;
+  maxTotalSupply: bigint;
+  maxAvailableSupply: bigint;
   activeClaimConditionId: number;
   activeClaimCondition: Omit<CollectionContractClaimCondition, 'phaseId'> & {
     isClaimingPaused: boolean;
@@ -89,8 +84,8 @@ type ActiveClaimConditions = {
 
 type PartialUserClaimConditions = {
   activeClaimConditionId: number;
-  walletClaimCount: BigNumber;
-  walletClaimedCountInPhase: BigNumber | null;
+  walletClaimCount: bigint;
+  walletClaimedCountInPhase: bigint | null;
   lastClaimTimestamp: number;
   nextClaimTimestamp: number;
 };
@@ -113,8 +108,8 @@ export class GetUserClaimConditions extends ContractFunction<
 
   async getUserClaimConditions(
     userAddress: Addressish,
-    tokenId: BigNumberish | null,
-    overrides: CallOverrides = {},
+    tokenId: TokenId,
+    params?: ReadParameters,
   ): Promise<UserClaimConditions> {
     const address = await asAddress(userAddress);
     const { userNftV3, userSftV3 } = this.partitions;
@@ -124,12 +119,12 @@ export class GetUserClaimConditions extends ContractFunction<
         tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
         if (userSftV3) {
-          return await this.getForUserERC1155V2(address, tokenId, overrides);
+          return await this.getForUserERC1155V2(address, tokenId, params);
         }
 
         const [activeConditions, userConditions] = await Promise.all([
-          this.getActiveERC1155(tokenId, overrides),
-          this.getForUserERC1155(address, tokenId, overrides),
+          this.getActiveERC1155(tokenId, params),
+          this.getForUserERC1155(address, tokenId, params),
         ]);
 
         const { activeClaimCondition, ...otherActiveConditions } = activeConditions;
@@ -140,12 +135,12 @@ export class GetUserClaimConditions extends ContractFunction<
         this.base.rejectTokenId(tokenId, this.functionName);
 
         if (userNftV3) {
-          return await this.getForUserERC721V2(address, overrides);
+          return await this.getForUserERC721V2(address, params);
         }
 
         const [activeConditions, userConditions] = await Promise.all([
-          this.getActiveERC721(overrides),
-          this.getForUserERC721(address, overrides),
+          this.getActiveERC721(params),
+          this.getForUserERC721(address, params),
         ]);
 
         const { activeClaimCondition, ...otherActiveConditions } = activeConditions;
@@ -154,31 +149,32 @@ export class GetUserClaimConditions extends ContractFunction<
     }
   }
 
-  protected async getActiveERC721(overrides: CallOverrides = {}): Promise<ActiveClaimConditions> {
+  protected async getActiveERC721(params?: ReadParameters): Promise<ActiveClaimConditions> {
     const { activeNftV1, activeNftV2, activeNftV3, activeNftV4 } = this.partitions;
 
     try {
       if (activeNftV1) {
-        const nft = activeNftV1.connectReadOnly();
+        const nft = this.reader(this.abi(activeNftV1));
 
-        const { condition, conditionId, walletMaxClaimCount, remainingSupply } = await nft.getActiveClaimConditions(
-          overrides,
+        const [condition, conditionId, walletMaxClaimCount, remainingSupply] = await nft.read.getActiveClaimConditions(
+          params,
         );
 
-        const tokenSupply = await this.base.totalSupply(null, overrides);
-        const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD) ? Zero : remainingSupply.add(tokenSupply);
+        const tokenSupply = await this.base.totalSupply(null, params);
+        const maxTotalSupply = remainingSupply > SUPPLY_THRESHOLD ? Zero : remainingSupply + tokenSupply;
 
-        const claimableSupply = condition.maxClaimableSupply.eq(0)
-          ? SUPPLY_THRESHOLD
-          : condition.maxClaimableSupply.sub(condition.supplyClaimed);
-        const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
+        const claimableSupply =
+          condition.maxClaimableSupply === Zero
+            ? SUPPLY_THRESHOLD
+            : condition.maxClaimableSupply - condition.supplyClaimed;
+        const maxAvailableSupply = claimableSupply > remainingSupply ? remainingSupply : claimableSupply;
 
         return {
           maxWalletClaimCount: walletMaxClaimCount,
           tokenSupply: tokenSupply,
           maxTotalSupply: maxTotalSupply,
           maxAvailableSupply: maxAvailableSupply,
-          activeClaimConditionId: conditionId.toNumber(),
+          activeClaimConditionId: Number(conditionId),
           activeClaimCondition: {
             currency: parse(Address, condition.currency),
             maxClaimableSupply: condition.maxClaimableSupply,
@@ -186,32 +182,33 @@ export class GetUserClaimConditions extends ContractFunction<
             merkleRoot: condition.merkleRoot,
             pricePerToken: condition.pricePerToken,
             quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
-            startTimestamp: condition.startTimestamp.toNumber(),
-            waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            startTimestamp: Number(condition.startTimestamp),
+            waitTimeInSecondsBetweenClaims: Number(condition.waitTimeInSecondsBetweenClaims),
             phaseId: null,
             isClaimingPaused: false,
           },
         };
       } else if (activeNftV2) {
-        const nft = activeNftV2.connectReadOnly();
+        const nft = this.reader(this.abi(activeNftV2));
 
-        const { condition, conditionId, walletMaxClaimCount, remainingSupply, isClaimPaused } =
-          await nft.getActiveClaimConditions(overrides);
+        const [condition, conditionId, walletMaxClaimCount, remainingSupply, isClaimPaused] =
+          await nft.read.getActiveClaimConditions(params);
 
-        const tokenSupply = await this.base.totalSupply(null, overrides);
-        const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD) ? Zero : remainingSupply.add(tokenSupply);
+        const tokenSupply = await this.base.totalSupply(null, params);
+        const maxTotalSupply = remainingSupply > SUPPLY_THRESHOLD ? Zero : remainingSupply + tokenSupply;
 
-        const claimableSupply = condition.maxClaimableSupply.eq(0)
-          ? SUPPLY_THRESHOLD
-          : condition.maxClaimableSupply.sub(condition.supplyClaimed);
-        const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
+        const claimableSupply =
+          condition.maxClaimableSupply === Zero
+            ? SUPPLY_THRESHOLD
+            : condition.maxClaimableSupply - condition.supplyClaimed;
+        const maxAvailableSupply = claimableSupply > remainingSupply ? remainingSupply : claimableSupply;
 
         return {
           maxWalletClaimCount: walletMaxClaimCount,
           tokenSupply: tokenSupply,
           maxTotalSupply: maxTotalSupply,
           maxAvailableSupply: maxAvailableSupply,
-          activeClaimConditionId: conditionId.toNumber(),
+          activeClaimConditionId: Number(conditionId),
           activeClaimCondition: {
             currency: parse(Address, condition.currency),
             maxClaimableSupply: condition.maxClaimableSupply,
@@ -219,39 +216,34 @@ export class GetUserClaimConditions extends ContractFunction<
             merkleRoot: condition.merkleRoot,
             pricePerToken: condition.pricePerToken,
             quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
-            startTimestamp: condition.startTimestamp.toNumber(),
-            waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            startTimestamp: Number(condition.startTimestamp),
+            waitTimeInSecondsBetweenClaims: Number(condition.waitTimeInSecondsBetweenClaims),
             phaseId: null,
             isClaimingPaused: isClaimPaused,
           },
         };
       } else if (activeNftV3) {
-        const nft = activeNftV3.connectReadOnly();
+        const nft = this.reader(this.abi(activeNftV3));
 
-        const {
-          condition,
-          conditionId,
-          walletMaxClaimCount,
-          isClaimPaused,
-          tokenSupply: v1,
-          maxTotalSupply: v2,
-        } = await nft.getActiveClaimConditions(overrides);
+        const [condition, conditionId, walletMaxClaimCount, v1, v2, isClaimPaused] =
+          await nft.read.getActiveClaimConditions(params);
 
         // TEMP HACK: to fix the issue where the tokenSupply and maxTotalSupply can be switched
-        const [tokenSupply, maxTotalSupply] = v1.lt(v2) ? [v1, v2] : [v2, v1];
+        const [tokenSupply, maxTotalSupply] = v1 < v2 ? [v1, v2] : [v2, v1];
 
-        const remainingSupply = maxTotalSupply.eq(0) ? SUPPLY_THRESHOLD : maxTotalSupply.sub(tokenSupply);
-        const claimableSupply = condition.maxClaimableSupply.eq(0)
-          ? SUPPLY_THRESHOLD
-          : condition.maxClaimableSupply.sub(condition.supplyClaimed);
-        const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
+        const remainingSupply = maxTotalSupply === Zero ? SUPPLY_THRESHOLD : maxTotalSupply - tokenSupply;
+        const claimableSupply =
+          condition.maxClaimableSupply === Zero
+            ? SUPPLY_THRESHOLD
+            : condition.maxClaimableSupply - condition.supplyClaimed;
+        const maxAvailableSupply = claimableSupply > remainingSupply ? remainingSupply : claimableSupply;
 
         return {
           maxWalletClaimCount: walletMaxClaimCount,
           tokenSupply: tokenSupply,
           maxTotalSupply: maxTotalSupply,
           maxAvailableSupply: maxAvailableSupply,
-          activeClaimConditionId: conditionId.toNumber(),
+          activeClaimConditionId: Number(conditionId),
           activeClaimCondition: {
             currency: parse(Address, condition.currency),
             maxClaimableSupply: condition.maxClaimableSupply,
@@ -259,30 +251,31 @@ export class GetUserClaimConditions extends ContractFunction<
             merkleRoot: condition.merkleRoot,
             pricePerToken: condition.pricePerToken,
             quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
-            startTimestamp: condition.startTimestamp.toNumber(),
-            waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            startTimestamp: Number(condition.startTimestamp),
+            waitTimeInSecondsBetweenClaims: Number(condition.waitTimeInSecondsBetweenClaims),
             phaseId: null,
             isClaimingPaused: isClaimPaused,
           },
         };
       } else if (activeNftV4) {
-        const nft = activeNftV4.connectReadOnly();
+        const nft = this.reader(this.abi(activeNftV4));
 
-        const { condition, conditionId, walletMaxClaimCount, isClaimPaused, tokenSupply, maxTotalSupply } =
-          await nft.getActiveClaimConditions(overrides);
+        const [condition, conditionId, walletMaxClaimCount, tokenSupply, maxTotalSupply, isClaimPaused] =
+          await nft.read.getActiveClaimConditions(params);
 
-        const remainingSupply = maxTotalSupply.eq(0) ? SUPPLY_THRESHOLD : maxTotalSupply.sub(tokenSupply);
-        const claimableSupply = condition.maxClaimableSupply.eq(0)
-          ? SUPPLY_THRESHOLD
-          : condition.maxClaimableSupply.sub(condition.supplyClaimed);
-        const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
+        const remainingSupply = maxTotalSupply === Zero ? SUPPLY_THRESHOLD : maxTotalSupply - tokenSupply;
+        const claimableSupply =
+          condition.maxClaimableSupply === Zero
+            ? SUPPLY_THRESHOLD
+            : condition.maxClaimableSupply - condition.supplyClaimed;
+        const maxAvailableSupply = claimableSupply > remainingSupply ? remainingSupply : claimableSupply;
 
         return {
           maxWalletClaimCount: walletMaxClaimCount,
           tokenSupply: tokenSupply,
           maxTotalSupply: maxTotalSupply,
           maxAvailableSupply: maxAvailableSupply,
-          activeClaimConditionId: conditionId.toNumber(),
+          activeClaimConditionId: Number(conditionId),
           activeClaimCondition: {
             currency: parse(Address, condition.currency),
             maxClaimableSupply: condition.maxClaimableSupply,
@@ -290,8 +283,8 @@ export class GetUserClaimConditions extends ContractFunction<
             merkleRoot: condition.merkleRoot,
             pricePerToken: condition.pricePerToken,
             quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
-            startTimestamp: condition.startTimestamp.toNumber(),
-            waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            startTimestamp: Number(condition.startTimestamp),
+            waitTimeInSecondsBetweenClaims: Number(condition.waitTimeInSecondsBetweenClaims),
             phaseId: condition.phaseId,
             isClaimingPaused: isClaimPaused,
           },
@@ -304,43 +297,40 @@ export class GetUserClaimConditions extends ContractFunction<
     this.notSupported();
   }
 
-  protected async getForUserERC721(
-    userAddress: Address,
-    overrides: CallOverrides = {},
-  ): Promise<PartialUserClaimConditions> {
+  protected async getForUserERC721(userAddress: Address, params?: ReadParameters): Promise<PartialUserClaimConditions> {
     const { userNftV1, userNftV2 } = this.partitions;
 
     try {
       if (userNftV1) {
-        const nft = userNftV1.connectReadOnly();
+        const nft = this.reader(this.abi(userNftV1));
 
-        const { conditionId, walletClaimedCount, lastClaimTimestamp, nextValidClaimTimestamp } =
-          await nft.getUserClaimConditions(userAddress, overrides);
+        const [conditionId, walletClaimedCount, lastClaimTimestamp, nextValidClaimTimestamp] =
+          await nft.read.getUserClaimConditions([userAddress as Hex], params);
 
         return {
-          activeClaimConditionId: conditionId.toNumber(),
+          activeClaimConditionId: Number(conditionId),
           walletClaimCount: walletClaimedCount,
           walletClaimedCountInPhase: null,
-          lastClaimTimestamp: lastClaimTimestamp.toNumber(),
-          nextClaimTimestamp: nextValidClaimTimestamp.toNumber(),
+          lastClaimTimestamp: Number(lastClaimTimestamp),
+          nextClaimTimestamp: Number(nextValidClaimTimestamp),
         };
       } else if (userNftV2) {
-        const nft = userNftV2.connectReadOnly();
+        const nft = this.reader(this.abi(userNftV2));
 
-        const {
+        const [
           conditionId,
           walletClaimedCount,
           walletClaimedCountInPhase,
           lastClaimTimestamp,
           nextValidClaimTimestamp,
-        } = await nft.getUserClaimConditions(userAddress, overrides);
+        ] = await nft.read.getUserClaimConditions([userAddress as Hex], params);
 
         return {
-          activeClaimConditionId: conditionId.toNumber(),
+          activeClaimConditionId: Number(conditionId),
           walletClaimCount: walletClaimedCount,
           walletClaimedCountInPhase: walletClaimedCountInPhase,
-          lastClaimTimestamp: lastClaimTimestamp.toNumber(),
-          nextClaimTimestamp: nextValidClaimTimestamp.toNumber(),
+          lastClaimTimestamp: Number(lastClaimTimestamp),
+          nextClaimTimestamp: Number(nextValidClaimTimestamp),
         };
       }
     } catch (err) {
@@ -350,32 +340,33 @@ export class GetUserClaimConditions extends ContractFunction<
     this.notSupported();
   }
 
-  protected async getActiveERC1155(tokenId: BigNumber, overrides: CallOverrides = {}): Promise<ActiveClaimConditions> {
+  protected async getActiveERC1155(tokenId: bigint, params?: ReadParameters): Promise<ActiveClaimConditions> {
     const { activeSftV1, activeSftV2, activeSftV3, activeSftV4 } = this.partitions;
 
     try {
       if (activeSftV1) {
-        const sft = activeSftV1.connectReadOnly();
+        const sft = this.reader(this.abi(activeSftV1));
 
-        const { condition, conditionId, walletMaxClaimCount, remainingSupply } = await sft.getActiveClaimConditions(
-          tokenId,
-          overrides,
+        const [condition, conditionId, walletMaxClaimCount, remainingSupply] = await sft.read.getActiveClaimConditions(
+          [tokenId],
+          params,
         );
 
-        const tokenSupply = await this.base.totalSupply(tokenId, overrides);
-        const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD) ? Zero : remainingSupply.add(tokenSupply);
+        const tokenSupply = await this.base.totalSupply(tokenId, params);
+        const maxTotalSupply = remainingSupply > SUPPLY_THRESHOLD ? Zero : remainingSupply + tokenSupply;
 
-        const claimableSupply = condition.maxClaimableSupply.eq(0)
-          ? SUPPLY_THRESHOLD
-          : condition.maxClaimableSupply.sub(condition.supplyClaimed);
-        const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
+        const claimableSupply =
+          condition.maxClaimableSupply === Zero
+            ? SUPPLY_THRESHOLD
+            : condition.maxClaimableSupply - condition.supplyClaimed;
+        const maxAvailableSupply = claimableSupply > remainingSupply ? remainingSupply : claimableSupply;
 
         return {
           maxWalletClaimCount: walletMaxClaimCount,
           tokenSupply: tokenSupply,
           maxTotalSupply: maxTotalSupply,
           maxAvailableSupply: maxAvailableSupply,
-          activeClaimConditionId: conditionId.toNumber(),
+          activeClaimConditionId: Number(conditionId),
           activeClaimCondition: {
             currency: parse(Address, condition.currency),
             maxClaimableSupply: condition.maxClaimableSupply,
@@ -383,32 +374,33 @@ export class GetUserClaimConditions extends ContractFunction<
             merkleRoot: condition.merkleRoot,
             pricePerToken: condition.pricePerToken,
             quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
-            startTimestamp: condition.startTimestamp.toNumber(),
-            waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            startTimestamp: Number(condition.startTimestamp),
+            waitTimeInSecondsBetweenClaims: Number(condition.waitTimeInSecondsBetweenClaims),
             phaseId: null,
             isClaimingPaused: false,
           },
         };
       } else if (activeSftV2) {
-        const iSftIssuance = activeSftV2.connectReadOnly();
+        const iSftIssuance = this.reader(this.abi(activeSftV2));
 
-        const { condition, conditionId, walletMaxClaimCount, remainingSupply, isClaimPaused } =
-          await iSftIssuance.getActiveClaimConditions(tokenId, overrides);
+        const [condition, conditionId, walletMaxClaimCount, remainingSupply, isClaimPaused] =
+          await iSftIssuance.read.getActiveClaimConditions([tokenId], params);
 
-        const tokenSupply = await this.base.totalSupply(tokenId, overrides);
-        const maxTotalSupply = remainingSupply.gt(SUPPLY_THRESHOLD) ? Zero : remainingSupply.add(tokenSupply);
+        const tokenSupply = await this.base.totalSupply(tokenId, params);
+        const maxTotalSupply = remainingSupply > SUPPLY_THRESHOLD ? Zero : remainingSupply + tokenSupply;
 
-        const claimableSupply = condition.maxClaimableSupply.eq(0)
-          ? SUPPLY_THRESHOLD
-          : condition.maxClaimableSupply.sub(condition.supplyClaimed);
-        const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
+        const claimableSupply =
+          condition.maxClaimableSupply === Zero
+            ? SUPPLY_THRESHOLD
+            : condition.maxClaimableSupply - condition.supplyClaimed;
+        const maxAvailableSupply = claimableSupply > remainingSupply ? remainingSupply : claimableSupply;
 
         return {
           maxWalletClaimCount: walletMaxClaimCount,
           tokenSupply: tokenSupply,
           maxTotalSupply: maxTotalSupply,
           maxAvailableSupply: maxAvailableSupply,
-          activeClaimConditionId: conditionId.toNumber(),
+          activeClaimConditionId: Number(conditionId),
           activeClaimCondition: {
             currency: parse(Address, condition.currency),
             maxClaimableSupply: condition.maxClaimableSupply,
@@ -416,30 +408,31 @@ export class GetUserClaimConditions extends ContractFunction<
             merkleRoot: condition.merkleRoot,
             pricePerToken: condition.pricePerToken,
             quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
-            startTimestamp: condition.startTimestamp.toNumber(),
-            waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            startTimestamp: Number(condition.startTimestamp),
+            waitTimeInSecondsBetweenClaims: Number(condition.waitTimeInSecondsBetweenClaims),
             phaseId: null,
             isClaimingPaused: isClaimPaused,
           },
         };
       } else if (activeSftV3) {
-        const sft = activeSftV3.connectReadOnly();
+        const sft = this.reader(this.abi(activeSftV3));
 
-        const { condition, conditionId, walletMaxClaimCount, isClaimPaused, tokenSupply, maxTotalSupply } =
-          await sft.getActiveClaimConditions(tokenId, overrides);
+        const [condition, conditionId, walletMaxClaimCount, tokenSupply, maxTotalSupply, isClaimPaused] =
+          await sft.read.getActiveClaimConditions([tokenId], params);
 
-        const remainingSupply = maxTotalSupply.eq(0) ? SUPPLY_THRESHOLD : maxTotalSupply.sub(tokenSupply);
-        const claimableSupply = condition.maxClaimableSupply.eq(0)
-          ? SUPPLY_THRESHOLD
-          : condition.maxClaimableSupply.sub(condition.supplyClaimed);
-        const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
+        const remainingSupply = maxTotalSupply === Zero ? SUPPLY_THRESHOLD : maxTotalSupply - tokenSupply;
+        const claimableSupply =
+          condition.maxClaimableSupply === Zero
+            ? SUPPLY_THRESHOLD
+            : condition.maxClaimableSupply - condition.supplyClaimed;
+        const maxAvailableSupply = claimableSupply > remainingSupply ? remainingSupply : claimableSupply;
 
         return {
           maxWalletClaimCount: walletMaxClaimCount,
           tokenSupply: tokenSupply,
           maxTotalSupply: maxTotalSupply,
           maxAvailableSupply: maxAvailableSupply,
-          activeClaimConditionId: conditionId.toNumber(),
+          activeClaimConditionId: Number(conditionId),
           activeClaimCondition: {
             currency: parse(Address, condition.currency),
             maxClaimableSupply: condition.maxClaimableSupply,
@@ -447,30 +440,31 @@ export class GetUserClaimConditions extends ContractFunction<
             merkleRoot: condition.merkleRoot,
             pricePerToken: condition.pricePerToken,
             quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
-            startTimestamp: condition.startTimestamp.toNumber(),
-            waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            startTimestamp: Number(condition.startTimestamp),
+            waitTimeInSecondsBetweenClaims: Number(condition.waitTimeInSecondsBetweenClaims),
             phaseId: null,
             isClaimingPaused: isClaimPaused,
           },
         };
       } else if (activeSftV4) {
-        const sft = activeSftV4.connectReadOnly();
+        const sft = this.reader(this.abi(activeSftV4));
 
-        const { condition, conditionId, walletMaxClaimCount, isClaimPaused, tokenSupply, maxTotalSupply } =
-          await sft.getActiveClaimConditions(tokenId, overrides);
+        const [condition, conditionId, walletMaxClaimCount, tokenSupply, maxTotalSupply, isClaimPaused] =
+          await sft.read.getActiveClaimConditions([tokenId], params);
 
-        const remainingSupply = maxTotalSupply.eq(0) ? SUPPLY_THRESHOLD : maxTotalSupply.sub(tokenSupply);
-        const claimableSupply = condition.maxClaimableSupply.eq(0)
-          ? SUPPLY_THRESHOLD
-          : condition.maxClaimableSupply.sub(condition.supplyClaimed);
-        const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
+        const remainingSupply = maxTotalSupply === Zero ? SUPPLY_THRESHOLD : maxTotalSupply - tokenSupply;
+        const claimableSupply =
+          condition.maxClaimableSupply === Zero
+            ? SUPPLY_THRESHOLD
+            : condition.maxClaimableSupply - condition.supplyClaimed;
+        const maxAvailableSupply = claimableSupply > remainingSupply ? remainingSupply : claimableSupply;
 
         return {
           maxWalletClaimCount: walletMaxClaimCount,
           tokenSupply: tokenSupply,
           maxTotalSupply: maxTotalSupply,
           maxAvailableSupply: maxAvailableSupply,
-          activeClaimConditionId: conditionId.toNumber(),
+          activeClaimConditionId: Number(conditionId),
           activeClaimCondition: {
             currency: parse(Address, condition.currency),
             maxClaimableSupply: condition.maxClaimableSupply,
@@ -478,8 +472,8 @@ export class GetUserClaimConditions extends ContractFunction<
             merkleRoot: condition.merkleRoot,
             pricePerToken: condition.pricePerToken,
             quantityLimitPerTransaction: condition.quantityLimitPerTransaction,
-            startTimestamp: condition.startTimestamp.toNumber(),
-            waitTimeInSecondsBetweenClaims: condition.waitTimeInSecondsBetweenClaims.toNumber(),
+            startTimestamp: Number(condition.startTimestamp),
+            waitTimeInSecondsBetweenClaims: Number(condition.waitTimeInSecondsBetweenClaims),
             phaseId: condition.phaseId,
             isClaimingPaused: isClaimPaused,
           },
@@ -492,13 +486,10 @@ export class GetUserClaimConditions extends ContractFunction<
     this.notSupported();
   }
 
-  protected async getForUserERC721V2(
-    userAddress: Address,
-    overrides: CallOverrides = {},
-  ): Promise<UserClaimConditions> {
+  protected async getForUserERC721V2(userAddress: Address, params?: ReadParameters): Promise<UserClaimConditions> {
     const userNftV3 = this.partition('userNftV3');
 
-    const {
+    const [
       condition,
       conditionId,
       walletMaxClaimCount,
@@ -509,7 +500,7 @@ export class GetUserClaimConditions extends ContractFunction<
       lastClaimTimestamp,
       nextValidClaimTimestamp,
       isClaimPaused,
-    } = await userNftV3.connectReadOnly().getUserClaimConditions(userAddress, overrides);
+    ] = await this.reader(this.abi(userNftV3)).read.getUserClaimConditions([userAddress as Hex], params);
 
     const {
       startTimestamp,
@@ -523,15 +514,14 @@ export class GetUserClaimConditions extends ContractFunction<
       phaseId,
     } = condition;
 
-    const remainingSupply = maxTotalSupply.eq(0) ? SUPPLY_THRESHOLD : maxTotalSupply.sub(tokenSupply);
-    const claimableSupply = condition.maxClaimableSupply.eq(0)
-      ? SUPPLY_THRESHOLD
-      : condition.maxClaimableSupply.sub(condition.supplyClaimed);
-    const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
+    const remainingSupply = maxTotalSupply === Zero ? SUPPLY_THRESHOLD : maxTotalSupply - tokenSupply;
+    const claimableSupply =
+      condition.maxClaimableSupply === Zero ? SUPPLY_THRESHOLD : condition.maxClaimableSupply - condition.supplyClaimed;
+    const maxAvailableSupply = claimableSupply > remainingSupply ? remainingSupply : claimableSupply;
 
     return {
-      startTimestamp: startTimestamp.toNumber(),
-      waitTimeInSecondsBetweenClaims: waitTimeInSecondsBetweenClaims.toNumber(),
+      startTimestamp: Number(startTimestamp),
+      waitTimeInSecondsBetweenClaims: Number(waitTimeInSecondsBetweenClaims),
       currency: parse(Address, currency),
       maxClaimableSupply,
       supplyClaimed,
@@ -543,23 +533,23 @@ export class GetUserClaimConditions extends ContractFunction<
       maxTotalSupply,
       maxAvailableSupply,
       maxWalletClaimCount: walletMaxClaimCount,
-      activeClaimConditionId: conditionId.toNumber(),
+      activeClaimConditionId: Number(conditionId),
       walletClaimCount: walletClaimedCount,
       walletClaimedCountInPhase,
-      lastClaimTimestamp: lastClaimTimestamp.toNumber(),
-      nextClaimTimestamp: nextValidClaimTimestamp.toNumber(),
+      lastClaimTimestamp: Number(lastClaimTimestamp),
+      nextClaimTimestamp: Number(nextValidClaimTimestamp),
       isClaimingPaused: isClaimPaused,
     };
   }
 
   protected async getForUserERC1155V2(
     userAddress: Address,
-    tokenId: BigNumber,
-    overrides: CallOverrides = {},
+    tokenId: bigint,
+    params?: ReadParameters,
   ): Promise<UserClaimConditions> {
     const userSftV3 = this.partition('userSftV3');
 
-    const {
+    const [
       condition,
       conditionId,
       walletMaxClaimCount,
@@ -570,7 +560,7 @@ export class GetUserClaimConditions extends ContractFunction<
       lastClaimTimestamp,
       nextValidClaimTimestamp,
       isClaimPaused,
-    } = await userSftV3.connectReadOnly().getUserClaimConditions(tokenId, userAddress, overrides);
+    ] = await this.reader(this.abi(userSftV3)).read.getUserClaimConditions([tokenId, userAddress as Hex], params);
 
     const {
       startTimestamp,
@@ -584,15 +574,14 @@ export class GetUserClaimConditions extends ContractFunction<
       phaseId,
     } = condition;
 
-    const remainingSupply = maxTotalSupply.eq(0) ? SUPPLY_THRESHOLD : maxTotalSupply.sub(tokenSupply);
-    const claimableSupply = condition.maxClaimableSupply.eq(0)
-      ? SUPPLY_THRESHOLD
-      : condition.maxClaimableSupply.sub(condition.supplyClaimed);
-    const maxAvailableSupply = claimableSupply.gt(remainingSupply) ? remainingSupply : claimableSupply;
+    const remainingSupply = maxTotalSupply === Zero ? SUPPLY_THRESHOLD : maxTotalSupply - tokenSupply;
+    const claimableSupply =
+      condition.maxClaimableSupply === Zero ? SUPPLY_THRESHOLD : condition.maxClaimableSupply - condition.supplyClaimed;
+    const maxAvailableSupply = claimableSupply > remainingSupply ? remainingSupply : claimableSupply;
 
     return {
-      startTimestamp: startTimestamp.toNumber(),
-      waitTimeInSecondsBetweenClaims: waitTimeInSecondsBetweenClaims.toNumber(),
+      startTimestamp: Number(startTimestamp),
+      waitTimeInSecondsBetweenClaims: Number(waitTimeInSecondsBetweenClaims),
       currency: parse(Address, currency),
       maxClaimableSupply,
       supplyClaimed,
@@ -604,55 +593,53 @@ export class GetUserClaimConditions extends ContractFunction<
       maxTotalSupply,
       maxAvailableSupply,
       maxWalletClaimCount: walletMaxClaimCount,
-      activeClaimConditionId: conditionId.toNumber(),
+      activeClaimConditionId: Number(conditionId),
       walletClaimCount: walletClaimedCount,
       walletClaimedCountInPhase,
-      lastClaimTimestamp: lastClaimTimestamp.toNumber(),
-      nextClaimTimestamp: nextValidClaimTimestamp.toNumber(),
+      lastClaimTimestamp: Number(lastClaimTimestamp),
+      nextClaimTimestamp: Number(nextValidClaimTimestamp),
       isClaimingPaused: isClaimPaused,
     };
   }
 
   protected async getForUserERC1155(
     userAddress: Address,
-    tokenId: BigNumber,
-    overrides: CallOverrides = {},
+    tokenId: bigint,
+    params?: ReadParameters,
   ): Promise<PartialUserClaimConditions> {
     const { userSftV1, userSftV2 } = this.partitions;
 
     try {
-      const tokenIdBn = BigNumber.from(tokenId);
-
       if (userSftV1) {
-        const sft = userSftV1.connectReadOnly();
+        const sft = this.reader(this.abi(userSftV1));
 
-        const { conditionId, walletClaimedCount, lastClaimTimestamp, nextValidClaimTimestamp } =
-          await sft.getUserClaimConditions(tokenIdBn, userAddress, overrides);
+        const [conditionId, walletClaimedCount, lastClaimTimestamp, nextValidClaimTimestamp] =
+          await sft.read.getUserClaimConditions([tokenId, userAddress as Hex], params);
 
         return {
-          activeClaimConditionId: conditionId.toNumber(),
+          activeClaimConditionId: Number(conditionId),
           walletClaimCount: walletClaimedCount,
           walletClaimedCountInPhase: null,
-          lastClaimTimestamp: lastClaimTimestamp.toNumber(),
-          nextClaimTimestamp: nextValidClaimTimestamp.toNumber(),
+          lastClaimTimestamp: Number(lastClaimTimestamp),
+          nextClaimTimestamp: Number(nextValidClaimTimestamp),
         };
       } else if (userSftV2) {
-        const sft = userSftV2.connectReadOnly();
+        const sft = this.reader(this.abi(userSftV2));
 
-        const {
+        const [
           conditionId,
           walletClaimedCount,
           walletClaimedCountInPhase,
           lastClaimTimestamp,
           nextValidClaimTimestamp,
-        } = await sft.getUserClaimConditions(tokenIdBn, userAddress, overrides);
+        ] = await sft.read.getUserClaimConditions([tokenId, userAddress as Hex], params);
 
         return {
-          activeClaimConditionId: conditionId.toNumber(),
+          activeClaimConditionId: Number(conditionId),
           walletClaimCount: walletClaimedCount,
           walletClaimedCountInPhase: walletClaimedCountInPhase,
-          lastClaimTimestamp: lastClaimTimestamp.toNumber(),
-          nextClaimTimestamp: nextValidClaimTimestamp.toNumber(),
+          lastClaimTimestamp: Number(lastClaimTimestamp),
+          nextClaimTimestamp: Number(nextValidClaimTimestamp),
         };
       }
     } catch (err) {

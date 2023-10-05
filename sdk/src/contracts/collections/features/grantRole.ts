@@ -1,6 +1,6 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, BytesLike, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { AccessControl__factory, CollectionContract, Signerish, WriteOverrides } from '../..';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex, parseAbi } from 'viem';
+import { BytesLike, CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
 
@@ -15,8 +15,10 @@ type GrantRolePartitions = typeof GrantRolePartitions;
 const GrantRoleInterfaces = Object.values(GrantRolePartitions).flat();
 type GrantRoleInterfaces = (typeof GrantRoleInterfaces)[number];
 
-export type GrantRoleCallArgs = [signer: Signerish, role: BytesLike, account: Addressish, overrides?: WriteOverrides];
-export type GrantRoleResponse = ContractTransaction;
+export type GrantRoleCallArgs = [walletClient: Signer, role: BytesLike, account: Addressish, params?: WriteParameters];
+export type GrantRoleResponse = GetTransactionReceiptReturnType;
+
+const GrantRoleAbi = ['function grantRole(bytes32 role, address account) public'];
 
 export class GrantRole extends ContractFunction<
   GrantRoleInterfaces,
@@ -35,50 +37,50 @@ export class GrantRole extends ContractFunction<
   }
 
   async grantRole(
-    signer: Signerish,
+    walletClient: Signer,
     role: BytesLike,
     account: Addressish,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<GrantRoleResponse> {
     const wallet = await asAddress(account);
 
     try {
-      const contract = AccessControl__factory.connect(this.base.address, signer);
-      const tx = await contract.grantRole(role, wallet, overrides);
-      return tx;
+      const abi = parseAbi(GrantRoleAbi);
+      const { request } = await this.reader(abi).simulate.grantRole([role as Hex, wallet as Hex], params);
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
   async estimateGas(
-    signer: Signerish,
+    walletClient: Signer,
     role: BytesLike,
     account: Addressish,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const wallet = await asAddress(account);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const contract = AccessControl__factory.connect(this.base.address, signer);
-      const estimate = await contract.estimateGas.grantRole(role, wallet, overrides);
+      const abi = parseAbi(GrantRoleAbi);
+      const estimate = await this.reader(abi).estimateGas.grantRole([role as Hex, wallet as Hex], fullParams);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
-  async populateTransaction(
-    role: BytesLike,
-    account: Addressish,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+  async populateTransaction(role: BytesLike, account: Addressish, params?: WriteParameters): Promise<string> {
     const wallet = await asAddress(account);
 
     try {
-      const contract = AccessControl__factory.connect(this.base.address, this.base.provider);
-      const tx = await contract.populateTransaction.grantRole(role, wallet, overrides);
-      return tx;
+      const abi = parseAbi(GrantRoleAbi);
+      const { request } = await this.reader(abi).simulate.grantRole([role as Hex, wallet as Hex], params);
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }

@@ -1,5 +1,4 @@
-import { BigNumber, CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -16,12 +15,12 @@ type RoyaltyInfoPartitions = typeof RoyaltyInfoPartitions;
 const RoyaltyInfoInterfaces = Object.values(RoyaltyInfoPartitions).flat();
 type RoyaltyInfoInterfaces = (typeof RoyaltyInfoInterfaces)[number];
 
-export type RoyaltyInfoCallArgs = [tokenId: BigNumber, salePrice: BigNumber, overrides?: CallOverrides];
+export type RoyaltyInfoCallArgs = [tokenId: bigint, salePrice: bigint, params?: ReadParameters];
 export type RoyaltyInfoResponse = RoyaltiesInfo;
 
 export type RoyaltiesInfo = {
   receiver: string;
-  royaltyAmount: BigNumber;
+  royaltyAmount: bigint;
 };
 
 export class RoyaltyInfo extends ContractFunction<
@@ -40,11 +39,11 @@ export class RoyaltyInfo extends ContractFunction<
     return this.royaltyInfo(...args);
   }
 
-  async royaltyInfo(tokenId: BigNumber, salePrice: BigNumber, overrides: CallOverrides = {}): Promise<RoyaltiesInfo> {
+  async royaltyInfo(tokenId: bigint, salePrice: bigint, params?: ReadParameters): Promise<RoyaltiesInfo> {
     const v1 = this.partition('v1');
 
     try {
-      const { receiver, royaltyAmount } = await v1.connectReadOnly().royaltyInfo(tokenId, salePrice, overrides);
+      const [receiver, royaltyAmount] = await this.reader(this.abi(v1)).read.royaltyInfo([tokenId, salePrice], params);
       return { receiver, royaltyAmount };
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

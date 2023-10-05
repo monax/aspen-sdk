@@ -330,12 +330,11 @@ The aim of this integration is to place a 'mint' button on our drop page. The ne
 
 ```typescript
 import { CollectionContract, parse, Address, NATIVE_TOKEN } from '@monaxlabs/aspen-sdk/dist/contracts/address';
-import { BigNumberish } from 'ethers';
 
 async function main(contract: CollectionContract): Promise<void> {
   const claimingAccount: Address = parse(Address, '0x92380354b9f2334a9c78c0686645db04d52972bc');
   // Depending on whether ERC721 or ERC1155
-  const tokenId: null | BigNumberish = 2;
+  const tokenId: null | bigint = 2;
   // Get the active claim phase from the contract
   const conditions = await contract.conditions.getState(claimingAccount, tokenId);
   if (conditions.claimState !== 'ok') {
@@ -352,7 +351,7 @@ async function main(contract: CollectionContract): Promise<void> {
       // tokenId if ERC1155, null if ERC721
       tokenId,
       // Quantity to claim (multiple tokens can be claimed in a single call for both ERC721 and ERC1155)
-      quantity: BigNumber.from(1),
+      quantity: BigInt(1),
       // price details
       currency: conditions.currency,
       pricePerToken: conditions.pricePerToken,

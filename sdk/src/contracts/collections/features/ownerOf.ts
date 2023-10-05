@@ -1,7 +1,6 @@
 import { parse } from '@monaxlabs/phloem/dist/schema';
 import { Address } from '@monaxlabs/phloem/dist/types';
-import { BigNumberish, CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters, RequiredTokenId } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -18,7 +17,7 @@ type OwnerOfPartitions = typeof OwnerOfPartitions;
 const OwnerOfInterfaces = Object.values(OwnerOfPartitions).flat();
 type OwnerOfInterfaces = (typeof OwnerOfInterfaces)[number];
 
-export type OwnerOfCallArgs = [tokenId: BigNumberish, overrides?: CallOverrides];
+export type OwnerOfCallArgs = [tokenId: RequiredTokenId, params?: ReadParameters];
 export type OwnerOfResponse = Address;
 
 export class OwnerOf extends ContractFunction<OwnerOfInterfaces, OwnerOfPartitions, OwnerOfCallArgs, OwnerOfResponse> {
@@ -33,11 +32,12 @@ export class OwnerOf extends ContractFunction<OwnerOfInterfaces, OwnerOfPartitio
     return this.ownerOf(...args);
   }
 
-  async ownerOf(tokenId: BigNumberish, overrides: CallOverrides = {}): Promise<Address> {
+  async ownerOf(tokenId: RequiredTokenId, params?: ReadParameters): Promise<Address> {
     const v1 = this.partition('v1');
+    tokenId = this.base.requireTokenId(tokenId, this.functionName);
 
     try {
-      const ownerOf = await v1.connectReadOnly().ownerOf(tokenId, overrides);
+      const ownerOf = await this.reader(this.abi(v1)).read.ownerOf([tokenId], params);
       return parse(Address, ownerOf);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

@@ -1,5 +1,4 @@
-import { BigNumber, BigNumberish, CallOverrides } from 'ethers';
-import { CollectionContract } from '../..';
+import { CollectionContract, ReadParameters, TokenId } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
@@ -19,8 +18,8 @@ type TotalSupplyPartitions = typeof TotalSupplyPartitions;
 const TotalSupplyInterfaces = Object.values(TotalSupplyPartitions).flat();
 type TotalSupplyInterfaces = (typeof TotalSupplyInterfaces)[number];
 
-export type TotalSupplyCallArgs = [tokenId?: BigNumberish | null, overrides?: CallOverrides];
-export type TotalSupplyResponse = BigNumber;
+export type TotalSupplyCallArgs = [tokenId?: TokenId, params?: ReadParameters];
+export type TotalSupplyResponse = bigint;
 
 export class TotalSupply extends ContractFunction<
   TotalSupplyInterfaces,
@@ -39,18 +38,18 @@ export class TotalSupply extends ContractFunction<
     return this.totalSupply(...args);
   }
 
-  async totalSupply(tokenId?: BigNumberish | null, overrides: CallOverrides = {}): Promise<BigNumber> {
+  async totalSupply(tokenId?: TokenId, params?: ReadParameters): Promise<bigint> {
     const { nft: nftV1, nftCatch, sft } = this.partitions;
     const nft = nftCatch ? this.base.assumeFeature('issuance/INFTSupply.sol:IPublicNFTSupplyV0') : nftV1;
 
     try {
       if (sft) {
         tokenId = this.base.requireTokenId(tokenId, this.functionName);
-        const balance = await sft.connectReadOnly().totalSupply(tokenId, overrides);
+        const balance = await this.reader(this.abi(sft)).read.totalSupply([tokenId], params);
         return balance;
       } else if (nft) {
         this.base.rejectTokenId(tokenId, this.functionName);
-        const balance = await nft.connectReadOnly().totalSupply(overrides);
+        const balance = await this.reader(this.abi(nft)).read.totalSupply(params);
         return balance;
       }
     } catch (err) {

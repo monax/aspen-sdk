@@ -1,7 +1,6 @@
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
+import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -19,8 +18,8 @@ type SetTermsActivationPartitions = typeof SetTermsActivationPartitions;
 const SetTermsActivationInterfaces = Object.values(SetTermsActivationPartitions).flat();
 type SetTermsActivationInterfaces = (typeof SetTermsActivationInterfaces)[number];
 
-export type SetTermsActivationCallArgs = [signer: Signerish, termsEnabled: boolean, overrides?: WriteOverrides];
-export type SetTermsActivationResponse = ContractTransaction;
+export type SetTermsActivationCallArgs = [walletClient: Signer, termsEnabled: boolean, params?: WriteParameters];
+export type SetTermsActivationResponse = GetTransactionReceiptReturnType;
 
 export class SetTermsActivation extends ContractFunction<
   SetTermsActivationInterfaces,
@@ -39,19 +38,25 @@ export class SetTermsActivation extends ContractFunction<
   }
 
   async setTermsActivation(
-    signer: Signerish,
+    walletClient: Signer,
     termsEnabled: boolean,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    params?: WriteParameters,
+  ): Promise<SetTermsActivationResponse> {
     const { v1, v2 } = this.partitions;
 
     try {
       if (v2) {
-        const tx = await v2.connectWith(signer).setTermsActivation(termsEnabled, overrides);
-        return tx;
+        const { request } = await this.reader(this.abi(v2)).simulate.setTermsActivation([termsEnabled], params);
+        const hash = await walletClient.writeContract(request);
+        return this.base.publicClient.waitForTransactionReceipt({
+          hash,
+        });
       } else if (v1) {
-        const tx = await v1.connectWith(signer).setTermsStatus(termsEnabled, overrides);
-        return tx;
+        const { request } = await this.reader(this.abi(v1)).simulate.setTermsStatus([termsEnabled], params);
+        const hash = await walletClient.writeContract(request);
+        return this.base.publicClient.waitForTransactionReceipt({
+          hash,
+        });
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -60,15 +65,16 @@ export class SetTermsActivation extends ContractFunction<
     this.notSupported();
   }
 
-  async estimateGas(signer: Signerish, termsEnabled: boolean, overrides: WriteOverrides = {}): Promise<BigNumber> {
+  async estimateGas(walletClient: Signer, termsEnabled: boolean, params?: WriteParameters): Promise<bigint> {
     const { v1, v2 } = this.partitions;
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       if (v2) {
-        const estimate = await v2.connectWith(signer).estimateGas.setTermsActivation(termsEnabled, overrides);
+        const estimate = await this.reader(this.abi(v2)).estimateGas.setTermsActivation([termsEnabled], fullParams);
         return estimate;
       } else if (v1) {
-        const estimate = await v1.connectWith(signer).estimateGas.setTermsStatus(termsEnabled, overrides);
+        const estimate = await this.reader(this.abi(v1)).estimateGas.setTermsStatus([termsEnabled], fullParams);
         return estimate;
       }
     } catch (err) {
@@ -78,16 +84,16 @@ export class SetTermsActivation extends ContractFunction<
     this.notSupported();
   }
 
-  async populateTransaction(termsEnabled: boolean, overrides: WriteOverrides = {}): Promise<PopulatedTransaction> {
+  async populateTransaction(termsEnabled: boolean, params?: WriteParameters): Promise<string> {
     const { v1, v2 } = this.partitions;
 
     try {
       if (v2) {
-        const tx = await v2.connectReadOnly().populateTransaction.setTermsActivation(termsEnabled, overrides);
-        return tx;
+        const { request } = await this.reader(this.abi(v2)).simulate.setTermsActivation([termsEnabled], params);
+        return encodeFunctionData(request);
       } else if (v1) {
-        const tx = await v1.connectReadOnly().populateTransaction.setTermsStatus(termsEnabled, overrides);
-        return tx;
+        const { request } = await this.reader(this.abi(v1)).simulate.setTermsStatus([termsEnabled], params);
+        return encodeFunctionData(request);
       }
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

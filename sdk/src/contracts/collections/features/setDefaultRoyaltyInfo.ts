@@ -1,8 +1,7 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { BigNumber, ContractTransaction, PopulatedTransaction } from 'ethers';
-import { CollectionContract } from '../..';
+import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
+import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import type { Signerish, WriteOverrides } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
 import { asCallableClass, ContractFunction } from './features';
 
@@ -19,12 +18,12 @@ const SetDefaultRoyaltyInfoInterfaces = Object.values(SetDefaultRoyaltyInfoParti
 type SetDefaultRoyaltyInfoInterfaces = (typeof SetDefaultRoyaltyInfoInterfaces)[number];
 
 export type SetDefaultRoyaltyInfoCallArgs = [
-  signer: Signerish,
+  walletClient: Signer,
   royaltyRecipient: Addressish,
-  basisPoints: BigNumber,
-  overrides?: WriteOverrides,
+  basisPoints: bigint,
+  params?: WriteParameters,
 ];
-export type SetDefaultRoyaltyInfoResponse = ContractTransaction;
+export type SetDefaultRoyaltyInfoResponse = GetTransactionReceiptReturnType;
 
 export class SetDefaultRoyaltyInfo extends ContractFunction<
   SetDefaultRoyaltyInfoInterfaces,
@@ -43,33 +42,43 @@ export class SetDefaultRoyaltyInfo extends ContractFunction<
   }
 
   async setDefaultRoyaltyInfo(
-    signer: Signerish,
+    walletClient: Signer,
     royaltyRecipient: Addressish,
-    basisPoints: BigNumber,
-    overrides: WriteOverrides = {},
-  ): Promise<ContractTransaction> {
+    basisPoints: bigint,
+    params?: WriteParameters,
+  ): Promise<SetDefaultRoyaltyInfoResponse> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(royaltyRecipient);
 
     try {
-      const tx = await v1.connectWith(signer).setDefaultRoyaltyInfo(wallet, basisPoints, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setDefaultRoyaltyInfo(
+        [wallet as Hex, basisPoints],
+        params,
+      );
+      const hash = await walletClient.writeContract(request);
+      return this.base.publicClient.waitForTransactionReceipt({
+        hash,
+      });
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
   }
 
   async estimateGas(
-    signer: Signerish,
+    walletClient: Signer,
     royaltyRecipient: Addressish,
-    basisPoints: BigNumber,
-    overrides: WriteOverrides = {},
-  ): Promise<BigNumber> {
+    basisPoints: bigint,
+    params?: WriteParameters,
+  ): Promise<bigint> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(royaltyRecipient);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const estimate = await v1.connectWith(signer).estimateGas.setDefaultRoyaltyInfo(wallet, basisPoints, overrides);
+      const estimate = await this.reader(this.abi(v1)).estimateGas.setDefaultRoyaltyInfo(
+        [wallet as Hex, basisPoints],
+        fullParams,
+      );
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
@@ -78,15 +87,18 @@ export class SetDefaultRoyaltyInfo extends ContractFunction<
 
   async populateTransaction(
     royaltyRecipient: Addressish,
-    basisPoints: BigNumber,
-    overrides: WriteOverrides = {},
-  ): Promise<PopulatedTransaction> {
+    basisPoints: bigint,
+    params?: WriteParameters,
+  ): Promise<string> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(royaltyRecipient);
 
     try {
-      const tx = await v1.connectReadOnly().populateTransaction.setDefaultRoyaltyInfo(wallet, basisPoints, overrides);
-      return tx;
+      const { request } = await this.reader(this.abi(v1)).simulate.setDefaultRoyaltyInfo(
+        [wallet as Hex, basisPoints],
+        params,
+      );
+      return encodeFunctionData(request);
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);
     }
