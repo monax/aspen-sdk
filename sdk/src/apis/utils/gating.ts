@@ -2,10 +2,10 @@ import { parse } from '@monaxlabs/phloem/dist/schema';
 import { Chain, ChainId } from '@monaxlabs/phloem/dist/types';
 import { either as E, function as F } from 'fp-ts';
 import * as t from 'io-ts';
-import { importJWK, JWTPayload, jwtVerify } from 'jose';
+import { JWTPayload, importJWK, jwtVerify } from 'jose';
 import { GatingAPI } from '..';
 import { Signer } from '../..';
-import { SupportedNetwork } from './secrets';
+import { SupportedNetwork } from '../secrets.js';
 
 const { AuthService, GateService, GateSignInMode, GateType, RolesService } = GatingAPI;
 

@@ -1,8 +1,8 @@
 import { JsonFromString } from 'io-ts-types';
 import * as path from 'path';
-import { ApiConfigs, AspenEnvironment } from '../apis';
 import { authenticateAll } from '../apis/identity/auth';
-import { parseFromEnvOrFile } from './environment';
+import { parseFromEnvOrFile } from './environment.js';
+import { ApiConfigs, AspenEnvironment } from './secrets.js';
 
 // A JSON object of type EnvCredentials is expected to be saved here (ignored from repo)
 const defaultCredentialsFile = 'credentials.json';

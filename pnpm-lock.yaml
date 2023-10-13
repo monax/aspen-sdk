@@ -35,6 +35,9 @@ importers:
       '@monaxlabs/aspen-sdk':
         specifier: workspace:*
         version: link:../../sdk
+      '@monaxlabs/phloem':
+        specifier: ^0.16.55
+        version: 0.16.55
       date-fns:
         specifier: ^2.29.3
         version: 2.29.3
@@ -880,7 +883,7 @@ packages:
   /@monaxlabs/cambium@0.16.52:
     resolution: {integrity: sha512-sSpbTm2SrUhbYSqjtROuzbxRXRCGy/Fg/WbKIpq+XDmnnnT4qNj9EINLmoFY5F7jdaIp8jB9SbaCR9iQP95F4Q==}
     dependencies:
-      '@monaxlabs/phloem': 0.16.52
+      '@monaxlabs/phloem': 0.16.55
       camel-case: 4.1.2
       ethers: 5.7.2
       fp-ts: 2.16.0
@@ -902,6 +905,26 @@ packages:
 
   /@monaxlabs/phloem@0.16.52:
     resolution: {integrity: sha512-rKZBolbd3bmNwsdIVvm7CgNkNZU6FGgs4i5o57/SwvWGKSOJ1p9U1Iy4aUQEgU7XD6bV2IGz61pSRE4bzsSU1A==}
+    dependencies:
+      axios: 1.4.0
+      date-fns: 2.30.0
+      duration-fns: 3.0.2
+      ethers: 5.7.2
+      form-data: 4.0.0
+      fp-ts: 2.16.0
+      io-ts: 2.2.20(fp-ts@2.16.0)
+      io-ts-reporters: 2.0.1(fp-ts@2.16.0)(io-ts@2.2.20)
+      io-ts-types: 0.5.19(fp-ts@2.16.0)(io-ts@2.2.20)(monocle-ts@2.3.13)(newtype-ts@0.3.5)
+      monocle-ts: 2.3.13(fp-ts@2.16.0)
+      newtype-ts: 0.3.5(fp-ts@2.16.0)(monocle-ts@2.3.13)
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - utf-8-validate
+    dev: false
+
+  /@monaxlabs/phloem@0.16.55:
+    resolution: {integrity: sha512-hbvtIV0dR1LOu2lr9eHZL0XfmSJzYHUN32l+WGNTTaH6Xr9uYSJD3xmTLc73VG56ocyPE6ttCN0KYOAcS4TTbQ==}
     dependencies:
       axios: 1.4.0
       date-fns: 2.30.0

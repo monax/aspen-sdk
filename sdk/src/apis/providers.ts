@@ -13,8 +13,8 @@ import {
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { goerli, mainnet, polygon, polygonMumbai } from 'viem/chains';
-import { NetworkSecrets, ProviderConfig, SupportedNetwork } from '../apis';
-import { parseFromEnvOrFile } from './environment';
+import { parseFromEnvOrFile } from './environment.js';
+import { NetworkSecrets, ProviderConfig, SupportedNetwork } from './secrets.js';
 
 // A JSON object of type EnvCredentials is expected to be saved here (ignored from repo)
 const defaultConfigFile = 'providers.json';
