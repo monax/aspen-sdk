@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@monaxlabs/aspen-sdk": "workspace:*",
-    "@monaxlabs/phloem": "^0.16.55",
+    "@monaxlabs/phloem": "0.17.3",
     "date-fns": "^2.29.3",
     "ethers": "^5.7.2",
     "fp-ts": "^2.13.1",

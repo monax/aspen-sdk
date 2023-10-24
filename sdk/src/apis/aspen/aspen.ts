@@ -4830,6 +4830,22 @@ export const PaymentIntent = t.exact(
   ]),
 );
 
+export interface TermsAcceptanceProofClickWrap {
+  type: 'clickwrap';
+  termsAccepted: boolean;
+}
+
+export const TermsAcceptanceProofClickWrap = t.exact(
+  t.type({
+    type: t.literal('clickwrap'),
+    termsAccepted: t.boolean,
+  }),
+);
+
+export type TermsAcceptanceProof = t.TypeOf<typeof TermsAcceptanceProofClickWrap> | null;
+
+export const TermsAcceptanceProof = t.union([TermsAcceptanceProofClickWrap, t.null]);
+
 export interface PaymentIntentMetadata {
   env: string;
   /** Storefront the tokens belong to */
@@ -4838,6 +4854,7 @@ export interface PaymentIntentMetadata {
   receiverAddress: t.TypeOf<typeof Address>;
   /** The email of the purchaser */
   email?: string;
+  termsAcceptanceProof: t.TypeOf<typeof TermsAcceptanceProof>;
   checkoutCart: Array<t.TypeOf<typeof TokenCheckoutItem>>;
 }
 
@@ -4849,6 +4866,7 @@ export const PaymentIntentMetadata = t.exact(
       storefrontId: UUIDFromString,
       /** The address of the tokens receiver */
       receiverAddress: Address,
+      termsAcceptanceProof: TermsAcceptanceProof,
       checkoutCart: t.array(TokenCheckoutItem),
     }),
     t.partial({
