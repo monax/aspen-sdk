@@ -1,6 +1,6 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType } from 'viem';
-import { claimConditionsForChain, CollectionContract } from '../..';
+import { GetTransactionReceiptReturnType, encodeFunctionData } from 'viem';
+import { CollectionContract, claimConditionsForChain } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type {
   CollectionContractClaimCondition,
@@ -10,7 +10,7 @@ import type {
   WriteParameters,
 } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const SetClaimConditionsFunctions = {
   nft: 'setClaimConditions(tuple[],bool)[]',
@@ -64,6 +64,7 @@ export class SetClaimConditions extends ContractFunction<
     const strictConditions: CollectionContractClaimConditionOnChain[] = await Promise.all(
       conditions.map(async (c) => claimConditionsForChain({ ...c, currency: await asAddress(c.currency) })),
     );
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       switch (this.base.tokenStandard) {
@@ -72,7 +73,7 @@ export class SetClaimConditions extends ContractFunction<
             tokenId = this.base.requireTokenId(tokenId, this.functionName);
             const { request } = await this.reader(this.abi(sft)).simulate.setClaimConditions(
               [tokenId, strictConditions, resetClaimEligibility],
-              params,
+              fullParams,
             );
             const hash = await walletClient.writeContract(request);
             return this.base.publicClient.waitForTransactionReceipt({
@@ -85,7 +86,7 @@ export class SetClaimConditions extends ContractFunction<
             this.base.rejectTokenId(tokenId, this.functionName);
             const { request } = await this.reader(this.abi(nft)).simulate.setClaimConditions(
               [strictConditions, resetClaimEligibility],
-              params,
+              fullParams,
             );
             const hash = await walletClient.writeContract(request);
             return this.base.publicClient.waitForTransactionReceipt({
@@ -107,10 +108,10 @@ export class SetClaimConditions extends ContractFunction<
     params?: WriteParameters,
   ): Promise<bigint> {
     const { nft, sft } = this.partitions;
-    const fullParams = { account: walletClient.account, ...params };
     const strictConditions: CollectionContractClaimConditionOnChain[] = await Promise.all(
       conditions.map(async (c) => claimConditionsForChain({ ...c, currency: await asAddress(c.currency) })),
     );
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       switch (this.base.tokenStandard) {

@@ -37,9 +37,10 @@ export class Multicall extends ContractFunction<
 
   async multicall(walletClient: Signer, data: BytesLike[], params?: WriteParameters): Promise<MulticallResponse> {
     const v1 = this.partition('v1');
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const { request } = await this.reader(this.abi(v1)).simulate.multicall([data as ReadonlyArray<Hex>], params);
+      const { request } = await this.reader(this.abi(v1)).simulate.multicall([data as ReadonlyArray<Hex>], fullParams);
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
         hash,

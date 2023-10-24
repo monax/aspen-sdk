@@ -47,11 +47,12 @@ export class SetPermanentTokenUri extends ContractFunction<
     params?: WriteParameters,
   ): Promise<SetPermanentTokenUriResponse> {
     const v1 = this.partition('v1');
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const { request } = await this.reader(this.abi(v1)).simulate.setPermantentTokenURI(
         [BigInt(tokenId), tokenUri],
-        params,
+        fullParams,
       );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({

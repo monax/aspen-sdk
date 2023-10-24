@@ -1,10 +1,10 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const ApproveFunctions = {
   nft: 'approve(address,uint256)[]',
@@ -44,9 +44,10 @@ export class Approve extends ContractFunction<ApproveInterfaces, ApprovePartitio
   ): Promise<ApproveResponse> {
     const nft = this.partition('nft');
     const to = await asAddress(toAddress);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const { request } = await this.reader(this.abi(nft)).simulate.approve([to as Hex, tokenId], params);
+      const { request } = await this.reader(this.abi(nft)).simulate.approve([to as Hex, tokenId], fullParams);
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
         hash,
@@ -59,12 +60,10 @@ export class Approve extends ContractFunction<ApproveInterfaces, ApprovePartitio
   async estimateGas(walletClient: Signer, { toAddress, tokenId }: ApproveArgs, params?: WriteParameters) {
     const nft = this.partition('nft');
     const to = await asAddress(toAddress);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const estimate = await this.reader(this.abi(nft)).estimateGas.approve([to as Hex, tokenId], {
-        account: walletClient.account,
-        ...params,
-      });
+      const estimate = await this.reader(this.abi(nft)).estimateGas.approve([to as Hex, tokenId], fullParams);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

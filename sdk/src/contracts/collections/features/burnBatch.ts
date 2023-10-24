@@ -1,11 +1,11 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { normalise } from '../number';
 import type { BigIntish, Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction, ERC1155StandardInterfaces } from './features';
+import { ContractFunction, ERC1155StandardInterfaces, asCallableClass } from './features';
 
 const BurnBatchFunctions = {
   sft: 'burnBatch(address,uint256[],uint256[])[]',
@@ -55,11 +55,12 @@ export class BurnBatch extends ContractFunction<
   ): Promise<BurnBatchResponse> {
     const sft = this.partition('sft');
     const account = await asAddress(wallet);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const { request } = await this.reader(this.abi(sft)).simulate.burnBatch(
         [account as Hex, tokenIds.map(normalise), amount.map(normalise)],
-        params,
+        fullParams,
       );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
@@ -79,14 +80,12 @@ export class BurnBatch extends ContractFunction<
   ): Promise<bigint> {
     const sft = this.partition('sft');
     const account = await asAddress(wallet);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const estimate = await this.reader(this.abi(sft)).estimateGas.burnBatch(
         [account as Hex, tokenIds.map(normalise), amount.map(normalise)],
-        {
-          account: walletClient.account,
-          ...params,
-        },
+        fullParams,
       );
       return estimate;
     } catch (err) {

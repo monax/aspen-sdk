@@ -37,9 +37,10 @@ export class SetTermsUri extends ContractFunction<
 
   async setTermsUri(walletClient: Signer, termsUri: string, params?: WriteParameters): Promise<SetTermsUriResponse> {
     const v1 = this.partition('v1');
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const { request } = await this.reader(this.abi(v1)).simulate.setTermsURI([termsUri], params);
+      const { request } = await this.reader(this.abi(v1)).simulate.setTermsURI([termsUri], fullParams);
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
         hash,

@@ -1,12 +1,12 @@
 import { parse } from '@monaxlabs/phloem/dist/schema/parse';
 import { Address, asAddress, isSameAddress } from '@monaxlabs/phloem/dist/types';
-import { decodeEventLog, encodeFunctionData, GetTransactionReceiptReturnType, Hex, TransactionReceipt } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, TransactionReceipt, decodeEventLog, encodeFunctionData } from 'viem';
 import { CollectionContract, IssueArgs, IssuedToken, ZERO_ADDRESS } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import { bigIntRange, normalise, One } from '../number';
+import { One, bigIntRange, normalise } from '../number';
 import type { Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const IssueWithinPhaseFunctions = {
   nft: 'issueWithinPhase(address,uint256)[]',
@@ -64,11 +64,12 @@ export class IssueWithinPhase extends ContractFunction<
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
     const wallet = await asAddress(receiver);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const { request } = await this.reader(this.abi(sft)).simulate.issueWithinPhase(
         [wallet as Hex, tokenId, normalise(quantity)],
-        params,
+        fullParams,
       );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
@@ -86,11 +87,12 @@ export class IssueWithinPhase extends ContractFunction<
   ): Promise<IssueWithinPhaseResponse> {
     const nft = this.partition('nft');
     const wallet = await asAddress(receiver);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const { request } = await this.reader(this.abi(nft)).simulate.issueWithinPhase(
         [wallet as Hex, normalise(quantity)],
-        params,
+        fullParams,
       );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
@@ -120,14 +122,12 @@ export class IssueWithinPhase extends ContractFunction<
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
     const wallet = await asAddress(receiver);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const estimate = await this.reader(this.abi(sft)).estimateGas.issueWithinPhase(
         [wallet as Hex, tokenId, normalise(quantity)],
-        {
-          account: walletClient.account,
-          ...params,
-        },
+        fullParams,
       );
       return estimate;
     } catch (err) {

@@ -50,6 +50,7 @@ export class SetMaxWalletClaimCount extends ContractFunction<
     params?: WriteParameters,
   ): Promise<SetMaxWalletClaimCountResponse> {
     const { nft, sft } = this.partitions;
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       switch (this.base.tokenStandard) {
@@ -58,7 +59,7 @@ export class SetMaxWalletClaimCount extends ContractFunction<
           const iSft = sft ?? this.base.assumeFeature('issuance/ISFTClaimCount.sol:IRestrictedSFTClaimCountV0');
           const { request } = await this.reader(this.abi(iSft)).simulate.setMaxWalletClaimCount(
             [tokenId, BigInt(maxWalletClaimCount)],
-            params,
+            fullParams,
           );
           const hash = await walletClient.writeContract(request);
           return this.base.publicClient.waitForTransactionReceipt({
@@ -71,7 +72,7 @@ export class SetMaxWalletClaimCount extends ContractFunction<
           const iNft = nft ?? this.base.assumeFeature('issuance/INFTClaimCount.sol:IRestrictedNFTClaimCountV0');
           const { request } = await this.reader(this.abi(iNft)).simulate.setMaxWalletClaimCount(
             [BigInt(maxWalletClaimCount)],
-            params,
+            fullParams,
           );
           const hash = await walletClient.writeContract(request);
           return this.base.publicClient.waitForTransactionReceipt({

@@ -1,9 +1,9 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const AcceptTermsWithSignatureFunctions = {
   v1: 'acceptTerms(address,bytes)[]',
@@ -56,12 +56,13 @@ export class AcceptTermsWithSignature extends ContractFunction<
   ): Promise<AcceptTermsWithSignatureResponse> {
     const { v1, v2 } = this.partitions;
     const wallet = await asAddress(acceptor);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       if (v1) {
         const { request } = await this.reader(this.abi(v1)).simulate.acceptTerms(
           [wallet as Hex, signature as Hex],
-          params,
+          fullParams,
         );
         const hash = await walletClient.writeContract(request);
         return this.base.publicClient.waitForTransactionReceipt({
@@ -70,7 +71,7 @@ export class AcceptTermsWithSignature extends ContractFunction<
       } else if (v2) {
         const { request } = await this.reader(this.abi(v2)).simulate.storeTermsAccepted(
           [wallet as Hex, signature as Hex],
-          params,
+          fullParams,
         );
         const hash = await walletClient.writeContract(request);
         return this.base.publicClient.waitForTransactionReceipt({
@@ -92,21 +93,19 @@ export class AcceptTermsWithSignature extends ContractFunction<
   ): Promise<bigint> {
     const { v1, v2 } = this.partitions;
     const wallet = await asAddress(acceptor);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       if (v1) {
-        const estimate = await this.reader(this.abi(v1)).estimateGas.acceptTerms([wallet as Hex, signature as Hex], {
-          account: walletClient.account,
-          ...params,
-        });
+        const estimate = await this.reader(this.abi(v1)).estimateGas.acceptTerms(
+          [wallet as Hex, signature as Hex],
+          fullParams,
+        );
         return estimate;
       } else if (v2) {
         const estimate = await this.reader(this.abi(v2)).estimateGas.storeTermsAccepted(
           [wallet as Hex, signature as Hex],
-          {
-            account: walletClient.account,
-            ...params,
-          },
+          fullParams,
         );
         return estimate;
       }

@@ -47,10 +47,11 @@ export class SetClaimPauseStatus extends ContractFunction<
     params?: WriteParameters,
   ): Promise<SetClaimPauseStatusResponse> {
     const { v1, v2 } = this.partitions;
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       if (v2) {
-        const { request } = await this.reader(this.abi(v2)).simulate.setClaimPauseStatus([pauseStatus], params);
+        const { request } = await this.reader(this.abi(v2)).simulate.setClaimPauseStatus([pauseStatus], fullParams);
         const hash = await walletClient.writeContract(request);
         return this.base.publicClient.waitForTransactionReceipt({
           hash,
@@ -58,9 +59,9 @@ export class SetClaimPauseStatus extends ContractFunction<
       } else if (v1) {
         let request;
         if (pauseStatus) {
-          ({ request } = await this.reader(this.abi(v1)).simulate.pauseClaims(params));
+          ({ request } = await this.reader(this.abi(v1)).simulate.pauseClaims(fullParams));
         } else {
-          ({ request } = await this.reader(this.abi(v1)).simulate.unpauseClaims(params));
+          ({ request } = await this.reader(this.abi(v1)).simulate.unpauseClaims(fullParams));
         }
         const hash = await walletClient.writeContract(request);
         return this.base.publicClient.waitForTransactionReceipt({

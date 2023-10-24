@@ -1,9 +1,9 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const SetDefaultRoyaltyInfoFunctions = {
   v1: 'setDefaultRoyaltyInfo(address,uint256)[]',
@@ -49,11 +49,12 @@ export class SetDefaultRoyaltyInfo extends ContractFunction<
   ): Promise<SetDefaultRoyaltyInfoResponse> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(royaltyRecipient);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const { request } = await this.reader(this.abi(v1)).simulate.setDefaultRoyaltyInfo(
         [wallet as Hex, basisPoints],
-        params,
+        fullParams,
       );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({

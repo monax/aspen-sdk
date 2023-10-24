@@ -1,11 +1,11 @@
 import { asAddress, isZeroAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType, Hex, TransactionReceipt } from 'viem';
-import { IssuedToken, IssueWithTokenUriArgs } from '../..';
+import { GetTransactionReceiptReturnType, Hex, TransactionReceipt, encodeFunctionData } from 'viem';
+import { IssueWithTokenUriArgs, IssuedToken } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const IssueWithinPhaseWithTokenUriFunctions = {
   nft: 'issueWithinPhaseWithTokenURI(address,string)[]',
@@ -55,11 +55,12 @@ export class IssueWithinPhaseWithTokenUri extends ContractFunction<
     this.validateArgs(args);
     const nft = this.partition('nft');
     const wallet = await asAddress(args.receiver);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const { request } = await this.reader(this.abi(nft)).simulate.issueWithinPhaseWithTokenURI(
         [wallet as Hex, args.tokenURI],
-        params,
+        fullParams,
       );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
@@ -74,14 +75,12 @@ export class IssueWithinPhaseWithTokenUri extends ContractFunction<
     this.validateArgs(args);
     const nft = this.partition('nft');
     const wallet = await asAddress(args.receiver);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const estimate = await this.reader(this.abi(nft)).estimateGas.issueWithinPhaseWithTokenURI(
         [wallet as Hex, args.tokenURI],
-        {
-          account: walletClient.account,
-          ...params,
-        },
+        fullParams,
       );
       return estimate;
     } catch (err) {

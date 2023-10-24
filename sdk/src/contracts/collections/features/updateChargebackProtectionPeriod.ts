@@ -52,11 +52,12 @@ export class UpdateChargebackProtectionPeriod extends ContractFunction<
     params?: WriteParameters,
   ): Promise<UpdateChargebackProtectionPeriodResponse> {
     const v1 = this.partition('v1');
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const { request } = await this.reader(this.abi(v1)).simulate.updateChargebackProtectionPeriod(
         [BigInt(newPeriodInSeconds)],
-        params,
+        fullParams,
       );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({

@@ -84,7 +84,10 @@ export function getCurrentAspenDeployer<C extends Provider | Signer>(client: C) 
 }
 
 // FIXME: Make this type saner
-type IAspenDeployer<V extends keyof AspenContractsFamilyVersions['AspenDeployer'], C extends Provider | Signer> = AspenContractInstance<'AspenDeployer', V, C>;
+type IAspenDeployer<
+  V extends keyof AspenContractsFamilyVersions['AspenDeployer'],
+  C extends Provider | Signer,
+> = AspenContractInstance<'AspenDeployer', V, C>;
 
 export function getAspenDeployer<
   C extends Provider | Signer,

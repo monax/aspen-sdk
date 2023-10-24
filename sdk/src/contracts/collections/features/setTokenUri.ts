@@ -48,9 +48,10 @@ export class SetTokenUri extends ContractFunction<
   ): Promise<SetTokenUriResponse> {
     const v1 = this.partition('v1');
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const { request } = await this.reader(this.abi(v1)).simulate.setTokenURI([tokenId, tokenUri], params);
+      const { request } = await this.reader(this.abi(v1)).simulate.setTokenURI([tokenId, tokenUri], fullParams);
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
         hash,

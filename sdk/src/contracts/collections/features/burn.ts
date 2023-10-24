@@ -51,6 +51,8 @@ export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnC
     params?: WriteParameters,
   ): Promise<BurnResponse> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
+    const fullParams = { account: walletClient.account, ...params };
+
     try {
       switch (this.base.tokenStandard) {
         case 'ERC1155': {
@@ -58,7 +60,7 @@ export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnC
           const account = await asAddress(wallet || '');
           const { request } = await this.reader(this.abi(sft)).simulate.burn(
             [account as Hex, tokenId, normalise(amount || Zero)],
-            params,
+            fullParams,
           );
           const hash = await walletClient.writeContract(request);
           return this.base.publicClient.waitForTransactionReceipt({
@@ -68,7 +70,7 @@ export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnC
 
         case 'ERC721': {
           const nft = this.base.assumeFeature('standard/IERC721.sol:IERC721V2');
-          const { request } = await this.reader(this.abi(nft)).simulate.burn([tokenId], params);
+          const { request } = await this.reader(this.abi(nft)).simulate.burn([tokenId], fullParams);
           const hash = await walletClient.writeContract(request);
           return this.base.publicClient.waitForTransactionReceipt({
             hash,
@@ -88,6 +90,8 @@ export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnC
     params?: WriteParameters,
   ): Promise<bigint> {
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
+    const fullParams = { account: walletClient.account, ...params };
+
     try {
       switch (this.base.tokenStandard) {
         case 'ERC1155': {
@@ -95,20 +99,14 @@ export class Burn extends ContractFunction<BurnInterfaces, BurnPartitions, BurnC
           const account = await asAddress(wallet || '');
           const estimate = await this.reader(this.abi(sft)).estimateGas.burn(
             [account as Hex, tokenId, normalise(amount || Zero)],
-            {
-              account: walletClient.account,
-              ...params,
-            },
+            fullParams,
           );
           return estimate;
         }
 
         case 'ERC721': {
           const nft = this.base.assumeFeature('standard/IERC721.sol:IERC721V2');
-          const estimate = await this.reader(this.abi(nft)).estimateGas.burn([tokenId], {
-            account: walletClient.account,
-            ...params,
-          });
+          const estimate = await this.reader(this.abi(nft)).estimateGas.burn([tokenId], fullParams);
           return estimate;
         }
       }

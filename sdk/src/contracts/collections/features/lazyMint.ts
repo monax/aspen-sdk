@@ -49,10 +49,11 @@ export class LazyMint extends ContractFunction<
     params?: WriteParameters,
   ): Promise<LazyMintResponse> {
     const { v1, v2 } = this.partitions;
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       if (v2) {
-        const { request } = await this.reader(this.abi(v2)).simulate.lazyMint([amount, baseURI], params);
+        const { request } = await this.reader(this.abi(v2)).simulate.lazyMint([amount, baseURI], fullParams);
         const hash = await walletClient.writeContract(request);
         return this.base.publicClient.waitForTransactionReceipt({
           hash,
@@ -63,7 +64,7 @@ export class LazyMint extends ContractFunction<
         }
         const { request } = await this.reader(this.abi(v1)).simulate.lazyMint(
           [amount, baseURI, encryptedBaseURI as Hex],
-          params,
+          fullParams,
         );
         const hash = await walletClient.writeContract(request);
         return this.base.publicClient.waitForTransactionReceipt({

@@ -1,9 +1,9 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { CollectionContract, RequiredTokenId, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const SetSaleRecipientForTokenFunctions = {
   v1: 'setSaleRecipientForToken(uint256,address)[]',
@@ -55,11 +55,12 @@ export class SetSaleRecipientForToken extends ContractFunction<
     const v1 = this.partition('v1');
     const wallet = await asAddress(saleRecipient);
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const { request } = await this.reader(this.abi(v1)).simulate.setSaleRecipientForToken(
         [tokenId, wallet as Hex],
-        params,
+        fullParams,
       );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({

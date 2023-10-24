@@ -77,6 +77,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     const sft = this.partition('sft');
     const wallet = await asAddress(receiver);
     const tokenAddress = await asAddress(currency);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !params.value) {
@@ -93,7 +94,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
           proofs as Hex[],
           normalise(proofMaxQuantityPerTransaction),
         ],
-        params,
+        fullParams,
       );
 
       const hash = await walletClient.writeContract(request);
@@ -116,6 +117,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     const nft = this.partition('nft');
     const wallet = await asAddress(receiver);
     const tokenAddress = await asAddress(currency);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !params.value) {
@@ -131,7 +133,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
           proofs as Hex[],
           normalise(proofMaxQuantityPerTransaction),
         ],
-        params,
+        fullParams,
       );
 
       const hash = await walletClient.writeContract(request);
@@ -164,6 +166,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     const sft = this.partition('sft');
     const wallet = await asAddress(receiver);
     const tokenAddress = await asAddress(currency);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !params.value) {
@@ -180,10 +183,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
           proofs as Hex[],
           normalise(proofMaxQuantityPerTransaction),
         ],
-        {
-          account: walletClient.account,
-          ...params,
-        },
+        fullParams,
       );
       return estimate;
     } catch (err) {
@@ -202,6 +202,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
     const nft = this.partition('nft');
     const wallet = await asAddress(receiver);
     const tokenAddress = await asAddress(currency);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       if (isSameAddress(tokenAddress, NATIVE_TOKEN) && !params.value) {
@@ -217,10 +218,7 @@ export class Claim extends ContractFunction<ClaimInterfaces, ClaimPartitions, Cl
           proofs as Hex[],
           normalise(proofMaxQuantityPerTransaction),
         ],
-        {
-          account: walletClient.account,
-          ...params,
-        },
+        fullParams,
       );
       return estimate;
     } catch (err) {

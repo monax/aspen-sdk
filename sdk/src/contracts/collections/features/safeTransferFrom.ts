@@ -1,10 +1,10 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { RequiredTokenId, Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const SafeTransferFromFunctions = {
   nft: 'safeTransferFrom(address,address,uint256,bytes)[]',
@@ -58,6 +58,7 @@ export class SafeTransferFrom extends ContractFunction<
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       switch (this.base.tokenStandard) {
@@ -65,7 +66,7 @@ export class SafeTransferFrom extends ContractFunction<
           if (sft) {
             const { request } = await this.reader(this.abi(sft)).simulate.safeTransferFrom(
               [from as Hex, to as Hex, tokenId, BigInt(amount || 0), bytes ?? '0x'],
-              params,
+              fullParams,
             );
             const hash = await walletClient.writeContract(request);
             return this.base.publicClient.waitForTransactionReceipt({
@@ -77,7 +78,7 @@ export class SafeTransferFrom extends ContractFunction<
           if (nft && bytes) {
             const { request } = await this.reader(this.abi(nft)).simulate.safeTransferFrom(
               [from as Hex, to as Hex, tokenId, bytes],
-              params,
+              fullParams,
             );
             const hash = await walletClient.writeContract(request);
             return this.base.publicClient.waitForTransactionReceipt({
@@ -86,7 +87,7 @@ export class SafeTransferFrom extends ContractFunction<
           } else if (nftV2 && !bytes) {
             const { request } = await this.reader(this.abi(nftV2)).simulate.safeTransferFrom(
               [from as Hex, to as Hex, tokenId],
-              params,
+              fullParams,
             );
             const hash = await walletClient.writeContract(request);
             return this.base.publicClient.waitForTransactionReceipt({
@@ -111,6 +112,7 @@ export class SafeTransferFrom extends ContractFunction<
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       switch (this.base.tokenStandard) {
@@ -118,10 +120,7 @@ export class SafeTransferFrom extends ContractFunction<
           if (sft) {
             const estimate = await this.reader(this.abi(sft)).estimateGas.safeTransferFrom(
               [from as Hex, to as Hex, tokenId, BigInt(amount || 0), bytes ?? '0x'],
-              {
-                account: walletClient.account,
-                ...params,
-              },
+              fullParams,
             );
             return estimate;
           }
@@ -130,19 +129,13 @@ export class SafeTransferFrom extends ContractFunction<
           if (nft && bytes) {
             const estimate = await this.reader(this.abi(nft)).estimateGas.safeTransferFrom(
               [from as Hex, to as Hex, tokenId, bytes],
-              {
-                account: walletClient.account,
-                ...params,
-              },
+              fullParams,
             );
             return estimate;
           } else if (nftV2 && !bytes) {
             const estimate = await this.reader(this.abi(nftV2)).estimateGas.safeTransferFrom(
               [from as Hex, to as Hex, tokenId],
-              {
-                account: walletClient.account,
-                ...params,
-              },
+              fullParams,
             );
             return estimate;
           }

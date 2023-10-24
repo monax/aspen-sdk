@@ -62,11 +62,12 @@ export class BatchIssueWithinPhase extends ContractFunction<
   ): Promise<BatchIssueWithinPhaseResponse> {
     const sft = this.partition('sft');
     const wallets = await Promise.all(receivers.map((receiver) => asAddress(receiver)));
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const { request } = await this.reader(this.abi(sft)).simulate.batchIssueWithinPhase(
         [wallets as Hex[], tokenIds, quantities],
-        params,
+        fullParams,
       );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
@@ -84,11 +85,12 @@ export class BatchIssueWithinPhase extends ContractFunction<
   ): Promise<BatchIssueWithinPhaseResponse> {
     const nft = this.partition('nft');
     const wallets = await Promise.all(receivers.map((receiver) => asAddress(receiver)));
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const { request } = await this.reader(this.abi(nft)).simulate.batchIssueWithinPhase(
         [wallets as Hex[], quantities],
-        params,
+        fullParams,
       );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
@@ -117,14 +119,12 @@ export class BatchIssueWithinPhase extends ContractFunction<
   ): Promise<bigint> {
     const sft = this.partition('sft');
     const wallets = await Promise.all(receivers.map((receiver) => asAddress(receiver)));
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const estimate = await this.reader(this.abi(sft)).estimateGas.batchIssueWithinPhase(
         [wallets as Hex[], tokenIds, quantities],
-        {
-          account: walletClient.account,
-          ...params,
-        },
+        fullParams,
       );
       return estimate;
     } catch (err) {
@@ -139,14 +139,12 @@ export class BatchIssueWithinPhase extends ContractFunction<
   ): Promise<bigint> {
     const nft = this.partition('nft');
     const wallets = await Promise.all(receivers.map((receiver) => asAddress(receiver)));
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const estimate = await this.reader(this.abi(nft)).estimateGas.batchIssueWithinPhase(
         [wallets as Hex[], quantities],
-        {
-          account: walletClient.account,
-          ...params,
-        },
+        fullParams,
       );
       return estimate;
     } catch (err) {

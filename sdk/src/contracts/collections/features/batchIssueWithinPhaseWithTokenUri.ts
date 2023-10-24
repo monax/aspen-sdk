@@ -1,10 +1,10 @@
 import { Address, asAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { BatchIssueWithTokenUriArgs, Signer, WriteParameters, ZERO_ADDRESS } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const BatchIssueWithinPhaseWithTokenUriFunctions = {
   nft: 'batchIssueWithinPhaseWithTokenURI(address[],string[])[]',
@@ -54,11 +54,12 @@ export class BatchIssueWithinPhaseWithTokenUri extends ContractFunction<
     this.validateArgs(args);
     const nft = this.partition('nft');
     const wallets = await Promise.all(args.receivers.map((receiver) => asAddress(receiver)));
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const { request } = await this.reader(this.abi(nft)).simulate.batchIssueWithinPhaseWithTokenURI(
         [wallets as Hex[], args.tokenURIs],
-        params,
+        fullParams,
       );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
@@ -73,14 +74,12 @@ export class BatchIssueWithinPhaseWithTokenUri extends ContractFunction<
     this.validateArgs(args);
     const nft = this.partition('nft');
     const wallets = await Promise.all(args.receivers.map((receiver) => asAddress(receiver)));
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const estimate = await this.reader(this.abi(nft)).estimateGas.batchIssueWithinPhaseWithTokenURI(
         [wallets as Hex[], args.tokenURIs],
-        {
-          account: walletClient.account,
-          ...params,
-        },
+        fullParams,
       );
       return estimate;
     } catch (err) {

@@ -1,9 +1,9 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const SetPlatformFeesFunctions = {
   v1: 'setPlatformFeeInfo(address,uint256)[]',
@@ -51,11 +51,12 @@ export class SetPlatformFees extends ContractFunction<
   ): Promise<SetPlatformFeesResponse> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(recipient);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const { request } = await this.reader(this.abi(v1)).simulate.setPlatformFeeInfo(
         [wallet as Hex, BigInt(basisPoints)],
-        params,
+        fullParams,
       );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({

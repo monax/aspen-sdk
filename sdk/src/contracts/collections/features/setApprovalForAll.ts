@@ -1,10 +1,10 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const SetApprovalForAllFunctions = {
   v1: 'setApprovalForAll(address,bool)[]',
@@ -49,9 +49,13 @@ export class SetApprovalForAll extends ContractFunction<
   ): Promise<SetApprovalForAllResponse> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(operator);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const { request } = await this.reader(this.abi(v1)).simulate.setApprovalForAll([wallet as Hex, approved], params);
+      const { request } = await this.reader(this.abi(v1)).simulate.setApprovalForAll(
+        [wallet as Hex, approved],
+        fullParams,
+      );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
         hash,
