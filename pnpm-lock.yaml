@@ -36,8 +36,8 @@ importers:
         specifier: workspace:*
         version: link:../../sdk
       '@monaxlabs/phloem':
-        specifier: ^0.16.55
-        version: 0.16.55
+        specifier: 0.17.3
+        version: 0.17.3
       date-fns:
         specifier: ^2.29.3
         version: 2.29.3
@@ -122,8 +122,8 @@ importers:
   sdk:
     dependencies:
       '@monaxlabs/phloem':
-        specifier: 0.16.52
-        version: 0.16.52
+        specifier: 0.17.3
+        version: 0.17.3
       axios:
         specifier: ^1.2.2
         version: 1.2.2
@@ -177,8 +177,8 @@ importers:
         specifier: 0.16.52
         version: 0.16.52
       '@monaxlabs/spec':
-        specifier: 0.16.52
-        version: 0.16.52
+        specifier: 0.17.3
+        version: 0.17.3
       '@openzeppelin/contracts':
         specifier: ^4.8.1
         version: 4.8.1
@@ -883,7 +883,7 @@ packages:
   /@monaxlabs/cambium@0.16.52:
     resolution: {integrity: sha512-sSpbTm2SrUhbYSqjtROuzbxRXRCGy/Fg/WbKIpq+XDmnnnT4qNj9EINLmoFY5F7jdaIp8jB9SbaCR9iQP95F4Q==}
     dependencies:
-      '@monaxlabs/phloem': 0.16.55
+      '@monaxlabs/phloem': 0.16.52
       camel-case: 4.1.2
       ethers: 5.7.2
       fp-ts: 2.16.0
@@ -921,10 +921,10 @@ packages:
       - bufferutil
       - debug
       - utf-8-validate
-    dev: false
+    dev: true
 
-  /@monaxlabs/phloem@0.16.55:
-    resolution: {integrity: sha512-hbvtIV0dR1LOu2lr9eHZL0XfmSJzYHUN32l+WGNTTaH6Xr9uYSJD3xmTLc73VG56ocyPE6ttCN0KYOAcS4TTbQ==}
+  /@monaxlabs/phloem@0.17.3:
+    resolution: {integrity: sha512-uMGLm6Gb9b01IOkIrwREMI8Imaq11va25yGjeJUSw/R3DHFOEbDdKVKcc6yjdtvPzBw12fFf4nb+nQWiXCqYNg==}
     dependencies:
       axios: 1.4.0
       date-fns: 2.30.0
@@ -941,9 +941,10 @@ packages:
       - bufferutil
       - debug
       - utf-8-validate
+    dev: false
 
-  /@monaxlabs/spec@0.16.52:
-    resolution: {integrity: sha512-h9+GKgTJbW6+iqT9FOfCBcrBHpQ2lOnYOqq8SWrkUTYo7KJ4iGZgXzM4aLGjs8YzMqNfy7ZiPpNfwp+BmkVM0g==}
+  /@monaxlabs/spec@0.17.3:
+    resolution: {integrity: sha512-0WivVC6XHsq8kTa7iaZLrELEoWjiPJtdKohyULCJYL4mOy9mom+fGqvpFIMsVGq7cKIsPLuLVixv6PpFBisJLQ==}
     dev: true
 
   /@noble/curves@1.2.0:

@@ -48,7 +48,7 @@
     "print:version": "../scripts/version.sh"
   },
   "dependencies": {
-    "@monaxlabs/phloem": "0.16.52",
+    "@monaxlabs/phloem": "0.17.3",
     "ethers": "^5.7.2",
     "axios": "^1.2.2",
     "ts-deepmerge": "^6.2.0",
@@ -67,7 +67,7 @@
     "viem": "^1.16.6"
   },
   "devDependencies": {
-    "@monaxlabs/spec": "0.16.52",
+    "@monaxlabs/spec": "0.17.3",
     "@monaxlabs/cambium": "0.16.52",
     "@openzeppelin/contracts": "^4.8.1",
     "typescript": "^5.2.2",
