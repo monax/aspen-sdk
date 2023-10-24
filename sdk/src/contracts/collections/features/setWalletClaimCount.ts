@@ -1,9 +1,9 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { CollectionContract, Signer, TokenId, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
+import { CatchAllInterfaces, ContractFunction, asCallableClass } from './features';
 
 const SetWalletClaimCountFunctions = {
   nft: 'setWalletClaimCount(address,uint256)[]',
@@ -54,6 +54,7 @@ export class SetWalletClaimCount extends ContractFunction<
   ): Promise<SetWalletClaimCountResponse> {
     const { nft, sft } = this.partitions;
     const address = await asAddress(userAddress);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       switch (this.base.tokenStandard) {
@@ -62,7 +63,7 @@ export class SetWalletClaimCount extends ContractFunction<
             tokenId = this.base.requireTokenId(tokenId, this.functionName);
             const { request } = await this.reader(this.abi(sft)).simulate.setWalletClaimCount(
               [tokenId, address as Hex, BigInt(maxWalletClaimCount)],
-              params,
+              fullParams,
             );
             const hash = await walletClient.writeContract(request);
             return this.base.publicClient.waitForTransactionReceipt({
@@ -76,7 +77,7 @@ export class SetWalletClaimCount extends ContractFunction<
             this.base.rejectTokenId(tokenId, this.functionName);
             const { request } = await this.reader(this.abi(nft)).simulate.setWalletClaimCount(
               [address as Hex, BigInt(maxWalletClaimCount)],
-              params,
+              fullParams,
             );
             const hash = await walletClient.writeContract(request);
             return this.base.publicClient.waitForTransactionReceipt({

@@ -1,10 +1,10 @@
 import { Address, Addressish, asAddress, isZeroAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const ChargebackWithdrawalFunctions = {
   nft: 'chargebackWithdrawal(uint256)[]',
@@ -69,11 +69,12 @@ export class ChargebackWithdrawal extends ContractFunction<
   ): Promise<ChargebackWithdrawalResponse> {
     const sft = this.partition('sft');
     const { quantity, tokenId, owner } = await this.requireArgs(args);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const { request } = await this.reader(this.abi(sft)).simulate.chargebackWithdrawal(
         [owner as Hex, tokenId, quantity],
-        params,
+        fullParams,
       );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
@@ -90,9 +91,10 @@ export class ChargebackWithdrawal extends ContractFunction<
     params?: WriteParameters,
   ): Promise<ChargebackWithdrawalResponse> {
     const nft = this.partition('nft');
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const { request } = await this.reader(this.abi(nft)).simulate.chargebackWithdrawal([tokenId], params);
+      const { request } = await this.reader(this.abi(nft)).simulate.chargebackWithdrawal([tokenId], fullParams);
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
         hash,
@@ -118,14 +120,12 @@ export class ChargebackWithdrawal extends ContractFunction<
   ): Promise<bigint> {
     const sft = this.partition('sft');
     const { quantity, tokenId, owner } = await this.requireArgs(args);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const estimate = await this.reader(this.abi(sft)).estimateGas.chargebackWithdrawal(
         [owner as Hex, tokenId, quantity],
-        {
-          account: walletClient.account,
-          ...params,
-        },
+        fullParams,
       );
       return estimate;
     } catch (err) {
@@ -139,12 +139,10 @@ export class ChargebackWithdrawal extends ContractFunction<
     params?: WriteParameters,
   ): Promise<bigint> {
     const nft = this.partition('nft');
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const estimate = await this.reader(this.abi(nft)).estimateGas.chargebackWithdrawal([tokenId], {
-        account: walletClient.account,
-        ...params,
-      });
+      const estimate = await this.reader(this.abi(nft)).estimateGas.chargebackWithdrawal([tokenId], fullParams);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { tokenId });

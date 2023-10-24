@@ -43,16 +43,17 @@ export class SetTermsActivation extends ContractFunction<
     params?: WriteParameters,
   ): Promise<SetTermsActivationResponse> {
     const { v1, v2 } = this.partitions;
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       if (v2) {
-        const { request } = await this.reader(this.abi(v2)).simulate.setTermsActivation([termsEnabled], params);
+        const { request } = await this.reader(this.abi(v2)).simulate.setTermsActivation([termsEnabled], fullParams);
         const hash = await walletClient.writeContract(request);
         return this.base.publicClient.waitForTransactionReceipt({
           hash,
         });
       } else if (v1) {
-        const { request } = await this.reader(this.abi(v1)).simulate.setTermsStatus([termsEnabled], params);
+        const { request } = await this.reader(this.abi(v1)).simulate.setTermsStatus([termsEnabled], fullParams);
         const hash = await walletClient.writeContract(request);
         return this.base.publicClient.waitForTransactionReceipt({
           hash,

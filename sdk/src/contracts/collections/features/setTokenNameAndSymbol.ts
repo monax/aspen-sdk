@@ -47,9 +47,10 @@ export class SetTokenNameAndSymbol extends ContractFunction<
     params?: WriteParameters,
   ): Promise<SetTokenNameAndSymbolResponse> {
     const v1 = this.partition('v1');
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const { request } = await this.reader(this.abi(v1)).simulate.setTokenNameAndSymbol([name, symbol], params);
+      const { request } = await this.reader(this.abi(v1)).simulate.setTokenNameAndSymbol([name, symbol], fullParams);
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
         hash,

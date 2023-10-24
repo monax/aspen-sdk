@@ -1,10 +1,10 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { BytesLike, RequiredTokenId, Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const SafeBatchTransferFromFunctions = {
   sft: 'safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)[]',
@@ -59,11 +59,12 @@ export class SafeBatchTransferFrom extends ContractFunction<
     const to = await asAddress(toAddress);
     const _tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
     const _amounts = amounts.map((a) => BigInt(a));
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const { request } = await this.reader(this.abi(sft)).simulate.safeBatchTransferFrom(
         [from as Hex, to as Hex, _tokenIds, _amounts, bytes as Hex],
-        params,
+        fullParams,
       );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
@@ -82,9 +83,9 @@ export class SafeBatchTransferFrom extends ContractFunction<
     const sft = this.partition('sft');
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
-    const fullParams = { account: walletClient.account, ...params };
     const _tokenIds = tokenIds.map((t) => this.base.requireTokenId(t, this.functionName));
     const _amounts = amounts.map((a) => BigInt(a));
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const tx = await this.reader(this.abi(sft)).estimateGas.safeBatchTransferFrom(

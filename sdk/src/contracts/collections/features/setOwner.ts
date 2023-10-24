@@ -1,9 +1,9 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const SetOwnerFunctions = {
   v1: 'setOwner(address)[]',
@@ -39,9 +39,10 @@ export class SetOwner extends ContractFunction<
   async setOwner(walletClient: Signer, ownerAddress: Addressish, params?: WriteParameters): Promise<SetOwnerResponse> {
     const v1 = this.partition('v1');
     const owner = await asAddress(ownerAddress);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const { request } = await this.reader(this.abi(v1)).simulate.setOwner([owner as Hex], params);
+      const { request } = await this.reader(this.abi(v1)).simulate.setOwner([owner as Hex], fullParams);
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
         hash,

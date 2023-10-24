@@ -1,8 +1,8 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType, Hex, parseAbi } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData, parseAbi } from 'viem';
 import { BytesLike, CollectionContract, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
-import { asCallableClass, CatchAllInterfaces, ContractFunction } from './features';
+import { CatchAllInterfaces, ContractFunction, asCallableClass } from './features';
 
 const RevokeRoleFunctions = {} as const;
 
@@ -43,10 +43,11 @@ export class RevokeRole extends ContractFunction<
     params?: WriteParameters,
   ): Promise<RevokeRoleResponse> {
     const wallet = await asAddress(account);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const abi = parseAbi(RevokeRoleAbi);
-      const { request } = await this.reader(abi).simulate.renounceRole([role as Hex, wallet as Hex], params);
+      const { request } = await this.reader(abi).simulate.renounceRole([role as Hex, wallet as Hex], fullParams);
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
         hash,

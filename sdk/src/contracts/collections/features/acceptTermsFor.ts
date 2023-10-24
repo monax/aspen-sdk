@@ -1,10 +1,10 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { CollectionContract } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import type { Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const AcceptTermsForFunctions = {
   v1: 'acceptTerms(address)[]',
@@ -44,9 +44,10 @@ export class AcceptTermsFor extends ContractFunction<
   ): Promise<AcceptTermsForResponse> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(acceptor);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const { request } = await this.reader(this.abi(v1)).simulate.acceptTerms([wallet as Hex], params);
+      const { request } = await this.reader(this.abi(v1)).simulate.acceptTerms([wallet as Hex], fullParams);
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
         hash,
@@ -59,12 +60,10 @@ export class AcceptTermsFor extends ContractFunction<
   async estimateGas(walletClient: Signer, acceptor: Addressish, params?: WriteParameters): Promise<bigint> {
     const v1 = this.partition('v1');
     const wallet = await asAddress(acceptor);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const estimate = await this.reader(this.abi(v1)).estimateGas.acceptTerms([wallet as Hex], {
-        account: walletClient.account,
-        ...params,
-      });
+      const estimate = await this.reader(this.abi(v1)).estimateGas.acceptTerms([wallet as Hex], fullParams);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

@@ -41,9 +41,10 @@ export class SetOperatorFilterer extends ContractFunction<
     params?: WriteParameters,
   ): Promise<SetOperatorFiltererResponse> {
     const v1 = this.partition('v1');
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const { request } = await this.reader(this.abi(v1)).simulate.setOperatorFilterer([operatorId as Hex], params);
+      const { request } = await this.reader(this.abi(v1)).simulate.setOperatorFilterer([operatorId as Hex], fullParams);
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
         hash,

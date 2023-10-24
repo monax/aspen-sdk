@@ -47,11 +47,12 @@ export class UpdateBaseUri extends ContractFunction<
     params?: WriteParameters,
   ): Promise<UpdateBaseUriResponse> {
     const v1 = this.partition('v1');
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const { request } = await this.reader(this.abi(v1)).simulate.updateBaseURI(
         [BigInt(baseURIIndex), baseURI],
-        params,
+        fullParams,
       );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({

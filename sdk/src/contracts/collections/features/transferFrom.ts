@@ -1,9 +1,9 @@
 import { Addressish, asAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType, Hex } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, encodeFunctionData } from 'viem';
 import { CollectionContract, RequiredTokenId, Signer, WriteParameters } from '../..';
 import { SdkError, SdkErrorCode } from '../errors';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const TransferFromFunctions = {
   nft: 'transferFrom(address,address,uint256)[]',
@@ -51,11 +51,12 @@ export class TransferFrom extends ContractFunction<
     const from = await asAddress(fromAddress);
     const to = await asAddress(toAddress);
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const { request } = await this.reader(this.abi(nft)).simulate.transferFrom(
         [from as Hex, to as Hex, tokenId],
-        params,
+        fullParams,
       );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({

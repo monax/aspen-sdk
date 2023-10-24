@@ -50,13 +50,14 @@ export class SetMaxTotalSupply extends ContractFunction<
     params?: WriteParameters,
   ): Promise<SetMaxTotalSupplyResponse> {
     const { nft, sft } = this.partitions;
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       if (sft) {
         tokenId = this.base.requireTokenId(tokenId, this.functionName);
         const { request } = await this.reader(this.abi(sft)).simulate.setMaxTotalSupply(
           [tokenId, BigInt(totalSupply)],
-          params,
+          fullParams,
         );
         const hash = await walletClient.writeContract(request);
         return this.base.publicClient.waitForTransactionReceipt({
@@ -64,7 +65,10 @@ export class SetMaxTotalSupply extends ContractFunction<
         });
       } else if (nft) {
         this.base.rejectTokenId(tokenId, this.functionName);
-        const { request } = await this.reader(this.abi(nft)).simulate.setMaxTotalSupply([BigInt(totalSupply)], params);
+        const { request } = await this.reader(this.abi(nft)).simulate.setMaxTotalSupply(
+          [BigInt(totalSupply)],
+          fullParams,
+        );
         const hash = await walletClient.writeContract(request);
         return this.base.publicClient.waitForTransactionReceipt({
           hash,

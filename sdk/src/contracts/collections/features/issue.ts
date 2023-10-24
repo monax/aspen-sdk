@@ -72,11 +72,12 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
     const wallet = await asAddress(receiver);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const { request } = await this.reader(this.abi(sft)).simulate.issue(
         [wallet as Hex, tokenId, normalise(quantity)],
-        params,
+        fullParams,
       );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
@@ -92,13 +93,13 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     { receiver, quantity }: IssueArgs,
     params?: WriteParameters,
   ): Promise<IssueResponse> {
-    // const nft = this.partition('nft');
     const wallet = await asAddress(receiver);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       // bypass ABI divercence
       const iface = this.base.assumeFeature('issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV0');
-      const { request } = await this.reader(iface.abi).simulate.issue([wallet as Hex, normalise(quantity)], params);
+      const { request } = await this.reader(iface.abi).simulate.issue([wallet as Hex, normalise(quantity)], fullParams);
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
         hash,
@@ -127,14 +128,12 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     tokenId = this.base.requireTokenId(tokenId, this.functionName);
     const sft = this.partition('sft');
     const wallet = await asAddress(receiver);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const estimate = await this.reader(this.abi(sft)).estimateGas.issue(
         [wallet as Hex, tokenId, normalise(quantity)],
-        {
-          account: walletClient.account,
-          ...params,
-        },
+        fullParams,
       );
       return estimate;
     } catch (err) {
@@ -147,16 +146,13 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     { receiver, quantity }: IssueArgs,
     params?: WriteParameters,
   ): Promise<bigint> {
-    // const nft = this.partition('nft');
     const wallet = await asAddress(receiver);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       // bypass ABI divercence
       const iface = this.base.assumeFeature('issuance/ICedarNFTIssuance.sol:IRestrictedNFTIssuanceV0');
-      const estimate = await this.reader(iface.abi).estimateGas.issue([wallet as Hex, normalise(quantity)], {
-        account: walletClient.account,
-        ...params,
-      });
+      const estimate = await this.reader(iface.abi).estimateGas.issue([wallet as Hex, normalise(quantity)], fullParams);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, { receiver, quantity });
@@ -197,7 +193,6 @@ export class Issue extends ContractFunction<IssueInterfaces, IssuePartitions, Is
     { receiver, quantity }: IssueArgs,
     params?: WriteParameters,
   ): Promise<string> {
-    // const nft = this.partition('nft');
     const wallet = await asAddress(receiver);
 
     try {

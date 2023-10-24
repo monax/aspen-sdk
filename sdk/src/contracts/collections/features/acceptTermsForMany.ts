@@ -43,9 +43,10 @@ export class AcceptTermsForMany extends ContractFunction<
   ): Promise<AcceptTermsForManyResponse> {
     const v1 = this.partition('v1');
     const wallets = await Promise.all(acceptors.map((a) => asAddress(a)));
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const { request } = await this.reader(this.abi(v1)).simulate.batchAcceptTerms([wallets as Hex[]], params);
+      const { request } = await this.reader(this.abi(v1)).simulate.batchAcceptTerms([wallets as Hex[]], fullParams);
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
         hash,
@@ -58,12 +59,10 @@ export class AcceptTermsForMany extends ContractFunction<
   async estimateGas(walletClient: Signer, acceptors: Addressish[], params?: WriteParameters): Promise<bigint> {
     const v1 = this.partition('v1');
     const wallets = await Promise.all(acceptors.map((a) => asAddress(a)));
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const estimate = await this.reader(this.abi(v1)).estimateGas.batchAcceptTerms([wallets as Hex[]], {
-        account: walletClient.account,
-        ...params,
-      });
+      const estimate = await this.reader(this.abi(v1)).estimateGas.batchAcceptTerms([wallets as Hex[]], fullParams);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

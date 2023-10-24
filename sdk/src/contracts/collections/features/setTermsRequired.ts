@@ -41,9 +41,10 @@ export class SetTermsRequired extends ContractFunction<
     params?: WriteParameters,
   ): Promise<SetTermsRequiredResponse> {
     const v1 = this.partition('v1');
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const { request } = await this.reader(this.abi(v1)).simulate.setTermsRequired([termsRequired], params);
+      const { request } = await this.reader(this.abi(v1)).simulate.setTermsRequired([termsRequired], fullParams);
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
         hash,

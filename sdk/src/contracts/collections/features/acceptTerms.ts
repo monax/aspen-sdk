@@ -39,9 +39,10 @@ export class AcceptTerms extends ContractFunction<
 
   protected async acceptTerms(walletClient: Signer, params?: WriteParameters): Promise<AcceptTermsResponse> {
     const v1 = this.partition('v1');
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const { request } = await this.reader(this.abi(v1)).simulate.acceptTerms(params);
+      const { request } = await this.reader(this.abi(v1)).simulate.acceptTerms(fullParams);
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
         hash,
@@ -53,12 +54,10 @@ export class AcceptTerms extends ContractFunction<
 
   async estimateGas(walletClient: Signer, params?: WriteParameters): Promise<bigint> {
     const v1 = this.partition('v1');
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const estimate = await this.reader(this.abi(v1)).estimateGas.acceptTerms({
-        account: walletClient.account,
-        ...params,
-      });
+      const estimate = await this.reader(this.abi(v1)).estimateGas.acceptTerms(fullParams);
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR);

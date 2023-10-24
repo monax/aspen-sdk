@@ -1,11 +1,11 @@
 import { Addressish, asAddress, isZeroAddress } from '@monaxlabs/phloem/dist/types';
-import { encodeFunctionData, GetTransactionReceiptReturnType, Hex, TransactionReceipt } from 'viem';
+import { GetTransactionReceiptReturnType, Hex, TransactionReceipt, encodeFunctionData } from 'viem';
 import { IssuedToken } from '../..';
 import { CollectionContract } from '../collections';
 import { SdkError, SdkErrorCode } from '../errors';
 import { Signer, WriteParameters } from '../types';
 import { FeatureFunctionsMap } from './feature-functions.gen';
-import { asCallableClass, ContractFunction } from './features';
+import { ContractFunction, asCallableClass } from './features';
 
 const IssueWithTokenUriFunctions = {
   nft: 'issueWithTokenURI(address,string)[]',
@@ -55,11 +55,12 @@ export class IssueWithTokenUri extends ContractFunction<
     this.validateArgs(args);
     const nft = this.partition('nft');
     const wallet = await asAddress(args.receiver);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
       const { request } = await this.reader(this.abi(nft)).simulate.issueWithTokenURI(
         [wallet as Hex, args.tokenURI],
-        params,
+        fullParams,
       );
       const hash = await walletClient.writeContract(request);
       return this.base.publicClient.waitForTransactionReceipt({
@@ -74,12 +75,13 @@ export class IssueWithTokenUri extends ContractFunction<
     this.validateArgs(args);
     const nft = this.partition('nft');
     const wallet = await asAddress(args.receiver);
+    const fullParams = { account: walletClient.account, ...params };
 
     try {
-      const estimate = await this.reader(this.abi(nft)).estimateGas.issueWithTokenURI([wallet as Hex, args.tokenURI], {
-        account: walletClient.account,
-        ...params,
-      });
+      const estimate = await this.reader(this.abi(nft)).estimateGas.issueWithTokenURI(
+        [wallet as Hex, args.tokenURI],
+        fullParams,
+      );
       return estimate;
     } catch (err) {
       throw SdkError.from(err, SdkErrorCode.CHAIN_ERROR, args);
